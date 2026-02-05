@@ -52,7 +52,7 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
         <div className="flex items-center gap-2 mb-4">
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Job Preview</span>
         </div>
-        <div className="flex items-start gap-3.5 mb-3">
+        <div className="flex items-start gap-4 mb-3">
           <CompanyLogo 
             logoUrl={job.company_logo} 
             companyName={job.company} 
@@ -61,12 +61,15 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
           />
           <div className="flex-1 min-w-0">
             <h3 
-              className="font-extrabold text-foreground text-lg leading-tight line-clamp-2 cursor-pointer hover:text-accent transition-colors"
+              className="font-bold text-foreground text-lg leading-tight line-clamp-2 cursor-pointer hover:text-accent transition-colors"
               onClick={handleTitleClick}
             >
               {job.title}
             </h3>
             <p className="text-muted-foreground text-sm mt-0.5">{job.company}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Posted {formatDistanceToNow(job.posted_date, { addSuffix: false })} ago
+            </p>
           </div>
         </div>
         
@@ -80,45 +83,40 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
       </div>
 
       {/* Scrollable Content */}
-      <ScrollArea className="flex-1 p-5">
+      <ScrollArea className="flex-1 p-5" style={{ maxHeight: '220px' }}>
+        {/* Full Description */}
+        <div className="mb-5">
+          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Description</h4>
+          <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-line">
+            {job.description}
+          </p>
+        </div>
+
         {/* Meta Row - Chip Style */}
-        <div className="flex flex-wrap gap-2 mb-4 pb-4 border-b border-border">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-chip-bg text-xs text-muted-foreground">
-            <Clock className="h-3.5 w-3.5" />
-            Posted {formatDistanceToNow(job.posted_date, { addSuffix: false })}
-          </span>
-          
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-chip-bg text-xs text-muted-foreground">
+        <div className="flex flex-wrap gap-2 mb-5">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-chip-bg text-xs text-muted-foreground">
             <MapPin className="h-3.5 w-3.5" />
             {job.location}
           </span>
           
           {job.salary_range && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-success-bg text-xs text-success-text font-medium">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-success-bg text-xs text-success-text font-medium">
               <DollarSign className="h-3.5 w-3.5" />
               {job.salary_range}
             </span>
           )}
           
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-chip-bg text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-chip-bg text-xs text-muted-foreground">
             <Briefcase className="h-3.5 w-3.5" />
             {job.employment_type}
           </span>
           
           {job.experience_years && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-chip-bg text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-chip-bg text-xs text-muted-foreground">
               <BriefcaseBusiness className="h-3.5 w-3.5" />
               {job.experience_years}
             </span>
           )}
-        </div>
-
-        {/* Full Description */}
-        <div className="mb-4">
-          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Description</h4>
-          <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-line">
-            {job.description}
-          </p>
         </div>
 
         {/* Skills */}
@@ -130,7 +128,7 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
                 <Badge 
                   key={skill} 
                   variant="secondary" 
-                  className="text-xs font-normal px-2.5 py-1 rounded-full bg-chip-bg text-muted-foreground border-0"
+                  className="text-xs font-normal px-2.5 py-1 rounded-full bg-chip-bg text-foreground border-0 hover:bg-secondary transition-colors"
                 >
                   {skill}
                 </Badge>

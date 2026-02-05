@@ -13,11 +13,12 @@ interface RoleCount {
   count: number;
 }
 
-const TIPS = [
-  "Apply within 24–48 hours for best response.",
-  "Save jobs and batch apply.",
-  "Customize your resume for each role.",
-  "Follow up after 1 week if no response.",
+const CATEGORIES = [
+  { key: "Software Engineer", keywords: ["software", "engineer", "developer", "frontend", "backend"] },
+  { key: "Full Stack", keywords: ["full stack", "fullstack"] },
+  { key: "Data Analyst", keywords: ["data", "analyst", "analytics"] },
+  { key: "Business", keywords: ["business", "operations", "strategy"] },
+  { key: "Civil", keywords: ["civil", "construction", "infrastructure"] },
 ];
 
 export function TopHiringsPanel({ onFilterByRole }: TopHiringsPanelProps) {
@@ -47,22 +48,11 @@ export function TopHiringsPanel({ onFilterByRole }: TopHiringsPanelProps) {
       const title = job.title.toLowerCase();
       let role = "Other";
       
-      if (title.includes("engineer") || title.includes("developer")) {
-        role = "Engineering";
-      } else if (title.includes("design")) {
-        role = "Design";
-      } else if (title.includes("product")) {
-        role = "Product";
-      } else if (title.includes("marketing")) {
-        role = "Marketing";
-      } else if (title.includes("sales")) {
-        role = "Sales";
-      } else if (title.includes("data") || title.includes("analyst")) {
-        role = "Data & Analytics";
-      } else if (title.includes("manager") || title.includes("lead")) {
-        role = "Management";
-      } else if (title.includes("support") || title.includes("success")) {
-        role = "Customer Success";
+      for (const category of CATEGORIES) {
+        if (category.keywords.some(kw => title.includes(kw))) {
+          role = category.key;
+          break;
+        }
       }
       
       roleMap.set(role, (roleMap.get(role) || 0) + 1);
@@ -80,7 +70,7 @@ export function TopHiringsPanel({ onFilterByRole }: TopHiringsPanelProps) {
 
     if (topRoles.length === 0) {
       return (
-        <div className="text-center py-8 text-muted-foreground text-sm">
+        <div className="text-center py-8 text-muted-foreground text-sm gradient-subtle rounded-xl">
           No jobs in this period
         </div>
       );
@@ -98,8 +88,8 @@ export function TopHiringsPanel({ onFilterByRole }: TopHiringsPanelProps) {
               <span className="text-sm font-medium text-foreground group-hover:text-accent transition-colors">
                 {item.role}
               </span>
-              <span className="text-xs text-muted-foreground">
-                {item.count} job{item.count !== 1 ? 's' : ''}
+              <span className="text-xs text-muted-foreground font-medium">
+                {item.count}
               </span>
             </div>
             <div className="h-2 bg-secondary rounded-full overflow-hidden">
@@ -117,31 +107,34 @@ export function TopHiringsPanel({ onFilterByRole }: TopHiringsPanelProps) {
   return (
     <div className="p-5 h-full flex flex-col">
       {/* Header */}
-      <div className="flex items-center gap-2.5 mb-5">
-        <div className="h-9 w-9 rounded-xl bg-accent/10 flex items-center justify-center">
+      <div className="flex items-center gap-3 mb-5">
+        <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center">
           <TrendingUp className="h-5 w-5 text-accent" />
         </div>
-        <h3 className="font-bold text-foreground text-lg">Top Hirings Today</h3>
+        <div>
+          <h3 className="font-bold text-foreground text-base">Top Hirings Today</h3>
+          <p className="text-xs text-muted-foreground">Based on jobs in your system</p>
+        </div>
       </div>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-        <TabsList className="w-full justify-start mb-4 h-auto p-1 bg-secondary/60 rounded-full">
+        <TabsList className="w-full justify-start mb-4 h-auto p-1 bg-secondary/70 rounded-full">
           <TabsTrigger 
             value="today" 
-            className="flex-1 text-xs rounded-full data-[state=active]:bg-card data-[state=active]:shadow-sm"
+            className="flex-1 text-xs rounded-full data-[state=active]:bg-tab-selected-bg data-[state=active]:text-tab-selected-text data-[state=active]:shadow-none font-medium"
           >
             Today
           </TabsTrigger>
           <TabsTrigger 
             value="yesterday" 
-            className="flex-1 text-xs rounded-full data-[state=active]:bg-card data-[state=active]:shadow-sm"
+            className="flex-1 text-xs rounded-full data-[state=active]:bg-tab-selected-bg data-[state=active]:text-tab-selected-text data-[state=active]:shadow-none font-medium"
           >
             Yesterday
           </TabsTrigger>
           <TabsTrigger 
             value="week" 
-            className="flex-1 text-xs rounded-full data-[state=active]:bg-card data-[state=active]:shadow-sm"
+            className="flex-1 text-xs rounded-full data-[state=active]:bg-tab-selected-bg data-[state=active]:text-tab-selected-text data-[state=active]:shadow-none font-medium"
           >
             This Week
           </TabsTrigger>
@@ -160,20 +153,17 @@ export function TopHiringsPanel({ onFilterByRole }: TopHiringsPanelProps) {
         </TabsContent>
       </Tabs>
 
-      {/* Mini Tips Widget */}
-      <div className="mt-auto pt-4 border-t border-border">
-        <div className="flex items-center gap-2 mb-3">
-          <Lightbulb className="h-4 w-4 text-accent" />
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Quick Tips</span>
+      {/* Tip Card Widget */}
+      <div className="mt-auto pt-5 border-t border-border">
+        <div className="bg-accent/5 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Lightbulb className="h-4 w-4 text-accent" />
+            <span className="text-xs font-semibold text-foreground">Quick Tip</span>
+          </div>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Apply early—most callbacks happen within the first 48 hours.
+          </p>
         </div>
-        <ul className="space-y-2">
-          {TIPS.slice(0, 2).map((tip, index) => (
-            <li key={index} className="text-xs text-muted-foreground leading-relaxed flex items-start gap-2">
-              <span className="text-accent mt-0.5">•</span>
-              <span>{tip}</span>
-            </li>
-          ))}
-        </ul>
       </div>
     </div>
   );

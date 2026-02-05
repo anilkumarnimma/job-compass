@@ -76,13 +76,13 @@ export function JobCard({ job, onViewDetails, onHover, onTap }: JobCardProps) {
 
   return (
     <Card 
-      className="group p-[18px] transition-all duration-[160ms] ease-out border border-border bg-card shadow-premium hover:shadow-premium-hover hover:border-accent/30 hover:-translate-y-0.5 rounded-2xl cursor-pointer"
+      className="group p-5 transition-all duration-[160ms] ease-out border border-border bg-card shadow-premium hover:shadow-premium-hover hover:border-accent/30 hover:-translate-y-0.5 rounded-2xl cursor-pointer"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleCardClick}
     >
       {/* Header: Logo + Title + Badge */}
-      <div className="flex items-start gap-3.5 mb-3">
+      <div className="flex items-start gap-4 mb-4">
         <CompanyLogo 
           logoUrl={job.company_logo} 
           companyName={job.company} 
@@ -94,12 +94,12 @@ export function JobCard({ job, onViewDetails, onHover, onTap }: JobCardProps) {
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h3 
-                className="font-extrabold text-foreground text-lg leading-tight line-clamp-1 cursor-pointer hover:text-accent transition-colors"
+                className="font-bold text-foreground text-lg leading-tight line-clamp-1 cursor-pointer hover:text-accent transition-colors"
                 onClick={handleTitleClick}
               >
                 {job.title}
               </h3>
-              <p className="text-muted-foreground text-[13px] mt-0.5">{job.company}</p>
+              <p className="text-muted-foreground text-sm mt-0.5">{job.company}</p>
             </div>
             {job.is_reviewing && (
               <Badge 
@@ -112,12 +112,12 @@ export function JobCard({ job, onViewDetails, onHover, onTap }: JobCardProps) {
         </div>
       </div>
 
-      {/* Description - 2 lines with expand */}
-      <div className="mb-3">
+      {/* Description - above meta row */}
+      <div className="mb-4">
         <p className={`text-sm leading-relaxed text-muted-foreground ${!isDescriptionExpanded ? 'line-clamp-2' : ''}`}>
           {job.description}
         </p>
-        {job.description.length > 100 && (
+        {job.description.length > 120 && (
           <button 
             className="text-xs font-medium text-accent hover:text-accent/80 mt-1.5 flex items-center gap-1 transition-colors"
             onClick={toggleDescription}
@@ -132,31 +132,31 @@ export function JobCard({ job, onViewDetails, onHover, onTap }: JobCardProps) {
       </div>
 
       {/* Meta Row - Chip Style */}
-      <div className="flex flex-wrap items-center gap-2 mb-3">
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-chip-bg text-xs text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-chip-bg text-xs text-muted-foreground">
           <Clock className="h-3.5 w-3.5" />
-          Posted {formatDistanceToNow(job.posted_date, { addSuffix: false })}
+          Posted {formatDistanceToNow(job.posted_date, { addSuffix: false })} ago
         </span>
         
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-chip-bg text-xs text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-chip-bg text-xs text-muted-foreground">
           <MapPin className="h-3.5 w-3.5" />
           {job.location}
         </span>
         
         {job.salary_range && (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-success-bg text-xs text-success-text font-medium">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-success-bg text-xs text-success-text font-medium">
             <DollarSign className="h-3.5 w-3.5" />
             {job.salary_range}
           </span>
         )}
         
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-chip-bg text-xs text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-chip-bg text-xs text-muted-foreground">
           <Briefcase className="h-3.5 w-3.5" />
           {job.employment_type}
         </span>
         
         {job.experience_years && (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-chip-bg text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-chip-bg text-xs text-muted-foreground">
             <BriefcaseBusiness className="h-3.5 w-3.5" />
             {job.experience_years}
           </span>
@@ -166,23 +166,23 @@ export function JobCard({ job, onViewDetails, onHover, onTap }: JobCardProps) {
       {/* Skills - Clean rounded pills */}
       {job.skills.length > 0 && (
         <div className="mb-4">
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Skills</p>
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Skills</p>
           <div className="flex flex-wrap gap-1.5">
-            {job.skills.slice(0, 7).map((skill) => (
+            {job.skills.slice(0, 8).map((skill) => (
               <Badge 
                 key={skill} 
                 variant="secondary" 
-                className="text-xs font-normal px-2.5 py-1 rounded-full bg-chip-bg text-muted-foreground border-0"
+                className="text-xs font-normal px-2.5 py-1 rounded-full bg-chip-bg text-foreground border-0 hover:bg-secondary transition-colors"
               >
                 {skill}
               </Badge>
             ))}
-            {job.skills.length > 7 && (
+            {job.skills.length > 8 && (
               <Badge 
                 variant="outline" 
                 className="text-xs font-normal px-2.5 py-1 rounded-full"
               >
-                +{job.skills.length - 7} more
+                +{job.skills.length - 8} more
               </Badge>
             )}
           </div>
@@ -190,7 +190,7 @@ export function JobCard({ job, onViewDetails, onHover, onTap }: JobCardProps) {
       )}
 
       {/* Actions - Bottom Right */}
-      <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+      <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
         <Button
           variant="ghost"
           size="sm"

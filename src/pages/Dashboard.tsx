@@ -20,33 +20,33 @@ export default function Dashboard() {
   const isMobile = useIsMobile();
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
  
-   const filteredJobs = useMemo(() => {
-     if (!searchQuery.trim()) return jobs;
-     
-     const query = searchQuery.toLowerCase();
-     return jobs.filter((job) => 
-       job.title.toLowerCase().includes(query) ||
-       job.company.toLowerCase().includes(query) ||
-       job.description.toLowerCase().includes(query) ||
-       job.skills.some((skill) => skill.toLowerCase().includes(query))
-     );
-   }, [searchQuery, jobs]);
- 
-   const todayJobs = useMemo(() => 
-     filteredJobs.filter((job) => isToday(job.posted_date)),
-   [filteredJobs]);
- 
-   const yesterdayJobs = useMemo(() => 
-     filteredJobs.filter((job) => isYesterday(job.posted_date)),
-   [filteredJobs]);
- 
-   const thisWeekJobs = useMemo(() => {
-     const weekAgo = startOfDay(subDays(new Date(), 7));
-     const twoDaysAgo = startOfDay(subDays(new Date(), 2));
-     return filteredJobs.filter((job) => 
-       isWithinInterval(job.posted_date, { start: weekAgo, end: twoDaysAgo })
-     );
-   }, [filteredJobs]);
+  const filteredJobs = useMemo(() => {
+    if (!searchQuery.trim()) return jobs;
+    
+    const query = searchQuery.toLowerCase();
+    return jobs.filter((job) => 
+      job.title.toLowerCase().includes(query) ||
+      job.company.toLowerCase().includes(query) ||
+      job.description.toLowerCase().includes(query) ||
+      job.skills.some((skill) => skill.toLowerCase().includes(query))
+    );
+  }, [searchQuery, jobs]);
+
+  const todayJobs = useMemo(() => 
+    filteredJobs.filter((job) => isToday(job.posted_date)),
+  [filteredJobs]);
+
+  const yesterdayJobs = useMemo(() => 
+    filteredJobs.filter((job) => isYesterday(job.posted_date)),
+  [filteredJobs]);
+
+  const thisWeekJobs = useMemo(() => {
+    const weekAgo = startOfDay(subDays(new Date(), 7));
+    const twoDaysAgo = startOfDay(subDays(new Date(), 2));
+    return filteredJobs.filter((job) => 
+      isWithinInterval(job.posted_date, { start: weekAgo, end: twoDaysAgo })
+    );
+  }, [filteredJobs]);
 
   // Handle hover with delay for smoother UX
   const handleJobHover = useCallback((job: Job | null) => {
@@ -99,10 +99,10 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="container max-w-[1240px] mx-auto px-6 py-[18px]">
+      <div className="container max-w-[1200px] mx-auto px-6 py-6">
         <div className="flex gap-6">
-          {/* Main Content - 70% */}
-          <div className="flex-1 min-w-0 lg:w-[70%]">
+          {/* Main Content - 68% */}
+          <div className="flex-1 min-w-0 lg:w-[68%]">
             {/* Header */}
             <div className="mb-6">
               <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
@@ -124,28 +124,28 @@ export default function Dashboard() {
 
             {/* Tabs - Pill Style */}
             <Tabs defaultValue="all" className="w-full">
-              <TabsList className="w-full justify-start mb-5 h-auto p-1 bg-secondary/60 rounded-full">
+              <TabsList className="w-full justify-start mb-5 h-auto p-1 bg-secondary/70 rounded-full">
                 <TabsTrigger 
                   value="all" 
-                  className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-card data-[state=active]:shadow-sm px-5"
+                  className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-tab-selected-bg data-[state=active]:text-tab-selected-text data-[state=active]:shadow-none px-5 font-medium"
                 >
                   All ({filteredJobs.length})
                 </TabsTrigger>
                 <TabsTrigger 
                   value="today" 
-                  className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-card data-[state=active]:shadow-sm px-5"
+                  className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-tab-selected-bg data-[state=active]:text-tab-selected-text data-[state=active]:shadow-none px-5 font-medium"
                 >
                   Today ({todayJobs.length})
                 </TabsTrigger>
                 <TabsTrigger 
                   value="yesterday" 
-                  className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-card data-[state=active]:shadow-sm px-5"
+                  className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-tab-selected-bg data-[state=active]:text-tab-selected-text data-[state=active]:shadow-none px-5 font-medium"
                 >
                   Yesterday ({yesterdayJobs.length})
                 </TabsTrigger>
                 <TabsTrigger 
                   value="week" 
-                  className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-card data-[state=active]:shadow-sm px-5"
+                  className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-tab-selected-bg data-[state=active]:text-tab-selected-text data-[state=active]:shadow-none px-5 font-medium"
                 >
                   This Week ({thisWeekJobs.length})
                 </TabsTrigger>
@@ -169,11 +169,11 @@ export default function Dashboard() {
             </Tabs>
           </div>
 
-          {/* Right Sidebar - 30% Desktop only */}
+          {/* Right Sidebar - 32% Desktop only */}
           {!isMobile && (
             <RightSidebar 
               hoveredJob={hoveredJob}
-              className="hidden lg:flex lg:flex-col w-[30%] sticky top-20 h-[calc(100vh-6rem)]"
+              className="hidden lg:flex lg:flex-col w-[32%] sticky top-20 h-[calc(100vh-6rem)]"
             />
           )}
         </div>
