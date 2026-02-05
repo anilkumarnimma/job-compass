@@ -2,17 +2,30 @@
  import { Button } from "@/components/ui/button";
  import { Card } from "@/components/ui/card";
  import { Badge } from "@/components/ui/badge";
- import { useJobs } from "@/context/JobContext";
+ import { useJobContext } from "@/context/JobContext";
+ import { useAuth } from "@/context/AuthContext";
+ import { CompanyLogo } from "@/components/CompanyLogo";
  import { format } from "date-fns";
- import { ExternalLink, Trash2, Briefcase, Calendar } from "lucide-react";
- import { Link } from "react-router-dom";
+ import { ExternalLink, Trash2, Briefcase, Calendar, Loader2 } from "lucide-react";
+ import { Link, Navigate } from "react-router-dom";
  
  export default function Applied() {
-   const { appliedJobs, removeAppliedJob } = useJobs();
+   const { applications, removeAppliedJob, isLoading } = useJobContext();
+   const { user, isLoading: authLoading } = useAuth();
  
-   const sortedJobs = [...appliedJobs].sort(
-     (a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime()
-   );
+   if (authLoading) {
+     return (
+       <Layout>
+         <div className="flex items-center justify-center min-h-[50vh]">
+           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+         </div>
+       </Layout>
+     );
+   }
+ 
+   if (!user) {
+     return <Navigate to="/auth" replace />;
+   }
  
    return (
      <Layout>
@@ -28,7 +41,12 @@
          </div>
  
          {/* Job List */}
-         {sortedJobs.length === 0 ? (
+         {isLoading ? (
+           <div className="text-center py-12">
+             <Loader2 className="h-8 w-8 text-muted-foreground mx-auto mb-4 animate-spin" />
+             <p className="text-muted-foreground">Loading applications...</p>
+           </div>
+         ) : applications.length === 0 ? (
            <Card className="p-12 text-center border-border/60">
              <Briefcase className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
              <h3 className="font-semibold text-foreground mb-2">No applications yet</h3>
@@ -41,62 +59,72 @@
            </Card>
          ) : (
            <div className="space-y-4">
-             {sortedJobs.map((job) => (
-               <Card key={job.id} className="p-5 border-border/60 animate-fade-in">
-                 <div className="flex items-start justify-between gap-4">
-                   <div className="flex-1 min-w-0">
-                     <div className="flex items-start gap-3 mb-2">
-                       <div className="flex-1 min-w-0">
-                         <h3 className="font-semibold text-foreground text-lg leading-tight truncate">
-                           {job.title}
-                         </h3>
-                         <p className="text-muted-foreground font-medium">{job.company}</p>
+             {applications.map((application) => {
+               const job = application.job;
+               if (!job) return null;
+ 
+               return (
+                 <Card key={application.id} className="p-5 border-border/60 animate-fade-in">
+                   <div className="flex items-start gap-4">
+                     <CompanyLogo 
+                       logoUrl={job.company_logo} 
+                       companyName={job.company} 
+                       size="md"
+                     />
+                     <div className="flex-1 min-w-0">
+                       <div className="flex items-start gap-3 mb-2">
+                         <div className="flex-1 min-w-0">
+                           <h3 className="font-semibold text-foreground text-lg leading-tight truncate">
+                             {job.title}
+                           </h3>
+                           <p className="text-muted-foreground font-medium">{job.company}</p>
+                         </div>
+                         {job.is_reviewing && (
+                           <Badge variant="success" className="shrink-0">
+                             Actively Reviewing
+                           </Badge>
+                         )}
                        </div>
-                       {job.isReviewing && (
-                         <Badge variant="success" className="shrink-0">
-                           Actively Reviewing
-                         </Badge>
-                       )}
-                     </div>
  
-                     <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
-                       <span className="flex items-center gap-1.5">
-                         <Calendar className="h-3.5 w-3.5" />
-                         Applied {format(job.appliedAt, "MMM d, yyyy 'at' h:mm a")}
-                       </span>
-                     </div>
+                       <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+                         <span className="flex items-center gap-1.5">
+                           <Calendar className="h-3.5 w-3.5" />
+                           Applied {format(application.applied_at, "MMM d, yyyy 'at' h:mm a")}
+                         </span>
+                       </div>
  
-                     <div className="flex flex-wrap gap-1.5">
-                       {job.skills.slice(0, 4).map((skill) => (
-                         <Badge key={skill} variant="secondary" className="text-xs">
-                           {skill}
-                         </Badge>
-                       ))}
+                       <div className="flex flex-wrap gap-1.5">
+                         {job.skills.slice(0, 4).map((skill) => (
+                           <Badge key={skill} variant="secondary" className="text-xs">
+                             {skill}
+                           </Badge>
+                         ))}
+                       </div>
                      </div>
                    </div>
-                 </div>
  
-                 <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border/60">
-                   <Button
-                     variant="outline"
-                     size="sm"
-                     onClick={() => window.open(job.externalApplyLink, "_blank")}
-                   >
-                     <ExternalLink className="h-3.5 w-3.5" />
-                     View Job
-                   </Button>
-                   <Button
-                     variant="ghost"
-                     size="sm"
-                     className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                     onClick={() => removeAppliedJob(job.id)}
-                   >
-                     <Trash2 className="h-3.5 w-3.5" />
-                     Remove
-                   </Button>
-                 </div>
-               </Card>
-             ))}
+                   <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border/60">
+                     <Button
+                       variant="outline"
+                       size="sm"
+                       onClick={() => window.open(job.external_apply_link, "_blank")}
+                     >
+                       <ExternalLink className="h-3.5 w-3.5" />
+                       View Job
+                     </Button>
+                     <Button
+                       variant="ghost"
+                       size="sm"
+                       className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                       onClick={() => removeAppliedJob(job.id)}
+                     >
+                       <Trash2 className="h-3.5 w-3.5" />
+                       Remove
+                     </Button>
+                   </div>
+                 </Card>
+               );
+             })}
            </div>
          )}
        </div>

@@ -1,27 +1,68 @@
- import { useState } from "react";
- import { useSearchParams, Link } from "react-router-dom";
+ import { useState, useEffect } from "react";
+ import { useSearchParams, Link, useNavigate } from "react-router-dom";
  import { Layout } from "@/components/Layout";
  import { Button } from "@/components/ui/button";
  import { Input } from "@/components/ui/input";
  import { Label } from "@/components/ui/label";
  import { Card } from "@/components/ui/card";
- import { Briefcase, Mail, Lock, Phone, Globe } from "lucide-react";
+ import { useAuth } from "@/context/AuthContext";
+ import { Briefcase, Mail, Lock, Globe, Loader2 } from "lucide-react";
+ import { toast } from "sonner";
  
  export default function Auth() {
    const [searchParams] = useSearchParams();
+   const navigate = useNavigate();
+   const { user, signIn, signUp, isLoading: authLoading } = useAuth();
    const isSignup = searchParams.get("signup") === "true";
    const [mode, setMode] = useState<"login" | "signup">(isSignup ? "signup" : "login");
+   const [isLoading, setIsLoading] = useState(false);
    
    const [email, setEmail] = useState("");
    const [password, setPassword] = useState("");
-   const [phone, setPhone] = useState("");
    const [country, setCountry] = useState("");
  
-   const handleSubmit = (e: React.FormEvent) => {
+   useEffect(() => {
+     if (user && !authLoading) {
+       navigate("/dashboard");
+     }
+   }, [user, authLoading, navigate]);
+ 
+   const handleSubmit = async (e: React.FormEvent) => {
      e.preventDefault();
-     // This will be connected to Supabase auth when Cloud is enabled
-     console.log("Auth submit:", { email, password, phone, country, mode });
+     setIsLoading(true);
+ 
+     try {
+       if (mode === "signup") {
+         const { error } = await signUp(email, password, country);
+         if (error) {
+           toast.error(error.message);
+         } else {
+           toast.success("Account created! Please check your email to verify your account.");
+           setMode("login");
+         }
+       } else {
+         const { error } = await signIn(email, password);
+         if (error) {
+           toast.error(error.message);
+         } else {
+           toast.success("Welcome back!");
+           navigate("/dashboard");
+         }
+       }
+     } finally {
+       setIsLoading(false);
+     }
    };
+ 
+   if (authLoading) {
+     return (
+       <Layout showFooter={false}>
+         <div className="min-h-[calc(100vh-64px)] flex items-center justify-center">
+           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+         </div>
+       </Layout>
+     );
+   }
  
    return (
      <Layout showFooter={false}>
@@ -83,41 +124,30 @@
              </div>
  
              {mode === "signup" && (
-               <>
-                 <div className="space-y-2">
-                   <Label htmlFor="country">Country</Label>
-                   <div className="relative">
-                     <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                     <Input
-                       id="country"
-                       type="text"
-                       placeholder="United States"
-                       value={country}
-                       onChange={(e) => setCountry(e.target.value)}
-                       className="pl-10"
-                     />
-                   </div>
+               <div className="space-y-2">
+                 <Label htmlFor="country">Country</Label>
+                 <div className="relative">
+                   <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                   <Input
+                     id="country"
+                     type="text"
+                     placeholder="United States"
+                     value={country}
+                     onChange={(e) => setCountry(e.target.value)}
+                     className="pl-10"
+                   />
                  </div>
- 
-                 <div className="space-y-2">
-                   <Label htmlFor="phone">Phone (for OTP verification)</Label>
-                   <div className="relative">
-                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                     <Input
-                       id="phone"
-                       type="tel"
-                       placeholder="+1 (555) 000-0000"
-                       value={phone}
-                       onChange={(e) => setPhone(e.target.value)}
-                       className="pl-10"
-                     />
-                   </div>
-                 </div>
-               </>
+               </div>
              )}
  
-             <Button type="submit" variant="accent" className="w-full" size="lg">
-               {mode === "login" ? "Sign In" : "Create Account"}
+             <Button type="submit" variant="accent" className="w-full" size="lg" disabled={isLoading}>
+               {isLoading ? (
+                 <Loader2 className="h-4 w-4 animate-spin" />
+               ) : mode === "login" ? (
+                 "Sign In"
+               ) : (
+                 "Create Account"
+               )}
              </Button>
            </form>
  

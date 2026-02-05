@@ -2,17 +2,30 @@
  import { Button } from "@/components/ui/button";
  import { Card } from "@/components/ui/card";
  import { Badge } from "@/components/ui/badge";
- import { useJobs } from "@/context/JobContext";
- import { Bookmark, ExternalLink, Trash2, MapPin } from "lucide-react";
- import { Link } from "react-router-dom";
+ import { useJobContext } from "@/context/JobContext";
+ import { useAuth } from "@/context/AuthContext";
+ import { CompanyLogo } from "@/components/CompanyLogo";
+ import { Bookmark, ExternalLink, Trash2, MapPin, Loader2 } from "lucide-react";
+ import { Link, Navigate } from "react-router-dom";
  import { formatDistanceToNow } from "date-fns";
  
  export default function Saved() {
-   const { savedJobs, unsaveJob, applyToJob, isApplied } = useJobs();
+   const { savedJobs, unsaveJob, applyToJob, isApplied, isLoading } = useJobContext();
+   const { user, isLoading: authLoading } = useAuth();
  
-   const sortedJobs = [...savedJobs].sort(
-     (a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime()
-   );
+   if (authLoading) {
+     return (
+       <Layout>
+         <div className="flex items-center justify-center min-h-[50vh]">
+           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+         </div>
+       </Layout>
+     );
+   }
+ 
+   if (!user) {
+     return <Navigate to="/auth" replace />;
+   }
  
    return (
      <Layout>
@@ -28,7 +41,12 @@
          </div>
  
          {/* Job List */}
-         {sortedJobs.length === 0 ? (
+         {isLoading ? (
+           <div className="text-center py-12">
+             <Loader2 className="h-8 w-8 text-muted-foreground mx-auto mb-4 animate-spin" />
+             <p className="text-muted-foreground">Loading saved jobs...</p>
+           </div>
+         ) : savedJobs.length === 0 ? (
            <Card className="p-12 text-center border-border/60">
              <Bookmark className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
              <h3 className="font-semibold text-foreground mb-2">No saved jobs</h3>
@@ -41,12 +59,20 @@
            </Card>
          ) : (
            <div className="space-y-4">
-             {sortedJobs.map((job) => {
+             {savedJobs.map((savedJob) => {
+               const job = savedJob.job;
+               if (!job) return null;
+               
                const applied = isApplied(job.id);
                
                return (
-                 <Card key={job.id} className="p-5 border-border/60 animate-fade-in">
-                   <div className="flex items-start justify-between gap-4">
+                 <Card key={savedJob.id} className="p-5 border-border/60 animate-fade-in">
+                   <div className="flex items-start gap-4">
+                     <CompanyLogo 
+                       logoUrl={job.company_logo} 
+                       companyName={job.company} 
+                       size="md"
+                     />
                      <div className="flex-1 min-w-0">
                        <div className="flex items-start gap-3 mb-2">
                          <div className="flex-1 min-w-0">
@@ -59,7 +85,7 @@
                            {applied && (
                              <Badge variant="accent">Applied</Badge>
                            )}
-                           {job.isReviewing && (
+                           {job.is_reviewing && (
                              <Badge variant="success">Actively Reviewing</Badge>
                            )}
                          </div>
@@ -71,7 +97,7 @@
                            {job.location}
                          </span>
                          <span>
-                           Posted {formatDistanceToNow(job.postedDate, { addSuffix: true })}
+                           Posted {formatDistanceToNow(job.posted_date, { addSuffix: true })}
                          </span>
                        </div>
  

@@ -2,9 +2,12 @@
  import { Button } from "@/components/ui/button";
  import { Card } from "@/components/ui/card";
  import { Job } from "@/types/job";
- import { useJobs } from "@/context/JobContext";
+ import { useJobContext } from "@/context/JobContext";
+ import { useAuth } from "@/context/AuthContext";
+ import { CompanyLogo } from "@/components/CompanyLogo";
  import { MapPin, Calendar, Bookmark, BookmarkCheck, ExternalLink } from "lucide-react";
  import { formatDistanceToNow } from "date-fns";
+ import { useNavigate } from "react-router-dom";
  
  interface JobCardProps {
    job: Job;
@@ -12,13 +15,19 @@
  }
  
  export function JobCard({ job, onViewDetails }: JobCardProps) {
-   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobs();
+   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
+   const { user } = useAuth();
+   const navigate = useNavigate();
    
    const saved = isSaved(job.id);
    const applied = isApplied(job.id);
  
    const handleSaveClick = (e: React.MouseEvent) => {
      e.stopPropagation();
+     if (!user) {
+       navigate("/auth");
+       return;
+     }
      if (saved) {
        unsaveJob(job.id);
      } else {
@@ -28,6 +37,10 @@
  
    const handleApplyClick = (e: React.MouseEvent) => {
      e.stopPropagation();
+     if (!user) {
+       navigate("/auth");
+       return;
+     }
      applyToJob(job);
    };
  
@@ -36,7 +49,14 @@
        className="p-5 cursor-pointer transition-all duration-200 hover:shadow-card-hover border-border/60 animate-fade-in"
        onClick={() => onViewDetails?.(job)}
      >
-       <div className="flex items-start justify-between gap-4">
+       <div className="flex items-start gap-4">
+         {/* Company Logo */}
+         <CompanyLogo 
+           logoUrl={job.company_logo} 
+           companyName={job.company} 
+           size="md"
+         />
+         
          <div className="flex-1 min-w-0">
            {/* Header with title and badges */}
            <div className="flex items-start gap-3 mb-2">
@@ -46,7 +66,7 @@
                </h3>
                <p className="text-muted-foreground font-medium">{job.company}</p>
              </div>
-             {job.isReviewing && (
+             {job.is_reviewing && (
                <Badge variant="success" className="shrink-0">
                  Actively Reviewing
                </Badge>
@@ -61,7 +81,7 @@
              </span>
              <span className="flex items-center gap-1.5">
                <Calendar className="h-3.5 w-3.5" />
-               {formatDistanceToNow(job.postedDate, { addSuffix: true })}
+               {formatDistanceToNow(job.posted_date, { addSuffix: true })}
              </span>
            </div>
  

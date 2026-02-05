@@ -1,88 +1,219 @@
- import { useState, useEffect, useCallback } from "react";
- import { Job, AppliedJob, SavedJob } from "@/types/job";
+ import { useCallback } from "react";
+ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+ import { supabase } from "@/integrations/supabase/client";
+ import { Job, Application, SavedJob } from "@/types/job";
+ import { useAuth } from "@/context/AuthContext";
+ import { toast } from "sonner";
  
- const APPLIED_JOBS_KEY = "jobtracker_applied";
- const SAVED_JOBS_KEY = "jobtracker_saved";
+ // Helper to parse job from DB
+ function parseJob(row: any): Job {
+   return {
+     id: row.id,
+     title: row.title,
+     company: row.company,
+     company_logo: row.company_logo,
+     location: row.location,
+     description: row.description,
+     skills: row.skills || [],
+     external_apply_link: row.external_apply_link,
+     is_published: row.is_published,
+     is_reviewing: row.is_reviewing,
+     posted_date: new Date(row.posted_date),
+     created_at: new Date(row.created_at),
+     updated_at: new Date(row.updated_at),
+   };
+ }
  
- export function useJobStore() {
-   const [appliedJobs, setAppliedJobs] = useState<AppliedJob[]>([]);
-   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
+ export function useJobs() {
+   return useQuery({
+     queryKey: ["jobs"],
+     queryFn: async () => {
+       const { data, error } = await supabase
+         .from("jobs")
+         .select("*")
+         .eq("is_published", true)
+         .order("posted_date", { ascending: false });
  
-   // Load from localStorage on mount
-   useEffect(() => {
-     const storedApplied = localStorage.getItem(APPLIED_JOBS_KEY);
-     const storedSaved = localStorage.getItem(SAVED_JOBS_KEY);
-     
-     if (storedApplied) {
-       const parsed = JSON.parse(storedApplied);
-       setAppliedJobs(parsed.map((j: AppliedJob) => ({
-         ...j,
-         postedDate: new Date(j.postedDate),
-         appliedAt: new Date(j.appliedAt),
-       })));
-     }
-     
-     if (storedSaved) {
-       const parsed = JSON.parse(storedSaved);
-       setSavedJobs(parsed.map((j: SavedJob) => ({
-         ...j,
-         postedDate: new Date(j.postedDate),
-         savedAt: new Date(j.savedAt),
-       })));
-     }
-   }, []);
+       if (error) throw error;
+       return (data || []).map(parseJob);
+     },
+   });
+ }
  
-   // Save to localStorage whenever state changes
-   useEffect(() => {
-     localStorage.setItem(APPLIED_JOBS_KEY, JSON.stringify(appliedJobs));
-   }, [appliedJobs]);
+ export function useApplications() {
+   const { user } = useAuth();
  
-   useEffect(() => {
-     localStorage.setItem(SAVED_JOBS_KEY, JSON.stringify(savedJobs));
-   }, [savedJobs]);
+   return useQuery({
+     queryKey: ["applications", user?.id],
+     queryFn: async () => {
+       if (!user) return [];
+       
+       const { data, error } = await supabase
+         .from("applications")
+         .select(`
+           *,
+           job:jobs(*)
+         `)
+         .eq("user_id", user.id)
+         .order("applied_at", { ascending: false });
  
-   const applyToJob = useCallback((job: Job) => {
-     // Open external link
-     window.open(job.externalApplyLink, "_blank");
-     
-     // Add to applied jobs if not already applied
-     setAppliedJobs((prev) => {
-       if (prev.some((j) => j.id === job.id)) return prev;
-       return [...prev, { ...job, appliedAt: new Date() }];
-     });
-   }, []);
+       if (error) throw error;
+       return (data || []).map((row) => ({
+         id: row.id,
+         user_id: row.user_id,
+         job_id: row.job_id,
+         applied_at: new Date(row.applied_at),
+         job: row.job ? parseJob(row.job) : undefined,
+       })) as Application[];
+     },
+     enabled: !!user,
+   });
+ }
  
-   const saveJob = useCallback((job: Job) => {
-     setSavedJobs((prev) => {
-       if (prev.some((j) => j.id === job.id)) return prev;
-       return [...prev, { ...job, savedAt: new Date() }];
-     });
-   }, []);
+ export function useSavedJobs() {
+   const { user } = useAuth();
  
-   const unsaveJob = useCallback((jobId: string) => {
-     setSavedJobs((prev) => prev.filter((j) => j.id !== jobId));
-   }, []);
+   return useQuery({
+     queryKey: ["saved_jobs", user?.id],
+     queryFn: async () => {
+       if (!user) return [];
+       
+       const { data, error } = await supabase
+         .from("saved_jobs")
+         .select(`
+           *,
+           job:jobs(*)
+         `)
+         .eq("user_id", user.id)
+         .order("saved_at", { ascending: false });
  
-   const removeAppliedJob = useCallback((jobId: string) => {
-     setAppliedJobs((prev) => prev.filter((j) => j.id !== jobId));
-   }, []);
+       if (error) throw error;
+       return (data || []).map((row) => ({
+         id: row.id,
+         user_id: row.user_id,
+         job_id: row.job_id,
+         saved_at: new Date(row.saved_at),
+         job: row.job ? parseJob(row.job) : undefined,
+       })) as SavedJob[];
+     },
+     enabled: !!user,
+   });
+ }
  
-   const isApplied = useCallback((jobId: string) => {
-     return appliedJobs.some((j) => j.id === jobId);
-   }, [appliedJobs]);
+ export function useJobActions() {
+   const { user } = useAuth();
+   const queryClient = useQueryClient();
  
-   const isSaved = useCallback((jobId: string) => {
-     return savedJobs.some((j) => j.id === jobId);
-   }, [savedJobs]);
+   const applyMutation = useMutation({
+     mutationFn: async (job: Job) => {
+       if (!user) throw new Error("Must be logged in to apply");
+ 
+       // Save to database first
+       const { error } = await supabase.from("applications").insert({
+         user_id: user.id,
+         job_id: job.id,
+       });
+ 
+       if (error && error.code !== "23505") throw error; // Ignore duplicate
+ 
+       // Then open external link
+       window.open(job.external_apply_link, "_blank");
+       return job;
+     },
+     onSuccess: () => {
+       queryClient.invalidateQueries({ queryKey: ["applications"] });
+       toast.success("Application tracked!");
+     },
+     onError: (error) => {
+       toast.error("Failed to track application: " + error.message);
+     },
+   });
+ 
+   const saveMutation = useMutation({
+     mutationFn: async (job: Job) => {
+       if (!user) throw new Error("Must be logged in to save jobs");
+ 
+       const { error } = await supabase.from("saved_jobs").insert({
+         user_id: user.id,
+         job_id: job.id,
+       });
+ 
+       if (error && error.code !== "23505") throw error;
+       return job;
+     },
+     onSuccess: () => {
+       queryClient.invalidateQueries({ queryKey: ["saved_jobs"] });
+       toast.success("Job saved!");
+     },
+     onError: (error) => {
+       toast.error("Failed to save job: " + error.message);
+     },
+   });
+ 
+   const unsaveMutation = useMutation({
+     mutationFn: async (jobId: string) => {
+       if (!user) throw new Error("Must be logged in");
+ 
+       const { error } = await supabase
+         .from("saved_jobs")
+         .delete()
+         .eq("user_id", user.id)
+         .eq("job_id", jobId);
+ 
+       if (error) throw error;
+       return jobId;
+     },
+     onSuccess: () => {
+       queryClient.invalidateQueries({ queryKey: ["saved_jobs"] });
+       toast.success("Job removed from saved");
+     },
+   });
+ 
+   const removeApplicationMutation = useMutation({
+     mutationFn: async (jobId: string) => {
+       if (!user) throw new Error("Must be logged in");
+ 
+       const { error } = await supabase
+         .from("applications")
+         .delete()
+         .eq("user_id", user.id)
+         .eq("job_id", jobId);
+ 
+       if (error) throw error;
+       return jobId;
+     },
+     onSuccess: () => {
+       queryClient.invalidateQueries({ queryKey: ["applications"] });
+       toast.success("Application removed");
+     },
+   });
+ 
+   const applyToJob = useCallback(
+     (job: Job) => applyMutation.mutate(job),
+     [applyMutation]
+   );
+ 
+   const saveJob = useCallback(
+     (job: Job) => saveMutation.mutate(job),
+     [saveMutation]
+   );
+ 
+   const unsaveJob = useCallback(
+     (jobId: string) => unsaveMutation.mutate(jobId),
+     [unsaveMutation]
+   );
+ 
+   const removeAppliedJob = useCallback(
+     (jobId: string) => removeApplicationMutation.mutate(jobId),
+     [removeApplicationMutation]
+   );
  
    return {
-     appliedJobs,
-     savedJobs,
      applyToJob,
      saveJob,
      unsaveJob,
      removeAppliedJob,
-     isApplied,
-     isSaved,
+     isApplying: applyMutation.isPending,
+     isSaving: saveMutation.isPending,
    };
  }
