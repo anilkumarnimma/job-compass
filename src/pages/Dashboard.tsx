@@ -3,40 +3,41 @@
  import { SearchBar } from "@/components/SearchBar";
  import { JobCard } from "@/components/JobCard";
  import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
- import { mockJobs } from "@/data/mockJobs";
+ import { useJobContext } from "@/context/JobContext";
  import { Job } from "@/types/job";
  import { isToday, isYesterday, isWithinInterval, subDays, startOfDay } from "date-fns";
- import { Briefcase } from "lucide-react";
+ import { Briefcase, Loader2 } from "lucide-react";
  
  export default function Dashboard() {
    const [searchQuery, setSearchQuery] = useState("");
    const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+   const { jobs, isLoading } = useJobContext();
  
    const filteredJobs = useMemo(() => {
-     if (!searchQuery.trim()) return mockJobs;
+     if (!searchQuery.trim()) return jobs;
      
      const query = searchQuery.toLowerCase();
-     return mockJobs.filter((job) => 
+     return jobs.filter((job) => 
        job.title.toLowerCase().includes(query) ||
        job.company.toLowerCase().includes(query) ||
        job.description.toLowerCase().includes(query) ||
        job.skills.some((skill) => skill.toLowerCase().includes(query))
      );
-   }, [searchQuery]);
+   }, [searchQuery, jobs]);
  
    const todayJobs = useMemo(() => 
-     filteredJobs.filter((job) => isToday(job.postedDate)),
+     filteredJobs.filter((job) => isToday(job.posted_date)),
    [filteredJobs]);
  
    const yesterdayJobs = useMemo(() => 
-     filteredJobs.filter((job) => isYesterday(job.postedDate)),
+     filteredJobs.filter((job) => isYesterday(job.posted_date)),
    [filteredJobs]);
  
    const thisWeekJobs = useMemo(() => {
      const weekAgo = startOfDay(subDays(new Date(), 7));
      const twoDaysAgo = startOfDay(subDays(new Date(), 2));
      return filteredJobs.filter((job) => 
-       isWithinInterval(job.postedDate, { start: weekAgo, end: twoDaysAgo })
+       isWithinInterval(job.posted_date, { start: weekAgo, end: twoDaysAgo })
      );
    }, [filteredJobs]);
  
@@ -46,7 +47,12 @@
  
    const JobList = ({ jobs }: { jobs: Job[] }) => (
      <div className="space-y-4">
-       {jobs.length === 0 ? (
+       {isLoading ? (
+         <div className="text-center py-12">
+           <Loader2 className="h-8 w-8 text-muted-foreground mx-auto mb-4 animate-spin" />
+           <p className="text-muted-foreground">Loading jobs...</p>
+         </div>
+       ) : jobs.length === 0 ? (
          <div className="text-center py-12">
            <Briefcase className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
            <p className="text-muted-foreground">No jobs found</p>
@@ -86,8 +92,11 @@
          </div>
  
          {/* Tabs */}
-         <Tabs defaultValue="today" className="w-full">
+         <Tabs defaultValue="all" className="w-full">
            <TabsList className="w-full justify-start mb-6 h-auto p-1 bg-secondary/50">
+             <TabsTrigger value="all" className="flex-1 sm:flex-none data-[state=active]:bg-card">
+               All ({filteredJobs.length})
+             </TabsTrigger>
              <TabsTrigger value="today" className="flex-1 sm:flex-none data-[state=active]:bg-card">
                Today ({todayJobs.length})
              </TabsTrigger>
@@ -98,6 +107,10 @@
                This Week ({thisWeekJobs.length})
              </TabsTrigger>
            </TabsList>
+ 
+           <TabsContent value="all">
+             <JobList jobs={filteredJobs} />
+           </TabsContent>
  
            <TabsContent value="today">
              <JobList jobs={todayJobs} />
