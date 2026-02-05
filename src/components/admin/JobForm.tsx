@@ -1,14 +1,15 @@
- import { useState, useRef } from "react";
- import { Button } from "@/components/ui/button";
- import { Input } from "@/components/ui/input";
- import { Label } from "@/components/ui/label";
- import { Textarea } from "@/components/ui/textarea";
- import { Switch } from "@/components/ui/switch";
- import { Card } from "@/components/ui/card";
- import { CompanyLogo } from "@/components/CompanyLogo";
- import { useCreateJob, useUpdateJob, useUploadLogo } from "@/hooks/useAdminJobs";
- import { Job } from "@/types/job";
- import { Loader2, Upload, X, Link as LinkIcon } from "lucide-react";
+import { useState, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CompanyLogo } from "@/components/CompanyLogo";
+import { useCreateJob, useUpdateJob, useUploadLogo } from "@/hooks/useAdminJobs";
+import { Job, EmploymentType } from "@/types/job";
+import { Loader2, Upload, X, Link as LinkIcon } from "lucide-react";
  
  interface JobFormProps {
    job?: Job | null;
@@ -21,17 +22,21 @@
    const uploadLogo = useUploadLogo();
    const fileInputRef = useRef<HTMLInputElement>(null);
  
-   const [formData, setFormData] = useState({
-     title: job?.title || "",
-     company: job?.company || "",
-     company_logo: job?.company_logo || "",
-     location: job?.location || "",
-     description: job?.description || "",
-     skills: job?.skills.join(", ") || "",
-     external_apply_link: job?.external_apply_link || "",
-     is_published: job?.is_published || false,
-     is_reviewing: job?.is_reviewing || false,
-   });
+  const EMPLOYMENT_TYPES: EmploymentType[] = ['Full Time', 'Contract', 'Internship', 'Part Time'];
+
+  const [formData, setFormData] = useState({
+    title: job?.title || "",
+    company: job?.company || "",
+    company_logo: job?.company_logo || "",
+    location: job?.location || "",
+    description: job?.description || "",
+    skills: job?.skills.join(", ") || "",
+    external_apply_link: job?.external_apply_link || "",
+    salary_range: job?.salary_range || "",
+    employment_type: job?.employment_type || "Full Time" as EmploymentType,
+    is_published: job?.is_published || false,
+    is_reviewing: job?.is_reviewing || false,
+  });
  
    const [logoInputMode, setLogoInputMode] = useState<"upload" | "url">("upload");
    const isLoading = createJob.isPending || updateJob.isPending || uploadLogo.isPending;
@@ -39,11 +44,12 @@
    const handleSubmit = async (e: React.FormEvent) => {
      e.preventDefault();
  
-     const jobData = {
-       ...formData,
-       skills: formData.skills.split(",").map((s) => s.trim()).filter(Boolean),
-       company_logo: formData.company_logo || null,
-     };
+    const jobData = {
+      ...formData,
+      skills: formData.skills.split(",").map((s) => s.trim()).filter(Boolean),
+      company_logo: formData.company_logo || null,
+      salary_range: formData.salary_range || null,
+    };
  
      if (job) {
        await updateJob.mutateAsync({ id: job.id, data: jobData });
@@ -211,17 +217,48 @@
            />
          </div>
  
-         <div className="space-y-2">
-           <Label htmlFor="external_apply_link">External Apply Link *</Label>
-           <Input
-             id="external_apply_link"
-             type="url"
-             value={formData.external_apply_link}
-             onChange={(e) => setFormData((p) => ({ ...p, external_apply_link: e.target.value }))}
-             placeholder="https://careers.example.com/job/123"
-             required
-           />
-         </div>
+        <div className="space-y-2">
+          <Label htmlFor="external_apply_link">External Apply Link *</Label>
+          <Input
+            id="external_apply_link"
+            type="url"
+            value={formData.external_apply_link}
+            onChange={(e) => setFormData((p) => ({ ...p, external_apply_link: e.target.value }))}
+            placeholder="https://careers.example.com/job/123"
+            required
+          />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="employment_type">Employment Type *</Label>
+            <Select
+              value={formData.employment_type}
+              onValueChange={(value: EmploymentType) => setFormData((p) => ({ ...p, employment_type: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                {EMPLOYMENT_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="salary_range">Salary Range (optional)</Label>
+            <Input
+              id="salary_range"
+              value={formData.salary_range}
+              onChange={(e) => setFormData((p) => ({ ...p, salary_range: e.target.value }))}
+              placeholder="$120k - $150k"
+            />
+          </div>
+        </div>
  
          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-t border-border/60 pt-4">
            <div className="flex items-center gap-6">

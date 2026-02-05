@@ -49,12 +49,14 @@ export type Database = {
           company_logo: string | null
           created_at: string
           description: string
+          employment_type: string
           external_apply_link: string
           id: string
           is_published: boolean
           is_reviewing: boolean
           location: string
           posted_date: string
+          salary_range: string | null
           skills: string[]
           title: string
           updated_at: string
@@ -64,12 +66,14 @@ export type Database = {
           company_logo?: string | null
           created_at?: string
           description: string
+          employment_type?: string
           external_apply_link: string
           id?: string
           is_published?: boolean
           is_reviewing?: boolean
           location: string
           posted_date?: string
+          salary_range?: string | null
           skills?: string[]
           title: string
           updated_at?: string
@@ -79,12 +83,14 @@ export type Database = {
           company_logo?: string | null
           created_at?: string
           description?: string
+          employment_type?: string
           external_apply_link?: string
           id?: string
           is_published?: boolean
           is_reviewing?: boolean
           location?: string
           posted_date?: string
+          salary_range?: string | null
           skills?: string[]
           title?: string
           updated_at?: string
