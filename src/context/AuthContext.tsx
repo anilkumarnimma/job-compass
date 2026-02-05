@@ -1,4 +1,4 @@
- import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
+ import { createContext, useContext, useEffect, useState, ReactNode } from "react";
  import { User, Session } from "@supabase/supabase-js";
  import { supabase } from "@/integrations/supabase/client";
  
@@ -20,35 +20,6 @@
    const [isAdmin, setIsAdmin] = useState(false);
    const [isLoading, setIsLoading] = useState(true);
  
-   useEffect(() => {
-     // Get initial session
-     supabase.auth.getSession().then(({ data: { session } }) => {
-       setSession(session);
-       setUser(session?.user ?? null);
-       if (session?.user) {
-         checkAdminRole(session.user.id);
-       } else {
-         setIsLoading(false);
-       }
-     });
- 
-     // Listen for auth changes
-     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-       async (_event, session) => {
-         setSession(session);
-         setUser(session?.user ?? null);
-         if (session?.user) {
-           await checkAdminRole(session.user.id);
-         } else {
-           setIsAdmin(false);
-           setIsLoading(false);
-         }
-       }
-     );
- 
-     return () => subscription.unsubscribe();
-   }, []);
- 
    const checkAdminRole = async (userId: string) => {
      const { data } = await supabase
        .from("user_roles")
@@ -61,12 +32,49 @@
      setIsLoading(false);
    };
  
+   useEffect(() => {
+     // Set up auth state listener FIRST (synchronous only)
+     const { data: { subscription } } = supabase.auth.onAuthStateChange(
+       (event, session) => {
+         // Only synchronous state updates here
+         setSession(session);
+         setUser(session?.user ?? null);
+         
+         // Defer Supabase calls with setTimeout to prevent deadlock
+         if (session?.user) {
+           setTimeout(() => {
+             checkAdminRole(session.user.id);
+           }, 0);
+         } else {
+           setIsAdmin(false);
+           setIsLoading(false);
+         }
+       }
+     );
+ 
+     // THEN check for existing session
+     supabase.auth.getSession().then(({ data: { session } }) => {
+       setSession(session);
+       setUser(session?.user ?? null);
+       if (session?.user) {
+         checkAdminRole(session.user.id);
+       } else {
+         setIsLoading(false);
+       }
+     });
+ 
+     return () => subscription.unsubscribe();
+   }, []);
+ 
    const signUp = async (email: string, password: string, country?: string) => {
+     const redirectUrl = `${window.location.origin}/`;
+     
      const { error } = await supabase.auth.signUp({
        email,
        password,
        options: {
          data: { country },
+         emailRedirectTo: redirectUrl,
        },
      });
  

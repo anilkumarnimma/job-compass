@@ -1,4 +1,4 @@
- import React, { createContext, useContext, ReactNode, useMemo } from "react";
+ import { createContext, useContext, ReactNode, useMemo } from "react";
  import { useJobs as useJobsQuery, useApplications, useSavedJobs, useJobActions } from "@/hooks/useJobStore";
  import { Job, Application, SavedJob } from "@/types/job";
  
