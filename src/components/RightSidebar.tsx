@@ -13,14 +13,18 @@ export function RightSidebar({ hoveredJob, onFilterByRole, className }: RightSid
   return (
     <aside 
       className={cn(
-        "bg-card border border-border rounded-2xl shadow-soft overflow-hidden transition-all duration-200",
+        "bg-card border border-border rounded-2xl shadow-soft overflow-hidden",
         className
       )}
     >
       {hoveredJob ? (
-        <JobPreviewPanel job={hoveredJob} />
+        <div key={hoveredJob.id} className="h-full animate-panel-in">
+          <JobPreviewPanel job={hoveredJob} />
+        </div>
       ) : (
-        <TopHiringsPanel onFilterByRole={onFilterByRole} />
+        <div className="h-full">
+          <TopHiringsPanel onFilterByRole={onFilterByRole} />
+        </div>
       )}
     </aside>
   );

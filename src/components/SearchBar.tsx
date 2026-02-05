@@ -16,7 +16,7 @@ export function SearchBar({ value, onChange, placeholder = "Search jobs..." }: S
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="pl-12 h-[50px] bg-card border-border rounded-2xl text-base shadow-soft focus:border-accent focus:ring-2 focus:ring-accent/10 transition-all"
+        className="pl-12 h-12 bg-card border-border rounded-xl text-base shadow-soft focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all"
       />
     </div>
   );

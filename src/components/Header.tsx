@@ -25,7 +25,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 glass-header border-b border-border">
-      <div className="container max-w-[1240px] mx-auto px-6">
+      <div className="container max-w-[1200px] mx-auto px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5">
@@ -37,7 +37,7 @@ export function Header() {
 
           {/* Desktop Navigation - Center */}
           <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
-            <div className="flex items-center bg-secondary/60 rounded-full p-1">
+            <div className="flex items-center bg-secondary/70 rounded-full p-1">
               {navLinks.map((link) => (
                 <Link key={link.path} to={link.path}>
                   <Button

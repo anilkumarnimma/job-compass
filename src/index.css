@@ -4,113 +4,120 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Apple-Style Premium Design System
-   Clean, calm, professional aesthetic
-   Primary: #0B1220 | Accent: #1D4ED8 | Background: #F7F8FA
+/* Founder Level Premium Design System
+   Clean, calm, professional SaaS aesthetic (Linear/Notion style)
+   Primary: #0F172A | Accent: #2563EB | Background: #F8FAFC
 */
 
 @layer base {
   :root {
-    /* Core palette - Apple style */
-    --background: 220 14% 97%;
-    --foreground: 222 47% 9%;
+    /* Core palette - Founder Level */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 9%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 9%;
+    --popover-foreground: 222 47% 11%;
 
     /* Deep navy primary */
-    --primary: 222 47% 9%;
+    --primary: 222 47% 11%;
     --primary-foreground: 0 0% 100%;
 
     /* Soft secondary */
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 222 47% 9%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 220 14% 93%;
-    --muted-foreground: 220 9% 43%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
 
-    /* Blue accent - Apple blue */
-    --accent: 224 76% 48%;
+    /* Blue accent */
+    --accent: 217 91% 60%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Success green - softer */
-    --success: 152 69% 31%;
+    /* Success green */
+    --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
-    --success-bg: 149 80% 95%;
-    --success-text: 152 72% 24%;
+    --success-bg: 142 76% 94%;
+    --success-text: 142 72% 29%;
 
-    /* Borders - subtle */
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 224 76% 48%;
+    /* Borders */
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 60%;
 
-    /* Premium radius */
-    --radius: 1.125rem;
+    /* Radius */
+    --radius: 1rem;
 
     /* Chip/pill backgrounds */
-    --chip-bg: 220 14% 95%;
+    --chip-bg: 210 40% 96%;
+
+    /* Selected tab */
+    --tab-selected-bg: 224 100% 94%;
+    --tab-selected-text: 217 91% 60%;
 
     /* Sidebar */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222 47% 9%;
-    --sidebar-primary: 224 76% 48%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 96%;
-    --sidebar-accent-foreground: 222 47% 9%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 224 76% 48%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 217 91% 60%;
   }
 
   .dark {
     --background: 222 47% 5%;
-    --foreground: 220 14% 97%;
+    --foreground: 210 40% 98%;
 
     --card: 222 47% 9%;
-    --card-foreground: 220 14% 97%;
+    --card-foreground: 210 40% 98%;
 
     --popover: 222 47% 9%;
-    --popover-foreground: 220 14% 97%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 220 14% 97%;
-    --primary-foreground: 222 47% 9%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222 47% 11%;
 
     --secondary: 222 33% 15%;
-    --secondary-foreground: 220 14% 97%;
+    --secondary-foreground: 210 40% 98%;
 
     --muted: 222 33% 15%;
-    --muted-foreground: 220 13% 65%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 224 76% 55%;
+    --accent: 217 91% 60%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 63% 31%;
-    --destructive-foreground: 220 14% 97%;
+    --destructive-foreground: 210 40% 98%;
 
-    --success: 152 69% 40%;
+    --success: 142 76% 40%;
     --success-foreground: 0 0% 100%;
-    --success-bg: 152 40% 15%;
-    --success-text: 152 69% 70%;
+    --success-bg: 142 40% 15%;
+    --success-text: 142 76% 70%;
 
     --border: 222 33% 17%;
     --input: 222 33% 17%;
-    --ring: 224 76% 55%;
+    --ring: 217 91% 60%;
 
     --chip-bg: 222 33% 17%;
 
+    --tab-selected-bg: 217 50% 20%;
+    --tab-selected-text: 217 91% 70%;
+
     --sidebar-background: 222 47% 9%;
-    --sidebar-foreground: 220 14% 97%;
-    --sidebar-primary: 224 76% 55%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 222 33% 15%;
-    --sidebar-accent-foreground: 220 14% 97%;
+    --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 222 33% 17%;
-    --sidebar-ring: 224 76% 55%;
+    --sidebar-ring: 217 91% 60%;
   }
 }
 
@@ -135,35 +142,45 @@
 
   /* Premium shadows */
   .shadow-premium {
-    box-shadow: 0 16px 40px rgba(2, 8, 23, 0.08);
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
   }
 
   .shadow-premium-hover {
-    box-shadow: 0 20px 50px rgba(2, 8, 23, 0.12);
+    box-shadow: 0 16px 35px rgba(15, 23, 42, 0.12);
   }
 
   .shadow-soft {
-    box-shadow: 0 4px 20px rgba(2, 8, 23, 0.06);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
   }
 
   /* Glass effect for header */
   .glass-header {
-    background: rgba(255, 255, 255, 0.78);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* Subtle gradient background for empty states */
+  .gradient-subtle {
+    background: linear-gradient(135deg, hsl(222 47% 11% / 0.02) 0%, hsl(217 91% 60% / 0.04) 100%);
   }
 
   /* Subtle animations */
   .animate-fade-in {
-    animation: fadeIn 0.5s ease-out forwards;
+    animation: fadeIn 0.3s ease-out forwards;
   }
 
   .animate-slide-up {
-    animation: slideUp 0.5s ease-out forwards;
+    animation: slideUp 0.4s ease-out forwards;
   }
 
   .animate-scale-in {
-    animation: scaleIn 0.3s ease-out forwards;
+    animation: scaleIn 0.2s ease-out forwards;
+  }
+
+  /* Panel transition */
+  .animate-panel-in {
+    animation: panelIn 0.16s ease-out forwards;
   }
 
   /* Hover lift effect */
@@ -188,7 +205,7 @@
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -199,10 +216,21 @@
 @keyframes scaleIn {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.96);
   }
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
