@@ -52,8 +52,8 @@ export function TopCompaniesPanel({ onFilterByCompany }: TopCompaniesPanelProps)
 
     if (topCompanies.length === 0) {
       return (
-        <div className="text-center py-6 text-muted-foreground text-sm">
-          No companies hiring yet
+        <div className="text-center py-8 text-muted-foreground text-sm bg-secondary/30 rounded-xl">
+          Add more jobs to see trends.
         </div>
       );
     }
