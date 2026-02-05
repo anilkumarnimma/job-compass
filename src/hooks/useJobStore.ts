@@ -6,23 +6,25 @@
  import { toast } from "sonner";
  
  // Helper to parse job from DB
- function parseJob(row: any): Job {
-   return {
-     id: row.id,
-     title: row.title,
-     company: row.company,
-     company_logo: row.company_logo,
-     location: row.location,
-     description: row.description,
-     skills: row.skills || [],
-     external_apply_link: row.external_apply_link,
-     is_published: row.is_published,
-     is_reviewing: row.is_reviewing,
-     posted_date: new Date(row.posted_date),
-     created_at: new Date(row.created_at),
-     updated_at: new Date(row.updated_at),
-   };
- }
+function parseJob(row: any): Job {
+  return {
+    id: row.id,
+    title: row.title,
+    company: row.company,
+    company_logo: row.company_logo,
+    location: row.location,
+    description: row.description,
+    skills: row.skills || [],
+    external_apply_link: row.external_apply_link,
+    is_published: row.is_published,
+    is_reviewing: row.is_reviewing,
+    salary_range: row.salary_range,
+    employment_type: row.employment_type || 'Full Time',
+    posted_date: new Date(row.posted_date),
+    created_at: new Date(row.created_at),
+    updated_at: new Date(row.updated_at),
+  };
+}
  
  export function useJobs() {
    return useQuery({

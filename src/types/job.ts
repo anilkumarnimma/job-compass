@@ -1,18 +1,22 @@
- export interface Job {
-   id: string;
-   title: string;
-   company: string;
-   company_logo: string | null;
-   location: string;
-   description: string;
-   skills: string[];
-   external_apply_link: string;
-   is_published: boolean;
-   is_reviewing: boolean;
-   posted_date: Date;
-   created_at: Date;
-   updated_at: Date;
- }
+export type EmploymentType = 'Full Time' | 'Contract' | 'Internship' | 'Part Time';
+
+export interface Job {
+  id: string;
+  title: string;
+  company: string;
+  company_logo: string | null;
+  location: string;
+  description: string;
+  skills: string[];
+  external_apply_link: string;
+  is_published: boolean;
+  is_reviewing: boolean;
+  salary_range: string | null;
+  employment_type: EmploymentType;
+  posted_date: Date;
+  created_at: Date;
+  updated_at: Date;
+}
  
  export interface Application {
    id: string;

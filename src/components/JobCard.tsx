@@ -1,13 +1,13 @@
- import { Badge } from "@/components/ui/badge";
- import { Button } from "@/components/ui/button";
- import { Card } from "@/components/ui/card";
- import { Job } from "@/types/job";
- import { useJobContext } from "@/context/JobContext";
- import { useAuth } from "@/context/AuthContext";
- import { CompanyLogo } from "@/components/CompanyLogo";
- import { MapPin, Calendar, Bookmark, BookmarkCheck, ExternalLink } from "lucide-react";
- import { formatDistanceToNow } from "date-fns";
- import { useNavigate } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Job } from "@/types/job";
+import { useJobContext } from "@/context/JobContext";
+import { useAuth } from "@/context/AuthContext";
+import { CompanyLogo } from "@/components/CompanyLogo";
+import { MapPin, Calendar, Bookmark, BookmarkCheck, ExternalLink, DollarSign, Briefcase } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { useNavigate } from "react-router-dom";
  
  interface JobCardProps {
    job: Job;
@@ -66,24 +66,34 @@
                </h3>
                <p className="text-muted-foreground font-medium">{job.company}</p>
              </div>
-             {job.is_reviewing && (
-               <Badge variant="success" className="shrink-0">
-                 Actively Reviewing
-               </Badge>
-             )}
-           </div>
+              {job.is_reviewing && (
+                <Badge variant="success" className="shrink-0">
+                  Actively Reviewing
+                </Badge>
+              )}
+              <Badge variant="outline" className="shrink-0 text-primary border-primary/30">
+                <Briefcase className="h-3 w-3 mr-1" />
+                {job.employment_type}
+              </Badge>
+            </div>
  
            {/* Location and date */}
-           <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
-             <span className="flex items-center gap-1.5">
-               <MapPin className="h-3.5 w-3.5" />
-               {job.location}
-             </span>
-             <span className="flex items-center gap-1.5">
-               <Calendar className="h-3.5 w-3.5" />
-               {formatDistanceToNow(job.posted_date, { addSuffix: true })}
-             </span>
-           </div>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+              <span className="flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5" />
+                {job.location}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5" />
+                {formatDistanceToNow(job.posted_date, { addSuffix: true })}
+              </span>
+              {job.salary_range && (
+                <span className="flex items-center gap-1.5 text-success font-medium">
+                  <DollarSign className="h-3.5 w-3.5" />
+                  {job.salary_range}
+                </span>
+              )}
+            </div>
  
            {/* Description */}
            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
