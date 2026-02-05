@@ -6,7 +6,7 @@ import { Job } from "@/types/job";
 import { useJobContext } from "@/context/JobContext";
 import { useAuth } from "@/context/AuthContext";
 import { CompanyLogo } from "@/components/CompanyLogo";
-import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
+import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, ChevronDown, ChevronUp, BriefcaseBusiness } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 
@@ -59,9 +59,7 @@ export function JobCard({ job, onViewDetails, onHover, onTap }: JobCardProps) {
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Only trigger on mobile (onTap is passed)
     if (onTap) {
-      // Don't trigger if clicking on buttons or links
       const target = e.target as HTMLElement;
       if (target.closest('button') || target.closest('a')) return;
       onTap(job);
@@ -78,54 +76,48 @@ export function JobCard({ job, onViewDetails, onHover, onTap }: JobCardProps) {
 
   return (
     <Card 
-      className="group p-5 sm:p-6 transition-all duration-300 ease-out border border-border/40 bg-card shadow-sm hover:border-accent/30 hover:shadow-lg hover:-translate-y-1 rounded-xl cursor-pointer"
+      className="group p-[18px] transition-all duration-[160ms] ease-out border border-border bg-card shadow-premium hover:shadow-premium-hover hover:border-accent/30 hover:-translate-y-0.5 rounded-2xl cursor-pointer"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleCardClick}
     >
       {/* Header: Logo + Title + Badge */}
-      <div className="flex items-start gap-4 mb-4">
+      <div className="flex items-start gap-3.5 mb-3">
         <CompanyLogo 
           logoUrl={job.company_logo} 
           companyName={job.company} 
           size="md"
+          className="rounded-xl"
         />
         
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h3 
-                className="font-semibold text-foreground text-base sm:text-lg leading-tight line-clamp-1 cursor-pointer hover:text-accent transition-colors"
+                className="font-extrabold text-foreground text-lg leading-tight line-clamp-1 cursor-pointer hover:text-accent transition-colors"
                 onClick={handleTitleClick}
               >
                 {job.title}
               </h3>
-              <p className="text-muted-foreground text-sm mt-0.5">{job.company}</p>
+              <p className="text-muted-foreground text-[13px] mt-0.5">{job.company}</p>
             </div>
             {job.is_reviewing && (
               <Badge 
-                variant="success" 
-                className="shrink-0 px-3 py-1 text-xs font-medium bg-success/10 text-success border-0"
+                className="shrink-0 px-2.5 py-1.5 text-xs font-medium bg-success-bg text-success-text border-0 rounded-full"
               >
                 Actively Reviewing
               </Badge>
             )}
           </div>
-          
-          {/* Posted time */}
-          <p className="flex items-center gap-1.5 text-xs text-muted-foreground/70 mt-1.5">
-            <Clock className="h-3.5 w-3.5" />
-            Posted {formatDistanceToNow(job.posted_date, { addSuffix: true })}
-          </p>
         </div>
       </div>
 
       {/* Description - 2 lines with expand */}
-      <div className="mb-4">
+      <div className="mb-3">
         <p className={`text-sm leading-relaxed text-muted-foreground ${!isDescriptionExpanded ? 'line-clamp-2' : ''}`}>
           {job.description}
         </p>
-        {job.description.length > 120 && (
+        {job.description.length > 100 && (
           <button 
             className="text-xs font-medium text-accent hover:text-accent/80 mt-1.5 flex items-center gap-1 transition-colors"
             onClick={toggleDescription}
@@ -139,28 +131,33 @@ export function JobCard({ job, onViewDetails, onHover, onTap }: JobCardProps) {
         )}
       </div>
 
-      {/* Job Info Row - Clean with proper icons */}
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm mb-4 pb-4 border-b border-border/50">
-        <span className="flex items-center gap-1.5 text-muted-foreground">
-          <MapPin className="h-4 w-4 text-muted-foreground/70" />
+      {/* Meta Row - Chip Style */}
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-chip-bg text-xs text-muted-foreground">
+          <Clock className="h-3.5 w-3.5" />
+          Posted {formatDistanceToNow(job.posted_date, { addSuffix: false })}
+        </span>
+        
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-chip-bg text-xs text-muted-foreground">
+          <MapPin className="h-3.5 w-3.5" />
           {job.location}
         </span>
         
         {job.salary_range && (
-          <span className="flex items-center gap-1.5 text-success font-semibold">
-            <DollarSign className="h-4 w-4" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-success-bg text-xs text-success-text font-medium">
+            <DollarSign className="h-3.5 w-3.5" />
             {job.salary_range}
           </span>
         )}
         
-        <span className="flex items-center gap-1.5 text-muted-foreground">
-          <Clock className="h-4 w-4 text-muted-foreground/70" />
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-chip-bg text-xs text-muted-foreground">
+          <Briefcase className="h-3.5 w-3.5" />
           {job.employment_type}
         </span>
         
         {job.experience_years && (
-          <span className="flex items-center gap-1.5 text-muted-foreground">
-            <Briefcase className="h-4 w-4 text-muted-foreground/70" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-chip-bg text-xs text-muted-foreground">
+            <BriefcaseBusiness className="h-3.5 w-3.5" />
             {job.experience_years}
           </span>
         )}
@@ -169,22 +166,23 @@ export function JobCard({ job, onViewDetails, onHover, onTap }: JobCardProps) {
       {/* Skills - Clean rounded pills */}
       {job.skills.length > 0 && (
         <div className="mb-4">
-          <div className="flex flex-wrap gap-2 max-h-[56px] overflow-hidden">
-            {job.skills.slice(0, 6).map((skill) => (
+          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Skills</p>
+          <div className="flex flex-wrap gap-1.5">
+            {job.skills.slice(0, 7).map((skill) => (
               <Badge 
                 key={skill} 
                 variant="secondary" 
-                className="text-xs font-normal px-3 py-1 rounded-full bg-secondary/80 text-muted-foreground"
+                className="text-xs font-normal px-2.5 py-1 rounded-full bg-chip-bg text-muted-foreground border-0"
               >
                 {skill}
               </Badge>
             ))}
-            {job.skills.length > 6 && (
+            {job.skills.length > 7 && (
               <Badge 
                 variant="outline" 
-                className="text-xs font-normal px-3 py-1 rounded-full"
+                className="text-xs font-normal px-2.5 py-1 rounded-full"
               >
-                +{job.skills.length - 6}
+                +{job.skills.length - 7} more
               </Badge>
             )}
           </div>
@@ -192,24 +190,27 @@ export function JobCard({ job, onViewDetails, onHover, onTap }: JobCardProps) {
       )}
 
       {/* Actions - Bottom Right */}
-      <div className="flex items-center justify-end gap-3 pt-2">
+      <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
         <Button
           variant="ghost"
           size="sm"
           onClick={handleSaveClick}
-          className={`h-9 px-4 text-sm font-medium ${saved ? "text-accent" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
+          className={`h-9 px-3 text-sm font-medium rounded-xl ${saved ? "text-accent" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
         >
           {saved ? (
-            <><BookmarkCheck className="h-4 w-4 mr-1.5" />Saved</>
+            <BookmarkCheck className="h-4 w-4" />
           ) : (
-            <><Bookmark className="h-4 w-4 mr-1.5" />Save</>
+            <Bookmark className="h-4 w-4" />
           )}
         </Button>
         <Button
-          variant={applied ? "secondary" : "default"}
           size="sm"
           onClick={handleApplyClick}
-          className={`h-9 text-sm font-medium ${applied ? "px-4" : "bg-accent hover:bg-accent/90 text-accent-foreground px-5 shadow-sm"}`}
+          className={`h-9 text-sm font-medium rounded-xl ${
+            applied 
+              ? "bg-secondary text-secondary-foreground px-4" 
+              : "bg-accent hover:bg-accent/90 text-accent-foreground px-5 shadow-sm"
+          }`}
         >
           {applied ? "Applied" : (
             <><ExternalLink className="h-4 w-4 mr-1.5" />Apply</>

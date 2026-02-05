@@ -47,7 +47,7 @@ export default function Dashboard() {
        isWithinInterval(job.posted_date, { start: weekAgo, end: twoDaysAgo })
      );
    }, [filteredJobs]);
- 
+
   // Handle hover with delay for smoother UX
   const handleJobHover = useCallback((job: Job | null) => {
     if (hoverTimeoutRef.current) {
@@ -73,17 +73,17 @@ export default function Dashboard() {
   const JobList = ({ jobs }: { jobs: Job[] }) => (
     <div>
       {isLoading ? (
-        <div className="text-center py-12">
+        <div className="text-center py-16">
           <Loader2 className="h-8 w-8 text-muted-foreground mx-auto mb-4 animate-spin" />
           <p className="text-muted-foreground">Loading jobs...</p>
         </div>
       ) : jobs.length === 0 ? (
-        <div className="text-center py-12">
+        <div className="text-center py-16">
           <Briefcase className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
           <p className="text-muted-foreground">No jobs found</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           {jobs.map((job) => (
             <JobCard 
               key={job.id} 
@@ -99,22 +99,22 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="container max-w-7xl mx-auto px-4 py-8">
+      <div className="container max-w-[1240px] mx-auto px-6 py-[18px]">
         <div className="flex gap-6">
-          {/* Main Content */}
-          <div className="flex-1 min-w-0">
+          {/* Main Content - 70% */}
+          <div className="flex-1 min-w-0 lg:w-[70%]">
             {/* Header */}
-            <div className="mb-8">
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+            <div className="mb-6">
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
                 Job Board
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 {filteredJobs.length} job{filteredJobs.length !== 1 ? 's' : ''} available
               </p>
             </div>
 
             {/* Search */}
-            <div className="mb-6">
+            <div className="mb-5">
               <SearchBar
                 value={searchQuery}
                 onChange={setSearchQuery}
@@ -122,19 +122,31 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* Tabs */}
+            {/* Tabs - Pill Style */}
             <Tabs defaultValue="all" className="w-full">
-              <TabsList className="w-full justify-start mb-6 h-auto p-1 bg-secondary/50">
-                <TabsTrigger value="all" className="flex-1 sm:flex-none data-[state=active]:bg-card">
+              <TabsList className="w-full justify-start mb-5 h-auto p-1 bg-secondary/60 rounded-full">
+                <TabsTrigger 
+                  value="all" 
+                  className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-card data-[state=active]:shadow-sm px-5"
+                >
                   All ({filteredJobs.length})
                 </TabsTrigger>
-                <TabsTrigger value="today" className="flex-1 sm:flex-none data-[state=active]:bg-card">
+                <TabsTrigger 
+                  value="today" 
+                  className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-card data-[state=active]:shadow-sm px-5"
+                >
                   Today ({todayJobs.length})
                 </TabsTrigger>
-                <TabsTrigger value="yesterday" className="flex-1 sm:flex-none data-[state=active]:bg-card">
+                <TabsTrigger 
+                  value="yesterday" 
+                  className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-card data-[state=active]:shadow-sm px-5"
+                >
                   Yesterday ({yesterdayJobs.length})
                 </TabsTrigger>
-                <TabsTrigger value="week" className="flex-1 sm:flex-none data-[state=active]:bg-card">
+                <TabsTrigger 
+                  value="week" 
+                  className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-card data-[state=active]:shadow-sm px-5"
+                >
                   This Week ({thisWeekJobs.length})
                 </TabsTrigger>
               </TabsList>
@@ -157,11 +169,11 @@ export default function Dashboard() {
             </Tabs>
           </div>
 
-          {/* Right Sidebar - Desktop only */}
+          {/* Right Sidebar - 30% Desktop only */}
           {!isMobile && (
             <RightSidebar 
               hoveredJob={hoveredJob}
-              className="hidden lg:flex lg:flex-col sticky top-4 h-[calc(100vh-8rem)]"
+              className="hidden lg:flex lg:flex-col w-[30%] sticky top-20 h-[calc(100vh-6rem)]"
             />
           )}
         </div>
