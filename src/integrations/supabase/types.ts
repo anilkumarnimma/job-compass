@@ -14,13 +14,170 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      applications: {
+        Row: {
+          applied_at: string
+          id: string
+          job_id: string
+          user_id: string
+        }
+        Insert: {
+          applied_at?: string
+          id?: string
+          job_id: string
+          user_id: string
+        }
+        Update: {
+          applied_at?: string
+          id?: string
+          job_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobs: {
+        Row: {
+          company: string
+          company_logo: string | null
+          created_at: string
+          description: string
+          external_apply_link: string
+          id: string
+          is_published: boolean
+          is_reviewing: boolean
+          location: string
+          posted_date: string
+          skills: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          company: string
+          company_logo?: string | null
+          created_at?: string
+          description: string
+          external_apply_link: string
+          id?: string
+          is_published?: boolean
+          is_reviewing?: boolean
+          location: string
+          posted_date?: string
+          skills?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          company?: string
+          company_logo?: string | null
+          created_at?: string
+          description?: string
+          external_apply_link?: string
+          id?: string
+          is_published?: boolean
+          is_reviewing?: boolean
+          location?: string
+          posted_date?: string
+          skills?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          country: string | null
+          created_at: string
+          email: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      saved_jobs: {
+        Row: {
+          id: string
+          job_id: string
+          saved_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          job_id: string
+          saved_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          job_id?: string
+          saved_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_jobs_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: { check_role: string; check_user_id: string }
+        Returns: boolean
+      }
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
