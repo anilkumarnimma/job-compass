@@ -13,9 +13,11 @@ import { useNavigate } from "react-router-dom";
 interface JobCardProps {
   job: Job;
   onViewDetails?: (job: Job) => void;
+  onHover?: (job: Job | null) => void;
+  onTap?: (job: Job) => void;
 }
 
-export function JobCard({ job, onViewDetails }: JobCardProps) {
+export function JobCard({ job, onViewDetails, onHover, onTap }: JobCardProps) {
   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -56,9 +58,30 @@ export function JobCard({ job, onViewDetails }: JobCardProps) {
     window.open(job.external_apply_link, "_blank");
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Only trigger on mobile (onTap is passed)
+    if (onTap) {
+      // Don't trigger if clicking on buttons or links
+      const target = e.target as HTMLElement;
+      if (target.closest('button') || target.closest('a')) return;
+      onTap(job);
+    }
+  };
+
+  const handleMouseEnter = () => {
+    onHover?.(job);
+  };
+
+  const handleMouseLeave = () => {
+    onHover?.(null);
+  };
+
   return (
     <Card 
-      className="group p-5 sm:p-6 transition-all duration-300 ease-out border border-border/40 bg-card shadow-sm hover:border-accent/30 hover:shadow-lg hover:-translate-y-1 rounded-xl"
+      className="group p-5 sm:p-6 transition-all duration-300 ease-out border border-border/40 bg-card shadow-sm hover:border-accent/30 hover:shadow-lg hover:-translate-y-1 rounded-xl cursor-pointer"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={handleCardClick}
     >
       {/* Header: Logo + Title + Badge */}
       <div className="flex items-start gap-4 mb-4">
