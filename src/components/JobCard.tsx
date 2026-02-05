@@ -6,10 +6,9 @@ import { Job } from "@/types/job";
 import { useJobContext } from "@/context/JobContext";
 import { useAuth } from "@/context/AuthContext";
 import { CompanyLogo } from "@/components/CompanyLogo";
-import { MapPin, Clock, DollarSign, Target, Bookmark, BookmarkCheck, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
+import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface JobCardProps {
   job: Job;
@@ -54,29 +53,29 @@ export function JobCard({ job, onViewDetails }: JobCardProps) {
 
   return (
     <Card 
-      className="group p-6 sm:p-7 cursor-pointer transition-all duration-300 ease-out border border-border/40 bg-card hover:border-border hover:shadow-elevated hover:-translate-y-1 rounded-xl animate-fade-in"
+      className="group p-4 sm:p-5 cursor-pointer transition-all duration-200 ease-out border border-border/50 bg-card hover:border-border/80 hover:shadow-md hover:-translate-y-0.5 rounded-lg"
       onClick={() => onViewDetails?.(job)}
     >
       {/* Header: Logo + Title + Badge */}
-      <div className="flex items-start gap-4 mb-5">
+      <div className="flex items-start gap-3 mb-3">
         <CompanyLogo 
           logoUrl={job.company_logo} 
           companyName={job.company} 
-          size="md"
+          size="sm"
         />
         
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0 space-y-1">
-              <h3 className="font-semibold text-foreground text-lg sm:text-xl leading-tight tracking-tight line-clamp-2">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <h3 className="font-semibold text-foreground text-sm sm:text-base leading-tight line-clamp-1">
                 {job.title}
               </h3>
-              <p className="text-muted-foreground text-sm font-medium">{job.company}</p>
+              <p className="text-muted-foreground text-xs mt-0.5">{job.company}</p>
             </div>
             {job.is_reviewing && (
               <Badge 
                 variant="success" 
-                className="shrink-0 px-3 py-1 text-xs font-semibold bg-success/15 text-success border-0 shadow-sm"
+                className="shrink-0 px-2 py-0.5 text-[10px] font-medium"
               >
                 Actively Reviewing
               </Badge>
@@ -84,115 +83,106 @@ export function JobCard({ job, onViewDetails }: JobCardProps) {
           </div>
           
           {/* Posted time */}
-          <p className="text-xs text-muted-foreground/70 mt-2 font-medium">
+          <p className="flex items-center gap-1 text-[10px] text-muted-foreground/70 mt-1">
+            <Clock className="h-3 w-3" />
             Posted {formatDistanceToNow(job.posted_date, { addSuffix: true })}
           </p>
         </div>
       </div>
 
-      {/* Description - Expandable */}
-      <Collapsible open={isDescriptionExpanded} onOpenChange={setIsDescriptionExpanded}>
-        <div className="mb-5">
-          <p className={`text-sm leading-relaxed text-muted-foreground ${!isDescriptionExpanded ? 'line-clamp-3' : ''}`}>
-            {job.description}
-          </p>
-          {job.description.length > 200 && (
-            <CollapsibleTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-auto p-0 mt-2 text-xs font-medium text-accent hover:text-accent/80 hover:bg-transparent"
-                onClick={toggleDescription}
-              >
-                {isDescriptionExpanded ? (
-                  <>Show less <ChevronUp className="h-3.5 w-3.5 ml-1" /></>
-                ) : (
-                  <>Show more <ChevronDown className="h-3.5 w-3.5 ml-1" /></>
-                )}
-              </Button>
-            </CollapsibleTrigger>
-          )}
-        </div>
-      </Collapsible>
+      {/* Description - 2 lines with expand */}
+      <div className="mb-3">
+        <p className={`text-xs leading-relaxed text-muted-foreground ${!isDescriptionExpanded ? 'line-clamp-2' : ''}`}>
+          {job.description}
+        </p>
+        {job.description.length > 120 && (
+          <button 
+            className="text-[10px] font-medium text-accent hover:text-accent/80 mt-1 flex items-center gap-0.5"
+            onClick={toggleDescription}
+          >
+            {isDescriptionExpanded ? (
+              <>Show less <ChevronUp className="h-3 w-3" /></>
+            ) : (
+              <>Show more <ChevronDown className="h-3 w-3" /></>
+            )}
+          </button>
+        )}
+      </div>
 
-      {/* Job Info Row */}
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-2.5 text-sm mb-5 pb-5 border-b border-border/50">
-        <span className="flex items-center gap-2 text-muted-foreground">
-          <MapPin className="h-4 w-4 text-muted-foreground/60" />
-          <span className="font-medium">{job.location}</span>
+      {/* Job Info Row - Compact with proper icons */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs mb-3 pb-3 border-b border-border/40">
+        <span className="flex items-center gap-1 text-muted-foreground">
+          <MapPin className="h-3.5 w-3.5" />
+          {job.location}
         </span>
         
         {job.salary_range && (
-          <span className="flex items-center gap-2 text-success font-semibold">
-            <DollarSign className="h-4 w-4" />
+          <span className="flex items-center gap-1 text-success font-medium">
+            <DollarSign className="h-3.5 w-3.5" />
             {job.salary_range}
           </span>
         )}
         
-        <span className="flex items-center gap-2 text-muted-foreground">
-          <Clock className="h-4 w-4 text-muted-foreground/60" />
-          <span className="font-medium">{job.employment_type}</span>
+        <span className="flex items-center gap-1 text-muted-foreground">
+          <Clock className="h-3.5 w-3.5" />
+          {job.employment_type}
         </span>
         
         {job.experience_years && (
-          <span className="flex items-center gap-2 text-muted-foreground">
-            <Target className="h-4 w-4 text-muted-foreground/60" />
-            <span className="font-medium">{job.experience_years}</span>
+          <span className="flex items-center gap-1 text-muted-foreground">
+            <Briefcase className="h-3.5 w-3.5" />
+            {job.experience_years}
           </span>
         )}
       </div>
 
-      {/* Skills */}
+      {/* Skills - Compact pills */}
       {job.skills.length > 0 && (
-        <div className="mb-5">
-          <p className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider mb-3">Skills</p>
-          <div className="flex flex-wrap gap-2">
-            {job.skills.map((skill) => (
+        <div className="mb-3">
+          <div className="flex flex-wrap gap-1.5 max-h-[52px] overflow-hidden">
+            {job.skills.slice(0, 6).map((skill) => (
               <Badge 
                 key={skill} 
                 variant="secondary" 
-                className="text-xs font-medium px-3 py-1 rounded-full bg-secondary/80 hover:bg-secondary transition-colors"
+                className="text-[10px] font-normal px-2 py-0.5 rounded-md bg-muted/60"
               >
                 {skill}
               </Badge>
             ))}
+            {job.skills.length > 6 && (
+              <Badge 
+                variant="outline" 
+                className="text-[10px] font-normal px-2 py-0.5 rounded-md"
+              >
+                +{job.skills.length - 6}
+              </Badge>
+            )}
           </div>
         </div>
       )}
 
       {/* Actions - Bottom Right */}
-      <div className="flex items-center justify-end gap-3 pt-2">
+      <div className="flex items-center justify-end gap-2 pt-1">
         <Button
           variant="ghost"
           size="sm"
           onClick={handleSaveClick}
-          className={`font-medium transition-colors ${saved ? "text-accent hover:text-accent/80" : "text-muted-foreground hover:text-foreground"}`}
+          className={`h-8 px-3 text-xs ${saved ? "text-accent" : "text-muted-foreground hover:text-foreground"}`}
         >
           {saved ? (
-            <>
-              <BookmarkCheck className="h-4 w-4 mr-1.5" />
-              Saved
-            </>
+            <><BookmarkCheck className="h-3.5 w-3.5 mr-1" />Saved</>
           ) : (
-            <>
-              <Bookmark className="h-4 w-4 mr-1.5" />
-              Save
-            </>
+            <><Bookmark className="h-3.5 w-3.5 mr-1" />Save</>
           )}
         </Button>
         <Button
           variant={applied ? "secondary" : "default"}
           size="sm"
           onClick={handleApplyClick}
-          className={applied ? "font-medium" : "bg-accent hover:bg-accent/90 text-accent-foreground font-medium shadow-sm px-5"}
+          className={`h-8 text-xs ${applied ? "" : "bg-accent hover:bg-accent/90 text-accent-foreground px-4"}`}
         >
-          {applied ? (
-            <>Applied</>
-          ) : (
-            <>
-              <ExternalLink className="h-4 w-4 mr-1.5" />
-              Apply Now
-            </>
+          {applied ? "Applied" : (
+            <><ExternalLink className="h-3.5 w-3.5 mr-1" />Apply</>
           )}
         </Button>
       </div>

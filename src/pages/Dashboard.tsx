@@ -45,33 +45,35 @@
      setSelectedJob(job);
    };
  
-   const JobList = ({ jobs }: { jobs: Job[] }) => (
-     <div className="space-y-4">
-       {isLoading ? (
-         <div className="text-center py-12">
-           <Loader2 className="h-8 w-8 text-muted-foreground mx-auto mb-4 animate-spin" />
-           <p className="text-muted-foreground">Loading jobs...</p>
-         </div>
-       ) : jobs.length === 0 ? (
-         <div className="text-center py-12">
-           <Briefcase className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-           <p className="text-muted-foreground">No jobs found</p>
-         </div>
-       ) : (
-         jobs.map((job) => (
-           <JobCard 
-             key={job.id} 
-             job={job} 
-             onViewDetails={handleViewDetails}
-           />
-         ))
-       )}
-     </div>
-   );
+  const JobList = ({ jobs }: { jobs: Job[] }) => (
+    <div>
+      {isLoading ? (
+        <div className="text-center py-12">
+          <Loader2 className="h-8 w-8 text-muted-foreground mx-auto mb-4 animate-spin" />
+          <p className="text-muted-foreground">Loading jobs...</p>
+        </div>
+      ) : jobs.length === 0 ? (
+        <div className="text-center py-12">
+          <Briefcase className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+          <p className="text-muted-foreground">No jobs found</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {jobs.map((job) => (
+            <JobCard 
+              key={job.id} 
+              job={job} 
+              onViewDetails={handleViewDetails}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
  
    return (
      <Layout>
-       <div className="container max-w-4xl mx-auto px-4 py-8">
+       <div className="container max-w-5xl mx-auto px-4 py-8">
          {/* Header */}
          <div className="mb-8">
            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
