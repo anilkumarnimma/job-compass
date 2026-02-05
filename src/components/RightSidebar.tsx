@@ -13,7 +13,7 @@ export function RightSidebar({ hoveredJob, onFilterByRole, className }: RightSid
   return (
     <aside 
       className={cn(
-        "w-80 bg-card border border-border/40 rounded-xl shadow-sm overflow-hidden transition-all duration-200",
+        "bg-card border border-border rounded-2xl shadow-soft overflow-hidden transition-all duration-200",
         className
       )}
     >
