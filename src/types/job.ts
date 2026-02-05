@@ -13,6 +13,7 @@ export interface Job {
   is_reviewing: boolean;
   salary_range: string | null;
   employment_type: EmploymentType;
+  experience_years: string | null;
   posted_date: Date;
   created_at: Date;
   updated_at: Date;

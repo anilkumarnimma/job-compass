@@ -15,6 +15,7 @@ interface JobFormData {
   is_reviewing: boolean;
   salary_range?: string | null;
   employment_type: string;
+  experience_years?: string | null;
 }
  
 function parseJob(row: any): Job {
@@ -31,6 +32,7 @@ function parseJob(row: any): Job {
     is_reviewing: row.is_reviewing,
     salary_range: row.salary_range,
     employment_type: row.employment_type || 'Full Time',
+    experience_years: row.experience_years,
     posted_date: new Date(row.posted_date),
     created_at: new Date(row.created_at),
     updated_at: new Date(row.updated_at),
@@ -69,6 +71,7 @@ function parseJob(row: any): Job {
         is_reviewing: data.is_reviewing,
         salary_range: data.salary_range || null,
         employment_type: data.employment_type,
+        experience_years: data.experience_years || null,
       });
 
       if (error) throw error;

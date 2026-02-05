@@ -34,6 +34,7 @@ import { Loader2, Upload, X, Link as LinkIcon } from "lucide-react";
     external_apply_link: job?.external_apply_link || "",
     salary_range: job?.salary_range || "",
     employment_type: job?.employment_type || "Full Time" as EmploymentType,
+    experience_years: job?.experience_years || "",
     is_published: job?.is_published || false,
     is_reviewing: job?.is_reviewing || false,
   });
@@ -49,6 +50,7 @@ import { Loader2, Upload, X, Link as LinkIcon } from "lucide-react";
       skills: formData.skills.split(",").map((s) => s.trim()).filter(Boolean),
       company_logo: formData.company_logo || null,
       salary_range: formData.salary_range || null,
+      experience_years: formData.experience_years || null,
     };
  
      if (job) {
@@ -250,14 +252,24 @@ import { Loader2, Upload, X, Link as LinkIcon } from "lucide-react";
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="salary_range">Salary Range (optional)</Label>
+            <Label htmlFor="experience_years">Experience (optional)</Label>
             <Input
-              id="salary_range"
-              value={formData.salary_range}
-              onChange={(e) => setFormData((p) => ({ ...p, salary_range: e.target.value }))}
-              placeholder="$120k - $150k"
+              id="experience_years"
+              value={formData.experience_years}
+              onChange={(e) => setFormData((p) => ({ ...p, experience_years: e.target.value }))}
+              placeholder="2–4 yrs"
             />
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="salary_range">Salary Range (optional)</Label>
+          <Input
+            id="salary_range"
+            value={formData.salary_range}
+            onChange={(e) => setFormData((p) => ({ ...p, salary_range: e.target.value }))}
+            placeholder="$120k - $150k"
+          />
         </div>
  
          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-t border-border/60 pt-4">

@@ -50,6 +50,7 @@ export type Database = {
           created_at: string
           description: string
           employment_type: string
+          experience_years: string | null
           external_apply_link: string
           id: string
           is_published: boolean
@@ -67,6 +68,7 @@ export type Database = {
           created_at?: string
           description: string
           employment_type?: string
+          experience_years?: string | null
           external_apply_link: string
           id?: string
           is_published?: boolean
@@ -84,6 +86,7 @@ export type Database = {
           created_at?: string
           description?: string
           employment_type?: string
+          experience_years?: string | null
           external_apply_link?: string
           id?: string
           is_published?: boolean
