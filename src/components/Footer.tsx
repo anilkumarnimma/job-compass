@@ -9,10 +9,10 @@
              <div className="h-7 w-7 rounded-lg bg-accent/10 flex items-center justify-center">
                <Briefcase className="h-3.5 w-3.5 text-accent" />
              </div>
-             <span className="font-medium text-sm text-muted-foreground">JobTracker</span>
+             <span className="font-medium text-sm text-muted-foreground">Sociax</span>
            </div>
            <p className="text-sm text-muted-foreground">
-             © {new Date().getFullYear()} JobTracker. All rights reserved.
+           © {new Date().getFullYear()} Sociax. All rights reserved.
            </p>
          </div>
        </div>

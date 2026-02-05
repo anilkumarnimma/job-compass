@@ -32,7 +32,7 @@
              <div className="h-8 w-8 rounded-lg bg-accent flex items-center justify-center">
                <Briefcase className="h-4 w-4 text-accent-foreground" />
              </div>
-             <span className="font-semibold text-foreground">JobTracker</span>
+       <span className="font-semibold text-foreground">Sociax</span>
            </Link>
  
            {/* Desktop Navigation */}
