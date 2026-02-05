@@ -2,26 +2,18 @@ import { useMemo, useState } from "react";
 import { useJobContext } from "@/context/JobContext";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { isToday, isYesterday, isWithinInterval, subDays, startOfDay } from "date-fns";
-import { TrendingUp } from "lucide-react";
+import { Building2 } from "lucide-react";
 
-interface TopHiringsPanelProps {
-  onFilterByRole?: (role: string) => void;
+interface TopCompaniesPanelProps {
+  onFilterByCompany?: (company: string) => void;
 }
 
-interface RoleCount {
-  role: string;
+interface CompanyCount {
+  company: string;
   count: number;
 }
 
-const CATEGORIES = [
-  { key: "Software Engineer", keywords: ["software", "engineer", "developer", "frontend", "backend"] },
-  { key: "Full Stack", keywords: ["full stack", "fullstack"] },
-  { key: "Data Analyst", keywords: ["data", "analyst", "analytics"] },
-  { key: "Business", keywords: ["business", "operations", "strategy"] },
-  { key: "Civil", keywords: ["civil", "construction", "infrastructure"] },
-];
-
-export function TopHiringsPanel({ onFilterByRole }: TopHiringsPanelProps) {
+export function TopCompaniesPanel({ onFilterByCompany }: TopCompaniesPanelProps) {
   const { jobs } = useJobContext();
   const [activeTab, setActiveTab] = useState("today");
 
@@ -41,52 +33,42 @@ export function TopHiringsPanel({ onFilterByRole }: TopHiringsPanelProps) {
     );
   }, [jobs]);
 
-  const getTopRoles = (jobsList: typeof jobs): RoleCount[] => {
-    const roleMap = new Map<string, number>();
+  const getTopCompanies = (jobsList: typeof jobs): CompanyCount[] => {
+    const companyMap = new Map<string, number>();
     
     jobsList.forEach((job) => {
-      const title = job.title.toLowerCase();
-      let role = "Other";
-      
-      for (const category of CATEGORIES) {
-        if (category.keywords.some(kw => title.includes(kw))) {
-          role = category.key;
-          break;
-        }
-      }
-      
-      roleMap.set(role, (roleMap.get(role) || 0) + 1);
+      companyMap.set(job.company, (companyMap.get(job.company) || 0) + 1);
     });
 
-    return Array.from(roleMap.entries())
-      .map(([role, count]) => ({ role, count }))
+    return Array.from(companyMap.entries())
+      .map(([company, count]) => ({ company, count }))
       .sort((a, b) => b.count - a.count)
-      .slice(0, 6);
+      .slice(0, 8);
   };
 
   const renderChart = (jobsList: typeof jobs) => {
-    const topRoles = getTopRoles(jobsList);
-    const maxCount = Math.max(...topRoles.map(r => r.count), 1);
+    const topCompanies = getTopCompanies(jobsList);
+    const maxCount = Math.max(...topCompanies.map(c => c.count), 1);
 
-    if (topRoles.length === 0) {
+    if (topCompanies.length === 0) {
       return (
-        <div className="text-center py-8 text-muted-foreground text-sm gradient-subtle rounded-xl">
-          No jobs in this period
+        <div className="text-center py-6 text-muted-foreground text-sm">
+          No companies hiring yet
         </div>
       );
     }
 
     return (
-      <div className="space-y-3">
-        {topRoles.map((item) => (
+      <div className="space-y-2.5">
+        {topCompanies.map((item) => (
           <button
-            key={item.role}
-            onClick={() => onFilterByRole?.(item.role)}
+            key={item.company}
+            onClick={() => onFilterByCompany?.(item.company)}
             className="w-full text-left group"
           >
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-sm font-medium text-foreground group-hover:text-accent transition-colors">
-                {item.role}
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate max-w-[180px]">
+                {item.company}
               </span>
               <span className="text-xs text-muted-foreground font-medium">
                 {item.count}
@@ -94,7 +76,7 @@ export function TopHiringsPanel({ onFilterByRole }: TopHiringsPanelProps) {
             </div>
             <div className="h-2 bg-secondary rounded-full overflow-hidden">
               <div 
-                className="h-full bg-accent rounded-full transition-all duration-300 group-hover:bg-accent/80"
+                className="h-full bg-primary rounded-full transition-all duration-300 group-hover:bg-primary/80"
                 style={{ width: `${(item.count / maxCount) * 100}%` }}
               />
             </div>
@@ -108,12 +90,12 @@ export function TopHiringsPanel({ onFilterByRole }: TopHiringsPanelProps) {
     <div className="p-4">
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
-        <div className="h-9 w-9 rounded-xl bg-accent/10 flex items-center justify-center">
-          <TrendingUp className="h-4 w-4 text-accent" />
+        <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
+          <Building2 className="h-4 w-4 text-primary" />
         </div>
         <div>
-          <h3 className="font-bold text-foreground text-sm">Top Hirings Today</h3>
-          <p className="text-xs text-muted-foreground">Most posted roles today</p>
+          <h3 className="font-bold text-foreground text-sm">Top Companies Hiring</h3>
+          <p className="text-xs text-muted-foreground">Most active companies</p>
         </div>
       </div>
 
