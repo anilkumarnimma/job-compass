@@ -61,7 +61,7 @@ export function TopHiringsPanel({ onFilterByRole }: TopHiringsPanelProps) {
     return Array.from(roleMap.entries())
       .map(([role, count]) => ({ role, count }))
       .sort((a, b) => b.count - a.count)
-      .slice(0, 6);
+      .slice(0, 8);
   };
 
   const renderChart = (jobsList: typeof jobs) => {
@@ -70,8 +70,8 @@ export function TopHiringsPanel({ onFilterByRole }: TopHiringsPanelProps) {
 
     if (topRoles.length === 0) {
       return (
-        <div className="text-center py-8 text-muted-foreground text-sm gradient-subtle rounded-xl">
-          No jobs in this period
+        <div className="text-center py-8 text-muted-foreground text-sm bg-secondary/30 rounded-xl">
+          Add more jobs to see trends.
         </div>
       );
     }

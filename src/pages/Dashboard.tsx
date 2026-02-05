@@ -170,14 +170,12 @@ export default function Dashboard() {
           </div>
 
           {/* Right Sidebar - 4 columns, Desktop only */}
-          {!isMobile && (
-            <div className="hidden lg:block lg:col-span-4">
-              <RightSidebar 
-                hoveredJob={hoveredJob}
-                className="sticky top-20"
-              />
-            </div>
-          )}
+          <div className="hidden lg:block lg:col-span-4 min-w-[320px]">
+            <RightSidebar 
+              hoveredJob={hoveredJob}
+              className="sticky top-[88px]"
+            />
+          </div>
         </div>
       </div>
 
