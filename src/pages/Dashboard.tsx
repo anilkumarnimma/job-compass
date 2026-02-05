@@ -99,10 +99,10 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="container max-w-[1200px] mx-auto px-6 py-6">
-        <div className="flex gap-6">
-          {/* Main Content - 68% */}
-          <div className="flex-1 min-w-0 lg:w-[68%]">
+      <div className="container max-w-[1280px] mx-auto px-6 py-6">
+        <div className="grid grid-cols-12 gap-5">
+          {/* Main Content - 8 columns */}
+          <div className="col-span-12 lg:col-span-8">
             {/* Header */}
             <div className="mb-6">
               <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
@@ -169,12 +169,14 @@ export default function Dashboard() {
             </Tabs>
           </div>
 
-          {/* Right Sidebar - 32% Desktop only */}
+          {/* Right Sidebar - 4 columns, Desktop only */}
           {!isMobile && (
-            <RightSidebar 
-              hoveredJob={hoveredJob}
-              className="hidden lg:flex lg:flex-col w-[32%] sticky top-20 h-[calc(100vh-6rem)]"
-            />
+            <div className="hidden lg:block lg:col-span-4">
+              <RightSidebar 
+                hoveredJob={hoveredJob}
+                className="sticky top-20"
+              />
+            </div>
           )}
         </div>
       </div>
