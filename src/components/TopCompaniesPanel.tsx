@@ -3,6 +3,7 @@ import { useJobContext } from "@/context/JobContext";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { isToday, isYesterday, isWithinInterval, subDays, startOfDay } from "date-fns";
 import { Building2 } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 interface TopCompaniesPanelProps {
   onFilterByCompany?: (company: string) => void;
@@ -12,6 +13,16 @@ interface CompanyCount {
   company: string;
   count: number;
 }
+
+// Colors for the donut chart segments (different palette from TopHiringsPanel)
+const CHART_COLORS = [
+  "hsl(160, 84%, 39%)",   // green
+  "hsl(199, 89%, 48%)",   // cyan
+  "hsl(38, 92%, 50%)",    // amber
+  "hsl(262, 83%, 58%)",   // purple
+  "hsl(346, 77%, 50%)",   // rose
+  "hsl(221, 83%, 53%)",   // primary blue
+];
 
 export function TopCompaniesPanel({ onFilterByCompany }: TopCompaniesPanelProps) {
   const { jobs } = useJobContext();
@@ -43,7 +54,7 @@ export function TopCompaniesPanel({ onFilterByCompany }: TopCompaniesPanelProps)
     return Array.from(companyMap.entries())
       .map(([company, count]) => ({ company, count }))
       .sort((a, b) => b.count - a.count)
-      .slice(0, 8);
+      .slice(0, 6);
   };
 
   // Sample data for demo when no real jobs exist
@@ -71,33 +82,80 @@ export function TopCompaniesPanel({ onFilterByCompany }: TopCompaniesPanelProps)
         );
       }
     }
-    
-    const maxCount = Math.max(...topCompanies.map(c => c.count), 1);
+
+    const total = topCompanies.reduce((sum, item) => sum + item.count, 0);
+    const chartData = topCompanies.map((item, index) => ({
+      ...item,
+      name: item.company,
+      value: item.count,
+      percentage: Math.round((item.count / total) * 100),
+      fill: CHART_COLORS[index % CHART_COLORS.length],
+    }));
 
     return (
-      <div className="space-y-2.5">
-        {topCompanies.map((item) => (
-          <button
-            key={item.company}
-            onClick={() => onFilterByCompany?.(item.company)}
-            className="w-full text-left group"
-          >
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate max-w-[180px]">
+      <div className="flex flex-col gap-3">
+        {/* Donut Chart */}
+        <div className="h-[140px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={chartData}
+                cx="50%"
+                cy="50%"
+                innerRadius={40}
+                outerRadius={60}
+                paddingAngle={2}
+                dataKey="value"
+                onClick={(data) => onFilterByCompany?.(data.company)}
+                className="cursor-pointer"
+              >
+                {chartData.map((entry, index) => (
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={entry.fill}
+                    className="hover:opacity-80 transition-opacity"
+                  />
+                ))}
+              </Pie>
+              <Tooltip 
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload;
+                    return (
+                      <div className="bg-popover border border-border rounded-lg px-3 py-2 shadow-lg">
+                        <p className="text-sm font-medium text-foreground">{data.company}</p>
+                        <p className="text-xs text-muted-foreground">{data.percentage}% of listings</p>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Legend */}
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+          {chartData.map((item, index) => (
+            <button
+              key={item.company}
+              onClick={() => onFilterByCompany?.(item.company)}
+              className="flex items-center gap-2 text-left group"
+            >
+              <div 
+                className="h-2.5 w-2.5 rounded-full shrink-0"
+                style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
+              />
+              <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors truncate">
                 {item.company}
               </span>
-              <span className="text-xs text-muted-foreground font-medium">
-                {item.count}
+              <span className="text-xs font-medium text-foreground ml-auto">
+                {item.percentage}%
               </span>
-            </div>
-            <div className="h-2 bg-secondary rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-accent rounded-full transition-all duration-300 group-hover:bg-accent/80"
-                style={{ width: `${(item.count / maxCount) * 100}%` }}
-              />
-            </div>
-          </button>
-        ))}
+            </button>
+          ))}
+        </div>
       </div>
     );
   };
