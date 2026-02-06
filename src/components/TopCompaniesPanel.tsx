@@ -59,20 +59,20 @@ export function TopCompaniesPanel({ onFilterByCompany }: TopCompaniesPanelProps)
   const renderChart = (jobsList: typeof jobs, useSample = false) => {
     let topCompanies = getTopCompanies(jobsList);
     
-    // Use sample data if no real jobs
-    if (topCompanies.length === 0 && useSample) {
-      topCompanies = sampleCompanies;
+    // Always use sample data if no real jobs exist
+    if (topCompanies.length === 0) {
+      if (useSample) {
+        topCompanies = sampleCompanies;
+      } else {
+        return (
+          <div className="text-center py-8 text-muted-foreground text-sm bg-secondary/30 rounded-xl">
+            Add more jobs to see trends.
+          </div>
+        );
+      }
     }
     
     const maxCount = Math.max(...topCompanies.map(c => c.count), 1);
-
-    if (topCompanies.length === 0) {
-      return (
-        <div className="text-center py-8 text-muted-foreground text-sm bg-secondary/30 rounded-xl">
-          Add more jobs to see trends.
-        </div>
-      );
-    }
 
     return (
       <div className="space-y-2.5">
