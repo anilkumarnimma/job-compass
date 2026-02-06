@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useId } from "react";
 import { useJobContext } from "@/context/JobContext";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { isToday, isYesterday, isWithinInterval, subDays, startOfDay } from "date-fns";
@@ -15,14 +15,24 @@ interface CompanyCount {
   count: number;
 }
 
-// Colors for the donut chart segments
-const CHART_COLORS = [
-  "hsl(160, 84%, 39%)",   // green
-  "hsl(199, 89%, 48%)",   // cyan
-  "hsl(38, 92%, 50%)",    // amber
-  "hsl(262, 83%, 58%)",   // purple
-  "hsl(346, 77%, 50%)",   // rose
-  "hsl(221, 83%, 53%)",   // primary blue
+// Gradient color pairs for the donut chart segments [start, end]
+const GRADIENT_COLORS = [
+  ["hsl(160, 84%, 45%)", "hsl(160, 84%, 32%)"],   // green
+  ["hsl(199, 89%, 55%)", "hsl(199, 89%, 40%)"],   // cyan
+  ["hsl(38, 92%, 58%)", "hsl(38, 92%, 42%)"],     // amber
+  ["hsl(262, 83%, 65%)", "hsl(262, 83%, 50%)"],   // purple
+  ["hsl(346, 77%, 58%)", "hsl(346, 77%, 42%)"],   // rose
+  ["hsl(221, 83%, 60%)", "hsl(221, 83%, 45%)"],   // primary blue
+];
+
+// Solid colors for legend dots
+const LEGEND_COLORS = [
+  "hsl(160, 84%, 39%)",
+  "hsl(199, 89%, 48%)",
+  "hsl(38, 92%, 50%)",
+  "hsl(262, 83%, 58%)",
+  "hsl(346, 77%, 50%)",
+  "hsl(221, 83%, 53%)",
 ];
 
 export function TopCompaniesPanel({ onFilterByCompany }: TopCompaniesPanelProps) {
@@ -90,7 +100,7 @@ export function TopCompaniesPanel({ onFilterByCompany }: TopCompaniesPanelProps)
       name: item.company,
       value: item.count,
       percentage: Math.round((item.count / total) * 100),
-      fill: CHART_COLORS[index % CHART_COLORS.length],
+      gradientIndex: index % GRADIENT_COLORS.length,
     }));
 
     return (
@@ -99,6 +109,22 @@ export function TopCompaniesPanel({ onFilterByCompany }: TopCompaniesPanelProps)
         <div className="h-[150px] w-full relative">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
+              {/* Define gradients */}
+              <defs>
+                {GRADIENT_COLORS.map((colors, index) => (
+                  <linearGradient 
+                    key={`gradient-${index}`} 
+                    id={`companyGradient-${index}`} 
+                    x1="0%" 
+                    y1="0%" 
+                    x2="100%" 
+                    y2="100%"
+                  >
+                    <stop offset="0%" stopColor={colors[0]} />
+                    <stop offset="100%" stopColor={colors[1]} />
+                  </linearGradient>
+                ))}
+              </defs>
               <Pie
                 data={chartData}
                 cx="50%"
@@ -113,7 +139,7 @@ export function TopCompaniesPanel({ onFilterByCompany }: TopCompaniesPanelProps)
                 {chartData.map((entry, index) => (
                   <Cell 
                     key={`cell-${index}`} 
-                    fill={entry.fill}
+                    fill={`url(#companyGradient-${entry.gradientIndex})`}
                     className="hover:opacity-80 transition-opacity"
                   />
                 ))}
@@ -151,7 +177,7 @@ export function TopCompaniesPanel({ onFilterByCompany }: TopCompaniesPanelProps)
             >
               <div 
                 className="h-2.5 w-2.5 rounded-full shrink-0"
-                style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
+                style={{ backgroundColor: LEGEND_COLORS[index % LEGEND_COLORS.length] }}
               />
               <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors truncate">
                 {item.company}
