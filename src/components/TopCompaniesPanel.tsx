@@ -46,8 +46,24 @@ export function TopCompaniesPanel({ onFilterByCompany }: TopCompaniesPanelProps)
       .slice(0, 8);
   };
 
-  const renderChart = (jobsList: typeof jobs) => {
-    const topCompanies = getTopCompanies(jobsList);
+  // Sample data for demo when no real jobs exist
+  const sampleCompanies: CompanyCount[] = [
+    { company: "Google", count: 38 },
+    { company: "Microsoft", count: 31 },
+    { company: "Amazon", count: 27 },
+    { company: "Meta", count: 22 },
+    { company: "Apple", count: 18 },
+    { company: "Netflix", count: 14 },
+  ];
+
+  const renderChart = (jobsList: typeof jobs, useSample = false) => {
+    let topCompanies = getTopCompanies(jobsList);
+    
+    // Use sample data if no real jobs
+    if (topCompanies.length === 0 && useSample) {
+      topCompanies = sampleCompanies;
+    }
+    
     const maxCount = Math.max(...topCompanies.map(c => c.count), 1);
 
     if (topCompanies.length === 0) {
@@ -76,7 +92,7 @@ export function TopCompaniesPanel({ onFilterByCompany }: TopCompaniesPanelProps)
             </div>
             <div className="h-2 bg-secondary rounded-full overflow-hidden">
               <div 
-                className="h-full bg-primary rounded-full transition-all duration-300 group-hover:bg-primary/80"
+                className="h-full bg-accent rounded-full transition-all duration-300 group-hover:bg-accent/80"
                 style={{ width: `${(item.count / maxCount) * 100}%` }}
               />
             </div>
@@ -123,15 +139,15 @@ export function TopCompaniesPanel({ onFilterByCompany }: TopCompaniesPanelProps)
         </TabsList>
 
         <TabsContent value="today" className="mt-0">
-          {renderChart(todayJobs)}
+          {renderChart(todayJobs, true)}
         </TabsContent>
 
         <TabsContent value="yesterday" className="mt-0">
-          {renderChart(yesterdayJobs)}
+          {renderChart(yesterdayJobs, true)}
         </TabsContent>
 
         <TabsContent value="week" className="mt-0">
-          {renderChart(thisWeekJobs)}
+          {renderChart(thisWeekJobs, true)}
         </TabsContent>
       </Tabs>
     </div>
