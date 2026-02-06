@@ -76,20 +76,20 @@ export function TopHiringsPanel({ onFilterByRole }: TopHiringsPanelProps) {
   const renderChart = (jobsList: typeof jobs, useSample = false) => {
     let topRoles = getTopRoles(jobsList);
     
-    // Use sample data if no real jobs
-    if (topRoles.length === 0 && useSample) {
-      topRoles = sampleRoles;
+    // Always use sample data if no real jobs exist
+    if (topRoles.length === 0) {
+      if (useSample) {
+        topRoles = sampleRoles;
+      } else {
+        return (
+          <div className="text-center py-8 text-muted-foreground text-sm bg-secondary/30 rounded-xl">
+            Add more jobs to see trends.
+          </div>
+        );
+      }
     }
     
     const maxCount = Math.max(...topRoles.map(r => r.count), 1);
-
-    if (topRoles.length === 0) {
-      return (
-        <div className="text-center py-8 text-muted-foreground text-sm bg-secondary/30 rounded-xl">
-          Add more jobs to see trends.
-        </div>
-      );
-    }
 
     return (
       <div className="space-y-2.5">
