@@ -8,29 +8,52 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useJobContext } from "@/context/JobContext";
 import { Job } from "@/types/job";
 import { isToday, isYesterday, isWithinInterval, subDays, startOfDay } from "date-fns";
-import { Briefcase, Loader2 } from "lucide-react";
+import { Briefcase, Loader2, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Badge } from "@/components/ui/badge";
 
 export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [hoveredJob, setHoveredJob] = useState<Job | null>(null);
   const [mobilePreviewJob, setMobilePreviewJob] = useState<Job | null>(null);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
+  const [roleFilter, setRoleFilter] = useState<string | null>(null);
+  const [companyFilter, setCompanyFilter] = useState<string | null>(null);
   const { jobs, isLoading } = useJobContext();
   const isMobile = useIsMobile();
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
- 
+
+  // Apply all filters
   const filteredJobs = useMemo(() => {
-    if (!searchQuery.trim()) return jobs;
+    let result = jobs;
     
-    const query = searchQuery.toLowerCase();
-    return jobs.filter((job) => 
-      job.title.toLowerCase().includes(query) ||
-      job.company.toLowerCase().includes(query) ||
-      job.description.toLowerCase().includes(query) ||
-      job.skills.some((skill) => skill.toLowerCase().includes(query))
-    );
-  }, [searchQuery, jobs]);
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter((job) => 
+        job.title.toLowerCase().includes(query) ||
+        job.company.toLowerCase().includes(query) ||
+        job.description.toLowerCase().includes(query) ||
+        job.skills.some((skill) => skill.toLowerCase().includes(query))
+      );
+    }
+    
+    // Role filter (checks if job title contains the role)
+    if (roleFilter) {
+      result = result.filter((job) => 
+        job.title.toLowerCase().includes(roleFilter.toLowerCase())
+      );
+    }
+    
+    // Company filter
+    if (companyFilter) {
+      result = result.filter((job) => 
+        job.company.toLowerCase() === companyFilter.toLowerCase()
+      );
+    }
+    
+    return result;
+  }, [searchQuery, jobs, roleFilter, companyFilter]);
 
   const todayJobs = useMemo(() => 
     filteredJobs.filter((job) => isToday(job.posted_date)),
@@ -57,11 +80,11 @@ export default function Dashboard() {
     if (job) {
       hoverTimeoutRef.current = setTimeout(() => {
         setHoveredJob(job);
-      }, 120); // 120ms delay as specified
+      }, 120);
     } else {
       hoverTimeoutRef.current = setTimeout(() => {
         setHoveredJob(null);
-      }, 150); // Slightly longer delay before reverting
+      }, 150);
     }
   }, []);
 
@@ -69,6 +92,23 @@ export default function Dashboard() {
     setMobilePreviewJob(job);
     setMobileSheetOpen(true);
   }, []);
+
+  const handleFilterByRole = useCallback((role: string) => {
+    setRoleFilter(role);
+    setCompanyFilter(null);
+  }, []);
+
+  const handleFilterByCompany = useCallback((company: string) => {
+    setCompanyFilter(company);
+    setRoleFilter(null);
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    setRoleFilter(null);
+    setCompanyFilter(null);
+  }, []);
+
+  const hasActiveFilter = roleFilter || companyFilter;
  
   const JobList = ({ jobs }: { jobs: Job[] }) => (
     <div>
@@ -122,6 +162,33 @@ export default function Dashboard() {
               />
             </div>
 
+            {/* Active Filters */}
+            {hasActiveFilter && (
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-sm text-muted-foreground">Filtered by:</span>
+                {roleFilter && (
+                  <Badge 
+                    variant="secondary" 
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/10 text-accent cursor-pointer hover:bg-accent/20 transition-colors"
+                    onClick={clearFilters}
+                  >
+                    Role: {roleFilter}
+                    <X className="h-3 w-3" />
+                  </Badge>
+                )}
+                {companyFilter && (
+                  <Badge 
+                    variant="secondary" 
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary cursor-pointer hover:bg-primary/20 transition-colors"
+                    onClick={clearFilters}
+                  >
+                    Company: {companyFilter}
+                    <X className="h-3 w-3" />
+                  </Badge>
+                )}
+              </div>
+            )}
+
             {/* Tabs - Pill Style */}
             <Tabs defaultValue="all" className="w-full">
               <TabsList className="w-full justify-start mb-5 h-auto p-1 bg-secondary/70 rounded-full">
@@ -173,6 +240,8 @@ export default function Dashboard() {
           <div className="hidden lg:block lg:col-span-4 min-w-[320px]">
             <RightSidebar 
               hoveredJob={hoveredJob}
+              onFilterByRole={handleFilterByRole}
+              onFilterByCompany={handleFilterByCompany}
               className="sticky top-[88px]"
             />
           </div>
