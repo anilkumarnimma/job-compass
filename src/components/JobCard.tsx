@@ -13,11 +13,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 interface JobCardProps {
   job: Job;
   onViewDetails?: (job: Job) => void;
-  onHover?: (job: Job | null) => void;
   onTap?: (job: Job) => void;
 }
 
-export function JobCard({ job, onViewDetails, onHover, onTap }: JobCardProps) {
+export function JobCard({ job, onViewDetails, onTap }: JobCardProps) {
   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -60,19 +59,9 @@ export function JobCard({ job, onViewDetails, onHover, onTap }: JobCardProps) {
     }
   };
 
-  const handleMouseEnter = () => {
-    onHover?.(job);
-  };
-
-  const handleMouseLeave = () => {
-    onHover?.(null);
-  };
-
   return (
     <Card 
       className="group p-5 transition-all duration-[160ms] ease-out border border-border bg-card hover:shadow-md hover:border-border/80 rounded-xl cursor-pointer"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
       onClick={handleCardClick}
     >
       {/* Header Row: Logo + Title/Company/Time + Badge */}

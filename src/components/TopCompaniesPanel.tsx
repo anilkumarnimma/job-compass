@@ -1,7 +1,7 @@
-import { useMemo, useState, useId } from "react";
-import { useJobContext } from "@/context/JobContext";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { isToday, isYesterday, isWithinInterval, subDays, startOfDay } from "date-fns";
 import { Building2 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { SociaxLogo } from "./SociaxLogo";
@@ -35,8 +35,51 @@ const LEGEND_COLORS = [
   "hsl(221, 83%, 53%)",
 ];
 
+// Lightweight hook to fetch just enough job data for charts
+function useChartJobs() {
+  return useQuery({
+    queryKey: ["jobs", "chart-data"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("jobs")
+        .select("title, company, posted_date")
+        .eq("is_published", true)
+        .order("posted_date", { ascending: false })
+        .limit(500); // Enough for chart aggregation
+
+      if (error) throw error;
+      return (data || []).map((row) => ({
+        title: row.title,
+        company: row.company,
+        posted_date: new Date(row.posted_date),
+      }));
+    },
+    staleTime: 60 * 1000, // 60 seconds
+  });
+}
+
+function isToday(date: Date): boolean {
+  const today = new Date();
+  return date.toDateString() === today.toDateString();
+}
+
+function isYesterday(date: Date): boolean {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return date.toDateString() === yesterday.toDateString();
+}
+
+function isWithinWeek(date: Date): boolean {
+  const now = new Date();
+  const weekAgo = new Date(now);
+  weekAgo.setDate(weekAgo.getDate() - 7);
+  const twoDaysAgo = new Date(now);
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+  return date >= weekAgo && date < twoDaysAgo;
+}
+
 export function TopCompaniesPanel({ onFilterByCompany }: TopCompaniesPanelProps) {
-  const { jobs } = useJobContext();
+  const { data: jobs = [] } = useChartJobs();
   const [activeTab, setActiveTab] = useState("today");
 
   const todayJobs = useMemo(() => 
@@ -47,13 +90,9 @@ export function TopCompaniesPanel({ onFilterByCompany }: TopCompaniesPanelProps)
     jobs.filter((job) => isYesterday(job.posted_date)),
   [jobs]);
 
-  const thisWeekJobs = useMemo(() => {
-    const weekAgo = startOfDay(subDays(new Date(), 7));
-    const twoDaysAgo = startOfDay(subDays(new Date(), 2));
-    return jobs.filter((job) => 
-      isWithinInterval(job.posted_date, { start: weekAgo, end: twoDaysAgo })
-    );
-  }, [jobs]);
+  const thisWeekJobs = useMemo(() => 
+    jobs.filter((job) => isWithinWeek(job.posted_date)),
+  [jobs]);
 
   const getTopCompanies = (jobsList: typeof jobs): CompanyCount[] => {
     const companyMap = new Map<string, number>();

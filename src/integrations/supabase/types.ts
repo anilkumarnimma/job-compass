@@ -53,11 +53,13 @@ export type Database = {
           experience_years: string | null
           external_apply_link: string
           id: string
+          is_archived: boolean
           is_published: boolean
           is_reviewing: boolean
           location: string
           posted_date: string
           salary_range: string | null
+          search_vector: unknown
           skills: string[]
           title: string
           updated_at: string
@@ -71,11 +73,13 @@ export type Database = {
           experience_years?: string | null
           external_apply_link: string
           id?: string
+          is_archived?: boolean
           is_published?: boolean
           is_reviewing?: boolean
           location: string
           posted_date?: string
           salary_range?: string | null
+          search_vector?: unknown
           skills?: string[]
           title: string
           updated_at?: string
@@ -89,11 +93,13 @@ export type Database = {
           experience_years?: string | null
           external_apply_link?: string
           id?: string
+          is_archived?: boolean
           is_published?: boolean
           is_reviewing?: boolean
           location?: string
           posted_date?: string
           salary_range?: string | null
+          search_vector?: unknown
           skills?: string[]
           title?: string
           updated_at?: string
@@ -182,11 +188,49 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      archive_old_jobs: { Args: never; Returns: number }
+      get_job_counts: {
+        Args: { search_query?: string }
+        Returns: {
+          today_count: number
+          total_count: number
+          week_count: number
+          yesterday_count: number
+        }[]
+      }
       has_role: {
         Args: { check_role: string; check_user_id: string }
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      search_jobs: {
+        Args: {
+          filter_tab?: string
+          page_offset?: number
+          page_size?: number
+          search_query: string
+        }
+        Returns: {
+          company: string
+          company_logo: string
+          created_at: string
+          description: string
+          employment_type: string
+          experience_years: string
+          external_apply_link: string
+          id: string
+          is_archived: boolean
+          is_published: boolean
+          is_reviewing: boolean
+          location: string
+          posted_date: string
+          rank: number
+          salary_range: string
+          skills: string[]
+          title: string
+          updated_at: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

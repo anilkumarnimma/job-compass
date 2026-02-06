@@ -110,28 +110,60 @@ function parseJob(row: any): Job {
    });
  }
  
- export function useDeleteJob() {
-   const queryClient = useQueryClient();
- 
-   return useMutation({
-     mutationFn: async (id: string) => {
-       const { error } = await supabase
-         .from("jobs")
-         .delete()
-         .eq("id", id);
- 
-       if (error) throw error;
-     },
-     onSuccess: () => {
-       queryClient.invalidateQueries({ queryKey: ["admin-jobs"] });
-       queryClient.invalidateQueries({ queryKey: ["jobs"] });
-       toast.success("Job deleted successfully!");
-     },
-     onError: (error) => {
-       toast.error("Failed to delete job: " + error.message);
-     },
-   });
- }
+export function useDeleteJob() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("jobs")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      toast.success("Job deleted successfully!");
+    },
+    onError: (error) => {
+      toast.error("Failed to delete job: " + error.message);
+    },
+  });
+}
+
+export function useDuplicateJob() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (job: Job) => {
+      const { error } = await supabase.from("jobs").insert({
+        title: job.title + " (Copy)",
+        company: job.company,
+        company_logo: job.company_logo,
+        location: job.location,
+        description: job.description,
+        skills: job.skills,
+        external_apply_link: job.external_apply_link,
+        is_published: false, // Duplicates start as drafts
+        is_reviewing: false,
+        salary_range: job.salary_range,
+        employment_type: job.employment_type,
+        experience_years: job.experience_years,
+      });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-jobs"] });
+      toast.success("Job duplicated! Edit the copy to customize.");
+    },
+    onError: (error) => {
+      toast.error("Failed to duplicate job: " + error.message);
+    },
+  });
+}
  
  export function useUploadLogo() {
    return useMutation({
