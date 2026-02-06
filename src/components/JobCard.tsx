@@ -136,26 +136,26 @@ export function JobCard({ job, onViewDetails, onHover, onTap }: JobCardProps) {
       </div>
 
       {/* Meta Row - Inline chips with icons */}
-      <div className="flex flex-wrap items-center gap-2 mb-3 text-xs text-muted-foreground">
-        <span className="inline-flex items-center gap-1">
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-secondary text-foreground text-xs font-medium">
           <MapPin className="h-3.5 w-3.5" />
           {job.location}
         </span>
         
         {job.salary_range && (
-          <span className="inline-flex items-center gap-1 text-success-text font-medium">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-success-bg text-success-text text-xs font-medium">
             <DollarSign className="h-3.5 w-3.5" />
             {job.salary_range}
           </span>
         )}
         
-        <span className="inline-flex items-center gap-1">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-secondary text-foreground text-xs font-medium">
           <Clock className="h-3.5 w-3.5" />
           {job.employment_type}
         </span>
         
         {job.experience_years && (
-          <span className="inline-flex items-center gap-1">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-secondary text-foreground text-xs font-medium">
             <Calendar className="h-3.5 w-3.5" />
             {job.experience_years}
           </span>
