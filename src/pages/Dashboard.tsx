@@ -123,7 +123,7 @@ export default function Dashboard() {
           <p className="text-muted-foreground">No jobs found</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4">
+        <div className="flex flex-col gap-4 max-w-[580px]">
           {jobs.map((job) => (
             <JobCard 
               key={job.id} 
@@ -140,9 +140,9 @@ export default function Dashboard() {
   return (
     <Layout>
       <div className="container max-w-[1280px] mx-auto px-6 py-6">
-        <div className="grid grid-cols-12 gap-5">
-          {/* Main Content - 8 columns */}
-          <div className="col-span-12 lg:col-span-8">
+        <div className="flex gap-8">
+          {/* Main Content */}
+          <div className="flex-1 max-w-[600px]">
             {/* Header */}
             <div className="mb-6">
               <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
@@ -236,8 +236,8 @@ export default function Dashboard() {
             </Tabs>
           </div>
 
-          {/* Right Sidebar - 4 columns, Desktop only */}
-          <div className="hidden lg:block lg:col-span-4 min-w-[320px]">
+          {/* Right Sidebar - Desktop only */}
+          <div className="hidden lg:block w-[320px] shrink-0">
             <RightSidebar 
               hoveredJob={hoveredJob}
               onFilterByRole={handleFilterByRole}
