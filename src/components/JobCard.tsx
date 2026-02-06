@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -6,9 +5,10 @@ import { Job } from "@/types/job";
 import { useJobContext } from "@/context/JobContext";
 import { useAuth } from "@/context/AuthContext";
 import { CompanyLogo } from "@/components/CompanyLogo";
-import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ChevronDown, ChevronUp, Calendar } from "lucide-react";
+import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, Calendar } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface JobCardProps {
   job: Job;
@@ -21,7 +21,6 @@ export function JobCard({ job, onViewDetails, onHover, onTap }: JobCardProps) {
   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   
   const saved = isSaved(job.id);
   const applied = isApplied(job.id);
@@ -46,11 +45,6 @@ export function JobCard({ job, onViewDetails, onHover, onTap }: JobCardProps) {
       return;
     }
     applyToJob(job);
-  };
-
-  const toggleDescription = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsDescriptionExpanded(!isDescriptionExpanded);
   };
 
   const handleTitleClick = (e: React.MouseEvent) => {
@@ -116,23 +110,26 @@ export function JobCard({ job, onViewDetails, onHover, onTap }: JobCardProps) {
         </div>
       </div>
 
-      {/* Description */}
+      {/* Description with hover tooltip */}
       <div className="mb-3">
-        <p className={`text-sm leading-relaxed text-muted-foreground ${!isDescriptionExpanded ? 'line-clamp-2' : ''}`}>
-          {job.description}
-        </p>
-        {job.description.length > 120 && (
-          <button 
-            className="text-xs text-muted-foreground hover:text-foreground mt-1 flex items-center gap-0.5 transition-colors"
-            onClick={toggleDescription}
-          >
-            {isDescriptionExpanded ? (
-              <>Show less <ChevronUp className="h-3 w-3" /></>
-            ) : (
-              <>Show more <ChevronDown className="h-3 w-3" /></>
+        <TooltipProvider delayDuration={300}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <p className="text-sm leading-relaxed text-muted-foreground line-clamp-2 cursor-default">
+                {job.description}
+              </p>
+            </TooltipTrigger>
+            {job.description.length > 100 && (
+              <TooltipContent 
+                side="top" 
+                align="start" 
+                className="max-w-[400px] p-3 text-sm leading-relaxed"
+              >
+                {job.description}
+              </TooltipContent>
             )}
-          </button>
-        )}
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {/* Meta Row - Inline chips with icons */}
