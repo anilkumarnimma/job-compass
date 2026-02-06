@@ -1,74 +1,57 @@
 import { useState, useMemo, useCallback } from "react";
 import { Layout } from "@/components/Layout";
 import { SearchBar } from "@/components/SearchBar";
-import { JobCard } from "@/components/JobCard";
 import { RightSidebar } from "@/components/RightSidebar";
 import { MobileJobPreviewSheet } from "@/components/MobileJobPreviewSheet";
+import { JobListInfinite } from "@/components/JobListInfinite";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { useJobContext } from "@/context/JobContext";
-import { Job } from "@/types/job";
-import { isToday, isYesterday, isWithinInterval, subDays, startOfDay } from "date-fns";
-import { Briefcase, Loader2, X } from "lucide-react";
+import { useJobSearch, useJobCounts } from "@/hooks/useJobSearch";
+import { useDebounce } from "@/hooks/useDebounce";
+import { Job, TabFilter } from "@/types/job";
+import { X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
 
 export default function Dashboard() {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [activeTab, setActiveTab] = useState<TabFilter>("all");
   const [mobilePreviewJob, setMobilePreviewJob] = useState<Job | null>(null);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const [companyFilter, setCompanyFilter] = useState<string | null>(null);
-  const { jobs, isLoading } = useJobContext();
   const isMobile = useIsMobile();
 
-  // Apply all filters
-  const filteredJobs = useMemo(() => {
-    let result = jobs;
-    
-    // Search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter((job) => 
-        job.title.toLowerCase().includes(query) ||
-        job.company.toLowerCase().includes(query) ||
-        job.description.toLowerCase().includes(query) ||
-        job.skills.some((skill) => skill.toLowerCase().includes(query))
-      );
-    }
-    
-    // Role filter (checks if job title contains the role)
-    if (roleFilter) {
-      result = result.filter((job) => 
-        job.title.toLowerCase().includes(roleFilter.toLowerCase())
-      );
-    }
-    
-    // Company filter
-    if (companyFilter) {
-      result = result.filter((job) => 
-        job.company.toLowerCase() === companyFilter.toLowerCase()
-      );
-    }
-    
-    return result;
-  }, [searchQuery, jobs, roleFilter, companyFilter]);
+  // Debounce search input by 300ms
+  const debouncedSearch = useDebounce(searchInput, 300);
 
-  const todayJobs = useMemo(() => 
-    filteredJobs.filter((job) => isToday(job.posted_date)),
-  [filteredJobs]);
+  // Build the combined search query including filters
+  const combinedSearchQuery = useMemo(() => {
+    const parts: string[] = [];
+    if (debouncedSearch.trim()) parts.push(debouncedSearch);
+    if (roleFilter) parts.push(roleFilter);
+    if (companyFilter) parts.push(companyFilter);
+    return parts.join(" ");
+  }, [debouncedSearch, roleFilter, companyFilter]);
 
-  const yesterdayJobs = useMemo(() => 
-    filteredJobs.filter((job) => isYesterday(job.posted_date)),
-  [filteredJobs]);
+  // Fetch jobs with infinite scroll
+  const {
+    data: jobsData,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useJobSearch({
+    searchQuery: combinedSearchQuery,
+    tab: activeTab,
+  });
 
-  const thisWeekJobs = useMemo(() => {
-    const weekAgo = startOfDay(subDays(new Date(), 7));
-    const twoDaysAgo = startOfDay(subDays(new Date(), 2));
-    return filteredJobs.filter((job) => 
-      isWithinInterval(job.posted_date, { start: weekAgo, end: twoDaysAgo })
-    );
-  }, [filteredJobs]);
+  // Fetch job counts for tabs
+  const { data: counts } = useJobCounts(combinedSearchQuery);
 
+  // Flatten pages into single array
+  const jobs = useMemo(() => {
+    return jobsData?.pages.flatMap((page) => page) || [];
+  }, [jobsData]);
 
   const handleMobileTap = useCallback((job: Job) => {
     setMobilePreviewJob(job);
@@ -90,33 +73,11 @@ export default function Dashboard() {
     setCompanyFilter(null);
   }, []);
 
+  const handleTabChange = useCallback((value: string) => {
+    setActiveTab(value as TabFilter);
+  }, []);
+
   const hasActiveFilter = roleFilter || companyFilter;
- 
-  const JobList = ({ jobs }: { jobs: Job[] }) => (
-    <div>
-      {isLoading ? (
-        <div className="text-center py-16">
-          <Loader2 className="h-8 w-8 text-muted-foreground mx-auto mb-4 animate-spin" />
-          <p className="text-muted-foreground">Loading jobs...</p>
-        </div>
-      ) : jobs.length === 0 ? (
-        <div className="text-center py-16">
-          <Briefcase className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-          <p className="text-muted-foreground">No jobs found</p>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-4 max-w-[580px]">
-          {jobs.map((job) => (
-            <JobCard 
-              key={job.id} 
-              job={job} 
-              onTap={isMobile ? handleMobileTap : undefined}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
 
   return (
     <Layout>
@@ -130,15 +91,15 @@ export default function Dashboard() {
                 Job Board
               </h1>
               <p className="text-muted-foreground text-sm">
-                {filteredJobs.length} job{filteredJobs.length !== 1 ? 's' : ''} available
+                {counts?.total_count ?? 0} job{counts?.total_count !== 1 ? 's' : ''} available
               </p>
             </div>
 
             {/* Search */}
             <div className="mb-5">
               <SearchBar
-                value={searchQuery}
-                onChange={setSearchQuery}
+                value={searchInput}
+                onChange={setSearchInput}
                 placeholder="Search by title, company, skills..."
               />
             </div>
@@ -171,48 +132,43 @@ export default function Dashboard() {
             )}
 
             {/* Tabs - Pill Style */}
-            <Tabs defaultValue="all" className="w-full">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
               <TabsList className="w-full justify-start mb-5 h-auto p-1 bg-secondary/70 rounded-full">
                 <TabsTrigger 
                   value="all" 
                   className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-tab-selected-bg data-[state=active]:text-tab-selected-text data-[state=active]:shadow-none px-5 font-medium"
                 >
-                  All ({filteredJobs.length})
+                  All ({counts?.total_count ?? 0})
                 </TabsTrigger>
                 <TabsTrigger 
                   value="today" 
                   className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-tab-selected-bg data-[state=active]:text-tab-selected-text data-[state=active]:shadow-none px-5 font-medium"
                 >
-                  Today ({todayJobs.length})
+                  Today ({counts?.today_count ?? 0})
                 </TabsTrigger>
                 <TabsTrigger 
                   value="yesterday" 
                   className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-tab-selected-bg data-[state=active]:text-tab-selected-text data-[state=active]:shadow-none px-5 font-medium"
                 >
-                  Yesterday ({yesterdayJobs.length})
+                  Yesterday ({counts?.yesterday_count ?? 0})
                 </TabsTrigger>
                 <TabsTrigger 
                   value="week" 
                   className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-tab-selected-bg data-[state=active]:text-tab-selected-text data-[state=active]:shadow-none px-5 font-medium"
                 >
-                  This Week ({thisWeekJobs.length})
+                  This Week ({counts?.week_count ?? 0})
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="all">
-                <JobList jobs={filteredJobs} />
-              </TabsContent>
-
-              <TabsContent value="today">
-                <JobList jobs={todayJobs} />
-              </TabsContent>
-
-              <TabsContent value="yesterday">
-                <JobList jobs={yesterdayJobs} />
-              </TabsContent>
-
-              <TabsContent value="week">
-                <JobList jobs={thisWeekJobs} />
+              <TabsContent value={activeTab} className="mt-0">
+                <JobListInfinite
+                  jobs={jobs}
+                  isLoading={isLoading}
+                  isFetchingNextPage={isFetchingNextPage}
+                  hasNextPage={hasNextPage ?? false}
+                  fetchNextPage={fetchNextPage}
+                  onTap={isMobile ? handleMobileTap : undefined}
+                />
               </TabsContent>
             </Tabs>
           </div>

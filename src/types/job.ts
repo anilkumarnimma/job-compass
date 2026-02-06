@@ -17,36 +17,46 @@ export interface Job {
   posted_date: Date;
   created_at: Date;
   updated_at: Date;
+  is_archived?: boolean;
 }
- 
- export interface Application {
-   id: string;
-   user_id: string;
-   job_id: string;
-   applied_at: Date;
-   job?: Job;
- }
- 
- export interface SavedJob {
-   id: string;
-   user_id: string;
-   job_id: string;
-   saved_at: Date;
-   job?: Job;
- }
- 
- export interface Profile {
-   id: string;
-   user_id: string;
-   email: string;
-   country: string | null;
-   created_at: Date;
-   updated_at: Date;
- }
- 
- export interface UserRole {
-   id: string;
-   user_id: string;
-   role: 'user' | 'admin';
-   created_at: Date;
- }
+
+export interface Application {
+  id: string;
+  user_id: string;
+  job_id: string;
+  applied_at: Date;
+  job?: Job;
+}
+
+export interface SavedJob {
+  id: string;
+  user_id: string;
+  job_id: string;
+  saved_at: Date;
+  job?: Job;
+}
+
+export interface Profile {
+  id: string;
+  user_id: string;
+  email: string;
+  country: string | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface UserRole {
+  id: string;
+  user_id: string;
+  role: 'user' | 'admin';
+  created_at: Date;
+}
+
+export interface JobCounts {
+  total_count: number;
+  today_count: number;
+  yesterday_count: number;
+  week_count: number;
+}
+
+export type TabFilter = 'all' | 'today' | 'yesterday' | 'week';
