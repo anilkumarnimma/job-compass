@@ -14,23 +14,22 @@ interface RightSidebarProps {
 export function RightSidebar({ hoveredJob, onFilterByRole, onFilterByCompany, className }: RightSidebarProps) {
   return (
     <aside className={cn("flex flex-col gap-4", className)}>
-      {hoveredJob ? (
+      {/* Job Preview - shows when hovering over a job card */}
+      {hoveredJob && (
         <div key={hoveredJob.id} className="animate-panel-in bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
           <JobPreviewPanel job={hoveredJob} />
         </div>
-      ) : (
-        <>
-          {/* Top Hirings Widget */}
-          <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
-            <TopHiringsPanel onFilterByRole={onFilterByRole} />
-          </div>
-          
-          {/* Top Companies Widget */}
-          <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
-            <TopCompaniesPanel onFilterByCompany={onFilterByCompany} />
-          </div>
-        </>
       )}
+      
+      {/* Top Hirings Widget - always visible */}
+      <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
+        <TopHiringsPanel onFilterByRole={onFilterByRole} />
+      </div>
+      
+      {/* Top Companies Widget - always visible */}
+      <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
+        <TopCompaniesPanel onFilterByCompany={onFilterByCompany} />
+      </div>
     </aside>
   );
 }
