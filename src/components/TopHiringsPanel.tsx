@@ -64,8 +64,23 @@ export function TopHiringsPanel({ onFilterByRole }: TopHiringsPanelProps) {
       .slice(0, 8);
   };
 
-  const renderChart = (jobsList: typeof jobs) => {
-    const topRoles = getTopRoles(jobsList);
+  // Sample data for demo when no real jobs exist
+  const sampleRoles: RoleCount[] = [
+    { role: "Software Engineer", count: 45 },
+    { role: "Full Stack", count: 32 },
+    { role: "Data Analyst", count: 28 },
+    { role: "Business", count: 18 },
+    { role: "Civil", count: 12 },
+  ];
+
+  const renderChart = (jobsList: typeof jobs, useSample = false) => {
+    let topRoles = getTopRoles(jobsList);
+    
+    // Use sample data if no real jobs
+    if (topRoles.length === 0 && useSample) {
+      topRoles = sampleRoles;
+    }
+    
     const maxCount = Math.max(...topRoles.map(r => r.count), 1);
 
     if (topRoles.length === 0) {
@@ -77,15 +92,15 @@ export function TopHiringsPanel({ onFilterByRole }: TopHiringsPanelProps) {
     }
 
     return (
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         {topRoles.map((item) => (
           <button
             key={item.role}
             onClick={() => onFilterByRole?.(item.role)}
             className="w-full text-left group"
           >
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-sm font-medium text-foreground group-hover:text-accent transition-colors">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
                 {item.role}
               </span>
               <span className="text-xs text-muted-foreground font-medium">
@@ -94,7 +109,7 @@ export function TopHiringsPanel({ onFilterByRole }: TopHiringsPanelProps) {
             </div>
             <div className="h-2 bg-secondary rounded-full overflow-hidden">
               <div 
-                className="h-full bg-accent rounded-full transition-all duration-300 group-hover:bg-accent/80"
+                className="h-full bg-primary rounded-full transition-all duration-300 group-hover:bg-primary/80"
                 style={{ width: `${(item.count / maxCount) * 100}%` }}
               />
             </div>
@@ -141,15 +156,15 @@ export function TopHiringsPanel({ onFilterByRole }: TopHiringsPanelProps) {
         </TabsList>
 
         <TabsContent value="today" className="mt-0">
-          {renderChart(todayJobs)}
+          {renderChart(todayJobs, true)}
         </TabsContent>
 
         <TabsContent value="yesterday" className="mt-0">
-          {renderChart(yesterdayJobs)}
+          {renderChart(yesterdayJobs, true)}
         </TabsContent>
 
         <TabsContent value="week" className="mt-0">
-          {renderChart(thisWeekJobs)}
+          {renderChart(thisWeekJobs, true)}
         </TabsContent>
       </Tabs>
     </div>
