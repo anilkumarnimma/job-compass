@@ -115,9 +115,16 @@ export function JobCard({ job, onViewDetails, onHover, onTap }: JobCardProps) {
         <TooltipProvider delayDuration={300}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <p className="text-sm leading-relaxed text-muted-foreground line-clamp-2 cursor-default">
-                {job.description}
-              </p>
+              <div className="cursor-default">
+                <p className="text-sm leading-relaxed text-muted-foreground line-clamp-2">
+                  {job.description}
+                </p>
+                {job.description.length > 100 && (
+                  <span className="text-xs text-primary hover:text-primary/80 font-medium mt-0.5 inline-block">
+                    ...more
+                  </span>
+                )}
+              </div>
             </TooltipTrigger>
             {job.description.length > 100 && (
               <TooltipContent 
