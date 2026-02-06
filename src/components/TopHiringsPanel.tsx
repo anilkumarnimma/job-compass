@@ -3,7 +3,6 @@ import { useJobContext } from "@/context/JobContext";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { isToday, isYesterday, isWithinInterval, subDays, startOfDay } from "date-fns";
 import { TrendingUp } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 interface TopHiringsPanelProps {
   onFilterByRole?: (role: string) => void;
@@ -22,8 +21,8 @@ const CATEGORIES = [
   { key: "Civil", keywords: ["civil", "construction", "infrastructure"] },
 ];
 
-// Colors for the donut chart segments
-const CHART_COLORS = [
+// Colors for the bar chart
+const BAR_COLORS = [
   "hsl(221, 83%, 53%)",   // primary blue
   "hsl(262, 83%, 58%)",   // purple
   "hsl(199, 89%, 48%)",   // cyan
@@ -103,76 +102,37 @@ export function TopHiringsPanel({ onFilterByRole }: TopHiringsPanelProps) {
     const total = topRoles.reduce((sum, item) => sum + item.count, 0);
     const chartData = topRoles.map((item, index) => ({
       ...item,
-      name: item.role,
-      value: item.count,
       percentage: Math.round((item.count / total) * 100),
-      fill: CHART_COLORS[index % CHART_COLORS.length],
+      color: BAR_COLORS[index % BAR_COLORS.length],
     }));
 
     return (
-      <div className="flex flex-col gap-3">
-        {/* Donut Chart */}
-        <div className="h-[140px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                innerRadius={40}
-                outerRadius={60}
-                paddingAngle={2}
-                dataKey="value"
-                onClick={(data) => onFilterByRole?.(data.role)}
-                className="cursor-pointer"
-              >
-                {chartData.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={entry.fill}
-                    className="hover:opacity-80 transition-opacity"
-                  />
-                ))}
-              </Pie>
-              <Tooltip 
-                content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    const data = payload[0].payload;
-                    return (
-                      <div className="bg-popover border border-border rounded-lg px-3 py-2 shadow-lg">
-                        <p className="text-sm font-medium text-foreground">{data.role}</p>
-                        <p className="text-xs text-muted-foreground">{data.percentage}% of listings</p>
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Legend */}
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-          {chartData.map((item, index) => (
-            <button
-              key={item.role}
-              onClick={() => onFilterByRole?.(item.role)}
-              className="flex items-center gap-2 text-left group"
-            >
-              <div 
-                className="h-2.5 w-2.5 rounded-full shrink-0"
-                style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
-              />
-              <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors truncate">
+      <div className="space-y-2.5">
+        {chartData.map((item) => (
+          <button
+            key={item.role}
+            onClick={() => onFilterByRole?.(item.role)}
+            className="w-full text-left group"
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate max-w-[160px]">
                 {item.role}
               </span>
-              <span className="text-xs font-medium text-foreground ml-auto">
+              <span className="text-xs font-semibold text-foreground">
                 {item.percentage}%
               </span>
-            </button>
-          ))}
-        </div>
+            </div>
+            <div className="h-2 bg-secondary rounded-full overflow-hidden">
+              <div 
+                className="h-full rounded-full transition-all duration-500 group-hover:opacity-80"
+                style={{ 
+                  width: `${item.percentage}%`,
+                  backgroundColor: item.color,
+                }}
+              />
+            </div>
+          </button>
+        ))}
       </div>
     );
   };

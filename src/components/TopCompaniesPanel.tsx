@@ -4,6 +4,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { isToday, isYesterday, isWithinInterval, subDays, startOfDay } from "date-fns";
 import { Building2 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { SociaxLogo } from "./SociaxLogo";
 
 interface TopCompaniesPanelProps {
   onFilterByCompany?: (company: string) => void;
@@ -14,7 +15,7 @@ interface CompanyCount {
   count: number;
 }
 
-// Colors for the donut chart segments (different palette from TopHiringsPanel)
+// Colors for the donut chart segments
 const CHART_COLORS = [
   "hsl(160, 84%, 39%)",   // green
   "hsl(199, 89%, 48%)",   // cyan
@@ -94,16 +95,16 @@ export function TopCompaniesPanel({ onFilterByCompany }: TopCompaniesPanelProps)
 
     return (
       <div className="flex flex-col gap-3">
-        {/* Donut Chart */}
-        <div className="h-[140px] w-full">
+        {/* Donut Chart with Logo in Center */}
+        <div className="h-[150px] w-full relative">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={chartData}
                 cx="50%"
                 cy="50%"
-                innerRadius={40}
-                outerRadius={60}
+                innerRadius={42}
+                outerRadius={65}
                 paddingAngle={2}
                 dataKey="value"
                 onClick={(data) => onFilterByCompany?.(data.company)}
@@ -133,6 +134,11 @@ export function TopCompaniesPanel({ onFilterByCompany }: TopCompaniesPanelProps)
               />
             </PieChart>
           </ResponsiveContainer>
+          
+          {/* Sociax Logo in Center */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <SociaxLogo size="sm" showText={false} />
+          </div>
         </div>
 
         {/* Legend */}
