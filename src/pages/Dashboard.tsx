@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Layout } from "@/components/Layout";
 import { SearchBar } from "@/components/SearchBar";
 import { JobCard } from "@/components/JobCard";
@@ -14,14 +14,12 @@ import { Badge } from "@/components/ui/badge";
 
 export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [hoveredJob, setHoveredJob] = useState<Job | null>(null);
   const [mobilePreviewJob, setMobilePreviewJob] = useState<Job | null>(null);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const [companyFilter, setCompanyFilter] = useState<string | null>(null);
   const { jobs, isLoading } = useJobContext();
   const isMobile = useIsMobile();
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Apply all filters
   const filteredJobs = useMemo(() => {
@@ -71,22 +69,6 @@ export default function Dashboard() {
     );
   }, [filteredJobs]);
 
-  // Handle hover with delay for smoother UX
-  const handleJobHover = useCallback((job: Job | null) => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-    }
-    
-    if (job) {
-      hoverTimeoutRef.current = setTimeout(() => {
-        setHoveredJob(job);
-      }, 120);
-    } else {
-      hoverTimeoutRef.current = setTimeout(() => {
-        setHoveredJob(null);
-      }, 150);
-    }
-  }, []);
 
   const handleMobileTap = useCallback((job: Job) => {
     setMobilePreviewJob(job);
@@ -128,7 +110,6 @@ export default function Dashboard() {
             <JobCard 
               key={job.id} 
               job={job} 
-              onHover={!isMobile ? handleJobHover : undefined}
               onTap={isMobile ? handleMobileTap : undefined}
             />
           ))}
@@ -239,7 +220,6 @@ export default function Dashboard() {
           {/* Right Sidebar - Desktop only */}
           <div className="hidden lg:block w-[320px] shrink-0">
             <RightSidebar 
-              hoveredJob={hoveredJob}
               onFilterByRole={handleFilterByRole}
               onFilterByCompany={handleFilterByCompany}
               className="sticky top-[88px]"
