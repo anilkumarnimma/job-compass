@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -102,11 +102,17 @@ export default function Admin() {
               <p className="text-muted-foreground">Manage job listings</p>
             </div>
           </div>
-          {!showForm && !showBulkUpload && (
+        {!showForm && !showBulkUpload && (
             <div className="flex gap-2">
+              <Link to="/admin/import">
+                <Button variant="outline">
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Google Sheet Import
+                </Button>
+              </Link>
               <Button variant="outline" onClick={() => { setShowBulkUpload(true); setShowForm(false); }}>
                 <FileSpreadsheet className="h-4 w-4" />
-                Bulk Upload
+                CSV Upload
               </Button>
               <Button variant="accent" onClick={() => { setShowForm(true); setShowBulkUpload(false); }}>
                 <Plus className="h-4 w-4" />

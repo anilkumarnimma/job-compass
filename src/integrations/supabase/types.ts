@@ -43,6 +43,39 @@ export type Database = {
           },
         ]
       }
+      import_history: {
+        Row: {
+          created_at: string
+          error_count: number
+          errors: Json | null
+          id: string
+          imported_count: number
+          sheet_url: string
+          skipped_count: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_count?: number
+          errors?: Json | null
+          id?: string
+          imported_count?: number
+          sheet_url: string
+          skipped_count?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_count?: number
+          errors?: Json | null
+          id?: string
+          imported_count?: number
+          sheet_url?: string
+          skipped_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       jobs: {
         Row: {
           company: string
