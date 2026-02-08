@@ -1,0 +1,186 @@
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+
+export interface ProfileData {
+  full_name: string | null;
+  email: string;
+  phone: string | null;
+  location: string | null;
+  linkedin_url: string | null;
+  portfolio_url: string | null;
+  resume_url: string | null;
+  resume_filename: string | null;
+}
+
+export function useProfile() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [isUploading, setIsUploading] = useState(false);
+
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+      
+      if (error) throw error;
+      return data as ProfileData;
+    },
+    enabled: !!user,
+  });
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async (updates: Partial<ProfileData>) => {
+      if (!user) throw new Error("Not authenticated");
+      
+      const { error } = await supabase
+        .from("profiles")
+        .update(updates)
+        .eq("user_id", user.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+      toast({
+        title: "Profile updated",
+        description: "Your changes have been saved.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const uploadResume = async (file: File) => {
+    if (!user) throw new Error("Not authenticated");
+    
+    if (file.type !== "application/pdf") {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a PDF file.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    
+    try {
+      const filePath = `${user.id}/${file.name}`;
+      
+      // Delete old resume if exists
+      if (profile?.resume_url) {
+        const oldPath = profile.resume_url.split("/").slice(-2).join("/");
+        await supabase.storage.from("resumes").remove([oldPath]);
+      }
+      
+      const { error: uploadError } = await supabase.storage
+        .from("resumes")
+        .upload(filePath, file, { upsert: true });
+      
+      if (uploadError) throw uploadError;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from("resumes")
+        .getPublicUrl(filePath);
+      
+      await updateProfileMutation.mutateAsync({
+        resume_url: filePath,
+        resume_filename: file.name,
+      });
+      
+      toast({
+        title: "Resume uploaded",
+        description: "Your resume has been saved.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const downloadResume = async () => {
+    if (!profile?.resume_url || !user) return;
+    
+    try {
+      const { data, error } = await supabase.storage
+        .from("resumes")
+        .download(profile.resume_url);
+      
+      if (error) throw error;
+      
+      const url = URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = profile.resume_filename || "resume.pdf";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      toast({
+        title: "Download failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteResume = async () => {
+    if (!profile?.resume_url || !user) return;
+    
+    try {
+      const { error } = await supabase.storage
+        .from("resumes")
+        .remove([profile.resume_url]);
+      
+      if (error) throw error;
+      
+      await updateProfileMutation.mutateAsync({
+        resume_url: null,
+        resume_filename: null,
+      });
+      
+      toast({
+        title: "Resume deleted",
+        description: "Your resume has been removed.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Delete failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  return {
+    profile,
+    isLoading,
+    updateProfile: updateProfileMutation.mutate,
+    isUpdating: updateProfileMutation.isPending,
+    uploadResume,
+    downloadResume,
+    deleteResume,
+    isUploading,
+  };
+}

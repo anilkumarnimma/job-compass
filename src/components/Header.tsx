@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
-import { Briefcase, Menu, X, LogOut, Shield } from "lucide-react";
+import { Briefcase, Menu, X, LogOut, Shield, User } from "lucide-react";
 import { useState } from "react";
 
 export function Header() {
@@ -60,6 +60,16 @@ export function Header() {
           <div className="hidden md:flex items-center gap-2">
             {user ? (
               <>
+                <Link to="/profile">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="rounded-xl h-9 px-4 text-muted-foreground hover:text-foreground"
+                  >
+                    <User className="h-4 w-4 mr-1.5" />
+                    Profile
+                  </Button>
+                </Link>
                 {isAdmin && (
                   <Link to="/admin">
                     <Button 
@@ -134,25 +144,33 @@ export function Header() {
                   </Button>
                 </Link>
               ))}
-              <div className="flex gap-2 mt-4 pt-4 border-t border-border">
+              <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-border">
                 {user ? (
                   <>
-                    {isAdmin && (
-                      <Link to="/admin" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
-                        <Button variant="outline" className="w-full rounded-xl">
-                          <Shield className="h-4 w-4 mr-1" />
-                          Admin
-                        </Button>
-                      </Link>
-                    )}
-                    <Button 
-                      variant="ghost" 
-                      className="flex-1 rounded-xl" 
-                      onClick={() => { handleSignOut(); setMobileMenuOpen(false); }}
-                    >
-                      <LogOut className="h-4 w-4 mr-1" />
-                      Sign out
-                    </Button>
+                    <Link to="/profile" className="w-full" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="outline" className="w-full rounded-xl">
+                        <User className="h-4 w-4 mr-1" />
+                        Profile
+                      </Button>
+                    </Link>
+                    <div className="flex gap-2">
+                      {isAdmin && (
+                        <Link to="/admin" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
+                          <Button variant="outline" className="w-full rounded-xl">
+                            <Shield className="h-4 w-4 mr-1" />
+                            Admin
+                          </Button>
+                        </Link>
+                      )}
+                      <Button 
+                        variant="ghost" 
+                        className="flex-1 rounded-xl" 
+                        onClick={() => { handleSignOut(); setMobileMenuOpen(false); }}
+                      >
+                        <LogOut className="h-4 w-4 mr-1" />
+                        Sign out
+                      </Button>
+                    </div>
                   </>
                 ) : (
                   <>

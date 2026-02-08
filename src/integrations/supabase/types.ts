@@ -144,7 +144,14 @@ export type Database = {
           country: string | null
           created_at: string
           email: string
+          full_name: string | null
           id: string
+          linkedin_url: string | null
+          location: string | null
+          phone: string | null
+          portfolio_url: string | null
+          resume_filename: string | null
+          resume_url: string | null
           updated_at: string
           user_id: string
         }
@@ -152,7 +159,14 @@ export type Database = {
           country?: string | null
           created_at?: string
           email: string
+          full_name?: string | null
           id?: string
+          linkedin_url?: string | null
+          location?: string | null
+          phone?: string | null
+          portfolio_url?: string | null
+          resume_filename?: string | null
+          resume_url?: string | null
           updated_at?: string
           user_id: string
         }
@@ -160,7 +174,14 @@ export type Database = {
           country?: string | null
           created_at?: string
           email?: string
+          full_name?: string | null
           id?: string
+          linkedin_url?: string | null
+          location?: string | null
+          phone?: string | null
+          portfolio_url?: string | null
+          resume_filename?: string | null
+          resume_url?: string | null
           updated_at?: string
           user_id?: string
         }
