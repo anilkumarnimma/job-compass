@@ -53,7 +53,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 function getRedirectPath(role: string): string {
   switch (role) {
     case "founder":
-      return "/admin";
+      return "/founder/employers";
     case "employer":
       return "/employer";
     default:

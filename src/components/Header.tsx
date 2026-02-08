@@ -24,21 +24,9 @@ export function Header() {
     navigate("/");
   };
 
-  // Role-based nav links
+  // Role-based nav links - all roles see job browsing tabs
   const getNavLinks = () => {
-    if (isFounder) {
-      // Founder sees everything
-      return [
-        { path: "/dashboard", label: "Jobs" },
-        { path: "/applied", label: "Applied" },
-        { path: "/saved", label: "Saved" },
-      ];
-    }
-    if (isEmployer) {
-      // Employer only sees Employer Dashboard link (no job seeker tabs)
-      return [];
-    }
-    // Regular user sees job seeker tabs
+    // All roles (user, employer, founder) can browse jobs
     return [
       { path: "/dashboard", label: "Jobs" },
       { path: "/applied", label: "Applied" },
@@ -87,22 +75,20 @@ export function Header() {
           <div className="hidden md:flex items-center gap-3">
             {user ? (
               <>
-                {/* Profile - show for users and founders */}
-                {(isFounder || (!isFounder && !isEmployer)) && (
-                  <Link to="/profile">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="rounded-xl h-9 px-4 text-muted-foreground hover:text-foreground"
-                    >
-                      <User className="h-4 w-4 mr-1.5" />
-                      Profile
-                    </Button>
-                  </Link>
-                )}
+                {/* Profile - show for all roles */}
+                <Link to="/profile">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="rounded-xl h-9 px-4 text-muted-foreground hover:text-foreground"
+                  >
+                    <User className="h-4 w-4 mr-1.5" />
+                    Profile
+                  </Button>
+                </Link>
 
-                {/* Employer Dashboard - only for employers */}
-                {isEmployer && !isFounder && (
+                {/* Employer Dashboard - for employers and founders */}
+                {(isEmployer || isFounder) && (
                   <Link to="/employer">
                     <Button 
                       variant="outline" 
@@ -206,18 +192,16 @@ export function Header() {
               <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-border">
                 {user ? (
                   <>
-                    {/* Profile - show for users and founders */}
-                    {(isFounder || (!isFounder && !isEmployer)) && (
-                      <Link to="/profile" className="w-full" onClick={() => setMobileMenuOpen(false)}>
-                        <Button variant="outline" className="w-full rounded-xl">
-                          <User className="h-4 w-4 mr-1" />
-                          Profile
-                        </Button>
-                      </Link>
-                    )}
+                    {/* Profile - show for all roles */}
+                    <Link to="/profile" className="w-full" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="outline" className="w-full rounded-xl">
+                        <User className="h-4 w-4 mr-1" />
+                        Profile
+                      </Button>
+                    </Link>
 
-                    {/* Employer Dashboard - only for employers */}
-                    {isEmployer && !isFounder && (
+                    {/* Employer Dashboard - for employers and founders */}
+                    {(isEmployer || isFounder) && (
                       <Link to="/employer" className="w-full" onClick={() => setMobileMenuOpen(false)}>
                         <Button variant="outline" className="w-full rounded-xl">
                           <Shield className="h-4 w-4 mr-1" />

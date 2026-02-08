@@ -43,24 +43,24 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
                 
-                {/* User pages - accessible by users and founders */}
+                {/* User pages - accessible by all authenticated roles */}
                 <Route path="/dashboard" element={
-                  <ProtectedRoute allowedRoles={["user", "founder"]}>
+                  <ProtectedRoute allowedRoles={["user", "employer", "founder"]}>
                     <Dashboard />
                   </ProtectedRoute>
                 } />
                 <Route path="/applied" element={
-                  <ProtectedRoute allowedRoles={["user", "founder"]}>
+                  <ProtectedRoute allowedRoles={["user", "employer", "founder"]}>
                     <Applied />
                   </ProtectedRoute>
                 } />
                 <Route path="/saved" element={
-                  <ProtectedRoute allowedRoles={["user", "founder"]}>
+                  <ProtectedRoute allowedRoles={["user", "employer", "founder"]}>
                     <Saved />
                   </ProtectedRoute>
                 } />
                 <Route path="/profile" element={
-                  <ProtectedRoute allowedRoles={["user", "founder"]}>
+                  <ProtectedRoute allowedRoles={["user", "employer", "founder"]}>
                     <Profile />
                   </ProtectedRoute>
                 } />
