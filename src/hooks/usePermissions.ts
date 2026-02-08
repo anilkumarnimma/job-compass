@@ -96,7 +96,7 @@ export function useMyPermissions() {
   });
 }
 
-// Hook to get the user's role
+// Hook to get the user's role (with priority: founder > employer > user)
 export function useUserRole() {
   const { user } = useAuth();
 
@@ -105,15 +105,40 @@ export function useUserRole() {
     queryFn: async () => {
       if (!user) return null;
 
-      const { data } = await supabase
+      // Fetch all roles for this user
+      const { data: roles } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .eq("user_id", user.id);
 
-      return data?.role || "user";
+      if (!roles || roles.length === 0) return "user";
+
+      // Priority: founder > employer > user
+      const roleSet = new Set(roles.map(r => r.role));
+      if (roleSet.has("founder")) return "founder";
+      if (roleSet.has("employer")) return "employer";
+      return "user";
+    },
+    enabled: !!user,
+  });
+}
+
+// Hook to get all user roles (for debugging)
+export function useAllUserRoles() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["all-user-roles", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: true });
+
+      return data || [];
     },
     enabled: !!user,
   });
