@@ -1,14 +1,16 @@
 import { TopHiringsPanelDisplay } from "./TopHiringsPanelDisplay";
-import { TopCompaniesPanel } from "./TopCompaniesPanel";
+import { MarketAlertCard } from "./MarketAlertCard";
 import { cn } from "@/lib/utils";
+import { useActiveMarketAlert } from "@/hooks/useMarketAlerts";
 
 interface RightSidebarProps {
   onFilterByRole?: (role: string) => void;
-  onFilterByCompany?: (company: string) => void;
   className?: string;
 }
 
-export function RightSidebar({ onFilterByRole, onFilterByCompany, className }: RightSidebarProps) {
+export function RightSidebar({ onFilterByRole, className }: RightSidebarProps) {
+  const { data: activeAlert } = useActiveMarketAlert();
+
   return (
     <aside className={cn("flex flex-col gap-4", className)}>
       {/* Top Hirings Widget - Founder-managed data only */}
@@ -16,10 +18,12 @@ export function RightSidebar({ onFilterByRole, onFilterByCompany, className }: R
         <TopHiringsPanelDisplay onFilterByRole={onFilterByRole} />
       </div>
       
-      {/* Top Companies Widget */}
-      <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
-        <TopCompaniesPanel onFilterByCompany={onFilterByCompany} />
-      </div>
+      {/* Market Alert Card - Only shows if active alert exists */}
+      {activeAlert && (
+        <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
+          <MarketAlertCard />
+        </div>
+      )}
     </aside>
   );
 }

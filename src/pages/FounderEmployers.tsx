@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { HiringGraphManager } from "@/components/founder/HiringGraphManager";
+import { MarketAlertManager } from "@/components/founder/MarketAlertManager";
 
 export default function FounderEmployers() {
   const { user, isLoading: authLoading } = useAuth();
@@ -89,6 +90,11 @@ export default function FounderEmployers() {
         {/* Hiring Graph Manager - Founder Only */}
         <div className="mb-8">
           <HiringGraphManager />
+        </div>
+
+        {/* Market Alert Manager - Founder Only */}
+        <div className="mb-8">
+          <MarketAlertManager />
         </div>
 
         {/* Header */}

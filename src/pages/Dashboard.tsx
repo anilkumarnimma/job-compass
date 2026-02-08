@@ -63,11 +63,6 @@ export default function Dashboard() {
     setCompanyFilter(null);
   }, []);
 
-  const handleFilterByCompany = useCallback((company: string) => {
-    setCompanyFilter(company);
-    setRoleFilter(null);
-  }, []);
-
   const clearFilters = useCallback(() => {
     setRoleFilter(null);
     setCompanyFilter(null);
@@ -177,7 +172,6 @@ export default function Dashboard() {
           <div className="hidden lg:block w-[320px] shrink-0">
             <RightSidebar 
               onFilterByRole={handleFilterByRole}
-              onFilterByCompany={handleFilterByCompany}
               className="sticky top-[88px]"
             />
           </div>
