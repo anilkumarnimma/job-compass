@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { useMyPermissions } from "@/hooks/usePermissions";
-import { Briefcase, Menu, X, LogOut, Shield, User, HelpCircle, Crown } from "lucide-react";
+import { Briefcase, Menu, X, LogOut, Shield, User, Crown } from "lucide-react";
 import { useState } from "react";
 
 export function Header() {
@@ -71,7 +71,7 @@ export function Header() {
           </nav>
 
           {/* Auth buttons (desktop) - Right */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-3">
             {user ? (
               <>
                 <Link to="/profile">
@@ -82,16 +82,6 @@ export function Header() {
                   >
                     <User className="h-4 w-4 mr-1.5" />
                     Profile
-                  </Button>
-                </Link>
-                <Link to="/help">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="rounded-xl h-9 px-4 text-muted-foreground hover:text-foreground"
-                  >
-                    <HelpCircle className="h-4 w-4 mr-1.5" />
-                    Help
                   </Button>
                 </Link>
                 {hasAdminAccess && (
@@ -175,12 +165,6 @@ export function Header() {
                       <Button variant="outline" className="w-full rounded-xl">
                         <User className="h-4 w-4 mr-1" />
                         Profile
-                      </Button>
-                    </Link>
-                    <Link to="/help" className="w-full" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="outline" className="w-full rounded-xl">
-                        <HelpCircle className="h-4 w-4 mr-1" />
-                        Help
                       </Button>
                     </Link>
                     <div className="flex gap-2">
