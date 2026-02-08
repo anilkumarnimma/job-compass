@@ -11,20 +11,20 @@ import {
   useUpdateHiringGraphEntry,
   useDeleteHiringGraphEntry,
   useReorderHiringGraph,
+  usePublishHiringGraph,
   HiringGraphEntry,
 } from "@/hooks/useHiringGraphData";
 import {
   BarChart3,
   Plus,
   Trash2,
-  GripVertical,
   Loader2,
-  Save,
   Pencil,
   X,
   Check,
   ChevronUp,
   ChevronDown,
+  Send,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -43,6 +43,7 @@ export function HiringGraphManager() {
   const updateEntry = useUpdateHiringGraphEntry();
   const deleteEntry = useDeleteHiringGraphEntry();
   const reorderEntries = useReorderHiringGraph();
+  const publishGraph = usePublishHiringGraph();
 
   const [newRoleName, setNewRoleName] = useState("");
   const [newPercentage, setNewPercentage] = useState("");
@@ -50,6 +51,7 @@ export function HiringGraphManager() {
   const [editRoleName, setEditRoleName] = useState("");
   const [editPercentage, setEditPercentage] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [showPublishConfirm, setShowPublishConfirm] = useState(false);
 
   const activeCount = entries.filter((e) => e.is_active).length;
 
@@ -107,6 +109,11 @@ export function HiringGraphManager() {
     setDeleteId(null);
   };
 
+  const handlePublish = async () => {
+    await publishGraph.mutateAsync();
+    setShowPublishConfirm(false);
+  };
+
   const moveUp = async (index: number) => {
     if (index === 0) return;
     const newEntries = [...entries];
@@ -137,17 +144,43 @@ export function HiringGraphManager() {
 
   return (
     <Card className="p-6 border-border/60">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center">
-          <BarChart3 className="h-5 w-5 text-accent" />
+      {/* Header with Publish Button */}
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center">
+            <BarChart3 className="h-5 w-5 text-accent" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-foreground">Hiring Graph Manager</h2>
+            <p className="text-sm text-muted-foreground">
+              Draft mode — changes won't show until published
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-xl font-bold text-foreground">Update Hiring Graph</h2>
-          <p className="text-sm text-muted-foreground">
-            Manage roles shown on the dashboard graph (max 5 active)
-          </p>
-        </div>
+        <Button
+          onClick={() => setShowPublishConfirm(true)}
+          disabled={activeCount === 0 || publishGraph.isPending}
+          className="gap-2"
+        >
+          {publishGraph.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Send className="h-4 w-4" />
+          )}
+          Publish Graph
+        </Button>
+      </div>
+
+      {/* Draft Status Banner */}
+      <div className="mb-6 p-3 bg-accent/10 border border-accent/20 rounded-lg">
+        <p className="text-sm text-accent-foreground">
+          <strong>Draft Mode:</strong> Edit roles below. Click "Publish Graph" to update the dashboard.
+          {activeCount > 5 && (
+            <span className="block mt-1 text-destructive">
+              Warning: Only the first 5 active roles will be published.
+            </span>
+          )}
+        </p>
       </div>
 
       {/* Add New Role Form */}
@@ -199,10 +232,11 @@ export function HiringGraphManager() {
       </div>
 
       {/* Info Badge */}
-      <div className="mb-4">
+      <div className="mb-4 flex items-center gap-2">
         <Badge variant={activeCount > 5 ? "destructive" : "secondary"}>
-          {activeCount}/5 active roles displayed
+          {activeCount}/5 active roles
         </Badge>
+        <span className="text-xs text-muted-foreground">(Draft)</span>
       </div>
 
       {/* Entries List */}
@@ -210,7 +244,7 @@ export function HiringGraphManager() {
         <div className="text-center py-8 text-muted-foreground">
           <BarChart3 className="h-12 w-12 mx-auto mb-3 opacity-30" />
           <p className="text-sm">No roles added yet. Add your first role above.</p>
-          <p className="text-xs mt-1">The dashboard graph will be empty until you add data.</p>
+          <p className="text-xs mt-1">The dashboard graph will be empty until you publish data.</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -342,7 +376,7 @@ export function HiringGraphManager() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this role?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove this role from the hiring graph.
+              This will remove this role from the draft. Publish to update the dashboard.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -352,6 +386,26 @@ export function HiringGraphManager() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Publish Confirmation */}
+      <AlertDialog open={showPublishConfirm} onOpenChange={setShowPublishConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Publish Hiring Graph?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will replace the current dashboard graph with your draft.
+              {activeCount} active role{activeCount !== 1 ? "s" : ""} will be published.
+              All users will see the updated graph immediately.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handlePublish}>
+              Publish Now
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
