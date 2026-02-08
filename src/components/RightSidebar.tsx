@@ -12,7 +12,7 @@ export function RightSidebar({ onFilterByRole, className }: RightSidebarProps) {
   const { data: activeAlert } = useActiveMarketAlert();
 
   return (
-    <aside className={cn("flex flex-col gap-4", className)}>
+    <aside className={cn("flex flex-col gap-2", className)}>
       {/* Top Hirings Widget - Founder-managed data only */}
       <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
         <TopHiringsPanelDisplay onFilterByRole={onFilterByRole} />

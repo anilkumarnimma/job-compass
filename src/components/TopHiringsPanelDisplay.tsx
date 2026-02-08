@@ -133,35 +133,35 @@ export function TopHiringsPanelDisplay({ onFilterByRole }: TopHiringsPanelDispla
   }
 
   return (
-    <div className="p-5 rounded-2xl bg-gradient-to-br from-card via-card to-muted/10 border border-border/40 shadow-xl shadow-primary/5 relative overflow-hidden">
+    <div className="p-4 rounded-2xl bg-gradient-to-br from-card via-card to-muted/10 border border-border/40 shadow-xl shadow-primary/5 relative overflow-hidden">
       {/* Subtle gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-primary/[0.02] to-transparent pointer-events-none" />
       
       <div className="relative">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-5">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shadow-inner">
-              <TrendingUp className="h-5 w-5 text-primary" />
+        {/* Header - compact */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shadow-inner shrink-0">
+              <TrendingUp className="h-4 w-4 text-primary" />
             </div>
-            <div>
-              <h3 className="font-bold text-foreground text-sm tracking-tight">Top Hirings Today</h3>
-              <p className="text-xs text-muted-foreground">USA market snapshot</p>
+            <div className="min-w-0">
+              <h3 className="font-bold text-foreground text-sm tracking-tight whitespace-nowrap">Top Hirings Today</h3>
+              <p className="text-[11px] text-muted-foreground whitespace-nowrap">USA market snapshot</p>
             </div>
           </div>
           
-          <div className="flex flex-col items-end gap-1.5">
+          <div className="flex flex-col items-end gap-1 shrink-0">
             {/* Trend badge */}
-            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/20">
-              <TrendingUp className="h-3 w-3 text-green-600" />
-              <span className="text-[10px] font-semibold text-green-600">+12% today</span>
+            <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-green-500/10 border border-green-500/20">
+              <TrendingUp className="h-2.5 w-2.5 text-green-600" />
+              <span className="text-[9px] font-semibold text-green-600">+12%</span>
             </div>
             
             {/* Updated time */}
             {lastUpdated && (
-              <div className="flex items-center gap-1 text-[10px] text-muted-foreground/70">
-                <Clock className="h-3 w-3" />
-                <span>Updated {formatDistanceToNow(lastUpdated, { addSuffix: false })} ago</span>
+              <div className="flex items-center gap-1 text-[9px] text-muted-foreground/70">
+                <Clock className="h-2.5 w-2.5" />
+                <span>{formatDistanceToNow(lastUpdated, { addSuffix: false })} ago</span>
               </div>
             )}
           </div>
@@ -179,8 +179,8 @@ export function TopHiringsPanelDisplay({ onFilterByRole }: TopHiringsPanelDispla
         ) : (
           <TooltipProvider delayDuration={100}>
             <>
-              {/* Donut Chart */}
-              <div className="flex justify-center mb-6">
+              {/* Donut Chart - compact */}
+              <div className="flex justify-center mb-4">
                 <div className="relative w-36 h-36">
                   {/* Outer glow effect */}
                   <div 
@@ -298,14 +298,14 @@ export function TopHiringsPanelDisplay({ onFilterByRole }: TopHiringsPanelDispla
               </div>
 
               {/* Stats line */}
-              <div className="text-center mb-5">
-                <p className="text-[10px] text-muted-foreground/70">
+              <div className="text-center mb-3">
+                <p className="text-[9px] text-muted-foreground/70">
                   Total jobs scanned: <span className="font-semibold text-muted-foreground">2,340</span>
                 </p>
               </div>
 
-              {/* Bar-style Legend */}
-              <div className="space-y-3">
+              {/* Bar-style Legend - compact */}
+              <div className="space-y-1.5">
                 {chartData.map((entry, index) => {
                   const isTop = index === 0;
                   const isHovered = hoveredIndex === index;
@@ -317,33 +317,33 @@ export function TopHiringsPanelDisplay({ onFilterByRole }: TopHiringsPanelDispla
                           onClick={() => onFilterByRole?.(entry.role_name)}
                           onMouseEnter={() => setHoveredIndex(index)}
                           onMouseLeave={() => setHoveredIndex(null)}
-                          className={`w-full text-left transition-all duration-200 rounded-lg p-2 -mx-2 ${
-                            isHovered ? 'bg-muted/50 scale-[1.02]' : 'hover:bg-muted/30'
+                          className={`w-full text-left transition-all duration-200 rounded-md py-1 px-1.5 -mx-1.5 ${
+                            isHovered ? 'bg-muted/50 scale-[1.01]' : 'hover:bg-muted/30'
                           } ${isTop ? 'ring-1 ring-primary/20 bg-primary/[0.03]' : ''}`}
                         >
-                          <div className="flex items-center justify-between mb-1.5">
-                            <div className="flex items-center gap-2 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-1.5 min-w-0">
                               <div
                                 className={`shrink-0 rounded-full transition-all duration-200 ${
-                                  isTop ? 'h-3.5 w-3.5' : 'h-3 w-3'
+                                  isTop ? 'h-2.5 w-2.5' : 'h-2 w-2'
                                 }`}
                                 style={{ 
                                   background: `linear-gradient(135deg, ${entry.color.start}, ${entry.color.end})`,
-                                  boxShadow: isHovered ? `0 0 8px ${entry.color.glow}` : 'none'
+                                  boxShadow: isHovered ? `0 0 6px ${entry.color.glow}` : 'none'
                                 }}
                               />
-                              <span className={`text-sm truncate transition-colors ${
+                              <span className={`text-xs truncate transition-colors ${
                                 isTop ? 'font-semibold text-foreground' : 'text-foreground/80'
                               } ${isHovered ? 'text-primary' : ''}`}>
                                 {entry.role_name}
                                 {isTop && (
-                                  <span className="ml-1.5 text-[9px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                                  <span className="ml-1 text-[8px] px-1 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
                                     #1
                                   </span>
                                 )}
                               </span>
                             </div>
-                            <span className={`text-xs font-bold ml-2 ${
+                            <span className={`text-[11px] font-bold ml-2 ${
                               isTop ? 'text-foreground' : 'text-muted-foreground'
                             }`}>
                               {entry.percentage}%
@@ -351,13 +351,13 @@ export function TopHiringsPanelDisplay({ onFilterByRole }: TopHiringsPanelDispla
                           </div>
                           
                           {/* Progress bar */}
-                          <div className="h-1.5 w-full bg-muted/50 rounded-full overflow-hidden">
+                          <div className="h-1 w-full bg-muted/50 rounded-full overflow-hidden">
                             <div
                               className="h-full rounded-full transition-all duration-500 ease-out"
                               style={{
                                 width: `${entry.percentage}%`,
                                 background: `linear-gradient(90deg, ${entry.color.start}, ${entry.color.end})`,
-                                boxShadow: isHovered ? `0 0 6px ${entry.color.glow}` : 'none'
+                                boxShadow: isHovered ? `0 0 4px ${entry.color.glow}` : 'none'
                               }}
                             />
                           </div>
