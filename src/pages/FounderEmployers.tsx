@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { HiringGraphManager } from "@/components/founder/HiringGraphManager";
 
 export default function FounderEmployers() {
   const { user, isLoading: authLoading } = useAuth();
@@ -85,6 +86,11 @@ export default function FounderEmployers() {
   return (
     <Layout>
       <div className="container max-w-4xl mx-auto px-4 py-8">
+        {/* Hiring Graph Manager - Founder Only */}
+        <div className="mb-8">
+          <HiringGraphManager />
+        </div>
+
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
           <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
