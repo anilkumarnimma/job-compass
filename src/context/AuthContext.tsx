@@ -20,17 +20,17 @@
    const [isAdmin, setIsAdmin] = useState(false);
    const [isLoading, setIsLoading] = useState(true);
  
-   const checkAdminRole = async (userId: string) => {
-     const { data } = await supabase
-       .from("user_roles")
-       .select("role")
-       .eq("user_id", userId)
-       .eq("role", "admin")
-       .maybeSingle();
-     
-     setIsAdmin(data?.role === "admin");
-     setIsLoading(false);
-   };
+  const checkAdminRole = async (userId: string) => {
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .in("role", ["admin", "founder"])
+      .maybeSingle();
+    
+    setIsAdmin(data?.role === "admin" || data?.role === "founder");
+    setIsLoading(false);
+  };
  
    useEffect(() => {
      // Set up auth state listener FIRST (synchronous only)

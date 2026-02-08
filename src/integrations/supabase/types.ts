@@ -43,6 +43,48 @@ export type Database = {
           },
         ]
       }
+      employer_permissions: {
+        Row: {
+          can_delete_jobs: boolean
+          can_edit_jobs: boolean
+          can_import_google_sheet: boolean
+          can_manage_team: boolean
+          can_post_jobs: boolean
+          can_view_graphs: boolean
+          created_at: string
+          employer_id: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          can_delete_jobs?: boolean
+          can_edit_jobs?: boolean
+          can_import_google_sheet?: boolean
+          can_manage_team?: boolean
+          can_post_jobs?: boolean
+          can_view_graphs?: boolean
+          created_at?: string
+          employer_id: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          can_delete_jobs?: boolean
+          can_edit_jobs?: boolean
+          can_import_google_sheet?: boolean
+          can_manage_team?: boolean
+          can_post_jobs?: boolean
+          can_view_graphs?: boolean
+          created_at?: string
+          employer_id?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       import_history: {
         Row: {
           created_at: string
@@ -81,7 +123,9 @@ export type Database = {
           company: string
           company_logo: string | null
           created_at: string
+          created_by_user_id: string | null
           description: string
+          employer_id: string | null
           employment_type: string
           experience_years: string | null
           external_apply_link: string
@@ -101,7 +145,9 @@ export type Database = {
           company: string
           company_logo?: string | null
           created_at?: string
+          created_by_user_id?: string | null
           description: string
+          employer_id?: string | null
           employment_type?: string
           experience_years?: string | null
           external_apply_link: string
@@ -121,7 +167,9 @@ export type Database = {
           company?: string
           company_logo?: string | null
           created_at?: string
+          created_by_user_id?: string | null
           description?: string
+          employer_id?: string | null
           employment_type?: string
           experience_years?: string | null
           external_apply_link?: string
@@ -144,8 +192,10 @@ export type Database = {
           country: string | null
           created_at: string
           email: string
+          employer_id: string | null
           full_name: string | null
           id: string
+          is_active: boolean
           linkedin_url: string | null
           location: string | null
           phone: string | null
@@ -159,8 +209,10 @@ export type Database = {
           country?: string | null
           created_at?: string
           email: string
+          employer_id?: string | null
           full_name?: string | null
           id?: string
+          is_active?: boolean
           linkedin_url?: string | null
           location?: string | null
           phone?: string | null
@@ -174,8 +226,10 @@ export type Database = {
           country?: string | null
           created_at?: string
           email?: string
+          employer_id?: string | null
           full_name?: string | null
           id?: string
+          is_active?: boolean
           linkedin_url?: string | null
           location?: string | null
           phone?: string | null
@@ -288,6 +342,7 @@ export type Database = {
     }
     Functions: {
       archive_old_jobs: { Args: never; Returns: number }
+      can_access_job: { Args: { job_id: string }; Returns: boolean }
       get_job_counts: {
         Args: { search_query?: string }
         Returns: {
@@ -297,11 +352,16 @@ export type Database = {
           yesterday_count: number
         }[]
       }
+      has_employer_permission: {
+        Args: { permission_name: string }
+        Returns: boolean
+      }
       has_role: {
         Args: { check_role: string; check_user_id: string }
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_founder: { Args: never; Returns: boolean }
       search_jobs: {
         Args: {
           filter_tab?: string
