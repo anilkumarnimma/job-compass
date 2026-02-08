@@ -85,6 +85,39 @@ export type Database = {
         }
         Relationships: []
       }
+      hiring_graph_data: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          percentage: number
+          role_name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          percentage: number
+          role_name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          percentage?: number
+          role_name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       import_history: {
         Row: {
           created_at: string
