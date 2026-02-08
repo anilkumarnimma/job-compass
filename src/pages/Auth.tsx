@@ -1,57 +1,70 @@
- import { useState, useEffect } from "react";
- import { useSearchParams, Link, useNavigate } from "react-router-dom";
- import { Layout } from "@/components/Layout";
- import { Button } from "@/components/ui/button";
- import { Input } from "@/components/ui/input";
- import { Label } from "@/components/ui/label";
- import { useAuth } from "@/context/AuthContext";
- import { Briefcase, Mail, Lock, Globe, Loader2, ArrowRight, Sparkles } from "lucide-react";
- import { toast } from "sonner";
- 
- export default function Auth() {
-   const [searchParams] = useSearchParams();
-   const navigate = useNavigate();
-   const { user, signIn, signUp, isLoading: authLoading } = useAuth();
-   const isSignup = searchParams.get("signup") === "true";
-   const [mode, setMode] = useState<"login" | "signup">(isSignup ? "signup" : "login");
-   const [isLoading, setIsLoading] = useState(false);
-   
-   const [email, setEmail] = useState("");
-   const [password, setPassword] = useState("");
-   const [country, setCountry] = useState("");
- 
-   useEffect(() => {
-     if (user && !authLoading) {
-       navigate("/dashboard");
-     }
-   }, [user, authLoading, navigate]);
- 
-   const handleSubmit = async (e: React.FormEvent) => {
-     e.preventDefault();
-     setIsLoading(true);
- 
-     try {
-       if (mode === "signup") {
-         const { error } = await signUp(email, password, country);
-         if (error) {
-           toast.error(error.message);
-         } else {
-           toast.success("Account created! Please check your email to verify your account.");
-           setMode("login");
-         }
-       } else {
-         const { error } = await signIn(email, password);
-         if (error) {
-           toast.error(error.message);
-         } else {
-           toast.success("Welcome back!");
-           navigate("/dashboard");
-         }
-       }
-     } finally {
-       setIsLoading(false);
-     }
-   };
+import { useState, useEffect } from "react";
+import { useSearchParams, Link, useNavigate } from "react-router-dom";
+import { Layout } from "@/components/Layout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useAuth } from "@/context/AuthContext";
+import { useUserRole } from "@/hooks/usePermissions";
+import { Briefcase, Mail, Lock, Globe, Loader2, ArrowRight, Sparkles } from "lucide-react";
+import { toast } from "sonner";
+
+export default function Auth() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { user, signIn, signUp, isLoading: authLoading } = useAuth();
+  const { data: userRole, isLoading: roleLoading } = useUserRole();
+  const isSignup = searchParams.get("signup") === "true";
+  const [mode, setMode] = useState<"login" | "signup">(isSignup ? "signup" : "login");
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [country, setCountry] = useState("");
+
+  // Role-based redirect after login
+  useEffect(() => {
+    if (user && !authLoading && !roleLoading && userRole !== undefined) {
+      switch (userRole) {
+        case "founder":
+          navigate("/admin");
+          break;
+        case "employer":
+          navigate("/employer");
+          break;
+        default:
+          navigate("/dashboard");
+          break;
+      }
+    }
+  }, [user, authLoading, roleLoading, userRole, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      if (mode === "signup") {
+        const { error } = await signUp(email, password, country);
+        if (error) {
+          toast.error(error.message);
+        } else {
+          toast.success("Account created! Please check your email to verify your account.");
+          setMode("login");
+        }
+      } else {
+        const { error } = await signIn(email, password);
+        if (error) {
+          toast.error(error.message);
+        } else {
+          toast.success("Welcome back!");
+          // Navigation handled by useEffect above
+        }
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
  
    if (authLoading) {
      return (

@@ -18,6 +18,8 @@ export interface Job {
   created_at: Date;
   updated_at: Date;
   is_archived?: boolean;
+  created_by_user_id?: string | null;
+  employer_id?: string | null;
 }
 
 export interface Application {
