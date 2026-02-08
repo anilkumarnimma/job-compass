@@ -24,19 +24,25 @@ export default function Auth() {
 
   // Role-based redirect after login
   useEffect(() => {
-    if (user && !authLoading && !roleLoading && userRole !== undefined) {
+    // Wait for auth and role to be fully loaded
+    if (authLoading || roleLoading) return;
+    
+    // Only redirect if user is logged in
+    if (!user) return;
+    
+    // Determine redirect path based on role
+    const redirectPath = (() => {
       switch (userRole) {
         case "founder":
-          navigate("/founder/employers");
-          break;
+          return "/founder/employers";
         case "employer":
-          navigate("/employer");
-          break;
+          return "/employer";
         default:
-          navigate("/dashboard");
-          break;
+          return "/dashboard";
       }
-    }
+    })();
+    
+    navigate(redirectPath, { replace: true });
   }, [user, authLoading, roleLoading, userRole, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {

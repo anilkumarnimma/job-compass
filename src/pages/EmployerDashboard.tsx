@@ -1,8 +1,6 @@
-import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { useState, useMemo } from "react";
 import { Layout } from "@/components/Layout";
 import { useAuth } from "@/context/AuthContext";
-import { useMyPermissions } from "@/hooks/usePermissions";
 import { useAdminJobs, useUpdateJob, useDeleteJob, useDuplicateJob } from "@/hooks/useAdminJobs";
 import { JobForm } from "@/components/admin/JobForm";
 import { CSVBulkUpload } from "@/components/admin/CSVBulkUpload";
@@ -22,8 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function EmployerDashboard() {
-  const { user, isLoading: authLoading } = useAuth();
-  const { data: permissions, isLoading: permLoading } = useMyPermissions();
+  const { user } = useAuth();
   const { data: jobs = [], isLoading: jobsLoading } = useAdminJobs();
   const updateJob = useUpdateJob();
   const deleteJob = useDeleteJob();
@@ -34,31 +31,11 @@ export default function EmployerDashboard() {
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [deletingJobId, setDeletingJobId] = useState<string | null>(null);
 
-  const isLoading = authLoading || permLoading;
-  const isFounder = permissions?.isFounder ?? false;
-  const isEmployer = permissions?.isEmployer ?? false;
-
-  // Employers only - founders should use /admin
-  if (!isLoading && isFounder) {
-    return <Navigate to="/admin" replace />;
-  }
-
-  if (isLoading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      </Layout>
-    );
-  }
-
-  if (!user || !isEmployer) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  // Filter jobs to only show those created by this user
-  const myJobs = jobs.filter((job) => job.created_by_user_id === user.id);
+  // Memoize filtered jobs to prevent re-renders
+  const myJobs = useMemo(() => {
+    if (!user?.id) return [];
+    return jobs.filter((job) => job.created_by_user_id === user.id);
+  }, [jobs, user?.id]);
 
   const handleEdit = (job: Job) => {
     setEditingJob(job);
@@ -95,6 +72,17 @@ export default function EmployerDashboard() {
   const handleDuplicate = async (job: Job) => {
     await duplicateJob.mutateAsync(job);
   };
+
+  // Show loading state while jobs are loading
+  if (jobsLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
