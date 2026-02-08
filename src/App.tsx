@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { JobProvider } from "@/context/JobContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { FloatingHelpButton } from "@/components/FloatingHelpButton";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
@@ -20,76 +21,85 @@ import Profile from "./pages/Profile";
 import Help from "./pages/Help";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <JobProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              
-              {/* User pages - accessible by users and founders */}
-              <Route path="/dashboard" element={
-                <ProtectedRoute allowedRoles={["user", "founder"]}>
-                  <Dashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/applied" element={
-                <ProtectedRoute allowedRoles={["user", "founder"]}>
-                  <Applied />
-                </ProtectedRoute>
-              } />
-              <Route path="/saved" element={
-                <ProtectedRoute allowedRoles={["user", "founder"]}>
-                  <Saved />
-                </ProtectedRoute>
-              } />
-              <Route path="/profile" element={
-                <ProtectedRoute allowedRoles={["user", "founder"]}>
-                  <Profile />
-                </ProtectedRoute>
-              } />
-              
-              {/* Employer pages - accessible by employers and founders */}
-              <Route path="/employer" element={
-                <ProtectedRoute allowedRoles={["employer", "founder"]}>
-                  <EmployerDashboard />
-                </ProtectedRoute>
-              } />
-              
-              {/* Founder-only pages */}
-              <Route path="/admin" element={
-                <ProtectedRoute allowedRoles={["founder"]}>
-                  <Admin />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/import" element={
-                <ProtectedRoute allowedRoles={["founder"]}>
-                  <AdminImport />
-                </ProtectedRoute>
-              } />
-              <Route path="/founder/employers" element={
-                <ProtectedRoute allowedRoles={["founder"]}>
-                  <FounderEmployers />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/help" element={<Help />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <FloatingHelpButton />
-          </BrowserRouter>
-        </JobProvider>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthProvider>
+          <JobProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                
+                {/* User pages - accessible by users and founders */}
+                <Route path="/dashboard" element={
+                  <ProtectedRoute allowedRoles={["user", "founder"]}>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/applied" element={
+                  <ProtectedRoute allowedRoles={["user", "founder"]}>
+                    <Applied />
+                  </ProtectedRoute>
+                } />
+                <Route path="/saved" element={
+                  <ProtectedRoute allowedRoles={["user", "founder"]}>
+                    <Saved />
+                  </ProtectedRoute>
+                } />
+                <Route path="/profile" element={
+                  <ProtectedRoute allowedRoles={["user", "founder"]}>
+                    <Profile />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Employer pages - accessible by employers and founders */}
+                <Route path="/employer" element={
+                  <ProtectedRoute allowedRoles={["employer", "founder"]}>
+                    <EmployerDashboard />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Founder-only pages */}
+                <Route path="/admin" element={
+                  <ProtectedRoute allowedRoles={["founder"]}>
+                    <Admin />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/import" element={
+                  <ProtectedRoute allowedRoles={["founder"]}>
+                    <AdminImport />
+                  </ProtectedRoute>
+                } />
+                <Route path="/founder/employers" element={
+                  <ProtectedRoute allowedRoles={["founder"]}>
+                    <FounderEmployers />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/help" element={<Help />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <FloatingHelpButton />
+            </BrowserRouter>
+          </JobProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
