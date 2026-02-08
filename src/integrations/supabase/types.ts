@@ -250,6 +250,30 @@ export type Database = {
         }
         Relationships: []
       }
+      market_alerts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          message: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          message: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          message?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           country: string | null
