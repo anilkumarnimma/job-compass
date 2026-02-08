@@ -35,6 +35,12 @@ export function Header() {
     return "Admin";
   };
   
+  const getAdminPath = () => {
+    if (isFounder) return "/admin";
+    if (isEmployer) return "/employer";
+    return "/admin";
+  };
+  
   const AdminIcon = isFounder ? Crown : Shield;
 
   return (
@@ -85,7 +91,7 @@ export function Header() {
                   </Button>
                 </Link>
                 {hasAdminAccess && (
-                  <Link to="/admin">
+                  <Link to={getAdminPath()}>
                     <Button 
                       variant="outline" 
                       size="sm" 
@@ -169,7 +175,7 @@ export function Header() {
                     </Link>
                     <div className="flex gap-2">
                       {hasAdminAccess && (
-                        <Link to="/admin" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
+                        <Link to={getAdminPath()} className="flex-1" onClick={() => setMobileMenuOpen(false)}>
                           <Button variant="outline" className="w-full rounded-xl">
                             <AdminIcon className="h-4 w-4 mr-1" />
                             {getAdminLabel()}

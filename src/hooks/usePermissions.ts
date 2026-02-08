@@ -59,23 +59,25 @@ export function useMyPermissions() {
         };
       }
 
-      // Check employer permissions
-      const { data: permissions } = await supabase
-        .from("employer_permissions")
-        .select("*")
+      // Check if user has employer role
+      const { data: employerRole } = await supabase
+        .from("user_roles")
+        .select("role")
         .eq("user_id", user.id)
+        .eq("role", "employer")
         .maybeSingle();
 
-      if (permissions) {
+      if (employerRole) {
+        // User has employer role - give them standard employer permissions
         return {
           isFounder: false,
           isEmployer: true,
-          can_post_jobs: permissions.can_post_jobs,
-          can_edit_jobs: permissions.can_edit_jobs,
-          can_delete_jobs: permissions.can_delete_jobs,
-          can_view_graphs: permissions.can_view_graphs,
-          can_import_google_sheet: permissions.can_import_google_sheet,
-          can_manage_team: permissions.can_manage_team,
+          can_post_jobs: true,
+          can_edit_jobs: true,
+          can_delete_jobs: true,
+          can_view_graphs: true,
+          can_import_google_sheet: false,
+          can_manage_team: false,
         };
       }
 
@@ -89,6 +91,29 @@ export function useMyPermissions() {
         can_import_google_sheet: false,
         can_manage_team: false,
       };
+    },
+    enabled: !!user,
+  });
+}
+
+// Hook to get the user's role
+export function useUserRole() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["user-role", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      return data?.role || "user";
     },
     enabled: !!user,
   });
@@ -117,9 +142,14 @@ export function useAllUsers() {
         .from("employer_permissions")
         .select("*");
 
-      // Combine data
+      // Combine data - prioritize founder/employer roles over 'user'
       const usersWithRoles: UserWithProfile[] = (profiles || []).map((profile) => {
-        const userRole = roles?.find((r) => r.user_id === profile.user_id);
+        const userRoles = roles?.filter((r) => r.user_id === profile.user_id) || [];
+        // Pick the highest priority role
+        const priorityRole = userRoles.find(r => r.role === "founder") 
+          || userRoles.find(r => r.role === "employer")
+          || userRoles.find(r => r.role === "user")
+          || { role: "user" };
         const userPermissions = permissions?.find((p) => p.user_id === profile.user_id);
 
         return {
@@ -128,12 +158,57 @@ export function useAllUsers() {
           full_name: profile.full_name,
           employer_id: profile.employer_id,
           is_active: profile.is_active,
-          role: userRole?.role || "user",
+          role: priorityRole.role,
           permissions: userPermissions || null,
         };
       });
 
       return usersWithRoles;
+    },
+  });
+}
+
+// Hook to update user role (founder, employer, user)
+export function useUpdateUserRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      newRole,
+    }: {
+      userId: string;
+      newRole: "user" | "employer" | "founder";
+    }) => {
+      // First, delete existing non-user roles for this user
+      await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId)
+        .in("role", ["founder", "employer"]);
+
+      // If new role is not 'user', insert the new role
+      if (newRole !== "user") {
+        const { error } = await supabase
+          .from("user_roles")
+          .insert({ user_id: userId, role: newRole });
+        if (error) throw error;
+      }
+
+      // If demoting from employer, also remove employer permissions
+      if (newRole === "user") {
+        await supabase
+          .from("employer_permissions")
+          .delete()
+          .eq("user_id", userId);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["all-users"] });
+      toast.success("User role updated successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to update role: " + error.message);
     },
   });
 }
@@ -236,21 +311,13 @@ export function useUpdateUserProfile() {
 
 // Quick toggle: Make employer admin (enable all main permissions)
 export function useMakeEmployerAdmin() {
-  const updatePermissions = useUpdateUserPermissions();
+  const updateRole = useUpdateUserRole();
 
   return useMutation({
-    mutationFn: async ({ userId, employerId }: { userId: string; employerId: string }) => {
-      return updatePermissions.mutateAsync({
+    mutationFn: async ({ userId }: { userId: string }) => {
+      return updateRole.mutateAsync({
         userId,
-        employerId,
-        permissions: {
-          can_post_jobs: true,
-          can_edit_jobs: true,
-          can_delete_jobs: true,
-          can_view_graphs: true,
-          can_import_google_sheet: false,
-          can_manage_team: false,
-        },
+        newRole: "employer",
       });
     },
   });

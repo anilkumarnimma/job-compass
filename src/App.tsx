@@ -14,6 +14,7 @@ import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import AdminImport from "./pages/AdminImport";
 import FounderEmployers from "./pages/FounderEmployers";
+import EmployerDashboard from "./pages/EmployerDashboard";
 import Profile from "./pages/Profile";
 import Help from "./pages/Help";
 import NotFound from "./pages/NotFound";
@@ -37,7 +38,9 @@ const App = () => (
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/import" element={<AdminImport />} />
               <Route path="/founder/employers" element={<FounderEmployers />} />
+              <Route path="/employer" element={<EmployerDashboard />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/help" element={<Help />} />
               <Route path="/help" element={<Help />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
