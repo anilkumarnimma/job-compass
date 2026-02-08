@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
-import { useMyPermissions } from "@/hooks/usePermissions";
+import { useUserRole } from "@/hooks/usePermissions";
 import { Briefcase, Menu, X, LogOut, Shield, User, Crown } from "lucide-react";
 import { useState } from "react";
 
@@ -9,39 +9,44 @@ export function Header() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { data: permissions } = useMyPermissions();
+  const { data: userRole } = useUserRole();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const isActive = (path: string) => location.pathname === path;
   
-  const isFounder = permissions?.isFounder ?? false;
-  const isEmployer = permissions?.isEmployer ?? false;
-  const hasAdminAccess = isFounder || isEmployer;
-  
-  const navLinks = [
-    { path: "/dashboard", label: "Jobs" },
-    { path: "/applied", label: "Applied" },
-    { path: "/saved", label: "Saved" },
-  ];
+  // Determine role - default to "user" if no role found
+  const role = userRole || "user";
+  const isFounder = role === "founder";
+  const isEmployer = role === "employer";
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
   };
-  
-  const getAdminLabel = () => {
-    if (isFounder) return "Founder";
-    if (isEmployer) return "Employer";
-    return "Admin";
+
+  // Role-based nav links
+  const getNavLinks = () => {
+    if (isFounder) {
+      // Founder sees everything
+      return [
+        { path: "/dashboard", label: "Jobs" },
+        { path: "/applied", label: "Applied" },
+        { path: "/saved", label: "Saved" },
+      ];
+    }
+    if (isEmployer) {
+      // Employer only sees Employer Dashboard link (no job seeker tabs)
+      return [];
+    }
+    // Regular user sees job seeker tabs
+    return [
+      { path: "/dashboard", label: "Jobs" },
+      { path: "/applied", label: "Applied" },
+      { path: "/saved", label: "Saved" },
+    ];
   };
-  
-  const getAdminPath = () => {
-    if (isFounder) return "/admin";
-    if (isEmployer) return "/employer";
-    return "/admin";
-  };
-  
-  const AdminIcon = isFounder ? Crown : Shield;
+
+  const navLinks = getNavLinks();
 
   return (
     <header className="sticky top-0 z-50 glass-header border-b border-border">
@@ -55,53 +60,87 @@ export function Header() {
             <span className="font-bold text-lg text-foreground tracking-tight">Sociax</span>
           </Link>
 
-          {/* Desktop Navigation - Center */}
-          <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
-            <div className="flex items-center bg-secondary/70 rounded-full p-1">
-              {navLinks.map((link) => (
-                <Link key={link.path} to={link.path}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={`rounded-full px-5 h-9 font-medium transition-all duration-200 ${
-                      isActive(link.path) 
-                        ? "bg-card text-foreground shadow-sm" 
-                        : "text-muted-foreground hover:text-foreground hover:bg-transparent"
-                    }`}
-                  >
-                    {link.label}
-                  </Button>
-                </Link>
-              ))}
-            </div>
-          </nav>
+          {/* Desktop Navigation - Center (only show if there are nav links) */}
+          {navLinks.length > 0 && (
+            <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
+              <div className="flex items-center bg-secondary/70 rounded-full p-1">
+                {navLinks.map((link) => (
+                  <Link key={link.path} to={link.path}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`rounded-full px-5 h-9 font-medium transition-all duration-200 ${
+                        isActive(link.path) 
+                          ? "bg-card text-foreground shadow-sm" 
+                          : "text-muted-foreground hover:text-foreground hover:bg-transparent"
+                      }`}
+                    >
+                      {link.label}
+                    </Button>
+                  </Link>
+                ))}
+              </div>
+            </nav>
+          )}
 
           {/* Auth buttons (desktop) - Right */}
           <div className="hidden md:flex items-center gap-3">
             {user ? (
               <>
-                <Link to="/profile">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="rounded-xl h-9 px-4 text-muted-foreground hover:text-foreground"
-                  >
-                    <User className="h-4 w-4 mr-1.5" />
-                    Profile
-                  </Button>
-                </Link>
-                {hasAdminAccess && (
-                  <Link to={getAdminPath()}>
+                {/* Profile - show for users and founders */}
+                {(isFounder || (!isFounder && !isEmployer)) && (
+                  <Link to="/profile">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="rounded-xl h-9 px-4 text-muted-foreground hover:text-foreground"
+                    >
+                      <User className="h-4 w-4 mr-1.5" />
+                      Profile
+                    </Button>
+                  </Link>
+                )}
+
+                {/* Employer Dashboard - only for employers */}
+                {isEmployer && !isFounder && (
+                  <Link to="/employer">
                     <Button 
                       variant="outline" 
                       size="sm" 
                       className="rounded-xl h-9 px-4 border-border hover:bg-secondary"
                     >
-                      <AdminIcon className="h-4 w-4 mr-1.5" />
-                      {getAdminLabel()}
+                      <Shield className="h-4 w-4 mr-1.5" />
+                      Employer Dashboard
                     </Button>
                   </Link>
                 )}
+
+                {/* Founder controls - only for founders */}
+                {isFounder && (
+                  <>
+                    <Link to="/founder/employers">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="rounded-xl h-9 px-4 border-border hover:bg-secondary"
+                      >
+                        <Crown className="h-4 w-4 mr-1.5" />
+                        Founder
+                      </Button>
+                    </Link>
+                    <Link to="/admin">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="rounded-xl h-9 px-4 border-border hover:bg-secondary"
+                      >
+                        <Shield className="h-4 w-4 mr-1.5" />
+                        Admin
+                      </Button>
+                    </Link>
+                  </>
+                )}
+
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -167,30 +206,52 @@ export function Header() {
               <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-border">
                 {user ? (
                   <>
-                    <Link to="/profile" className="w-full" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="outline" className="w-full rounded-xl">
-                        <User className="h-4 w-4 mr-1" />
-                        Profile
-                      </Button>
-                    </Link>
-                    <div className="flex gap-2">
-                      {hasAdminAccess && (
-                        <Link to={getAdminPath()} className="flex-1" onClick={() => setMobileMenuOpen(false)}>
+                    {/* Profile - show for users and founders */}
+                    {(isFounder || (!isFounder && !isEmployer)) && (
+                      <Link to="/profile" className="w-full" onClick={() => setMobileMenuOpen(false)}>
+                        <Button variant="outline" className="w-full rounded-xl">
+                          <User className="h-4 w-4 mr-1" />
+                          Profile
+                        </Button>
+                      </Link>
+                    )}
+
+                    {/* Employer Dashboard - only for employers */}
+                    {isEmployer && !isFounder && (
+                      <Link to="/employer" className="w-full" onClick={() => setMobileMenuOpen(false)}>
+                        <Button variant="outline" className="w-full rounded-xl">
+                          <Shield className="h-4 w-4 mr-1" />
+                          Employer Dashboard
+                        </Button>
+                      </Link>
+                    )}
+
+                    {/* Founder controls - only for founders */}
+                    {isFounder && (
+                      <>
+                        <Link to="/founder/employers" className="w-full" onClick={() => setMobileMenuOpen(false)}>
                           <Button variant="outline" className="w-full rounded-xl">
-                            <AdminIcon className="h-4 w-4 mr-1" />
-                            {getAdminLabel()}
+                            <Crown className="h-4 w-4 mr-1" />
+                            Founder
                           </Button>
                         </Link>
-                      )}
-                      <Button 
-                        variant="ghost" 
-                        className="flex-1 rounded-xl" 
-                        onClick={() => { handleSignOut(); setMobileMenuOpen(false); }}
-                      >
-                        <LogOut className="h-4 w-4 mr-1" />
-                        Sign out
-                      </Button>
-                    </div>
+                        <Link to="/admin" className="w-full" onClick={() => setMobileMenuOpen(false)}>
+                          <Button variant="outline" className="w-full rounded-xl">
+                            <Shield className="h-4 w-4 mr-1" />
+                            Admin
+                          </Button>
+                        </Link>
+                      </>
+                    )}
+
+                    <Button 
+                      variant="ghost" 
+                      className="w-full rounded-xl" 
+                      onClick={() => { handleSignOut(); setMobileMenuOpen(false); }}
+                    >
+                      <LogOut className="h-4 w-4 mr-1" />
+                      Sign out
+                    </Button>
                   </>
                 ) : (
                   <>

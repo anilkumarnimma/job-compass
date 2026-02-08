@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { JobProvider } from "@/context/JobContext";
 import { FloatingHelpButton } from "@/components/FloatingHelpButton";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Applied from "./pages/Applied";
@@ -31,16 +32,54 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/applied" element={<Applied />} />
-              <Route path="/saved" element={<Saved />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/admin/import" element={<AdminImport />} />
-              <Route path="/founder/employers" element={<FounderEmployers />} />
-              <Route path="/employer" element={<EmployerDashboard />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/help" element={<Help />} />
+              
+              {/* User pages - accessible by users and founders */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute allowedRoles={["user", "founder"]}>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/applied" element={
+                <ProtectedRoute allowedRoles={["user", "founder"]}>
+                  <Applied />
+                </ProtectedRoute>
+              } />
+              <Route path="/saved" element={
+                <ProtectedRoute allowedRoles={["user", "founder"]}>
+                  <Saved />
+                </ProtectedRoute>
+              } />
+              <Route path="/profile" element={
+                <ProtectedRoute allowedRoles={["user", "founder"]}>
+                  <Profile />
+                </ProtectedRoute>
+              } />
+              
+              {/* Employer pages - accessible by employers and founders */}
+              <Route path="/employer" element={
+                <ProtectedRoute allowedRoles={["employer", "founder"]}>
+                  <EmployerDashboard />
+                </ProtectedRoute>
+              } />
+              
+              {/* Founder-only pages */}
+              <Route path="/admin" element={
+                <ProtectedRoute allowedRoles={["founder"]}>
+                  <Admin />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/import" element={
+                <ProtectedRoute allowedRoles={["founder"]}>
+                  <AdminImport />
+                </ProtectedRoute>
+              } />
+              <Route path="/founder/employers" element={
+                <ProtectedRoute allowedRoles={["founder"]}>
+                  <FounderEmployers />
+                </ProtectedRoute>
+              } />
+              
               <Route path="/help" element={<Help />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
