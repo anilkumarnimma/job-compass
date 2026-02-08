@@ -13,6 +13,7 @@ import Saved from "./pages/Saved";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import AdminImport from "./pages/AdminImport";
+import FounderEmployers from "./pages/FounderEmployers";
 import Profile from "./pages/Profile";
 import Help from "./pages/Help";
 import NotFound from "./pages/NotFound";
@@ -35,6 +36,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/import" element={<AdminImport />} />
+              <Route path="/founder/employers" element={<FounderEmployers />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/help" element={<Help />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

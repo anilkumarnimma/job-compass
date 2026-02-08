@@ -1,16 +1,22 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
-import { Briefcase, Menu, X, LogOut, Shield, User, HelpCircle } from "lucide-react";
+import { useMyPermissions } from "@/hooks/usePermissions";
+import { Briefcase, Menu, X, LogOut, Shield, User, HelpCircle, Crown } from "lucide-react";
 import { useState } from "react";
 
 export function Header() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, signOut } = useAuth();
+  const { data: permissions } = useMyPermissions();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const isActive = (path: string) => location.pathname === path;
+  
+  const isFounder = permissions?.isFounder ?? false;
+  const isEmployer = permissions?.isEmployer ?? false;
+  const hasAdminAccess = isFounder || isEmployer;
   
   const navLinks = [
     { path: "/dashboard", label: "Jobs" },
@@ -22,6 +28,14 @@ export function Header() {
     await signOut();
     navigate("/");
   };
+  
+  const getAdminLabel = () => {
+    if (isFounder) return "Founder";
+    if (isEmployer) return "Employer";
+    return "Admin";
+  };
+  
+  const AdminIcon = isFounder ? Crown : Shield;
 
   return (
     <header className="sticky top-0 z-50 glass-header border-b border-border">
@@ -80,15 +94,15 @@ export function Header() {
                     Help
                   </Button>
                 </Link>
-                {isAdmin && (
+                {hasAdminAccess && (
                   <Link to="/admin">
                     <Button 
                       variant="outline" 
                       size="sm" 
                       className="rounded-xl h-9 px-4 border-border hover:bg-secondary"
                     >
-                      <Shield className="h-4 w-4 mr-1.5" />
-                      Admin
+                      <AdminIcon className="h-4 w-4 mr-1.5" />
+                      {getAdminLabel()}
                     </Button>
                   </Link>
                 )}
@@ -170,11 +184,11 @@ export function Header() {
                       </Button>
                     </Link>
                     <div className="flex gap-2">
-                      {isAdmin && (
+                      {hasAdminAccess && (
                         <Link to="/admin" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
                           <Button variant="outline" className="w-full rounded-xl">
-                            <Shield className="h-4 w-4 mr-1" />
-                            Admin
+                            <AdminIcon className="h-4 w-4 mr-1" />
+                            {getAdminLabel()}
                           </Button>
                         </Link>
                       )}
