@@ -29,17 +29,22 @@ export default function Auth() {
     
     // Only redirect if user is logged in
     if (!user) return;
+
+    // Debug logging (temporary)
+    console.log("[Auth] Redirect check - userRole:", userRole, "user:", user?.email);
     
-    // Determine redirect path based on role
+    // Determine redirect path based on role (founder has highest priority)
     const redirectPath = (() => {
-      switch (userRole) {
-        case "founder":
-          return "/founder/employers";
-        case "employer":
-          return "/employer";
-        default:
-          return "/dashboard";
+      if (userRole === "founder") {
+        console.log("[Auth] Redirecting founder to /founder/employers");
+        return "/founder/employers";
       }
+      if (userRole === "employer") {
+        console.log("[Auth] Redirecting employer to /employer");
+        return "/employer";
+      }
+      console.log("[Auth] Redirecting user to /dashboard");
+      return "/dashboard";
     })();
     
     navigate(redirectPath, { replace: true });
