@@ -204,11 +204,13 @@ Deno.serve(async (req) => {
       );
     }
     
-    // Check admin role
-    const { data: isAdminData } = await supabaseAuth.rpc('is_admin');
-    if (!isAdminData) {
+    // Check that user is founder OR employer with post permission
+    const { data: isFounderData } = await supabaseAuth.rpc('is_founder');
+    const { data: hasPostPermission } = await supabaseAuth.rpc('has_employer_permission', { permission_name: 'can_post_jobs' });
+    
+    if (!isFounderData && !hasPostPermission) {
       return new Response(
-        JSON.stringify({ error: 'Admin access required' }),
+        JSON.stringify({ error: 'Employer or founder access required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -360,6 +362,7 @@ Deno.serve(async (req) => {
             is_reviewing: parseBoolean(row.actively_reviewing),
             company_logo: row.company_logo_url?.trim() || null,
             is_published: row.is_published !== undefined ? parseBoolean(row.is_published) : true,
+            created_by_user_id: user.id,
           });
           
           // Mark as existing to prevent duplicates within same batch

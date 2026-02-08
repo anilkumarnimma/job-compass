@@ -119,6 +119,9 @@ export function CSVBulkUpload({ onComplete }: CSVBulkUploadProps) {
 
   const uploadMutation = useMutation({
     mutationFn: async (jobs: CSVJob[]) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
       const total = jobs.length;
       let uploaded = 0;
 
@@ -139,6 +142,7 @@ export function CSVBulkUpload({ onComplete }: CSVBulkUploadProps) {
           posted_date: job.posted_date || new Date().toISOString(),
           is_published: true,
           is_reviewing: false,
+          created_by_user_id: user.id,
         }));
 
         const { error } = await supabase.from("jobs").insert(batch);

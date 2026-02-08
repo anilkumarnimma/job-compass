@@ -57,8 +57,11 @@ function parseJob(row: any): Job {
  export function useCreateJob() {
    const queryClient = useQueryClient();
  
-   return useMutation({
+  return useMutation({
     mutationFn: async (data: JobFormData) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
       const { error } = await supabase.from("jobs").insert({
         title: data.title,
         company: data.company,
@@ -72,6 +75,7 @@ function parseJob(row: any): Job {
         salary_range: data.salary_range || null,
         employment_type: data.employment_type,
         experience_years: data.experience_years || null,
+        created_by_user_id: user.id,
       });
 
       if (error) throw error;
@@ -138,6 +142,9 @@ export function useDuplicateJob() {
 
   return useMutation({
     mutationFn: async (job: Job) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
       const { error } = await supabase.from("jobs").insert({
         title: job.title + " (Copy)",
         company: job.company,
@@ -151,6 +158,7 @@ export function useDuplicateJob() {
         salary_range: job.salary_range,
         employment_type: job.employment_type,
         experience_years: job.experience_years,
+        created_by_user_id: user.id,
       });
 
       if (error) throw error;

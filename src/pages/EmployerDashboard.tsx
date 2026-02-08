@@ -1,6 +1,8 @@
 import { useState, useMemo } from "react";
+import { Navigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { useAuth } from "@/context/AuthContext";
+import { useUserRole } from "@/hooks/usePermissions";
 import { useAdminJobs, useUpdateJob, useDeleteJob, useDuplicateJob } from "@/hooks/useAdminJobs";
 import { JobForm } from "@/components/admin/JobForm";
 import { CSVBulkUpload } from "@/components/admin/CSVBulkUpload";
@@ -21,6 +23,7 @@ import {
 
 export default function EmployerDashboard() {
   const { user } = useAuth();
+  const { data: userRole, isLoading: roleLoading } = useUserRole();
   const { data: jobs = [], isLoading: jobsLoading } = useAdminJobs();
   const updateJob = useUpdateJob();
   const deleteJob = useDeleteJob();
@@ -31,11 +34,16 @@ export default function EmployerDashboard() {
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [deletingJobId, setDeletingJobId] = useState<string | null>(null);
 
+  const isFounder = userRole === "founder";
+  const isEmployer = userRole === "employer";
+
   // Memoize filtered jobs to prevent re-renders
   const myJobs = useMemo(() => {
     if (!user?.id) return [];
+    // Founders see all; employers see only own
+    if (isFounder) return jobs;
     return jobs.filter((job) => job.created_by_user_id === user.id);
-  }, [jobs, user?.id]);
+  }, [jobs, user?.id, isFounder]);
 
   const handleEdit = (job: Job) => {
     setEditingJob(job);
@@ -73,8 +81,8 @@ export default function EmployerDashboard() {
     await duplicateJob.mutateAsync(job);
   };
 
-  // Show loading state while jobs are loading
-  if (jobsLoading) {
+  // Block access if not employer or founder
+  if (roleLoading || jobsLoading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[50vh]">
@@ -82,6 +90,11 @@ export default function EmployerDashboard() {
         </div>
       </Layout>
     );
+  }
+
+  // Only employer or founder may access
+  if (!isEmployer && !isFounder) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (
@@ -139,11 +152,11 @@ export default function EmployerDashboard() {
           </div>
         )}
 
-        {/* Jobs List - Only employer's own jobs */}
+        {/* Jobs List - Only employer's own jobs (founder sees all) */}
         <AdminJobsList
           jobs={myJobs}
           isLoading={jobsLoading}
-          isFounder={false}
+          isFounder={isFounder}
           canEditJobs={true}
           canDeleteJobs={true}
           canPostJobs={true}
