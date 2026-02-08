@@ -1,8 +1,7 @@
 import { usePublishedHiringGraphData } from "@/hooks/useHiringGraphData";
 import { TrendingUp, PieChart, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Progress } from "@/components/ui/progress";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import {
   Tooltip,
@@ -11,13 +10,33 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-// Premium gradient colors for the donut chart segments
+// Premium vibrant gradient colors for the donut chart segments
 const CHART_COLORS = [
-  { main: "hsl(var(--primary))", glow: "hsl(var(--primary) / 0.3)" },
-  { main: "hsl(262, 83%, 58%)", glow: "hsl(262, 83%, 58% / 0.3)" },
-  { main: "hsl(199, 89%, 48%)", glow: "hsl(199, 89%, 48% / 0.3)" },
-  { main: "hsl(160, 84%, 39%)", glow: "hsl(160, 84%, 39% / 0.3)" },
-  { main: "hsl(38, 92%, 50%)", glow: "hsl(38, 92%, 50% / 0.3)" },
+  { 
+    start: "hsl(221, 83%, 53%)", 
+    end: "hsl(221, 83%, 63%)", 
+    glow: "hsl(221, 83%, 53% / 0.4)" 
+  },
+  { 
+    start: "hsl(262, 83%, 55%)", 
+    end: "hsl(262, 83%, 68%)", 
+    glow: "hsl(262, 83%, 58% / 0.4)" 
+  },
+  { 
+    start: "hsl(199, 89%, 45%)", 
+    end: "hsl(199, 89%, 58%)", 
+    glow: "hsl(199, 89%, 48% / 0.4)" 
+  },
+  { 
+    start: "hsl(160, 84%, 36%)", 
+    end: "hsl(160, 84%, 48%)", 
+    glow: "hsl(160, 84%, 39% / 0.4)" 
+  },
+  { 
+    start: "hsl(38, 92%, 48%)", 
+    end: "hsl(38, 92%, 60%)", 
+    glow: "hsl(38, 92%, 50% / 0.4)" 
+  },
 ];
 
 interface TopHiringsPanelDisplayProps {
@@ -27,26 +46,36 @@ interface TopHiringsPanelDisplayProps {
 export function TopHiringsPanelDisplay({ onFilterByRole }: TopHiringsPanelDisplayProps) {
   const { data: entries = [], isLoading } = usePublishedHiringGraphData();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [isAnimated, setIsAnimated] = useState(false);
 
-  // Calculate chart segments
+  // Trigger animation on mount
+  useEffect(() => {
+    if (entries.length > 0 && !isAnimated) {
+      const timer = setTimeout(() => setIsAnimated(true), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [entries.length, isAnimated]);
+
+  // Calculate chart segments with gap
   const chartData = useMemo(() => {
     if (entries.length === 0) return [];
     
     const total = entries.reduce((sum, e) => sum + e.percentage, 0);
+    const gapAngle = 2; // Gap between segments in degrees
     let cumulativeAngle = 0;
     
     return entries.map((entry, index) => {
       const percentage = total > 0 ? (entry.percentage / total) * 100 : 0;
-      const angle = (percentage / 100) * 360;
-      const startAngle = cumulativeAngle;
-      cumulativeAngle += angle;
+      const angle = (percentage / 100) * 360 - gapAngle;
+      const startAngle = cumulativeAngle + gapAngle / 2;
+      cumulativeAngle += angle + gapAngle;
       
       return {
         ...entry,
         color: CHART_COLORS[index % CHART_COLORS.length],
         percentage: entry.percentage,
         startAngle,
-        endAngle: cumulativeAngle,
+        endAngle: startAngle + angle,
       };
     });
   }, [entries]);
@@ -58,34 +87,23 @@ export function TopHiringsPanelDisplay({ onFilterByRole }: TopHiringsPanelDispla
     return new Date(Math.max(...dates.map(d => d.getTime())));
   }, [entries]);
 
-  // Generate SVG path for donut segment with rounded ends
-  const createDonutSegment = (
+  // Generate arc path for stroke-based donut with rounded caps
+  const createArcPath = (
     startAngle: number, 
     endAngle: number, 
-    radius: number, 
-    innerRadius: number,
-    isHovered: boolean
+    radius: number
   ) => {
-    const hoverScale = isHovered ? 2 : 0;
-    const r = radius + hoverScale;
-    const ir = innerRadius - hoverScale / 2;
-    
     const startRad = (startAngle - 90) * (Math.PI / 180);
     const endRad = (endAngle - 90) * (Math.PI / 180);
     
-    const x1 = 50 + r * Math.cos(startRad);
-    const y1 = 50 + r * Math.sin(startRad);
-    const x2 = 50 + r * Math.cos(endRad);
-    const y2 = 50 + r * Math.sin(endRad);
-    
-    const x3 = 50 + ir * Math.cos(endRad);
-    const y3 = 50 + ir * Math.sin(endRad);
-    const x4 = 50 + ir * Math.cos(startRad);
-    const y4 = 50 + ir * Math.sin(startRad);
+    const x1 = 50 + radius * Math.cos(startRad);
+    const y1 = 50 + radius * Math.sin(startRad);
+    const x2 = 50 + radius * Math.cos(endRad);
+    const y2 = 50 + radius * Math.sin(endRad);
     
     const largeArc = endAngle - startAngle > 180 ? 1 : 0;
     
-    return `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${ir} ${ir} 0 ${largeArc} 0 ${x4} ${y4} Z`;
+    return `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`;
   };
 
   if (isLoading) {
@@ -164,21 +182,44 @@ export function TopHiringsPanelDisplay({ onFilterByRole }: TopHiringsPanelDispla
               {/* Donut Chart */}
               <div className="flex justify-center mb-6">
                 <div className="relative w-36 h-36">
-                  {/* Glow effect behind chart */}
-                  <div className="absolute inset-2 rounded-full bg-gradient-to-br from-primary/10 via-transparent to-purple-500/10 blur-xl" />
+                  {/* Outer glow effect */}
+                  <div 
+                    className="absolute inset-0 rounded-full blur-xl opacity-40"
+                    style={{
+                      background: `radial-gradient(circle, ${CHART_COLORS[0].glow} 0%, transparent 70%)`
+                    }}
+                  />
                   
                   <svg viewBox="0 0 100 100" className="w-full h-full relative z-10">
-                    {/* Inner shadow circle */}
                     <defs>
-                      <filter id="innerShadow" x="-50%" y="-50%" width="200%" height="200%">
-                        <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur" />
-                        <feOffset in="blur" dx="0" dy="1" result="offsetBlur" />
-                        <feComposite in="SourceGraphic" in2="offsetBlur" operator="over" />
+                      {/* Gradient definitions for each segment */}
+                      {chartData.map((segment, index) => (
+                        <linearGradient
+                          key={`gradient-${index}`}
+                          id={`segmentGradient-${index}`}
+                          x1="0%"
+                          y1="0%"
+                          x2="100%"
+                          y2="100%"
+                        >
+                          <stop offset="0%" stopColor={segment.color.start} />
+                          <stop offset="100%" stopColor={segment.color.end} />
+                        </linearGradient>
+                      ))}
+                      
+                      {/* Inner shadow filter for center */}
+                      <filter id="centerInnerShadow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="hsl(var(--foreground))" floodOpacity="0.1" />
                       </filter>
-                      <linearGradient id="centerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="hsl(var(--card))" />
-                        <stop offset="100%" stopColor="hsl(var(--muted) / 0.3)" />
-                      </linearGradient>
+                      
+                      {/* Glow filter for hovered segments */}
+                      <filter id="segmentGlow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+                        <feMerge>
+                          <feMergeNode in="coloredBlur" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
                     </defs>
                     
                     {/* Background track */}
@@ -187,52 +228,70 @@ export function TopHiringsPanelDisplay({ onFilterByRole }: TopHiringsPanelDispla
                       cy="50"
                       r="38"
                       fill="none"
-                      stroke="hsl(var(--muted) / 0.3)"
-                      strokeWidth="14"
+                      stroke="hsl(var(--muted) / 0.2)"
+                      strokeWidth="17"
                     />
                     
-                    {/* Chart segments */}
-                    {chartData.map((segment, index) => (
-                      <Tooltip key={segment.id}>
-                        <TooltipTrigger asChild>
-                          <path
-                            d={createDonutSegment(
-                              segment.startAngle, 
-                              segment.endAngle, 
-                              45, 
-                              31,
-                              hoveredIndex === index
-                            )}
-                            fill={segment.color.main}
-                            className="transition-all duration-200 cursor-pointer"
-                            style={{
-                              filter: hoveredIndex === index ? `drop-shadow(0 0 8px ${segment.color.glow})` : 'none',
-                              opacity: hoveredIndex !== null && hoveredIndex !== index ? 0.6 : 1,
-                            }}
-                            onClick={() => onFilterByRole?.(segment.role_name)}
-                            onMouseEnter={() => setHoveredIndex(index)}
-                            onMouseLeave={() => setHoveredIndex(null)}
-                          />
-                        </TooltipTrigger>
-                        <TooltipContent 
-                          side="top" 
-                          className="bg-popover/95 backdrop-blur-sm border-border/50 shadow-xl"
-                        >
-                          <div className="text-center">
-                            <p className="font-semibold text-foreground">{segment.role_name}</p>
-                            <p className="text-lg font-bold text-primary">{segment.percentage}%</p>
-                            <p className="text-[10px] text-muted-foreground">Click to filter jobs</p>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    ))}
+                    {/* Chart segments with animation */}
+                    {chartData.map((segment, index) => {
+                      const isHovered = hoveredIndex === index;
+                      const arcLength = ((segment.endAngle - segment.startAngle) / 360) * (2 * Math.PI * 38);
+                      const totalLength = 2 * Math.PI * 38;
+                      
+                      return (
+                        <Tooltip key={segment.id}>
+                          <TooltipTrigger asChild>
+                            <path
+                              d={createArcPath(segment.startAngle, segment.endAngle, 38)}
+                              fill="none"
+                              stroke={`url(#segmentGradient-${index})`}
+                              strokeWidth={isHovered ? 19 : 17}
+                              strokeLinecap="round"
+                              className="cursor-pointer"
+                              style={{
+                                filter: isHovered ? 'url(#segmentGlow)' : 'none',
+                                opacity: hoveredIndex !== null && !isHovered ? 0.5 : 1,
+                                strokeDasharray: isAnimated ? `${arcLength} ${totalLength}` : `0 ${totalLength}`,
+                                strokeDashoffset: 0,
+                                transition: isAnimated 
+                                  ? 'stroke-width 200ms ease-out, opacity 200ms ease-out'
+                                  : `stroke-dasharray 600ms ease-out ${index * 80}ms, stroke-width 200ms ease-out, opacity 200ms ease-out`,
+                              }}
+                              onClick={() => onFilterByRole?.(segment.role_name)}
+                              onMouseEnter={() => setHoveredIndex(index)}
+                              onMouseLeave={() => setHoveredIndex(null)}
+                            />
+                          </TooltipTrigger>
+                          <TooltipContent 
+                            side="top" 
+                            className="bg-popover/95 backdrop-blur-sm border-border/50 shadow-xl"
+                          >
+                            <div className="text-center">
+                              <p className="font-semibold text-foreground">{segment.role_name}</p>
+                              <p className="text-lg font-bold text-primary">{segment.percentage}%</p>
+                              <p className="text-[10px] text-muted-foreground">Click to filter jobs</p>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    })}
                   </svg>
                   
-                  {/* Center content */}
+                  {/* Center content with inner shadow */}
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center bg-gradient-to-br from-card to-card/80 rounded-full w-14 h-14 flex flex-col items-center justify-center shadow-inner">
-                      <span className="text-xl font-bold text-foreground leading-none">{entries.length}</span>
-                      <span className="text-[9px] text-muted-foreground font-medium">Top roles</span>
+                    <div 
+                      className="text-center rounded-full w-[52px] h-[52px] flex flex-col items-center justify-center"
+                      style={{
+                        background: 'linear-gradient(145deg, hsl(var(--card)) 0%, hsl(var(--muted) / 0.15) 100%)',
+                        boxShadow: 'inset 0 2px 8px hsl(var(--foreground) / 0.08), 0 1px 2px hsl(var(--background) / 0.5)'
+                      }}
+                    >
+                      <span className="text-2xl font-extrabold text-foreground leading-none tracking-tight">
+                        {entries.length}
+                      </span>
+                      <span className="text-[8px] text-muted-foreground font-medium leading-tight mt-0.5">
+                        Active roles
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -269,7 +328,7 @@ export function TopHiringsPanelDisplay({ onFilterByRole }: TopHiringsPanelDispla
                                   isTop ? 'h-3.5 w-3.5' : 'h-3 w-3'
                                 }`}
                                 style={{ 
-                                  backgroundColor: entry.color.main,
+                                  background: `linear-gradient(135deg, ${entry.color.start}, ${entry.color.end})`,
                                   boxShadow: isHovered ? `0 0 8px ${entry.color.glow}` : 'none'
                                 }}
                               />
@@ -297,7 +356,7 @@ export function TopHiringsPanelDisplay({ onFilterByRole }: TopHiringsPanelDispla
                               className="h-full rounded-full transition-all duration-500 ease-out"
                               style={{
                                 width: `${entry.percentage}%`,
-                                background: `linear-gradient(90deg, ${entry.color.main}, ${entry.color.main}dd)`,
+                                background: `linear-gradient(90deg, ${entry.color.start}, ${entry.color.end})`,
                                 boxShadow: isHovered ? `0 0 6px ${entry.color.glow}` : 'none'
                               }}
                             />
