@@ -106,20 +106,34 @@ export function useUserRole() {
       if (!user) return null;
 
       // Fetch all roles for this user
-      const { data: roles } = await supabase
+      const { data: roles, error } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", user.id);
 
-      if (!roles || roles.length === 0) return "user";
+      console.log("[useUserRole] Fetched roles for", user.email, ":", roles, error);
+
+      if (!roles || roles.length === 0) {
+        console.log("[useUserRole] No roles found, defaulting to 'user'");
+        return "user";
+      }
 
       // Priority: founder > employer > user
       const roleSet = new Set(roles.map(r => r.role));
-      if (roleSet.has("founder")) return "founder";
-      if (roleSet.has("employer")) return "employer";
+      if (roleSet.has("founder")) {
+        console.log("[useUserRole] Found founder role, returning 'founder'");
+        return "founder";
+      }
+      if (roleSet.has("employer")) {
+        console.log("[useUserRole] Found employer role, returning 'employer'");
+        return "employer";
+      }
+      console.log("[useUserRole] Defaulting to 'user'");
       return "user";
     },
     enabled: !!user,
+    staleTime: 0, // Always refetch to ensure fresh data
+    refetchOnMount: true,
   });
 }
 
