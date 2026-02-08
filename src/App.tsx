@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { JobProvider } from "@/context/JobContext";
+import { FloatingHelpButton } from "@/components/FloatingHelpButton";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Applied from "./pages/Applied";
@@ -13,6 +14,7 @@ import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import AdminImport from "./pages/AdminImport";
 import Profile from "./pages/Profile";
+import Help from "./pages/Help";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,9 +36,11 @@ const App = () => (
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/import" element={<AdminImport />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/help" element={<Help />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <FloatingHelpButton />
           </BrowserRouter>
         </JobProvider>
       </AuthProvider>

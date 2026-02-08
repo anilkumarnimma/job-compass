@@ -9,6 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useAdminJobs, useUpdateJob, useDeleteJob, useDuplicateJob } from "@/hooks/useAdminJobs";
 import { JobForm } from "@/components/admin/JobForm";
 import { CSVBulkUpload } from "@/components/admin/CSVBulkUpload";
+import { SupportTicketsPanel } from "@/components/admin/SupportTicketsPanel";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { Job } from "@/types/job";
 import { Plus, Pencil, Trash2, Loader2, Shield, Copy, FileSpreadsheet } from "lucide-react";
@@ -260,6 +261,11 @@ export default function Admin() {
             ))}
           </div>
         )}
+
+        {/* Support Tickets Section */}
+        <div className="mt-8">
+          <SupportTicketsPanel />
+        </div>
 
         {/* Delete Confirmation */}
         <AlertDialog open={!!deletingJobId} onOpenChange={() => setDeletingJobId(null)}>
