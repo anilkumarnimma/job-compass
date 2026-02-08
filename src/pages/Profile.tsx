@@ -2,17 +2,21 @@ import { useState, useEffect, useRef } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useProfile, ProfileData } from "@/hooks/useProfile";
+import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, FileText, Upload, Download, Trash2, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { User, FileText, Upload, Download, Trash2, Loader2, Bug } from "lucide-react";
 
 export default function Profile() {
   const { user, isLoading: authLoading } = useAuth();
   const { profile, isLoading, updateProfile, isUpdating, uploadResume, downloadResume, deleteResume, isUploading } = useProfile();
+  const { data: effectiveRole, isLoading: roleLoading } = useUserRole();
+  const { data: allRoles } = useAllUserRoles();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
@@ -252,6 +256,45 @@ export default function Profile() {
                     </div>
                   )}
                 </div>
+              )}
+            </CardContent>
+          </Card>
+          {/* Debug Role Section (Temporary) */}
+          <Card className="border-dashed border-accent/50 bg-accent/5">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Bug className="h-5 w-5 text-accent" />
+                <CardTitle className="text-lg text-accent-foreground">Debug: Role Information</CardTitle>
+              </div>
+              <CardDescription>Temporary debug section - shows your current role(s)</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {roleLoading ? (
+                <Skeleton className="h-8 w-32" />
+              ) : (
+                <>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Effective Role:</span>
+                    <Badge variant={effectiveRole === "founder" ? "default" : effectiveRole === "employer" ? "secondary" : "outline"}>
+                      {effectiveRole || "user"}
+                    </Badge>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm text-muted-foreground">All Assigned Roles:</span>
+                    {allRoles && allRoles.length > 0 ? (
+                      allRoles.map((r, i) => (
+                        <Badge key={i} variant="outline" className="text-xs">
+                          {r.role}
+                        </Badge>
+                      ))
+                    ) : (
+                      <Badge variant="outline">user (default)</Badge>
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-2">
+                    User ID: {user?.id}
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
