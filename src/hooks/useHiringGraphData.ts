@@ -13,6 +13,16 @@ export interface HiringGraphEntry {
   created_by: string | null;
 }
 
+export interface HiringGraphPublished {
+  id: string;
+  role_name: string;
+  percentage: number;
+  sort_order: number;
+  created_at: string;
+  published_at: string;
+  published_by: string | null;
+}
+
 export interface HiringGraphInsert {
   role_name: string;
   percentage: number;
@@ -28,7 +38,7 @@ export interface HiringGraphUpdate {
   is_active?: boolean;
 }
 
-// Fetch all graph data (founder sees all, others see only active)
+// Fetch all draft data (founder only)
 export function useHiringGraphData() {
   return useQuery({
     queryKey: ["hiring-graph-data"],
@@ -46,27 +56,25 @@ export function useHiringGraphData() {
   });
 }
 
-// Fetch only active entries for public display (max 5)
-export function useActiveHiringGraphData() {
+// Fetch published data for public display (what users see on dashboard)
+export function usePublishedHiringGraphData() {
   return useQuery({
-    queryKey: ["hiring-graph-data", "active"],
+    queryKey: ["hiring-graph-published"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("hiring_graph_data")
+        .from("hiring_graph_published")
         .select("*")
-        .eq("is_active", true)
         .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: true })
         .limit(5);
 
       if (error) throw error;
-      return data as HiringGraphEntry[];
+      return data as HiringGraphPublished[];
     },
     staleTime: 30 * 1000,
   });
 }
 
-// Add a new graph entry
+// Add a new draft entry
 export function useAddHiringGraphEntry() {
   const queryClient = useQueryClient();
 
@@ -89,7 +97,7 @@ export function useAddHiringGraphEntry() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["hiring-graph-data"] });
-      toast.success("Role added to graph");
+      toast.success("Role added to draft");
     },
     onError: (error: Error) => {
       console.error("Failed to add graph entry:", error);
@@ -98,7 +106,7 @@ export function useAddHiringGraphEntry() {
   });
 }
 
-// Update a graph entry
+// Update a draft entry
 export function useUpdateHiringGraphEntry() {
   const queryClient = useQueryClient();
 
@@ -116,7 +124,7 @@ export function useUpdateHiringGraphEntry() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["hiring-graph-data"] });
-      toast.success("Role updated");
+      toast.success("Draft updated");
     },
     onError: (error: Error) => {
       console.error("Failed to update graph entry:", error);
@@ -125,7 +133,7 @@ export function useUpdateHiringGraphEntry() {
   });
 }
 
-// Delete a graph entry
+// Delete a draft entry
 export function useDeleteHiringGraphEntry() {
   const queryClient = useQueryClient();
 
@@ -140,7 +148,7 @@ export function useDeleteHiringGraphEntry() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["hiring-graph-data"] });
-      toast.success("Role deleted");
+      toast.success("Role deleted from draft");
     },
     onError: (error: Error) => {
       console.error("Failed to delete graph entry:", error);
@@ -155,7 +163,6 @@ export function useReorderHiringGraph() {
 
   return useMutation({
     mutationFn: async (entries: { id: string; sort_order: number }[]) => {
-      // Update each entry's sort_order
       const promises = entries.map(({ id, sort_order }) =>
         supabase
           .from("hiring_graph_data")
@@ -176,6 +183,27 @@ export function useReorderHiringGraph() {
     onError: (error: Error) => {
       console.error("Failed to reorder graph:", error);
       toast.error("Failed to save order");
+    },
+  });
+}
+
+// Publish the graph - copies active drafts to published table
+export function usePublishHiringGraph() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("publish_hiring_graph");
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["hiring-graph-published"] });
+      toast.success("Graph published successfully!");
+    },
+    onError: (error: Error) => {
+      console.error("Failed to publish graph:", error);
+      toast.error("Failed to publish: " + error.message);
     },
   });
 }

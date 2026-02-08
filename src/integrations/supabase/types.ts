@@ -118,6 +118,36 @@ export type Database = {
         }
         Relationships: []
       }
+      hiring_graph_published: {
+        Row: {
+          created_at: string
+          id: string
+          percentage: number
+          published_at: string
+          published_by: string | null
+          role_name: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          percentage: number
+          published_at?: string
+          published_by?: string | null
+          role_name: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          percentage?: number
+          published_at?: string
+          published_by?: string | null
+          role_name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       import_history: {
         Row: {
           created_at: string
@@ -395,6 +425,7 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_founder: { Args: never; Returns: boolean }
+      publish_hiring_graph: { Args: never; Returns: undefined }
       search_jobs: {
         Args: {
           filter_tab?: string
