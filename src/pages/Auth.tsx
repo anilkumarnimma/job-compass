@@ -27,7 +27,7 @@ export default function Auth() {
     if (user && !authLoading && !roleLoading && userRole !== undefined) {
       switch (userRole) {
         case "founder":
-          navigate("/admin");
+          navigate("/founder/employers");
           break;
         case "employer":
           navigate("/employer");
