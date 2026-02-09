@@ -33,15 +33,14 @@ export function Header() {
     navigate("/");
   };
 
-  // Role-based nav links
-  // User + Founder: Jobs, Applied, Saved, Profile
-  // Employer: only Employer Dashboard + Sign out
+  // Nav links - always show Jobs/Applied/Saved for users and founders
+  // Employers only get their specific links
   const getNavLinks = () => {
-    if (isEmployer && !isFounder) {
-      // Employers only see Employer Dashboard (no browsing tabs)
+    // Employers (non-founders) only see Employer Dashboard
+    if (user && isEmployer && !isFounder) {
       return [];
     }
-    // users and founders see standard tabs
+    // Everyone else (logged in users, founders, or logged out) sees standard tabs
     return [
       { path: "/dashboard", label: "Jobs" },
       { path: "/applied", label: "Applied" },

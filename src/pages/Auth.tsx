@@ -207,7 +207,25 @@ export default function Auth() {
              </Link>
            </div>
          </div>
-       </div>
-     </Layout>
+
+        {/* Founder Quote Card - Bottom left */}
+        <div className="absolute bottom-8 left-8 hidden md:block">
+          <div className="w-72 bg-card rounded-xl shadow-md border border-border/50 p-4 flex gap-3">
+            {/* Blue accent line */}
+            <div className="w-1 shrink-0 rounded-full bg-accent" />
+            
+            {/* Quote content */}
+            <div>
+              <p className="text-sm text-foreground italic leading-relaxed">
+                "Built by someone who once refreshed job portals at 2 AM."
+              </p>
+              <p className="text-sm text-muted-foreground mt-2.5 font-medium not-italic">
+                — Founder, JobPulse
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Layout>
   );
 }
