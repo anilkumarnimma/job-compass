@@ -82,7 +82,7 @@ export default function Auth() {
             <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center shadow-soft">
               <Briefcase className="h-5 w-5 text-accent-foreground" />
             </div>
-            <span className="font-bold text-xl text-foreground tracking-tight">JobPulse</span>
+            <span className="font-bold text-xl text-foreground tracking-tight">Sociax.tech</span>
           </div>
 
           {/* Card */}
@@ -94,7 +94,7 @@ export default function Auth() {
               </h1>
               <p className="text-sm text-muted-foreground">
                 {mode === "login" 
-                  ? "Sign in to continue to JobPulse" 
+                  ? "Sign in to continue to Sociax.tech" 
                   : "Get started with your job search"}
               </p>
             </div>
@@ -220,7 +220,7 @@ export default function Auth() {
                 "Built by someone who once refreshed job portals at 2 AM."
               </p>
               <p className="text-sm text-muted-foreground mt-2.5 font-medium not-italic">
-                — Founder, JobPulse
+                — Founder, Sociax.tech
               </p>
             </div>
           </div>
