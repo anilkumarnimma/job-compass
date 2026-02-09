@@ -283,6 +283,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_active: boolean
+          is_premium: boolean
           linkedin_url: string | null
           location: string | null
           phone: string | null
@@ -300,6 +301,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_active?: boolean
+          is_premium?: boolean
           linkedin_url?: string | null
           location?: string | null
           phone?: string | null
@@ -317,6 +319,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_active?: boolean
+          is_premium?: boolean
           linkedin_url?: string | null
           location?: string | null
           phone?: string | null

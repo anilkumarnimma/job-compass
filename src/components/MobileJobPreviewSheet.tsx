@@ -5,6 +5,7 @@ import { CompanyLogo } from "@/components/CompanyLogo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { UpgradeDialog } from "@/components/UpgradeDialog";
 import {
   Sheet,
   SheetContent,
@@ -22,7 +23,7 @@ interface MobileJobPreviewSheetProps {
 }
 
 export function MobileJobPreviewSheet({ job, open, onOpenChange }: MobileJobPreviewSheetProps) {
-  const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
+  const { applyToJob, saveJob, unsaveJob, isApplied, isSaved, showUpgradeDialog, setShowUpgradeDialog } = useJobContext();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -178,6 +179,7 @@ export function MobileJobPreviewSheet({ job, open, onOpenChange }: MobileJobPrev
             </Button>
           </div>
         </div>
+        <UpgradeDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog} />
       </SheetContent>
     </Sheet>
   );

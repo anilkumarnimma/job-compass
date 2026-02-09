@@ -13,6 +13,7 @@ export interface ProfileData {
   portfolio_url: string | null;
   resume_url: string | null;
   resume_filename: string | null;
+  is_premium: boolean;
 }
 
 export function useProfile() {

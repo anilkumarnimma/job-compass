@@ -2,7 +2,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
-import { Briefcase, Menu, X, LogOut, Shield, User, Crown, ChevronDown } from "lucide-react";
+import { useProfile } from "@/hooks/useProfile";
+import { Briefcase, Menu, X, LogOut, Shield, User, Crown, ChevronDown, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -19,7 +20,11 @@ export function Header() {
   const { user, signOut } = useAuth();
   const { data: userRole } = useUserRole();
   const { data: allRoles } = useAllUserRoles();
+  const { profile } = useProfile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const STRIPE_LINK = "https://buy.stripe.com/test_eVq28rgVxdQO6Vt0Lp1wY00";
+  const isPremium = profile?.is_premium ?? false;
   
   const isActive = (path: string) => location.pathname === path;
   
@@ -89,6 +94,17 @@ export function Header() {
           <div className="hidden md:flex items-center gap-2 shrink-0 flex-nowrap">
             {user ? (
               <>
+                {/* Upgrade button for non-premium regular users */}
+                {!isPremium && !isFounder && !isEmployer && (
+                  <Button
+                    size="sm"
+                    className="rounded-xl h-9 px-4 bg-accent hover:bg-accent/90 text-accent-foreground shadow-sm"
+                    onClick={() => window.open(STRIPE_LINK, "_blank")}
+                  >
+                    <Sparkles className="h-4 w-4 mr-1.5" />
+                    Upgrade
+                  </Button>
+                )}
                 {/* Profile dropdown - users & founders (employers only need Admin link) */}
                 {(!isEmployer || isFounder) && (
                   <DropdownMenu>
