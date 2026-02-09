@@ -12,8 +12,6 @@ import {
   PieChart,
   AlertCircle
 } from "lucide-react";
-import { TopHiringsPanelDisplay } from "@/components/TopHiringsPanelDisplay";
-import { MarketAlertCard } from "@/components/MarketAlertCard";
 
 const features = [
   {
@@ -62,74 +60,58 @@ export default function Index() {
   return (
     <Layout showFooter={true}>
       {/* Hero Section */}
-      <section className="py-16 md:py-24 relative">
+      <section className="py-20 md:py-28">
         <div className="container max-w-6xl mx-auto px-4">
-          <div className="flex flex-col lg:flex-row items-start gap-12">
-            {/* Left side - Hero content */}
-            <div className="flex-1 max-w-xl animate-fade-in">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-sm font-medium mb-6">
-                <Briefcase className="h-4 w-4" />
-                Your job search, simplified
-              </div>
-              
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-6">
-                Find Your Next
-                <span className="block text-accent">Dream Job</span>
-              </h1>
-              
-              <p className="text-lg md:text-xl text-muted-foreground mb-8">
-                Search curated job listings, apply with one click, and automatically track 
-                all your applications in one clean dashboard.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row items-start gap-3 mb-12">
-                <Link to="/dashboard">
-                  <Button variant="accent" size="lg" className="w-full sm:w-auto">
-                    Browse Jobs
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link to="/auth">
-                  <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                    Create Account
-                  </Button>
-                </Link>
-              </div>
-
-              {/* Founder Note Card - Warm sticky note style */}
-              <div className="max-w-72">
-                <div 
-                  className="relative px-4 py-3.5 rounded-xl border shadow-md"
-                  style={{
-                    background: 'linear-gradient(135deg, hsl(45, 100%, 96%) 0%, hsl(40, 80%, 94%) 100%)',
-                    borderColor: 'hsl(40, 60%, 85%)',
-                  }}
-                >
-                  {/* Blue accent line */}
-                  <div className="absolute left-0 top-3 bottom-3 w-1 rounded-full bg-accent" />
-                  
-                  <div className="pl-3">
-                    <p className="text-sm text-foreground/90 italic leading-relaxed">
-                      "Built by someone who once refreshed job portals at 2 AM."
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-2 font-medium not-italic">
-                      — Founder, JobPulse
-                    </p>
-                  </div>
-                </div>
-              </div>
+          <div className="max-w-3xl mx-auto text-center animate-fade-in">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-sm font-medium mb-6">
+              <Briefcase className="h-4 w-4" />
+              Your job search, simplified
             </div>
             
-            {/* Right side - Dashboard Preview Widgets */}
-            <div className="w-full lg:w-80 shrink-0 flex flex-col gap-3">
-              {/* Top Hirings Widget */}
-              <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
-                <TopHiringsPanelDisplay />
-              </div>
-              
-              {/* Market Alert Widget */}
-              <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
-                <MarketAlertCard />
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-6">
+              Find Your Next
+              <span className="block text-accent">Dream Job</span>
+            </h1>
+            
+            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Search curated job listings, apply with one click, and automatically track 
+              all your applications in one clean dashboard.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-10">
+              <Link to="/dashboard">
+                <Button variant="accent" size="lg" className="w-full sm:w-auto">
+                  Browse Jobs
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Link to="/auth">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                  Create Account
+                </Button>
+              </Link>
+            </div>
+
+            {/* Founder Note Card */}
+            <div className="inline-block">
+              <div 
+                className="relative px-4 py-3.5 rounded-xl border shadow-md text-left"
+                style={{
+                  background: 'linear-gradient(135deg, hsl(45, 100%, 96%) 0%, hsl(40, 80%, 94%) 100%)',
+                  borderColor: 'hsl(40, 60%, 85%)',
+                }}
+              >
+                {/* Blue accent line */}
+                <div className="absolute left-0 top-3 bottom-3 w-1 rounded-full bg-accent" />
+                
+                <div className="pl-3">
+                  <p className="text-sm text-foreground/90 italic leading-relaxed">
+                    "Built by someone who once refreshed job portals at 2 AM."
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2 font-medium not-italic">
+                    — Founder, JobPulse
+                  </p>
+                </div>
               </div>
             </div>
           </div>
