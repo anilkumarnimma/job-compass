@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
 import { useUserRole } from "@/hooks/usePermissions";
-import { Briefcase, Mail, Lock, Globe, Loader2, ArrowRight, Sparkles } from "lucide-react";
+import { Briefcase, Mail, Lock, Globe, Loader2, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Auth() {
@@ -24,26 +24,12 @@ export default function Auth() {
 
   // Role-based redirect after login
   useEffect(() => {
-    // Wait for auth and role to be fully loaded
     if (authLoading || roleLoading) return;
-    
-    // Only redirect if user is logged in
     if (!user) return;
 
-    // Debug logging (temporary)
-    console.log("[Auth] Redirect check - userRole:", userRole, "user:", user?.email);
-    
-    // Determine redirect path based on role (founder has highest priority)
     const redirectPath = (() => {
-      if (userRole === "founder") {
-        console.log("[Auth] Redirecting founder to /founder/employers");
-        return "/founder/employers";
-      }
-      if (userRole === "employer") {
-        console.log("[Auth] Redirecting employer to /employer");
-        return "/employer";
-      }
-      console.log("[Auth] Redirecting user to /dashboard");
+      if (userRole === "founder") return "/founder/employers";
+      if (userRole === "employer") return "/employer";
       return "/dashboard";
     })();
     
@@ -69,209 +55,166 @@ export default function Auth() {
           toast.error(error.message);
         } else {
           toast.success("Welcome back!");
-          // Navigation handled by useEffect above
         }
       }
     } finally {
       setIsLoading(false);
     }
   };
- 
-   if (authLoading) {
-     return (
-       <Layout showFooter={false}>
-         <div className="min-h-[calc(100vh-64px)] flex items-center justify-center">
-           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-         </div>
-       </Layout>
-     );
-   }
- 
-   return (
-     <Layout showFooter={false}>
-       <div className="min-h-[calc(100vh-64px)] flex">
-         {/* Left side - Branding */}
-         <div className="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden">
-           <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-accent/20" />
-           <div className="absolute inset-0 opacity-10">
-             <div className="absolute top-20 left-10 w-72 h-72 bg-accent rounded-full blur-3xl" />
-             <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent rounded-full blur-3xl" />
-           </div>
-           
-           <div className="relative z-10 flex flex-col justify-center px-12 lg:px-16">
-             <div className="flex items-center gap-3 mb-8">
-               <div className="h-12 w-12 rounded-xl bg-accent flex items-center justify-center">
-                 <Briefcase className="h-6 w-6 text-accent-foreground" />
-               </div>
-               <span className="font-bold text-2xl text-primary-foreground">JobPulse</span>
-             </div>
-             
-             <h1 className="text-4xl lg:text-5xl font-bold text-primary-foreground leading-tight mb-6">
-               Your career journey
-               <span className="block text-accent">starts here</span>
-             </h1>
-             
-              <p className="text-lg text-primary-foreground/80 max-w-md mb-8">
-                Join thousands of professionals who found their dream jobs through JobPulse. 
-                Track applications, discover opportunities, and land interviews.
-              </p>
-             
-             <div className="flex flex-col gap-4">
-               <div className="flex items-center gap-3 text-primary-foreground/90">
-                 <div className="h-8 w-8 rounded-lg bg-accent/20 flex items-center justify-center">
-                   <Sparkles className="h-4 w-4 text-accent" />
-                 </div>
-                 <span>One-click applications to top companies</span>
-               </div>
-               <div className="flex items-center gap-3 text-primary-foreground/90">
-                 <div className="h-8 w-8 rounded-lg bg-accent/20 flex items-center justify-center">
-                   <Sparkles className="h-4 w-4 text-accent" />
-                 </div>
-                 <span>Track every application in one place</span>
-               </div>
-               <div className="flex items-center gap-3 text-primary-foreground/90">
-                 <div className="h-8 w-8 rounded-lg bg-accent/20 flex items-center justify-center">
-                   <Sparkles className="h-4 w-4 text-accent" />
-                 </div>
-                 <span>Get notified when companies are hiring</span>
-               </div>
-             </div>
-           </div>
-         </div>
-         
-          {/* Right side - Form */}
-          <div className="w-full lg:w-1/2 flex items-center justify-center py-12 px-4 sm:px-8 bg-background relative">
-            <div className="w-full max-w-md relative">
-             {/* Mobile logo */}
-             <div className="flex items-center justify-center gap-2 mb-8 lg:hidden">
-               <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center">
-                 <Briefcase className="h-5 w-5 text-accent-foreground" />
-               </div>
-                <span className="font-bold text-xl text-foreground">JobPulse</span>
-              </div>
- 
-             {/* Header */}
-             <div className="text-center lg:text-left mb-8">
-               <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                 {mode === "login" ? "Welcome back" : "Create your account"}
-               </h2>
-               <p className="text-muted-foreground">
-                 {mode === "login" 
-                   ? "Enter your credentials to access your dashboard" 
-                   : "Start your journey to finding the perfect job"}
-               </p>
-             </div>
- 
-             {/* Form */}
-             <form onSubmit={handleSubmit} className="space-y-5">
-               <div className="space-y-2">
-                 <Label htmlFor="email" className="text-sm font-medium">Email address</Label>
-                 <div className="relative">
-                   <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                   <Input
-                     id="email"
-                     type="email"
-                     placeholder="you@example.com"
-                     value={email}
-                     onChange={(e) => setEmail(e.target.value)}
-                     className="pl-10 h-12 bg-card border-border/60 focus:border-accent focus:ring-accent"
-                     required
-                   />
-                 </div>
-               </div>
- 
-               <div className="space-y-2">
-                 <Label htmlFor="password" className="text-sm font-medium">Password</Label>
-                 <div className="relative">
-                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                   <Input
-                     id="password"
-                     type="password"
-                     placeholder="••••••••"
-                     value={password}
-                     onChange={(e) => setPassword(e.target.value)}
-                     className="pl-10 h-12 bg-card border-border/60 focus:border-accent focus:ring-accent"
-                     required
-                     minLength={6}
-                   />
-                 </div>
-               </div>
- 
-               {mode === "signup" && (
-                 <div className="space-y-2">
-                   <Label htmlFor="country" className="text-sm font-medium">Country</Label>
-                   <div className="relative">
-                     <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                     <Input
-                       id="country"
-                       type="text"
-                       placeholder="United States"
-                       value={country}
-                       onChange={(e) => setCountry(e.target.value)}
-                       className="pl-10 h-12 bg-card border-border/60 focus:border-accent focus:ring-accent"
-                     />
-                   </div>
-                 </div>
-               )}
- 
-               <Button 
-                 type="submit" 
-                 variant="accent" 
-                 className="w-full h-12 text-base font-medium" 
-                 disabled={isLoading}
-               >
-                 {isLoading ? (
-                   <Loader2 className="h-5 w-5 animate-spin" />
-                 ) : (
-                   <>
-                     {mode === "login" ? "Sign In" : "Create Account"}
-                     <ArrowRight className="ml-2 h-4 w-4" />
-                   </>
-                 )}
-               </Button>
-             </form>
- 
-             {/* Divider */}
-             <div className="relative my-8">
-               <div className="absolute inset-0 flex items-center">
-                 <div className="w-full border-t border-border/60" />
-               </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-3 text-muted-foreground">
-                    {mode === "login" ? "New to JobPulse?" : "Already have an account?"}
-                 </span>
-               </div>
-             </div>
- 
-             {/* Toggle mode */}
-             <Button
-               type="button"
-               variant="outline"
-               className="w-full h-12"
-               onClick={() => setMode(mode === "login" ? "signup" : "login")}
-             >
-               {mode === "login" ? "Create an account" : "Sign in instead"}
-             </Button>
- 
-             {/* Back to home */}
-             <div className="mt-8 text-center">
-               <Link 
-                 to="/" 
-                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-               >
-                 ← Back to home
-               </Link>
-              </div>
 
-              {/* Founder Note */}
-              <div className="absolute bottom-6 left-6 text-xs font-medium text-muted-foreground italic leading-relaxed max-w-80 z-10">
-                Built by someone who once refreshed job portals at 2 AM.
-                <br />
-                — Founder, JobPulse
-              </div>
-            </div>
-          </div>
+  if (authLoading) {
+    return (
+      <Layout showFooter={false}>
+        <div className="min-h-[calc(100vh-64px)] flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       </Layout>
     );
   }
+
+  return (
+    <Layout showFooter={false}>
+      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-12 bg-background relative">
+        {/* Centered Auth Card */}
+        <div className="w-full max-w-sm">
+          {/* Logo */}
+          <div className="flex items-center justify-center gap-2.5 mb-8">
+            <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center shadow-soft">
+              <Briefcase className="h-5 w-5 text-accent-foreground" />
+            </div>
+            <span className="font-bold text-xl text-foreground tracking-tight">JobPulse</span>
+          </div>
+
+          {/* Card */}
+          <div className="bg-card border border-border/60 rounded-2xl p-8 shadow-soft">
+            {/* Header */}
+            <div className="text-center mb-6">
+              <h1 className="text-xl font-semibold text-foreground mb-1">
+                {mode === "login" ? "Welcome back" : "Create your account"}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {mode === "login" 
+                  ? "Sign in to continue to JobPulse" 
+                  : "Get started with your job search"}
+              </p>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="email" className="text-sm font-medium text-foreground">
+                  Email
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10 h-11 bg-background border-border/80 focus:border-accent focus:ring-accent"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="password" className="text-sm font-medium text-foreground">
+                  Password
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10 h-11 bg-background border-border/80 focus:border-accent focus:ring-accent"
+                    required
+                    minLength={6}
+                  />
+                </div>
+              </div>
+
+              {mode === "signup" && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="country" className="text-sm font-medium text-foreground">
+                    Country
+                  </Label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="country"
+                      type="text"
+                      placeholder="United States"
+                      value={country}
+                      onChange={(e) => setCountry(e.target.value)}
+                      className="pl-10 h-11 bg-background border-border/80 focus:border-accent focus:ring-accent"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <Button 
+                type="submit" 
+                variant="accent" 
+                className="w-full h-11 text-sm font-medium mt-2" 
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    {mode === "login" ? "Sign in" : "Create account"}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </form>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border/60" />
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-card px-3 text-muted-foreground">
+                  {mode === "login" ? "New here?" : "Already have an account?"}
+                </span>
+              </div>
+            </div>
+
+            {/* Toggle mode */}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-11 text-sm"
+              onClick={() => setMode(mode === "login" ? "signup" : "login")}
+            >
+              {mode === "login" ? "Create account" : "Sign in instead"}
+            </Button>
+          </div>
+
+          {/* Back to home */}
+          <div className="mt-6 text-center">
+            <Link 
+              to="/" 
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ← Back to home
+            </Link>
+          </div>
+        </div>
+
+        {/* Founder Note - Bottom Left */}
+        <div className="absolute bottom-6 left-6 text-xs text-muted-foreground/70 italic leading-relaxed max-w-72 hidden sm:block">
+          Built by someone who once refreshed job portals at 2 AM.
+          <br />
+          <span className="not-italic">— Founder, JobPulse</span>
+        </div>
+      </div>
+    </Layout>
+  );
+}
