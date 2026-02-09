@@ -3,6 +3,7 @@ import { Layout } from "@/components/Layout";
 import { SearchBar } from "@/components/SearchBar";
 import { RightSidebar } from "@/components/RightSidebar";
 import { MobileJobPreviewSheet } from "@/components/MobileJobPreviewSheet";
+import { JobPreviewPanel } from "@/components/JobPreviewPanel";
 import { JobListInfinite } from "@/components/JobListInfinite";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useJobSearch, useJobCounts } from "@/hooks/useJobSearch";
@@ -17,6 +18,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<TabFilter>("all");
   const [mobilePreviewJob, setMobilePreviewJob] = useState<Job | null>(null);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const [companyFilter, setCompanyFilter] = useState<string | null>(null);
   const isMobile = useIsMobile();
@@ -53,10 +55,14 @@ export default function Dashboard() {
     return jobsData?.pages.flatMap((page) => page) || [];
   }, [jobsData]);
 
-  const handleMobileTap = useCallback((job: Job) => {
-    setMobilePreviewJob(job);
-    setMobileSheetOpen(true);
-  }, []);
+  const handleJobTap = useCallback((job: Job) => {
+    if (isMobile) {
+      setMobilePreviewJob(job);
+      setMobileSheetOpen(true);
+    } else {
+      setSelectedJob(prev => prev?.id === job.id ? null : job);
+    }
+  }, [isMobile]);
 
   const handleFilterByRole = useCallback((role: string) => {
     setRoleFilter(role);
@@ -162,7 +168,7 @@ export default function Dashboard() {
                   isFetchingNextPage={isFetchingNextPage}
                   hasNextPage={hasNextPage ?? false}
                   fetchNextPage={fetchNextPage}
-                  onTap={isMobile ? handleMobileTap : undefined}
+                  onTap={handleJobTap}
                 />
               </TabsContent>
             </Tabs>
@@ -170,10 +176,17 @@ export default function Dashboard() {
 
           {/* Right Sidebar - Desktop only */}
           <div className="hidden lg:block w-[320px] shrink-0">
-            <RightSidebar 
-              onFilterByRole={handleFilterByRole}
-              className="sticky top-[88px]"
-            />
+            <div className="sticky top-[88px] space-y-4">
+              {/* Job Preview Panel - shows when a job is selected */}
+              {selectedJob && (
+                <div className="border border-border rounded-xl bg-card overflow-hidden shadow-sm">
+                  <JobPreviewPanel job={selectedJob} />
+                </div>
+              )}
+              <RightSidebar 
+                onFilterByRole={handleFilterByRole}
+              />
+            </div>
           </div>
         </div>
       </div>
