@@ -78,7 +78,7 @@ export default function Index() {
                 all your applications in one clean dashboard.
               </p>
               
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-10">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Link to="/dashboard">
                   <Button variant="accent" size="lg" className="w-full sm:w-auto">
                     Browse Jobs
@@ -90,21 +90,6 @@ export default function Index() {
                     Create Account
                   </Button>
                 </Link>
-              </div>
-
-              {/* Founder Quote Card - Premium white card */}
-              <div className="flex justify-center mt-8">
-                <div className="w-full max-w-sm px-5 py-4 rounded-2xl bg-white border border-border/40 shadow-sm">
-                  {/* Blue accent line */}
-                  <div className="absolute left-0 top-4 bottom-4 w-1 rounded-full bg-accent ml-5" />
-                  
-                  <p className="text-sm text-foreground/85 italic leading-relaxed pl-3">
-                    "Built by someone who once refreshed job portals at 2 AM."
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-3 font-medium not-italic pl-3">
-                    — Founder, JobPulse
-                  </p>
-                </div>
               </div>
           </div>
         </div>
