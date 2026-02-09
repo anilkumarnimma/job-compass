@@ -82,7 +82,7 @@
                Everything you need to land your next role
              </h2>
              <p className="text-muted-foreground max-w-xl mx-auto">
-             Stop juggling spreadsheets. Sociax keeps everything organized.
+             Stop juggling spreadsheets. JobPulse keeps everything organized.
              </p>
            </div>
            
@@ -113,8 +113,8 @@
                  Streamline your job search
                </h2>
                <p className="text-muted-foreground mb-6">
-               Sociax makes it easy to find, apply, and track opportunities 
-                 so you can focus on what matters: landing interviews.
+              JobPulse makes it easy to find, apply, and track opportunities 
+                so you can focus on what matters: landing interviews.
                </p>
                <ul className="space-y-3">
                  {benefits.map((benefit) => (
@@ -158,7 +158,7 @@
              Ready to start your job search?
            </h2>
            <p className="text-primary-foreground/80 mb-8 max-w-xl mx-auto">
-             Join thousands of job seekers who use Sociax to find and land their dream jobs.
+             Join thousands of job seekers who use JobPulse to find and land their dream jobs.
            </p>
            <Link to="/dashboard">
              <Button 
