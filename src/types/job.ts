@@ -26,7 +26,9 @@ export interface Application {
   id: string;
   user_id: string;
   job_id: string;
+  status: 'applied' | 'withdrawn';
   applied_at: Date;
+  updated_at: Date;
   job?: Job;
 }
 

@@ -19,18 +19,24 @@ export type Database = {
           applied_at: string
           id: string
           job_id: string
+          status: string
+          updated_at: string
           user_id: string
         }
         Insert: {
           applied_at?: string
           id?: string
           job_id: string
+          status?: string
+          updated_at?: string
           user_id: string
         }
         Update: {
           applied_at?: string
           id?: string
           job_id?: string
+          status?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: [

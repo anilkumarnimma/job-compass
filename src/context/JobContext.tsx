@@ -1,5 +1,5 @@
 import { createContext, useContext, ReactNode, useMemo, useState, useCallback } from "react";
-import { useApplications, useSavedJobs, useJobActions } from "@/hooks/useJobStore";
+import { useApplications, useSavedJobs, useJobActions, useTotalApplicationCount } from "@/hooks/useJobStore";
 import { useProfile } from "@/hooks/useProfile";
 import { Application, SavedJob } from "@/types/job";
 
@@ -22,6 +22,7 @@ const JobContext = createContext<JobContextType | undefined>(undefined);
 export function JobProvider({ children }: { children: ReactNode }) {
   const { data: applications = [], isLoading: appsLoading } = useApplications();
   const { data: savedJobs = [], isLoading: savedLoading } = useSavedJobs();
+  const { data: totalAppCount = 0 } = useTotalApplicationCount();
   const { applyToJob: rawApply, saveJob, unsaveJob, removeAppliedJob } = useJobActions();
   const { profile } = useProfile();
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
@@ -41,12 +42,13 @@ export function JobProvider({ children }: { children: ReactNode }) {
 
   const applyToJob = useCallback((job: any) => {
     const isPremium = profile?.is_premium ?? false;
-    if (!isPremium && applications.length >= 1) {
+    // totalAppCount includes withdrawn — prevents bypass
+    if (!isPremium && totalAppCount >= 1) {
       setShowUpgradeDialog(true);
       return;
     }
     rawApply(job);
-  }, [profile, applications.length, rawApply]);
+  }, [profile, totalAppCount, rawApply]);
 
   const value = {
     applications,
