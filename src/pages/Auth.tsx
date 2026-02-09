@@ -208,26 +208,21 @@ export default function Auth() {
           </div>
         </div>
 
-        {/* Founder Note - Sticky Note Style */}
-        <div 
-          className="absolute bottom-6 left-6 hidden sm:block"
-          style={{ transform: 'rotate(-1.5deg)' }}
-        >
-          <div className="relative max-w-64 px-4 py-3.5 rounded-lg bg-[hsl(var(--note-bg))] border border-[hsl(var(--note-border)/0.4)] shadow-md">
-            {/* Subtle corner fold effect */}
-            <div 
-              className="absolute top-0 right-0 w-4 h-4 rounded-bl"
-              style={{
-                background: 'linear-gradient(135deg, transparent 50%, hsl(var(--note-border) / 0.2) 50%)',
-              }}
-            />
+        {/* Founder Quote Card */}
+        <div className="absolute bottom-6 left-6 hidden sm:block">
+          <div className="w-72 bg-card rounded-2xl shadow-lg border border-border/40 p-4 flex gap-3">
+            {/* Blue accent line */}
+            <div className="w-1 shrink-0 rounded-full bg-accent" />
             
-            <p className="text-sm text-foreground/80 leading-relaxed">
-              Built by someone who once refreshed job portals at 2 AM.
-            </p>
-            <p className="text-sm text-muted-foreground mt-2 font-medium">
-              — Founder, JobPulse
-            </p>
+            {/* Quote content */}
+            <div>
+              <p className="text-sm text-foreground/80 italic leading-relaxed">
+                "Built by someone who once refreshed job portals at 2 AM."
+              </p>
+              <p className="text-sm text-muted-foreground mt-2.5 font-medium not-italic">
+                — Founder, JobPulse
+              </p>
+            </div>
           </div>
         </div>
       </div>
