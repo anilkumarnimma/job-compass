@@ -103,7 +103,7 @@ export default function Auth() {
                <div className="h-12 w-12 rounded-xl bg-accent flex items-center justify-center">
                  <Briefcase className="h-6 w-6 text-accent-foreground" />
                </div>
-               <span className="font-bold text-2xl text-primary-foreground">Sociax</span>
+               <span className="font-bold text-2xl text-primary-foreground">JobPulse</span>
              </div>
              
              <h1 className="text-4xl lg:text-5xl font-bold text-primary-foreground leading-tight mb-6">
@@ -111,10 +111,10 @@ export default function Auth() {
                <span className="block text-accent">starts here</span>
              </h1>
              
-             <p className="text-lg text-primary-foreground/80 max-w-md mb-8">
-               Join thousands of professionals who found their dream jobs through Sociax. 
-               Track applications, discover opportunities, and land interviews.
-             </p>
+              <p className="text-lg text-primary-foreground/80 max-w-md mb-8">
+                Join thousands of professionals who found their dream jobs through JobPulse. 
+                Track applications, discover opportunities, and land interviews.
+              </p>
              
              <div className="flex flex-col gap-4">
                <div className="flex items-center gap-3 text-primary-foreground/90">
@@ -147,8 +147,8 @@ export default function Auth() {
                <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center">
                  <Briefcase className="h-5 w-5 text-accent-foreground" />
                </div>
-               <span className="font-bold text-xl text-foreground">Sociax</span>
-             </div>
+                <span className="font-bold text-xl text-foreground">JobPulse</span>
+              </div>
  
              {/* Header */}
              <div className="text-center lg:text-left mb-8">
@@ -236,9 +236,9 @@ export default function Auth() {
                <div className="absolute inset-0 flex items-center">
                  <div className="w-full border-t border-border/60" />
                </div>
-               <div className="relative flex justify-center text-xs uppercase">
-                 <span className="bg-background px-3 text-muted-foreground">
-                   {mode === "login" ? "New to Sociax?" : "Already have an account?"}
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-3 text-muted-foreground">
+                    {mode === "login" ? "New to JobPulse?" : "Already have an account?"}
                  </span>
                </div>
              </div>
