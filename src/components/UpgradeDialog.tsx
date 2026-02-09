@@ -1,13 +1,13 @@
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Crown } from "lucide-react";
+import { Crown, Check, Loader2 } from "lucide-react";
 
 const STRIPE_LINK = "https://buy.stripe.com/test_eVq28rgVxdQO6Vt0Lp1wY00";
 
@@ -17,41 +17,63 @@ interface UpgradeDialogProps {
 }
 
 export function UpgradeDialog({ open, onOpenChange }: UpgradeDialogProps) {
+  const [loading, setLoading] = useState(false);
+
+  const handleUpgrade = () => {
+    setLoading(true);
+    window.open(STRIPE_LINK, "_blank");
+    setTimeout(() => {
+      setLoading(false);
+      onOpenChange(false);
+    }, 600);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[420px] p-6 gap-0">
         <DialogHeader className="space-y-2">
           <DialogTitle className="text-xl font-bold text-foreground">
-            Free limit reached
+            Upgrade to apply unlimited
           </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
-            You've used your 1 free application. Upgrade to Premium to apply to unlimited jobs.
+            You've used your 1 free application. Upgrade to apply to unlimited jobs.
           </DialogDescription>
-          <p className="text-xs text-muted-foreground/70 pt-1">
-            Premium: $5.99/month
-          </p>
         </DialogHeader>
-        <DialogFooter className="flex-row justify-end gap-2 pt-6">
+
+        <ul className="space-y-2 pt-4 pb-2 text-sm text-foreground">
+          {[
+            "Unlimited job applications",
+            "Auto-tracking of applied jobs",
+            "Priority access to new jobs",
+          ].map((item) => (
+            <li key={item} className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-primary shrink-0" />
+              {item}
+            </li>
+          ))}
+        </ul>
+
+        <div className="flex flex-col gap-2 pt-4">
           <Button
-            variant="outline"
-            size="sm"
-            className="rounded-xl px-5"
+            className="w-full rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
+            onClick={handleUpgrade}
+            disabled={loading}
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+            ) : (
+              <Crown className="h-4 w-4 mr-1.5" />
+            )}
+            Upgrade for $5.99/month
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full rounded-xl text-muted-foreground"
             onClick={() => onOpenChange(false)}
           >
-            Close
+            Not now
           </Button>
-          <Button
-            size="sm"
-            className="rounded-xl px-5 bg-accent hover:bg-accent/90 text-accent-foreground shadow-sm"
-            onClick={() => {
-              window.open(STRIPE_LINK, "_blank");
-              onOpenChange(false);
-            }}
-          >
-            <Crown className="h-4 w-4 mr-1.5" />
-            Upgrade
-          </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
