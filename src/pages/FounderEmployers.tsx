@@ -6,9 +6,13 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/context/AuthContext";
 import { useMyPermissions, useAllUsers, useUpdateUserRole } from "@/hooks/usePermissions";
-import { Users, Search, Loader2, Shield, Crown, User } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Users, Search, Loader2, Shield, Crown, User, Sparkles } from "lucide-react";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Select,
   SelectContent,
@@ -26,7 +30,7 @@ export default function FounderEmployers() {
   const updateRole = useUpdateUserRole();
 
   const [searchQuery, setSearchQuery] = useState("");
-
+  const queryClient = useQueryClient();
   const isLoading = authLoading || permLoading;
   const isFounder = permissions?.isFounder;
 
@@ -46,6 +50,20 @@ export default function FounderEmployers() {
 
   const handleRoleChange = async (userId: string, newRole: "user" | "employer" | "founder") => {
     await updateRole.mutateAsync({ userId, newRole });
+  };
+
+  const handlePremiumToggle = async (userId: string, currentValue: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ is_premium: !currentValue })
+        .eq("user_id", userId);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["all-users"] });
+      toast.success(`Premium ${!currentValue ? "enabled" : "disabled"}`);
+    } catch (err: any) {
+      toast.error("Failed to update premium: " + err.message);
+    }
   };
 
   const getRoleIcon = (role: string | null) => {
@@ -176,6 +194,14 @@ export default function FounderEmployers() {
                   </div>
 
                   <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className={`h-3.5 w-3.5 ${userData.is_premium ? "text-accent" : "text-muted-foreground/40"}`} />
+                      <Switch
+                        checked={userData.is_premium}
+                        onCheckedChange={() => handlePremiumToggle(userData.id, userData.is_premium)}
+                      />
+                    </div>
+
                     <Badge variant={getRoleBadgeVariant(userData.role)}>
                       {userData.role || "user"}
                     </Badge>

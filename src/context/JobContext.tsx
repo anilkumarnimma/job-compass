@@ -1,5 +1,6 @@
-import { createContext, useContext, ReactNode, useMemo } from "react";
+import { createContext, useContext, ReactNode, useMemo, useState, useCallback } from "react";
 import { useApplications, useSavedJobs, useJobActions } from "@/hooks/useJobStore";
+import { useProfile } from "@/hooks/useProfile";
 import { Application, SavedJob } from "@/types/job";
 
 interface JobContextType {
@@ -12,6 +13,8 @@ interface JobContextType {
   removeAppliedJob: (jobId: string) => void;
   isApplied: (jobId: string) => boolean;
   isSaved: (jobId: string) => boolean;
+  showUpgradeDialog: boolean;
+  setShowUpgradeDialog: (open: boolean) => void;
 }
 
 const JobContext = createContext<JobContextType | undefined>(undefined);
@@ -19,7 +22,9 @@ const JobContext = createContext<JobContextType | undefined>(undefined);
 export function JobProvider({ children }: { children: ReactNode }) {
   const { data: applications = [], isLoading: appsLoading } = useApplications();
   const { data: savedJobs = [], isLoading: savedLoading } = useSavedJobs();
-  const { applyToJob, saveJob, unsaveJob, removeAppliedJob } = useJobActions();
+  const { applyToJob: rawApply, saveJob, unsaveJob, removeAppliedJob } = useJobActions();
+  const { profile } = useProfile();
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
   const appliedJobIds = useMemo(
     () => new Set(applications.map((a) => a.job_id)),
@@ -34,6 +39,15 @@ export function JobProvider({ children }: { children: ReactNode }) {
   const isApplied = (jobId: string) => appliedJobIds.has(jobId);
   const isSaved = (jobId: string) => savedJobIds.has(jobId);
 
+  const applyToJob = useCallback((job: any) => {
+    const isPremium = profile?.is_premium ?? false;
+    if (!isPremium && applications.length >= 1) {
+      setShowUpgradeDialog(true);
+      return;
+    }
+    rawApply(job);
+  }, [profile, applications.length, rawApply]);
+
   const value = {
     applications,
     savedJobs,
@@ -44,6 +58,8 @@ export function JobProvider({ children }: { children: ReactNode }) {
     removeAppliedJob,
     isApplied,
     isSaved,
+    showUpgradeDialog,
+    setShowUpgradeDialog,
   };
 
   return <JobContext.Provider value={value}>{children}</JobContext.Provider>;

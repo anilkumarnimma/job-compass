@@ -23,6 +23,7 @@ export interface UserWithProfile {
   full_name: string | null;
   employer_id: string | null;
   is_active: boolean;
+  is_premium: boolean;
   role: string | null;
   permissions: EmployerPermissions | null;
 }
@@ -166,7 +167,7 @@ export function useAllUsers() {
       // Get all profiles
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select("user_id, email, full_name, employer_id, is_active")
+        .select("user_id, email, full_name, employer_id, is_active, is_premium")
         .order("created_at", { ascending: false });
 
       if (profilesError) throw profilesError;
@@ -197,6 +198,7 @@ export function useAllUsers() {
           full_name: profile.full_name,
           employer_id: profile.employer_id,
           is_active: profile.is_active,
+          is_premium: profile.is_premium ?? false,
           role: priorityRole.role,
           permissions: userPermissions || null,
         };
