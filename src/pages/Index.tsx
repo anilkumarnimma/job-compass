@@ -73,47 +73,39 @@ export default function Index() {
               <span className="block text-accent">Dream Job</span>
             </h1>
             
-            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Search curated job listings, apply with one click, and automatically track 
-              all your applications in one clean dashboard.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-10">
-              <Link to="/dashboard">
-                <Button variant="accent" size="lg" className="w-full sm:w-auto">
-                  Browse Jobs
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link to="/auth">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                  Create Account
-                </Button>
-              </Link>
-            </div>
+              <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+                Search curated job listings, apply with one click, and automatically track 
+                all your applications in one clean dashboard.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-10">
+                <Link to="/dashboard">
+                  <Button variant="accent" size="lg" className="w-full sm:w-auto">
+                    Browse Jobs
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link to="/auth">
+                  <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                    Create Account
+                  </Button>
+                </Link>
+              </div>
 
-            {/* Founder Note Card */}
-            <div className="inline-block">
-              <div 
-                className="relative px-4 py-3.5 rounded-xl border shadow-md text-left"
-                style={{
-                  background: 'linear-gradient(135deg, hsl(45, 100%, 96%) 0%, hsl(40, 80%, 94%) 100%)',
-                  borderColor: 'hsl(40, 60%, 85%)',
-                }}
-              >
-                {/* Blue accent line */}
-                <div className="absolute left-0 top-3 bottom-3 w-1 rounded-full bg-accent" />
-                
-                <div className="pl-3">
-                  <p className="text-sm text-foreground/90 italic leading-relaxed">
+              {/* Founder Quote Card - Premium white card */}
+              <div className="flex justify-center mt-8">
+                <div className="w-full max-w-sm px-5 py-4 rounded-2xl bg-white border border-border/40 shadow-sm">
+                  {/* Blue accent line */}
+                  <div className="absolute left-0 top-4 bottom-4 w-1 rounded-full bg-accent ml-5" />
+                  
+                  <p className="text-sm text-foreground/85 italic leading-relaxed pl-3">
                     "Built by someone who once refreshed job portals at 2 AM."
                   </p>
-                  <p className="text-sm text-muted-foreground mt-2 font-medium not-italic">
+                  <p className="text-xs text-muted-foreground mt-3 font-medium not-italic pl-3">
                     — Founder, JobPulse
                   </p>
                 </div>
               </div>
-            </div>
           </div>
         </div>
       </section>
