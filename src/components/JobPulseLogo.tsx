@@ -53,7 +53,7 @@ export function JobPulseLogo({ size = "md", className, showText = true }: JobPul
       
       {showText && (
         <span className={cn("font-bold text-foreground", textSizes[size])}>
-          JobPulse
+          Sociax.tech
         </span>
       )}
     </div>

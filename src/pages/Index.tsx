@@ -100,7 +100,7 @@ export default function Index() {
         <div className="container max-w-6xl mx-auto px-4">
           <div className="text-center mb-8">
             <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2">
-              How JobPulse helps you see real hiring signals
+              How Sociax.tech helps you see real hiring signals
             </h2>
           </div>
           
@@ -132,7 +132,7 @@ export default function Index() {
               Everything you need to land your next role
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-            Stop juggling spreadsheets. JobPulse keeps everything organized.
+            Stop juggling spreadsheets. Sociax.tech keeps everything organized.
             </p>
           </div>
           
@@ -163,7 +163,7 @@ export default function Index() {
                 Streamline your job search
               </h2>
               <p className="text-muted-foreground mb-6">
-             JobPulse makes it easy to find, apply, and track opportunities 
+             Sociax.tech makes it easy to find, apply, and track opportunities 
                so you can focus on what matters: landing interviews.
               </p>
               <ul className="space-y-3">
@@ -208,7 +208,7 @@ export default function Index() {
             Ready to start your job search?
           </h2>
           <p className="text-primary-foreground/80 mb-8 max-w-xl mx-auto">
-            Join thousands of job seekers who use JobPulse to find and land their dream jobs.
+            Join thousands of job seekers who use Sociax.tech to find and land their dream jobs.
           </p>
           <Link to="/dashboard">
             <Button 
