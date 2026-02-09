@@ -5,9 +5,11 @@ import { RightSidebar } from "@/components/RightSidebar";
 import { MobileJobPreviewSheet } from "@/components/MobileJobPreviewSheet";
 import { JobPreviewPanel } from "@/components/JobPreviewPanel";
 import { JobListInfinite } from "@/components/JobListInfinite";
+import { UpgradeDialog } from "@/components/UpgradeDialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useJobSearch, useJobCounts } from "@/hooks/useJobSearch";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useJobContext } from "@/context/JobContext";
 import { Job, TabFilter } from "@/types/job";
 import { X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -22,6 +24,7 @@ export default function Dashboard() {
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const [companyFilter, setCompanyFilter] = useState<string | null>(null);
   const isMobile = useIsMobile();
+  const { showUpgradeDialog, setShowUpgradeDialog } = useJobContext();
 
   // Debounce search input by 300ms
   const debouncedSearch = useDebounce(searchInput, 300);
@@ -197,6 +200,9 @@ export default function Dashboard() {
         open={mobileSheetOpen}
         onOpenChange={setMobileSheetOpen}
       />
+
+      {/* Upgrade dialog - always mounted so it works from any Apply button */}
+      <UpgradeDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog} />
     </Layout>
   );
 }

@@ -5,7 +5,6 @@ import { CompanyLogo } from "@/components/CompanyLogo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { UpgradeDialog } from "@/components/UpgradeDialog";
 import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, BriefcaseBusiness } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -15,7 +14,7 @@ interface JobPreviewPanelProps {
 }
 
 export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
-  const { applyToJob, saveJob, unsaveJob, isApplied, isSaved, showUpgradeDialog, setShowUpgradeDialog } = useJobContext();
+  const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
   const navigate = useNavigate();
   
@@ -167,7 +166,6 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
           )}
         </Button>
       </div>
-      <UpgradeDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog} />
     </div>
   );
 }
