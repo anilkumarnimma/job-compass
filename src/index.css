@@ -56,6 +56,10 @@
     /* Chip/pill backgrounds */
     --chip-bg: 210 40% 96%;
 
+    /* Note/sticky card */
+    --note-bg: 40 100% 97%;
+    --note-border: 35 50% 70%;
+
     /* Selected tab */
     --tab-selected-bg: 224 100% 94%;
     --tab-selected-text: 217 91% 60%;
@@ -106,6 +110,10 @@
     --ring: 217 91% 60%;
 
     --chip-bg: 222 33% 17%;
+
+    /* Note/sticky card (dark mode) */
+    --note-bg: 35 30% 15%;
+    --note-border: 35 30% 30%;
 
     --tab-selected-bg: 217 50% 20%;
     --tab-selected-text: 217 91% 70%;

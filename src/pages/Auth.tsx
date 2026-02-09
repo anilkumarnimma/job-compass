@@ -208,11 +208,27 @@ export default function Auth() {
           </div>
         </div>
 
-        {/* Founder Note - Bottom Left */}
-        <div className="absolute bottom-6 left-6 text-xs text-muted-foreground/70 italic leading-relaxed max-w-72 hidden sm:block">
-          Built by someone who once refreshed job portals at 2 AM.
-          <br />
-          <span className="not-italic">— Founder, JobPulse</span>
+        {/* Founder Note - Sticky Note Style */}
+        <div 
+          className="absolute bottom-6 left-6 hidden sm:block"
+          style={{ transform: 'rotate(-1.5deg)' }}
+        >
+          <div className="relative max-w-64 px-4 py-3.5 rounded-lg bg-[hsl(var(--note-bg))] border border-[hsl(var(--note-border)/0.4)] shadow-md">
+            {/* Subtle corner fold effect */}
+            <div 
+              className="absolute top-0 right-0 w-4 h-4 rounded-bl"
+              style={{
+                background: 'linear-gradient(135deg, transparent 50%, hsl(var(--note-border) / 0.2) 50%)',
+              }}
+            />
+            
+            <p className="text-sm text-foreground/80 leading-relaxed">
+              Built by someone who once refreshed job portals at 2 AM.
+            </p>
+            <p className="text-sm text-muted-foreground mt-2 font-medium">
+              — Founder, JobPulse
+            </p>
+          </div>
         </div>
       </div>
     </Layout>
