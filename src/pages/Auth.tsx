@@ -197,35 +197,17 @@ export default function Auth() {
             </Button>
           </div>
 
-          {/* Back to home */}
-          <div className="mt-6 text-center">
-            <Link 
-              to="/" 
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              ← Back to home
-            </Link>
-          </div>
-        </div>
-
-        {/* Founder Quote Card */}
-        <div className="absolute bottom-6 left-6 hidden sm:block">
-          <div className="w-72 bg-card rounded-2xl shadow-lg border border-border/40 p-4 flex gap-3">
-            {/* Blue accent line */}
-            <div className="w-1 shrink-0 rounded-full bg-accent" />
-            
-            {/* Quote content */}
-            <div>
-              <p className="text-sm text-foreground/80 italic leading-relaxed">
-                "Built by someone who once refreshed job portals at 2 AM."
-              </p>
-              <p className="text-sm text-muted-foreground mt-2.5 font-medium not-italic">
-                — Founder, JobPulse
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Layout>
+           {/* Back to home */}
+           <div className="mt-6 text-center">
+             <Link 
+               to="/" 
+               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+             >
+               ← Back to home
+             </Link>
+           </div>
+         </div>
+       </div>
+     </Layout>
   );
 }
