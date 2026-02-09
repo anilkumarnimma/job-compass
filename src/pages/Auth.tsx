@@ -139,9 +139,9 @@ export default function Auth() {
            </div>
          </div>
          
-         {/* Right side - Form */}
-         <div className="w-full lg:w-1/2 flex items-center justify-center py-12 px-4 sm:px-8 bg-background">
-           <div className="w-full max-w-md">
+          {/* Right side - Form */}
+          <div className="w-full lg:w-1/2 flex items-center justify-center py-12 px-4 sm:px-8 bg-background relative">
+            <div className="w-full max-w-md relative">
              {/* Mobile logo */}
              <div className="flex items-center justify-center gap-2 mb-8 lg:hidden">
                <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center">
@@ -261,10 +261,17 @@ export default function Auth() {
                >
                  ← Back to home
                </Link>
-             </div>
-           </div>
-         </div>
-       </div>
-     </Layout>
-   );
- }
+              </div>
+
+              {/* Founder Note */}
+              <div className="absolute bottom-6 left-6 text-xs font-medium text-muted-foreground italic leading-relaxed max-w-80 z-10">
+                Built by someone who once refreshed job portals at 2 AM.
+                <br />
+                — Founder, JobPulse
+              </div>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
