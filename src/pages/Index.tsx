@@ -57,19 +57,26 @@
                all your applications in one clean dashboard.
              </p>
              
-             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-               <Link to="/dashboard">
-                 <Button variant="accent" size="lg" className="w-full sm:w-auto">
-                   Browse Jobs
-                   <ArrowRight className="h-4 w-4" />
-                 </Button>
-               </Link>
-               <Link to="/auth">
-                 <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                   Create Account
-                 </Button>
-               </Link>
-             </div>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
+                <Link to="/dashboard">
+                  <Button variant="accent" size="lg" className="w-full sm:w-auto">
+                    Browse Jobs
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link to="/auth">
+                  <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                    Create Account
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Founder Note */}
+              <p className="text-xs text-muted-foreground italic leading-relaxed max-w-sm">
+                Built by someone who once refreshed job portals at 2 AM.
+                <br />
+                — Founder, JobPulse
+              </p>
            </div>
          </div>
        </section>
