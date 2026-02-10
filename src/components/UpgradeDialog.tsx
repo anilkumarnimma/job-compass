@@ -9,7 +9,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Crown, Check, Loader2 } from "lucide-react";
 
-const STRIPE_LINK = "https://buy.stripe.com/test_eVq28rgVxdQO6Vt0Lp1wY00";
+const STRIPE_BASE_LINK = "https://buy.stripe.com/test_eVq28rgVxdQO6Vt0Lp1wY00";
+const SUCCESS_REDIRECT = `${window.location.origin}/dashboard?premium=true`;
+const STRIPE_LINK = `${STRIPE_BASE_LINK}?success_url=${encodeURIComponent(SUCCESS_REDIRECT)}`;
 
 interface UpgradeDialogProps {
   open: boolean;

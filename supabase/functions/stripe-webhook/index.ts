@@ -1,0 +1,95 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import Stripe from "https://esm.sh/stripe@17.7.0?target=deno&no-check";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, stripe-signature",
+};
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+  const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+  if (!stripeSecretKey || !webhookSecret) {
+    console.error("Missing Stripe configuration");
+    return new Response(JSON.stringify({ error: "Server misconfigured" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const stripe = new Stripe(stripeSecretKey, { apiVersion: "2024-12-18.acacia" });
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  try {
+    const body = await req.text();
+    const signature = req.headers.get("stripe-signature");
+
+    if (!signature) {
+      return new Response(JSON.stringify({ error: "No signature" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
+    console.log(`Received Stripe event: ${event.type}`);
+
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const customerEmail = session.customer_details?.email || session.customer_email;
+
+      if (!customerEmail) {
+        console.error("No customer email found in checkout session");
+        return new Response(JSON.stringify({ error: "No email" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      console.log(`Upgrading user with email: ${customerEmail}`);
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .update({ is_premium: true })
+        .eq("email", customerEmail.toLowerCase())
+        .select("user_id");
+
+      if (error) {
+        console.error("Failed to update profile:", error);
+        return new Response(JSON.stringify({ error: "DB update failed" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!data || data.length === 0) {
+        console.error(`No profile found for email: ${customerEmail}`);
+        return new Response(JSON.stringify({ error: "User not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      console.log(`Successfully upgraded user ${data[0].user_id} to premium`);
+    }
+
+    return new Response(JSON.stringify({ received: true }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    console.error("Webhook error:", err.message);
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});

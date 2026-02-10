@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { SearchBar } from "@/components/SearchBar";
 import { RightSidebar } from "@/components/RightSidebar";
@@ -14,6 +14,8 @@ import { Job, TabFilter } from "@/types/job";
 import { X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
+import { useSearchParams } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
   const [searchInput, setSearchInput] = useState("");
@@ -25,6 +27,20 @@ export default function Dashboard() {
   const [companyFilter, setCompanyFilter] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const { showUpgradeDialog, setShowUpgradeDialog } = useJobContext();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { toast } = useToast();
+
+  // Detect premium=true redirect from Stripe
+  useEffect(() => {
+    if (searchParams.get("premium") === "true") {
+      toast({
+        title: "🎉 Premium unlocked!",
+        description: "You can now apply to unlimited jobs.",
+      });
+      searchParams.delete("premium");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams, toast]);
 
   // Debounce search input by 300ms
   const debouncedSearch = useDebounce(searchInput, 300);
