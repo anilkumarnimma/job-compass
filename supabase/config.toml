@@ -2,3 +2,6 @@ project_id = "dyguncqqjzuyiwxhgwcw"
 
 [functions.import-google-sheet]
 verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
