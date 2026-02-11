@@ -143,8 +143,6 @@ export function useJobActions() {
       });
 
       if (error && error.code !== "23505") throw error;
-
-      window.open(job.external_apply_link, "_blank");
       return job;
     },
     onSuccess: () => {

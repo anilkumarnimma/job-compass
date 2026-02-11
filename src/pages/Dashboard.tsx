@@ -6,6 +6,7 @@ import { MobileJobPreviewSheet } from "@/components/MobileJobPreviewSheet";
 import { JobPreviewPanel } from "@/components/JobPreviewPanel";
 import { JobListInfinite } from "@/components/JobListInfinite";
 import { UpgradeDialog } from "@/components/UpgradeDialog";
+import { ApplyConfirmDialog } from "@/components/ApplyConfirmDialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useJobSearch, useJobCounts } from "@/hooks/useJobSearch";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -26,7 +27,7 @@ export default function Dashboard() {
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const [companyFilter, setCompanyFilter] = useState<string | null>(null);
   const isMobile = useIsMobile();
-  const { showUpgradeDialog, setShowUpgradeDialog } = useJobContext();
+  const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply } = useJobContext();
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
 
@@ -217,8 +218,15 @@ export default function Dashboard() {
         onOpenChange={setMobileSheetOpen}
       />
 
-      {/* Upgrade dialog - always mounted so it works from any Apply button */}
+      {/* Upgrade dialog */}
       <UpgradeDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog} />
+
+      {/* Apply confirmation dialog */}
+      <ApplyConfirmDialog
+        open={showApplyConfirm}
+        onConfirm={confirmApply}
+        onCancel={cancelApply}
+      />
     </Layout>
   );
 }
