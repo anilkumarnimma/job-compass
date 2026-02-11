@@ -197,6 +197,7 @@ export function JobCard({ job, onViewDetails, onTap }: JobCardProps) {
           variant={applied ? "outline" : "default"}
           size="sm"
           onClick={handleApplyClick}
+          disabled={applied}
           className={`h-8 px-4 text-sm font-medium ${
             applied 
               ? "bg-secondary/80 text-foreground border-border hover:bg-secondary" 

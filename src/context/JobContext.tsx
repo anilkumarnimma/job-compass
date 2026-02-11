@@ -1,13 +1,15 @@
 import { createContext, useContext, ReactNode, useMemo, useState, useCallback } from "react";
 import { useApplications, useSavedJobs, useJobActions, useTotalApplicationCount } from "@/hooks/useJobStore";
 import { useProfile } from "@/hooks/useProfile";
-import { Application, SavedJob } from "@/types/job";
+import { Application, SavedJob, Job } from "@/types/job";
 
 interface JobContextType {
   applications: Application[];
   savedJobs: SavedJob[];
   isLoading: boolean;
   applyToJob: (job: any) => void;
+  confirmApply: () => void;
+  cancelApply: () => void;
   saveJob: (job: any) => void;
   unsaveJob: (jobId: string) => void;
   removeAppliedJob: (jobId: string) => void;
@@ -15,6 +17,7 @@ interface JobContextType {
   isSaved: (jobId: string) => boolean;
   showUpgradeDialog: boolean;
   setShowUpgradeDialog: (open: boolean) => void;
+  showApplyConfirm: boolean;
 }
 
 const JobContext = createContext<JobContextType | undefined>(undefined);
@@ -26,6 +29,8 @@ export function JobProvider({ children }: { children: ReactNode }) {
   const { applyToJob: rawApply, saveJob, unsaveJob, removeAppliedJob } = useJobActions();
   const { profile } = useProfile();
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [showApplyConfirm, setShowApplyConfirm] = useState(false);
+  const [pendingJob, setPendingJob] = useState<Job | null>(null);
 
   const appliedJobIds = useMemo(
     () => new Set(applications.map((a) => a.job_id)),
@@ -40,21 +45,42 @@ export function JobProvider({ children }: { children: ReactNode }) {
   const isApplied = (jobId: string) => appliedJobIds.has(jobId);
   const isSaved = (jobId: string) => savedJobIds.has(jobId);
 
+  // Step 1: Open external link + show confirmation dialog
   const applyToJob = useCallback((job: any) => {
     const isPremium = profile?.is_premium ?? false;
-    // totalAppCount includes withdrawn — prevents bypass
     if (!isPremium && totalAppCount >= 1) {
       setShowUpgradeDialog(true);
       return;
     }
-    rawApply(job);
-  }, [profile, totalAppCount, rawApply]);
+    // Open external link immediately
+    window.open(job.external_apply_link, "_blank");
+    // Store pending job and show confirmation
+    setPendingJob(job);
+    setShowApplyConfirm(true);
+  }, [profile, totalAppCount]);
+
+  // Step 2a: User confirms they applied
+  const confirmApply = useCallback(() => {
+    if (pendingJob) {
+      rawApply(pendingJob);
+    }
+    setPendingJob(null);
+    setShowApplyConfirm(false);
+  }, [pendingJob, rawApply]);
+
+  // Step 2b: User didn't apply yet
+  const cancelApply = useCallback(() => {
+    setPendingJob(null);
+    setShowApplyConfirm(false);
+  }, []);
 
   const value = {
     applications,
     savedJobs,
     isLoading: appsLoading || savedLoading,
     applyToJob,
+    confirmApply,
+    cancelApply,
     saveJob,
     unsaveJob,
     removeAppliedJob,
@@ -62,6 +88,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
     isSaved,
     showUpgradeDialog,
     setShowUpgradeDialog,
+    showApplyConfirm,
   };
 
   return <JobContext.Provider value={value}>{children}</JobContext.Provider>;
