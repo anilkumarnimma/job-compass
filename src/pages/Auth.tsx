@@ -77,10 +77,17 @@ export default function Auth() {
       <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-12 bg-background relative">
         {/* Centered Auth Card */}
         <div className="w-full max-w-sm">
-          {/* Tagline */}
-          <p className="text-center text-base font-medium text-muted-foreground mb-8">
-            Apply anywhere. Track everything. Get hired faster.
-          </p>
+          {/* Hero header */}
+          <div className="text-center mb-10">
+            <p className="text-sm font-medium tracking-widest uppercase text-accent mb-3">
+              Your career, organized.
+            </p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground leading-tight">
+              Apply anywhere. Track everything.
+              <br />
+              Get hired faster.
+            </h1>
+          </div>
 
           {/* Card */}
           <div className="bg-card border border-border/60 rounded-2xl p-8 shadow-soft">
