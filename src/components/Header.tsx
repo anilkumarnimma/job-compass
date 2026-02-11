@@ -45,7 +45,8 @@ export function Header() {
     if (user && isEmployer && !isFounder) {
       return [];
     }
-    // Everyone else (logged in users, founders, or logged out) sees standard tabs
+    // Only show tabs for logged-in users (not on auth/landing pages)
+    if (!user) return [];
     return [
       { path: "/dashboard", label: "Jobs" },
       { path: "/applied", label: "Applied" },

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
 import { useUserRole } from "@/hooks/usePermissions";
-import { Briefcase, Mail, Lock, Globe, Loader2, ArrowRight } from "lucide-react";
+import { Mail, Lock, Globe, Loader2, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Auth() {
@@ -77,13 +77,10 @@ export default function Auth() {
       <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-12 bg-background relative">
         {/* Centered Auth Card */}
         <div className="w-full max-w-sm">
-          {/* Logo */}
-          <div className="flex items-center justify-center gap-2.5 mb-8">
-            <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center shadow-soft">
-              <Briefcase className="h-5 w-5 text-accent-foreground" />
-            </div>
-            <span className="font-bold text-xl text-foreground tracking-tight">Sociax.tech</span>
-          </div>
+          {/* Tagline */}
+          <p className="text-center text-base font-medium text-muted-foreground mb-8">
+            Apply anywhere. Track everything. Get hired faster.
+          </p>
 
           {/* Card */}
           <div className="bg-card border border-border/60 rounded-2xl p-8 shadow-soft">
