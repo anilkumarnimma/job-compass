@@ -83,8 +83,11 @@ Deno.serve(async (req) => {
 
     let nextRenewal: string | null = null;
     if (hasActive) {
-      nextRenewal = new Date(subscriptions.data[0].current_period_end * 1000).toISOString();
-      logStep("Active subscription found", { nextRenewal });
+      const periodEnd = subscriptions.data[0].current_period_end;
+      if (periodEnd && !isNaN(periodEnd)) {
+        nextRenewal = new Date(periodEnd * 1000).toISOString();
+      }
+      logStep("Active subscription found", { nextRenewal, periodEnd });
     }
 
     // Update profiles
