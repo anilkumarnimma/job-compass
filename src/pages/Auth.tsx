@@ -46,24 +46,35 @@ export default function Auth() {
     [countrySearch]
   );
 
+  // Track whether we've already decided to show the country prompt
+  const [countryChecked, setCountryChecked] = useState(false);
+
   // Role-based redirect after login (only if country is set)
   useEffect(() => {
     if (authLoading || roleLoading) return;
     if (!user) return;
+    // Don't re-check if we're already showing the prompt or saving
+    if (showCountryPrompt || savingCountry || countryChecked) return;
 
-    // Check if user has country set
     const checkCountry = async () => {
-      const { data: profile } = await supabase
+      const { data: profile, error } = await supabase
         .from("profiles")
         .select("country")
         .eq("user_id", user.id)
         .maybeSingle();
 
+      if (error) {
+        console.error("[AUTH] Failed to check country:", error);
+        return;
+      }
+
       if (!profile?.country) {
+        setCountryChecked(true);
         setShowCountryPrompt(true);
         return;
       }
 
+      setCountryChecked(true);
       const redirectPath = (() => {
         if (userRole === "founder") return "/founder/employers";
         if (userRole === "employer") return "/employer";
@@ -73,12 +84,24 @@ export default function Auth() {
     };
 
     checkCountry();
-  }, [user, authLoading, roleLoading, userRole, navigate]);
+  }, [user, authLoading, roleLoading, userRole, navigate, showCountryPrompt, savingCountry, countryChecked]);
 
   const handleCountrySelected = async (selectedCountry: string) => {
     if (!user) return;
     setSavingCountry(true);
-    await supabase.from("profiles").update({ country: selectedCountry }).eq("user_id", user.id);
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ country: selectedCountry })
+      .eq("user_id", user.id);
+
+    if (error) {
+      console.error("[AUTH] Failed to save country:", error);
+      toast.error("Failed to save country. Please try again.");
+      setSavingCountry(false);
+      return;
+    }
+
     setSavingCountry(false);
     setShowCountryPrompt(false);
 
