@@ -79,14 +79,12 @@ export default function Auth() {
         <div className="w-full max-w-sm">
           {/* Hero header */}
           <div className="text-center mb-10">
-            <p className="text-sm font-medium tracking-widest uppercase text-accent mb-3">
+            <h1 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">
               Your career, organized.
-            </p>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground leading-tight">
-              Apply anywhere. Track everything.
-              <br />
-              Get hired faster.
             </h1>
+            <p className="mt-3 text-base text-muted-foreground">
+              Apply anywhere. Track everything. Get hired faster.
+            </p>
           </div>
 
           {/* Card */}
