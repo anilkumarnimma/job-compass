@@ -2,11 +2,14 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-const checkSubscriptionStatus = async (accessToken: string) => {
+const checkSubscriptionStatus = async () => {
   try {
-    await supabase.functions.invoke("check-subscription", {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      console.warn("[AUTH] Skipping subscription check - no active session");
+      return;
+    }
+    await supabase.functions.invoke("check-subscription");
   } catch (err) {
     console.error("[AUTH] Subscription check failed:", err);
   }
@@ -55,9 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user) {
         setTimeout(() => {
           checkAdminRole(session.user.id);
-          if (session.access_token) {
-            checkSubscriptionStatus(session.access_token);
-          }
+          checkSubscriptionStatus();
         }, 0);
       } else {
         setIsAdmin(false);
@@ -71,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       if (session?.user) {
         checkAdminRole(session.user.id);
-        checkSubscriptionStatus(session.access_token);
+        checkSubscriptionStatus();
       } else {
         setIsLoading(false);
       }
