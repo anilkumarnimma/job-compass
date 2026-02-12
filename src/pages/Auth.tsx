@@ -82,9 +82,6 @@ export default function Auth() {
             <h1 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">
               Your career, organized.
             </h1>
-            <p className="mt-3 text-base text-muted-foreground">
-              Apply anywhere. Track everything. Get hired faster.
-            </p>
           </div>
 
           {/* Card */}
