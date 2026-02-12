@@ -1,6 +1,14 @@
  import { createContext, useContext, useEffect, useState, ReactNode } from "react";
  import { User, Session } from "@supabase/supabase-js";
- import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
+
+const checkSubscriptionStatus = async () => {
+  try {
+    await supabase.functions.invoke("check-subscription");
+  } catch (err) {
+    console.error("[AUTH] Subscription check failed:", err);
+  }
+};
  
  interface AuthContextType {
    user: User | null;
@@ -41,10 +49,11 @@
          setUser(session?.user ?? null);
          
          // Defer Supabase calls with setTimeout to prevent deadlock
-         if (session?.user) {
-           setTimeout(() => {
-             checkAdminRole(session.user.id);
-           }, 0);
+          if (session?.user) {
+            setTimeout(() => {
+              checkAdminRole(session.user.id);
+              checkSubscriptionStatus();
+            }, 0);
          } else {
            setIsAdmin(false);
            setIsLoading(false);
@@ -56,9 +65,10 @@
      supabase.auth.getSession().then(({ data: { session } }) => {
        setSession(session);
        setUser(session?.user ?? null);
-       if (session?.user) {
-         checkAdminRole(session.user.id);
-       } else {
+        if (session?.user) {
+          checkAdminRole(session.user.id);
+          checkSubscriptionStatus();
+        } else {
          setIsLoading(false);
        }
      });
