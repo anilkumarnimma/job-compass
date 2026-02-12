@@ -8,10 +8,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Crown, Check, Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 const STRIPE_BASE_LINK = "https://buy.stripe.com/test_eVq28rgVxdQO6Vt0Lp1wY00";
 const SUCCESS_REDIRECT = `${window.location.origin}/dashboard?premium=true`;
-const STRIPE_LINK = `${STRIPE_BASE_LINK}?success_url=${encodeURIComponent(SUCCESS_REDIRECT)}`;
 
 interface UpgradeDialogProps {
   open: boolean;
@@ -20,10 +20,13 @@ interface UpgradeDialogProps {
 
 export function UpgradeDialog({ open, onOpenChange }: UpgradeDialogProps) {
   const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
+
+  const stripeLink = `${STRIPE_BASE_LINK}?success_url=${encodeURIComponent(SUCCESS_REDIRECT)}${user?.email ? `&prefilled_email=${encodeURIComponent(user.email)}` : ""}`;
 
   const handleUpgrade = () => {
     setLoading(true);
-    window.open(STRIPE_LINK, "_blank");
+    window.open(stripeLink, "_blank");
     setTimeout(() => {
       setLoading(false);
       onOpenChange(false);
