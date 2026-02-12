@@ -17,6 +17,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function Dashboard() {
   const [searchInput, setSearchInput] = useState("");
@@ -75,12 +76,19 @@ export default function Dashboard() {
     return jobsData?.pages.flatMap((page) => page) || [];
   }, [jobsData]);
 
+  // Auto-select first job on desktop when jobs load and nothing is selected
+  useEffect(() => {
+    if (!isMobile && jobs.length > 0 && !selectedJob) {
+      setSelectedJob(jobs[0]);
+    }
+  }, [jobs, isMobile, selectedJob]);
+
   const handleJobTap = useCallback((job: Job) => {
     if (isMobile) {
       setMobilePreviewJob(job);
       setMobileSheetOpen(true);
     } else {
-      setSelectedJob(prev => prev?.id === job.id ? null : job);
+      setSelectedJob(job);
     }
   }, [isMobile]);
 
@@ -102,12 +110,12 @@ export default function Dashboard() {
 
   return (
     <Layout>
-        <div className="w-full max-w-[1280px] mx-auto px-4 md:px-6 py-6">
-          <div className="flex gap-8 justify-center">
-          {/* Main Content */}
-          <div className="flex-1 max-w-[600px]">
+      <div className="w-full max-w-[1280px] mx-auto px-4 md:px-6 py-6">
+        <div className="flex gap-6">
+          {/* Left Column - Job List (40% on desktop) */}
+          <div className="w-full lg:w-[40%] lg:shrink-0 flex flex-col min-h-0">
             {/* Header */}
-            <div className="mb-6">
+            <div className="mb-4">
               <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
                 Job Board
               </h1>
@@ -117,7 +125,7 @@ export default function Dashboard() {
             </div>
 
             {/* Search */}
-            <div className="mb-5">
+            <div className="mb-4">
               <SearchBar
                 value={searchInput}
                 onChange={setSearchInput}
@@ -127,7 +135,7 @@ export default function Dashboard() {
 
             {/* Active Filters */}
             {hasActiveFilter && (
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-2 mb-3">
                 <span className="text-sm text-muted-foreground">Filtered by:</span>
                 {roleFilter && (
                   <Badge 
@@ -153,35 +161,35 @@ export default function Dashboard() {
             )}
 
             {/* Tabs - Pill Style */}
-            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-              <TabsList className="w-full justify-start mb-5 h-auto p-1 bg-secondary/70 rounded-full">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full flex flex-col min-h-0">
+              <TabsList className="w-full justify-start mb-4 h-auto p-1 bg-secondary/70 rounded-full shrink-0">
                 <TabsTrigger 
                   value="all" 
-                  className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-tab-selected-bg data-[state=active]:text-tab-selected-text data-[state=active]:shadow-none px-5 font-medium"
+                  className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-tab-selected-bg data-[state=active]:text-tab-selected-text data-[state=active]:shadow-none px-4 text-xs font-medium"
                 >
                   All ({counts?.total_count ?? 0})
                 </TabsTrigger>
                 <TabsTrigger 
                   value="today" 
-                  className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-tab-selected-bg data-[state=active]:text-tab-selected-text data-[state=active]:shadow-none px-5 font-medium"
+                  className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-tab-selected-bg data-[state=active]:text-tab-selected-text data-[state=active]:shadow-none px-4 text-xs font-medium"
                 >
                   Today ({counts?.today_count ?? 0})
                 </TabsTrigger>
                 <TabsTrigger 
                   value="yesterday" 
-                  className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-tab-selected-bg data-[state=active]:text-tab-selected-text data-[state=active]:shadow-none px-5 font-medium"
+                  className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-tab-selected-bg data-[state=active]:text-tab-selected-text data-[state=active]:shadow-none px-4 text-xs font-medium"
                 >
                   Yesterday ({counts?.yesterday_count ?? 0})
                 </TabsTrigger>
                 <TabsTrigger 
                   value="week" 
-                  className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-tab-selected-bg data-[state=active]:text-tab-selected-text data-[state=active]:shadow-none px-5 font-medium"
+                  className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-tab-selected-bg data-[state=active]:text-tab-selected-text data-[state=active]:shadow-none px-4 text-xs font-medium"
                 >
                   This Week ({counts?.week_count ?? 0})
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value={activeTab} className="mt-0">
+              <TabsContent value={activeTab} className="mt-0 flex-1 min-h-0 lg:overflow-y-auto lg:max-h-[calc(100vh-280px)] lg:pr-2 lg:-mr-2 scrollbar-thin">
                 <JobListInfinite
                   jobs={jobs}
                   isLoading={isLoading}
@@ -189,25 +197,29 @@ export default function Dashboard() {
                   hasNextPage={hasNextPage ?? false}
                   fetchNextPage={fetchNextPage}
                   onTap={handleJobTap}
+                  selectedJobId={selectedJob?.id}
                 />
               </TabsContent>
             </Tabs>
           </div>
 
-          {/* Right Sidebar - Desktop only */}
-          <div className="hidden lg:block w-[320px] shrink-0">
-            <div className="sticky top-[88px] space-y-4">
-              {/* Job Preview Panel - shows when a job is selected */}
-              {selectedJob && (
-                <div className="border border-border rounded-xl bg-card overflow-hidden shadow-sm">
-                  <JobPreviewPanel job={selectedJob} />
+          {/* Right Column - Detail Panel (60% on desktop) */}
+          <div className="hidden lg:block lg:w-[60%] min-h-0">
+            <div className="sticky top-[88px] max-h-[calc(100vh-112px)] overflow-y-auto rounded-2xl border border-border bg-card shadow-soft">
+              {selectedJob ? (
+                <JobPreviewPanel job={selectedJob} />
+              ) : (
+                <div className="p-6">
+                  <RightSidebar onFilterByRole={handleFilterByRole} />
                 </div>
               )}
-              <RightSidebar 
-                onFilterByRole={handleFilterByRole}
-              />
             </div>
           </div>
+        </div>
+
+        {/* Mobile: show sidebar widgets below the list */}
+        <div className="lg:hidden mt-6">
+          <RightSidebar onFilterByRole={handleFilterByRole} />
         </div>
       </div>
 
