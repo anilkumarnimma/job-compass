@@ -29,6 +29,14 @@ interface ParseResult {
 
 const REQUIRED_FIELDS = ["title", "company", "location", "description", "skills", "external_apply_link"];
 
+function sanitizeCSVValue(value: string): string {
+  const trimmed = value.trim();
+  if (/^[=+\-@\t\r]/.test(trimmed)) {
+    return "'" + trimmed;
+  }
+  return trimmed;
+}
+
 function parseCSV(text: string): ParseResult {
   const lines = text.trim().split("\n");
   if (lines.length < 2) {
@@ -72,7 +80,7 @@ function parseCSV(text: string): ParseResult {
     // Map values to fields
     const row: Record<string, string> = {};
     header.forEach((field, index) => {
-      row[field] = values[index]?.replace(/^["']|["']$/g, "") || "";
+      row[field] = sanitizeCSVValue(values[index]?.replace(/^["']|["']$/g, "") || "");
     });
 
     // Validate required fields
