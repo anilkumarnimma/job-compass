@@ -40,7 +40,22 @@ Deno.serve(async (req) => {
     }
 
     const event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
-    console.log(`Received Stripe event: ${event.type}`);
+    console.log(`Received Stripe event: ${event.type} (${event.id})`);
+
+    // Idempotency check: skip already-processed events
+    const { data: existing } = await supabase
+      .from("processed_stripe_events")
+      .select("id")
+      .eq("event_id", event.id)
+      .maybeSingle();
+
+    if (existing) {
+      console.log(`Event ${event.id} already processed, skipping`);
+      return new Response(JSON.stringify({ received: true, skipped: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
@@ -112,6 +127,11 @@ Deno.serve(async (req) => {
 
       console.log(`Successfully updated subscription for user ${userId}`);
     }
+
+    // Mark event as processed
+    await supabase
+      .from("processed_stripe_events")
+      .insert({ event_id: event.id, event_type: event.type });
 
     return new Response(JSON.stringify({ received: true }), {
       status: 200,
