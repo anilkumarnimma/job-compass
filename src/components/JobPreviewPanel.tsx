@@ -83,7 +83,7 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
       </div>
 
       {/* Scrollable Content */}
-      <ScrollArea className="flex-1 p-5" style={{ maxHeight: '500px' }}>
+      <ScrollArea className="flex-1 p-5" style={{ maxHeight: '220px' }}>
         {/* Full Description */}
         <div className="mb-5">
           <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Description</h4>
