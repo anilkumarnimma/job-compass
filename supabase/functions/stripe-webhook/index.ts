@@ -54,31 +54,63 @@ Deno.serve(async (req) => {
         });
       }
 
-      console.log(`Upgrading user with email: ${customerEmail}`);
+      console.log(`Processing checkout for email: ${customerEmail}`);
 
-      const { data, error } = await supabase
+      // Look up the user profile
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .update({ is_premium: true })
+        .select("user_id")
         .eq("email", customerEmail.toLowerCase())
-        .select("user_id");
+        .single();
 
-      if (error) {
-        console.error("Failed to update profile:", error);
-        return new Response(JSON.stringify({ error: "DB update failed" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      if (!data || data.length === 0) {
-        console.error(`No profile found for email: ${customerEmail}`);
+      if (profileError || !profileData) {
+        console.error(`No profile found for email: ${customerEmail}`, profileError);
         return new Response(JSON.stringify({ error: "User not found" }), {
           status: 404,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      console.log(`Successfully upgraded user ${data[0].user_id} to premium`);
+      const userId = profileData.user_id;
+      const stripeCustomerId = typeof session.customer === "string" ? session.customer : session.customer?.id || null;
+
+      // Get subscription details if available
+      let nextRenewalDate: string | null = null;
+      if (session.subscription) {
+        const subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription.id;
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+        nextRenewalDate = new Date(subscription.current_period_end * 1000).toISOString();
+      }
+
+      // Update profiles.is_premium
+      const { error: premiumError } = await supabase
+        .from("profiles")
+        .update({ is_premium: true })
+        .eq("user_id", userId);
+
+      if (premiumError) {
+        console.error("Failed to update profile:", premiumError);
+      }
+
+      // Upsert into user_subscriptions
+      const { error: subError } = await supabase
+        .from("user_subscriptions")
+        .upsert({
+          user_id: userId,
+          stripe_customer_id: stripeCustomerId,
+          next_renewal_date: nextRenewalDate,
+          is_subscribed: true,
+        }, { onConflict: "user_id" });
+
+      if (subError) {
+        console.error("Failed to upsert user_subscriptions:", subError);
+        return new Response(JSON.stringify({ error: "Subscription DB update failed" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      console.log(`Successfully updated subscription for user ${userId}`);
     }
 
     return new Response(JSON.stringify({ received: true }), {
