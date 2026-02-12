@@ -148,19 +148,11 @@ export default function Auth() {
 
   return (
     <Layout showFooter={false}>
-      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-12 bg-background">
+      <div className="min-h-[calc(100vh-64px)] relative flex flex-col items-center justify-center px-4 py-12 bg-background">
         <div className="w-full max-w-sm">
-          {/* Logo + Heading */}
+          {/* Heading */}
           <div className="text-center mb-8">
-            <div className="flex justify-center mb-4">
-              <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center shadow-soft">
-                <Briefcase className="h-5 w-5 text-accent-foreground" />
-              </div>
-            </div>
-            <Link to="/" className="text-lg font-bold text-foreground tracking-tight">
-              Sociax.tech
-            </Link>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mt-3">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
               Apply anywhere. Track everything. Get hired faster.
             </h1>
           </div>
@@ -389,6 +381,26 @@ export default function Auth() {
             <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               ← Back to home
             </Link>
+          </div>
+
+          {/* Founder quote – mobile: below form */}
+          <div className="mt-8 block md:hidden">
+            <div className="bg-card border border-border/40 rounded-xl px-5 py-4 shadow-sm">
+              <p className="text-sm italic text-muted-foreground leading-relaxed">
+                "Built by someone who refreshed job portals at 2 AM."
+              </p>
+              <p className="mt-2 text-xs font-medium text-foreground/70">— Founder, Sociax</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Founder quote – desktop: bottom-left */}
+        <div className="hidden md:block absolute bottom-6 left-6">
+          <div className="bg-card border border-border/40 rounded-xl px-5 py-4 shadow-sm max-w-xs">
+            <p className="text-sm italic text-muted-foreground leading-relaxed">
+              "Built by someone who refreshed job portals at 2 AM."
+            </p>
+            <p className="mt-2 text-xs font-medium text-foreground/70">— Founder, Sociax</p>
           </div>
         </div>
       </div>
