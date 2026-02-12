@@ -105,6 +105,40 @@ Deno.serve(async (req) => {
       }
 
       logStep("Premium upgrade successful", { matchedProfiles: data.length });
+
+      // Update user_subscriptions table
+      const userId = data[0].user_id;
+      const stripeCustomerId = (session as any).customer as string | null;
+      const subscriptionId = (session as any).subscription as string | null;
+
+      logStep("Updating user_subscriptions", {
+        hasUserId: !!userId,
+        hasStripeCustomerId: !!stripeCustomerId,
+        hasSubscriptionId: !!subscriptionId,
+      });
+
+      // Calculate next renewal date (1 month from now for monthly subscription)
+      const nextRenewal = new Date();
+      nextRenewal.setMonth(nextRenewal.getMonth() + 1);
+
+      const { error: subError } = await supabase
+        .from("user_subscriptions")
+        .upsert(
+          {
+            user_id: userId,
+            is_subscribed: true,
+            stripe_customer_id: stripeCustomerId || null,
+            next_renewal_date: nextRenewal.toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id" }
+        );
+
+      if (subError) {
+        logStep("ERROR: Subscription update failed", { errorMessage: subError.message, errorCode: subError.code });
+      } else {
+        logStep("Subscription record updated successfully");
+      }
     } else {
       logStep("Unhandled event type, acknowledging", { eventType: event.type });
     }
