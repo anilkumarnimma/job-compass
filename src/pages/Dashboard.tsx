@@ -102,8 +102,8 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="container max-w-[1280px] mx-auto px-6 py-6">
-        <div className="flex gap-8">
+        <div className="w-full max-w-[1280px] mx-auto px-4 md:px-6 py-6">
+          <div className="flex gap-8 justify-center">
           {/* Main Content */}
           <div className="flex-1 max-w-[600px]">
             {/* Header */}
