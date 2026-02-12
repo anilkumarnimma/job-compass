@@ -1,5 +1,5 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Stripe from "https://esm.sh/stripe@17.7.0?target=deno&no-check";
+import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     });
   }
 
-  const stripe = new Stripe(stripeSecretKey, { apiVersion: "2024-12-18.acacia" });
+  const stripe = new Stripe(stripeSecretKey, { apiVersion: "2025-08-27.basil" });
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
