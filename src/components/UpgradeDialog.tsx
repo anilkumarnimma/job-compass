@@ -1,17 +1,11 @@
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Crown, Check, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 const STRIPE_BASE_LINK = "https://buy.stripe.com/test_eVq28rgVxdQO6Vt0Lp1wY00";
-const SUCCESS_REDIRECT = `${window.location.origin}/payment-success`;
+const SUCCESS_REDIRECT = `${window.location.origin}/dashboard?premium=true`;
 
 interface UpgradeDialogProps {
   open: boolean;
@@ -37,25 +31,21 @@ export function UpgradeDialog({ open, onOpenChange }: UpgradeDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[420px] p-6 gap-0">
         <DialogHeader className="space-y-2">
-          <DialogTitle className="text-xl font-bold text-foreground">
-            Upgrade to apply unlimited
-          </DialogTitle>
+          <DialogTitle className="text-xl font-bold text-foreground">Upgrade to apply unlimited</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
             You've used your 1 free application. Upgrade to apply to unlimited jobs.
           </DialogDescription>
         </DialogHeader>
 
         <ul className="space-y-2 pt-4 pb-2 text-sm text-foreground">
-          {[
-            "Unlimited job applications",
-            "Auto-tracking of applied jobs",
-            "Priority access to new jobs",
-          ].map((item) => (
-            <li key={item} className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-primary shrink-0" />
-              {item}
-            </li>
-          ))}
+          {["Unlimited job applications", "Auto-tracking of applied jobs", "Priority access to new jobs"].map(
+            (item) => (
+              <li key={item} className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-primary shrink-0" />
+                {item}
+              </li>
+            ),
+          )}
         </ul>
 
         <div className="flex flex-col gap-2 pt-4">
@@ -64,11 +54,7 @@ export function UpgradeDialog({ open, onOpenChange }: UpgradeDialogProps) {
             onClick={handleUpgrade}
             disabled={loading}
           >
-            {loading ? (
-              <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-            ) : (
-              <Crown className="h-4 w-4 mr-1.5" />
-            )}
+            {loading ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Crown className="h-4 w-4 mr-1.5" />}
             Upgrade for $5.99/month
           </Button>
           <Button
