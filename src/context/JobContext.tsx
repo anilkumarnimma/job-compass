@@ -32,32 +32,30 @@ export function JobProvider({ children }: { children: ReactNode }) {
   const [showApplyConfirm, setShowApplyConfirm] = useState(false);
   const [pendingJob, setPendingJob] = useState<Job | null>(null);
 
-  const appliedJobIds = useMemo(
-    () => new Set(applications.map((a) => a.job_id)),
-    [applications]
-  );
+  const appliedJobIds = useMemo(() => new Set(applications.map((a) => a.job_id)), [applications]);
 
-  const savedJobIds = useMemo(
-    () => new Set(savedJobs.map((s) => s.job_id)),
-    [savedJobs]
-  );
+  const savedJobIds = useMemo(() => new Set(savedJobs.map((s) => s.job_id)), [savedJobs]);
 
   const isApplied = (jobId: string) => appliedJobIds.has(jobId);
   const isSaved = (jobId: string) => savedJobIds.has(jobId);
 
   // Step 1: Open external link + show confirmation dialog
-  const applyToJob = useCallback((job: any) => {
-    const isPremium = profile?.is_premium ?? false;
-    if (!isPremium && totalAppCount >= 1) {
-      setShowUpgradeDialog(true);
-      return;
-    }
-    // Open external link immediately
-    window.open(job.external_apply_link, "_blank");
-    // Store pending job and show confirmation
-    setPendingJob(job);
-    setShowApplyConfirm(true);
-  }, [profile, totalAppCount]);
+  const applyToJob = useCallback(
+    (job: any) => {
+      console.log(profile);
+      const isPremium = profile?.is_premium ?? false;
+      if (!isPremium && totalAppCount >= 1) {
+        setShowUpgradeDialog(true);
+        return;
+      }
+      // Open external link immediately
+      window.open(job.external_apply_link, "_blank");
+      // Store pending job and show confirmation
+      setPendingJob(job);
+      setShowApplyConfirm(true);
+    },
+    [profile, totalAppCount],
+  );
 
   // Step 2a: User confirms they applied
   const confirmApply = useCallback(() => {
