@@ -20,6 +20,7 @@ import EmployerDashboard from "./pages/EmployerDashboard";
 import Profile from "./pages/Profile";
 import Help from "./pages/Help";
 import NotFound from "./pages/NotFound";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -89,6 +90,7 @@ const App = () => (
                   </ProtectedRoute>
                 } />
                 
+                <Route path="/payment-success" element={<PaymentSuccess />} />
                 <Route path="/help" element={<Help />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
