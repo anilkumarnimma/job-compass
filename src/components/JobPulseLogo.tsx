@@ -21,7 +21,7 @@ export function JobPulseLogo({ size = "md", className, showText = true }: JobPul
 
   return (
     <div className={cn("flex flex-col items-center justify-center gap-0.5", className)}>
-      {/* Logo Icon - Abstract "J" shape */}
+      {/* Logo Icon - "S" in rounded square */}
       <div className={cn(sizeClasses[size], "relative")}>
         <svg
           viewBox="0 0 40 40"
@@ -29,25 +29,28 @@ export function JobPulseLogo({ size = "md", className, showText = true }: JobPul
           xmlns="http://www.w3.org/2000/svg"
           className="w-full h-full"
         >
-          {/* Gradient background circle */}
           <defs>
-            <linearGradient id="jobpulseGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="hsl(221, 83%, 53%)" />
-              <stop offset="100%" stopColor="hsl(262, 83%, 58%)" />
+            <linearGradient id="sociaxGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="hsl(217, 91%, 60%)" />
+              <stop offset="100%" stopColor="hsl(221, 83%, 53%)" />
             </linearGradient>
           </defs>
           
-          {/* Main circle */}
-          <circle cx="20" cy="20" r="18" fill="url(#jobpulseGradient)" />
+          {/* Rounded square */}
+          <rect x="2" y="2" width="36" height="36" rx="10" fill="url(#sociaxGradient)" />
           
-          {/* Abstract "J" path */}
-          <path
-            d="M14 14C14 14 16 12 20 12C24 12 26 14 26 16C26 18 24 20 20 20C16 20 14 22 14 24C14 26 16 28 20 28C24 28 26 26 26 26"
-            stroke="white"
-            strokeWidth="3"
-            strokeLinecap="round"
-            fill="none"
-          />
+          {/* Letter S */}
+          <text
+            x="20"
+            y="28"
+            textAnchor="middle"
+            fontFamily="Inter, system-ui, sans-serif"
+            fontWeight="700"
+            fontSize="24"
+            fill="white"
+          >
+            S
+          </text>
         </svg>
       </div>
       
