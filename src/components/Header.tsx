@@ -23,11 +23,11 @@ export function Header() {
   const { profile } = useProfile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const STRIPE_LINK = "https://buy.stripe.com/test_eVq28rgVxdQO6Vt0Lp1wY00";
+  const STRIPE_LINK = "https://buy.stripe.com/eVqaEX9treQ0eOL4dX3AY00";
   const isPremium = profile?.is_premium ?? false;
-  
+
   const isActive = (path: string) => location.pathname === path;
-  
+
   // Determine role - default to "user" if no role found
   const role = userRole || "user";
   const isFounder = role === "founder";
@@ -78,8 +78,8 @@ export function Header() {
                       variant="ghost"
                       size="sm"
                       className={`rounded-full px-4 h-8 font-medium transition-all duration-200 ${
-                        isActive(link.path) 
-                          ? "bg-card text-foreground shadow-sm" 
+                        isActive(link.path)
+                          ? "bg-card text-foreground shadow-sm"
                           : "text-muted-foreground hover:text-foreground hover:bg-transparent"
                       }`}
                     >
@@ -110,9 +110,9 @@ export function Header() {
                 {(!isEmployer || isFounder) && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         className="rounded-xl h-9 px-3 text-muted-foreground hover:text-foreground gap-1.5"
                       >
                         <User className="h-4 w-4" />
@@ -125,13 +125,16 @@ export function Header() {
                         <User className="h-4 w-4 mr-2" />
                         My Profile
                       </DropdownMenuItem>
-                      
+
                       {/* Debug: Show current role(s) */}
                       <DropdownMenuSeparator />
                       <div className="px-2 py-1.5 text-xs text-muted-foreground">
                         <div className="flex items-center gap-2 mb-1">
                           <span>Role:</span>
-                          <Badge variant={isFounder ? "default" : isEmployer ? "secondary" : "outline"} className="text-xs">
+                          <Badge
+                            variant={isFounder ? "default" : isEmployer ? "secondary" : "outline"}
+                            className="text-xs"
+                          >
                             {role}
                           </Badge>
                         </div>
@@ -146,7 +149,7 @@ export function Header() {
                           </div>
                         )}
                       </div>
-                      
+
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
                         <LogOut className="h-4 w-4 mr-2" />
@@ -160,17 +163,17 @@ export function Header() {
                 {isEmployer && !isFounder && (
                   <>
                     <Link to="/employer">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="rounded-xl h-9 px-4 border-border hover:bg-secondary"
                       >
                         <Shield className="h-4 w-4 mr-1.5" />
                         Admin
                       </Button>
                     </Link>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="sm"
                       onClick={handleSignOut}
                       className="rounded-xl h-9 px-3 text-destructive hover:text-destructive"
@@ -184,9 +187,9 @@ export function Header() {
                 {isFounder && (
                   <>
                     <Link to="/founder/employers">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="rounded-xl h-9 px-4 border-border hover:bg-secondary"
                       >
                         <Crown className="h-4 w-4 mr-1.5" />
@@ -194,9 +197,9 @@ export function Header() {
                       </Button>
                     </Link>
                     <Link to="/admin">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="rounded-xl h-9 px-4 border-border hover:bg-secondary"
                       >
                         <Shield className="h-4 w-4 mr-1.5" />
@@ -209,8 +212,8 @@ export function Header() {
             ) : (
               <>
                 <Link to="/auth">
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="sm"
                     className="rounded-xl h-9 px-4 text-muted-foreground hover:text-foreground"
                   >
@@ -218,7 +221,7 @@ export function Header() {
                   </Button>
                 </Link>
                 <Link to="/auth?signup=true">
-                  <Button 
+                  <Button
                     size="sm"
                     className="rounded-xl h-9 px-5 bg-accent hover:bg-accent/90 text-accent-foreground shadow-sm"
                   >
@@ -245,11 +248,7 @@ export function Header() {
           <div className="md:hidden py-4 border-t border-border animate-slide-up">
             <nav className="flex flex-col gap-1">
               {navLinks.map((link) => (
-                <Link 
-                  key={link.path} 
-                  to={link.path}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
+                <Link key={link.path} to={link.path} onClick={() => setMobileMenuOpen(false)}>
                   <Button
                     variant={isActive(link.path) ? "secondary" : "ghost"}
                     className="w-full justify-start rounded-xl"
@@ -307,10 +306,13 @@ export function Header() {
                       </>
                     )}
 
-                    <Button 
-                      variant="ghost" 
-                      className="w-full rounded-xl justify-start text-destructive hover:text-destructive" 
-                      onClick={() => { handleSignOut(); setMobileMenuOpen(false); }}
+                    <Button
+                      variant="ghost"
+                      className="w-full rounded-xl justify-start text-destructive hover:text-destructive"
+                      onClick={() => {
+                        handleSignOut();
+                        setMobileMenuOpen(false);
+                      }}
                     >
                       <LogOut className="h-4 w-4 mr-2" />
                       Sign out
@@ -319,7 +321,9 @@ export function Header() {
                 ) : (
                   <div className="flex gap-2">
                     <Link to="/auth" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="outline" className="w-full rounded-xl">Log in</Button>
+                      <Button variant="outline" className="w-full rounded-xl">
+                        Log in
+                      </Button>
                     </Link>
                     <Link to="/auth?signup=true" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
                       <Button className="w-full rounded-xl bg-accent hover:bg-accent/90">Sign up</Button>
