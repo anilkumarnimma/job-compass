@@ -42,7 +42,6 @@ export function JobProvider({ children }: { children: ReactNode }) {
   // Step 1: Open external link + show confirmation dialog
   const applyToJob = useCallback(
     (job: any) => {
-      console.log(profile);
       const isPremium = profile?.is_premium ?? false;
       if (!isPremium && totalAppCount >= 1) {
         setShowUpgradeDialog(true);
