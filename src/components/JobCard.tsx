@@ -14,9 +14,10 @@ interface JobCardProps {
   job: Job;
   onViewDetails?: (job: Job) => void;
   onTap?: (job: Job) => void;
+  isSelected?: boolean;
 }
 
-export function JobCard({ job, onViewDetails, onTap }: JobCardProps) {
+export function JobCard({ job, onViewDetails, onTap, isSelected }: JobCardProps) {
   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -61,7 +62,11 @@ export function JobCard({ job, onViewDetails, onTap }: JobCardProps) {
 
   return (
     <Card 
-      className="group p-5 transition-all duration-[160ms] ease-out border border-border bg-card hover:shadow-md hover:border-border/80 rounded-xl cursor-pointer"
+      className={`group p-5 transition-all duration-[160ms] ease-out border bg-card rounded-xl cursor-pointer ${
+        isSelected 
+          ? "border-accent bg-accent/5 shadow-md ring-1 ring-accent/20" 
+          : "border-border hover:shadow-md hover:border-border/80"
+      }`}
       onClick={handleCardClick}
     >
       {/* Header Row: Logo + Title/Company/Time + Badge */}
