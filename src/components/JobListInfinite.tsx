@@ -11,7 +11,6 @@ interface JobListInfiniteProps {
   hasNextPage: boolean;
   fetchNextPage: () => void;
   onTap?: (job: Job) => void;
-  selectedJobId?: string;
 }
 
 // Skeleton loader for job cards
@@ -52,7 +51,6 @@ export function JobListInfinite({
   hasNextPage,
   fetchNextPage,
   onTap,
-  selectedJobId,
 }: JobListInfiniteProps) {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -89,7 +87,7 @@ export function JobListInfinite({
   // Initial loading state with skeletons
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 max-w-[580px]">
         {Array.from({ length: 5 }).map((_, i) => (
           <JobCardSkeleton key={i} />
         ))}
@@ -108,9 +106,9 @@ export function JobListInfinite({
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4 max-w-[580px]">
       {jobs.map((job) => (
-        <JobCard key={job.id} job={job} onTap={onTap} isSelected={selectedJobId === job.id} />
+        <JobCard key={job.id} job={job} onTap={onTap} />
       ))}
 
       {/* Load more trigger */}

@@ -8,16 +8,15 @@ import { CompanyLogo } from "@/components/CompanyLogo";
 import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, Calendar } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
-
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface JobCardProps {
   job: Job;
   onViewDetails?: (job: Job) => void;
   onTap?: (job: Job) => void;
-  isSelected?: boolean;
 }
 
-export function JobCard({ job, onViewDetails, onTap, isSelected }: JobCardProps) {
+export function JobCard({ job, onViewDetails, onTap }: JobCardProps) {
   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -52,20 +51,18 @@ export function JobCard({ job, onViewDetails, onTap, isSelected }: JobCardProps)
     window.open(job.external_apply_link, "_blank");
   };
 
-  const handleMoreClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleCardClick = (e: React.MouseEvent) => {
     if (onTap) {
+      const target = e.target as HTMLElement;
+      if (target.closest('button') || target.closest('a')) return;
       onTap(job);
     }
   };
 
   return (
     <Card 
-      className={`group p-5 transition-all duration-[160ms] ease-out border bg-card rounded-xl ${
-        isSelected 
-          ? "border-accent bg-accent/5 shadow-md ring-1 ring-accent/20" 
-          : "border-border hover:shadow-md hover:border-border/80"
-      }`}
+      className="group p-5 transition-all duration-[160ms] ease-out border border-border bg-card hover:shadow-md hover:border-border/80 rounded-xl cursor-pointer"
+      onClick={handleCardClick}
     >
       {/* Header Row: Logo + Title/Company/Time + Badge */}
       <div className="flex items-start gap-3 mb-3">
@@ -104,17 +101,31 @@ export function JobCard({ job, onViewDetails, onTap, isSelected }: JobCardProps)
 
       {/* Description with hover tooltip */}
       <div className="mb-3">
-        <p className="text-sm leading-relaxed text-muted-foreground line-clamp-2">
-          {job.description}
-        </p>
-        {job.description.length > 100 && (
-          <span 
-            className="text-xs text-primary hover:text-primary/80 font-medium mt-0.5 inline-block cursor-pointer"
-            onClick={handleMoreClick}
-          >
-            ...more
-          </span>
-        )}
+        <TooltipProvider delayDuration={300}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="cursor-default">
+                <p className="text-sm leading-relaxed text-muted-foreground line-clamp-2">
+                  {job.description}
+                </p>
+                {job.description.length > 100 && (
+                  <span className="text-xs text-primary hover:text-primary/80 font-medium mt-0.5 inline-block">
+                    ...more
+                  </span>
+                )}
+              </div>
+            </TooltipTrigger>
+            {job.description.length > 100 && (
+              <TooltipContent 
+                side="top" 
+                align="start" 
+                className="max-w-[400px] p-3 text-sm leading-relaxed"
+              >
+                {job.description}
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {/* Meta Row - Inline chips with icons */}
