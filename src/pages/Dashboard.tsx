@@ -76,12 +76,7 @@ export default function Dashboard() {
     return jobsData?.pages.flatMap((page) => page) || [];
   }, [jobsData]);
 
-  // Auto-select first job on desktop when jobs load and nothing is selected
-  useEffect(() => {
-    if (!isMobile && jobs.length > 0 && !selectedJob) {
-      setSelectedJob(jobs[0]);
-    }
-  }, [jobs, isMobile, selectedJob]);
+  // No auto-select: right panel shows graph/alerts by default until user clicks "More"
 
   const handleJobTap = useCallback((job: Job) => {
     if (isMobile) {
