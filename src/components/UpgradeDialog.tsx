@@ -11,7 +11,7 @@ import { Crown, Check, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 const STRIPE_BASE_LINK = "https://buy.stripe.com/test_eVq28rgVxdQO6Vt0Lp1wY00";
-const SUCCESS_REDIRECT = `${window.location.origin}/dashboard?premium=true`;
+const SUCCESS_REDIRECT = `${window.location.origin}/payment-success`;
 
 interface UpgradeDialogProps {
   open: boolean;
