@@ -163,10 +163,23 @@ function parseCSV(text: string): string[][] {
   return rows;
 }
 
+function sanitizeCSVValue(value: string): string {
+  if (!value) return value;
+  const trimmed = value.trim();
+  const dangerousChars = ['=', '+', '-', '@', '\t', '\r'];
+  if (dangerousChars.some(char => trimmed.startsWith(char))) {
+    // Only sanitize if it looks like a formula (not a normal negative number or email)
+    if (trimmed.startsWith('-') && /^-[\d.,]+$/.test(trimmed)) return value;
+    if (trimmed.startsWith('@') && !trimmed.includes('(')) return value;
+    return "'" + trimmed;
+  }
+  return value;
+}
+
 function rowToObject(headers: string[], row: string[]): Record<string, string> {
   const obj: Record<string, string> = {};
   headers.forEach((h, i) => {
-    obj[h] = row[i] || '';
+    obj[h] = sanitizeCSVValue(row[i] || '');
   });
   return obj;
 }
