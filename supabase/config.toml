@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.check-subscription]
 verify_jwt = false
+
+[functions.api-login]
+verify_jwt = false
+
+[functions.api-profile]
+verify_jwt = false
