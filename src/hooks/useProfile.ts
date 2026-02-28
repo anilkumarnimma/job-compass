@@ -37,6 +37,8 @@ export function useProfile() {
       return data as ProfileData;
     },
     enabled: !!user,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const updateProfileMutation = useMutation({
