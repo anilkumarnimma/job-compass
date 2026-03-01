@@ -148,6 +148,7 @@ export function useJobActions() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["applications"] });
       queryClient.invalidateQueries({ queryKey: ["application-count"] });
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
       toast.success("Application tracked!");
     },
     onError: (error) => {

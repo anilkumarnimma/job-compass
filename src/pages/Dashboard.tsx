@@ -70,10 +70,13 @@ export default function Dashboard() {
   // Fetch job counts for tabs
   const { data: counts } = useJobCounts(combinedSearchQuery);
 
-  // Flatten pages into single array
+  const { isApplied } = useJobContext();
+
+  // Flatten pages into single array, excluding applied jobs
   const jobs = useMemo(() => {
-    return jobsData?.pages.flatMap((page) => page) || [];
-  }, [jobsData]);
+    const all = jobsData?.pages.flatMap((page) => page) || [];
+    return all.filter((job) => !isApplied(job.id));
+  }, [jobsData, isApplied]);
 
   const handleJobTap = useCallback((job: Job) => {
     if (isMobile) {
