@@ -107,10 +107,11 @@ export function useProfile() {
   const uploadResume = async (file: File) => {
     if (!user) throw new Error("Not authenticated");
     
-    if (file.type !== "application/pdf") {
+    const allowedTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+    if (!allowedTypes.includes(file.type)) {
       toast({
         title: "Invalid file type",
-        description: "Please upload a PDF file.",
+        description: "Please upload a PDF or DOCX file.",
         variant: "destructive",
       });
       return;
