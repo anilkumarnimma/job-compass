@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { Navigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { useProfile, ProfileData, WorkExperience, Education } from "@/hooks/useProfile";
+import { useToast } from "@/hooks/use-toast";
 import { useResumeParser, ExtractedResumeData } from "@/hooks/useResumeParser";
 import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
 import { ResumeReviewDialog } from "@/components/ResumeReviewDialog";
@@ -57,6 +59,7 @@ const emptyCert: Certification = { name: "", issuer: "", date_obtained: "", expi
 export default function Profile() {
   const { user, isLoading: authLoading } = useAuth();
   const { profile, isLoading, updateProfile, isUpdating, uploadResume, downloadResume, deleteResume, isUploading } = useProfile();
+  const { toast } = useToast();
   const { parseResume, isParsing, extractedData, clearExtracted } = useResumeParser();
   const { data: effectiveRole, isLoading: roleLoading } = useUserRole();
   const { data: allRoles } = useAllUserRoles();
@@ -336,50 +339,46 @@ export default function Profile() {
             <CardContent>
               {isLoading ? <Skeleton className="h-24 w-full" /> : (
                 <div className="space-y-4">
-                  <input type="file" ref={fileInputRef} accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleResumeUpload} className="hidden" />
-                  <input type="file" ref={resumeAutoFillRef} accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleAutoFillUpload} className="hidden" />
+                  <input type="file" ref={fileInputRef} accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleFirstUpload} className="hidden" />
+                  <input type="file" ref={reuploadRef} accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleReupload} className="hidden" />
 
                   {profile?.resume_filename ? (
-                    <div className="flex items-center justify-between p-4 bg-background rounded-lg border border-border">
-                      <div className="flex items-center gap-3">
-                        <FileText className="h-8 w-8 text-primary" />
-                        <div>
-                          <p className="font-medium text-foreground">{profile.resume_filename}</p>
-                          <p className="text-sm text-muted-foreground">Uploaded resume</p>
+                    <>
+                      <div className="flex items-center justify-between p-4 bg-background rounded-lg border border-border">
+                        <div className="flex items-center gap-3">
+                          <FileText className="h-8 w-8 text-primary" />
+                          <div>
+                            <p className="font-medium text-foreground">{profile.resume_filename}</p>
+                            <p className="text-sm text-muted-foreground">Uploaded resume</p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex gap-2 flex-wrap">
                         <Button variant="outline" size="sm" onClick={downloadResume}>
                           <Download className="h-4 w-4 mr-1" /> Download
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
-                          {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Upload className="h-4 w-4 mr-1" /> Replace</>}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button onClick={handleAutofillExisting} disabled={isParsing || isDownloadingResume} className="flex-1">
+                          {isParsing || isDownloadingResume ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Parsing Resume...</> : <><Wand2 className="h-4 w-4 mr-2" />Auto-fill from Resume</>}
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={deleteResume} className="text-destructive hover:text-destructive">
+                        <Button variant="outline" onClick={() => reuploadRef.current?.click()} disabled={isUploading || isParsing}>
+                          {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Upload className="h-4 w-4 mr-1" />Re-upload</>}
+                        </Button>
+                        <Button variant="ghost" onClick={deleteResume} className="text-destructive hover:text-destructive">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                    </div>
+                    </>
                   ) : (
-                    <div onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 hover:bg-secondary/30 transition-colors">
-                      {isUploading ? (
-                        <><Loader2 className="h-10 w-10 text-muted-foreground animate-spin mb-3" /><p className="text-muted-foreground">Uploading...</p></>
-                      ) : (
-                        <><Upload className="h-10 w-10 text-muted-foreground mb-3" /><p className="font-medium text-foreground">Click to upload resume</p><p className="text-sm text-muted-foreground mt-1">PDF or DOCX files</p></>
-                      )}
-                    </div>
+                    <>
+                      <div onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 hover:bg-secondary/30 transition-colors">
+                        {isUploading || isParsing ? (
+                          <><Loader2 className="h-10 w-10 text-muted-foreground animate-spin mb-3" /><p className="text-muted-foreground">{isParsing ? "Parsing..." : "Uploading..."}</p></>
+                        ) : (
+                          <><Upload className="h-10 w-10 text-muted-foreground mb-3" /><p className="font-medium text-foreground">Click to upload resume</p><p className="text-sm text-muted-foreground mt-1">PDF or DOCX — will auto-fill your profile</p></>
+                        )}
+                      </div>
+                    </>
                   )}
-
-                  <div className="flex gap-2">
-                    <Button onClick={() => resumeAutoFillRef.current?.click()} disabled={isParsing} className="flex-1">
-                      {isParsing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Parsing Resume...</> : <><Wand2 className="h-4 w-4 mr-2" />Auto-fill from Resume</>}
-                    </Button>
-                    {profile?.resume_filename && (
-                      <Button variant="outline" onClick={() => resumeAutoFillRef.current?.click()} disabled={isParsing}>
-                        Re-run Auto-fill
-                      </Button>
-                    )}
-                  </div>
                 </div>
               )}
             </CardContent>
