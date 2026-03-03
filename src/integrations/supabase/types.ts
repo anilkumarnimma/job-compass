@@ -303,58 +303,97 @@ export type Database = {
       }
       profiles: {
         Row: {
+          city: string | null
           country: string | null
           created_at: string
+          current_company: string | null
+          current_title: string | null
+          education: Json | null
           email: string
           employer_id: string | null
+          experience_years: number | null
+          first_name: string | null
           full_name: string | null
+          github_url: string | null
           id: string
           is_active: boolean
           is_premium: boolean
+          last_name: string | null
           linkedin_url: string | null
           location: string | null
           phone: string | null
           portfolio_url: string | null
           resume_filename: string | null
           resume_url: string | null
+          skills: string[] | null
+          state: string | null
           updated_at: string
           user_id: string
+          visa_status: string | null
+          work_authorization: string | null
+          zip: string | null
         }
         Insert: {
+          city?: string | null
           country?: string | null
           created_at?: string
+          current_company?: string | null
+          current_title?: string | null
+          education?: Json | null
           email: string
           employer_id?: string | null
+          experience_years?: number | null
+          first_name?: string | null
           full_name?: string | null
+          github_url?: string | null
           id?: string
           is_active?: boolean
           is_premium?: boolean
+          last_name?: string | null
           linkedin_url?: string | null
           location?: string | null
           phone?: string | null
           portfolio_url?: string | null
           resume_filename?: string | null
           resume_url?: string | null
+          skills?: string[] | null
+          state?: string | null
           updated_at?: string
           user_id: string
+          visa_status?: string | null
+          work_authorization?: string | null
+          zip?: string | null
         }
         Update: {
+          city?: string | null
           country?: string | null
           created_at?: string
+          current_company?: string | null
+          current_title?: string | null
+          education?: Json | null
           email?: string
           employer_id?: string | null
+          experience_years?: number | null
+          first_name?: string | null
           full_name?: string | null
+          github_url?: string | null
           id?: string
           is_active?: boolean
           is_premium?: boolean
+          last_name?: string | null
           linkedin_url?: string | null
           location?: string | null
           phone?: string | null
           portfolio_url?: string | null
           resume_filename?: string | null
           resume_url?: string | null
+          skills?: string[] | null
+          state?: string | null
           updated_at?: string
           user_id?: string
+          visa_status?: string | null
+          work_authorization?: string | null
+          zip?: string | null
         }
         Relationships: []
       }
