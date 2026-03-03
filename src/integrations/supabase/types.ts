@@ -303,6 +303,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
           city: string | null
           country: string | null
           created_at: string
@@ -331,9 +332,11 @@ export type Database = {
           user_id: string
           visa_status: string | null
           work_authorization: string | null
+          work_experience: Json | null
           zip: string | null
         }
         Insert: {
+          address?: string | null
           city?: string | null
           country?: string | null
           created_at?: string
@@ -362,9 +365,11 @@ export type Database = {
           user_id: string
           visa_status?: string | null
           work_authorization?: string | null
+          work_experience?: Json | null
           zip?: string | null
         }
         Update: {
+          address?: string | null
           city?: string | null
           country?: string | null
           created_at?: string
@@ -393,6 +398,7 @@ export type Database = {
           user_id?: string
           visa_status?: string | null
           work_authorization?: string | null
+          work_experience?: Json | null
           zip?: string | null
         }
         Relationships: []

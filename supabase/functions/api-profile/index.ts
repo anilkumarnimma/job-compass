@@ -55,7 +55,10 @@ Deno.serve(async (req) => {
     }
 
     // Return structured profile with empty defaults instead of null
-    const education = profile.education || {};
+    const educationRaw = profile.education;
+    const education = Array.isArray(educationRaw) ? educationRaw : [];
+    const workExperienceRaw = profile.work_experience;
+    const workExperience = Array.isArray(workExperienceRaw) ? workExperienceRaw : [];
 
     const structured = {
       user: { id: user.id, email: user.email || "" },
@@ -65,6 +68,7 @@ Deno.serve(async (req) => {
         full_name: profile.full_name || "",
         email: profile.email || user.email || "",
         phone: profile.phone || "",
+        address: profile.address || "",
         city: profile.city || "",
         state: profile.state || "",
         zip: profile.zip || "",
@@ -78,12 +82,19 @@ Deno.serve(async (req) => {
         current_company: profile.current_company || "",
         current_title: profile.current_title || "",
         skills: profile.skills || [],
-        education: {
-          school: education.school || "",
-          degree: education.degree || "",
-          major: education.major || "",
-          graduation_year: education.graduation_year || "",
-        },
+        work_experience: workExperience.map((w: any) => ({
+          title: w.title || "",
+          company: w.company || "",
+          start_date: w.start_date || "",
+          end_date: w.end_date || "",
+          is_current: w.is_current || false,
+        })),
+        education: education.map((e: any) => ({
+          school: e.school || "",
+          degree: e.degree || "",
+          major: e.major || "",
+          graduation_year: e.graduation_year || "",
+        })),
         resume_url: profile.resume_url || "",
         resume_filename: profile.resume_filename || "",
         is_premium: profile.is_premium || false,
