@@ -449,7 +449,6 @@ export default function Profile() {
                       <Input id="zip" placeholder="94102" value={formData.zip} onChange={(e) => set("zip", e.target.value)} />
                     </div>
                   </div>
-                  <SaveButton />
                 </>
               )}
             </CardContent>
@@ -481,7 +480,6 @@ export default function Profile() {
                       <Input id="portfolio" placeholder="https://mysite.com" value={formData.portfolio_url} onChange={(e) => set("portfolio_url", e.target.value)} />
                     </div>
                   </div>
-                  <SaveButton />
                 </>
               )}
             </CardContent>
@@ -545,7 +543,6 @@ export default function Profile() {
                       </Select>
                     </div>
                   </div>
-                  <SaveButton />
                 </>
               )}
             </CardContent>
@@ -583,7 +580,6 @@ export default function Profile() {
                       </div>
                     </div>
                   ))}
-                  <SaveButton />
                 </>
               )}
             </CardContent>
@@ -612,7 +608,6 @@ export default function Profile() {
                       ))}
                     </div>
                   )}
-                  <SaveButton />
                 </>
               )}
             </CardContent>
@@ -713,7 +708,6 @@ export default function Profile() {
                       </Select>
                     </div>
                   </div>
-                  <SaveButton />
                 </>
               )}
             </CardContent>
