@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { useProfile, ProfileData } from "@/hooks/useProfile";
+import { useProfile, ProfileData, WorkExperience, Education } from "@/hooks/useProfile";
 import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,10 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   User, FileText, Upload, Download, Trash2, Loader2, Bug,
-  Link2, Briefcase, GraduationCap, Sparkles,
+  Link2, Briefcase, GraduationCap, Sparkles, Plus,
 } from "lucide-react";
 
 const WORK_AUTH_OPTIONS = [
@@ -34,6 +35,9 @@ const VISA_STATUS_OPTIONS = [
   "Will need sponsorship in future",
 ];
 
+const emptyWork: WorkExperience = { title: "", company: "", start_date: "", end_date: "", is_current: false };
+const emptyEdu: Education = { school: "", degree: "", major: "", graduation_year: "" };
+
 export default function Profile() {
   const { user, isLoading: authLoading } = useAuth();
   const { profile, isLoading, updateProfile, isUpdating, uploadResume, downloadResume, deleteResume, isUploading } = useProfile();
@@ -45,6 +49,7 @@ export default function Profile() {
     first_name: "",
     last_name: "",
     phone: "",
+    address: "",
     city: "",
     state: "",
     zip: "",
@@ -57,19 +62,18 @@ export default function Profile() {
     current_company: "",
     current_title: "",
     skills: "",
-    education_school: "",
-    education_degree: "",
-    education_major: "",
-    education_graduation_year: "",
   });
+
+  const [workExperiences, setWorkExperiences] = useState<WorkExperience[]>([{ ...emptyWork }]);
+  const [educations, setEducations] = useState<Education[]>([{ ...emptyEdu }]);
 
   useEffect(() => {
     if (profile) {
-      const edu = profile.education || {};
       setFormData({
         first_name: profile.first_name || "",
         last_name: profile.last_name || "",
         phone: profile.phone || "",
+        address: (profile as any).address || "",
         city: profile.city || "",
         state: profile.state || "",
         zip: profile.zip || "",
@@ -82,11 +86,32 @@ export default function Profile() {
         current_company: profile.current_company || "",
         current_title: profile.current_title || "",
         skills: (profile.skills || []).join(", "),
-        education_school: edu.school || "",
-        education_degree: edu.degree || "",
-        education_major: edu.major || "",
-        education_graduation_year: edu.graduation_year || "",
       });
+
+      const we = profile.work_experience;
+      if (Array.isArray(we) && we.length > 0) {
+        setWorkExperiences(we);
+      } else {
+        // Migrate from old single fields
+        if (profile.current_title || profile.current_company) {
+          setWorkExperiences([{
+            title: profile.current_title || "",
+            company: profile.current_company || "",
+            start_date: "",
+            end_date: "",
+            is_current: true,
+          }]);
+        } else {
+          setWorkExperiences([{ ...emptyWork }]);
+        }
+      }
+
+      const edu = profile.education;
+      if (Array.isArray(edu) && edu.length > 0) {
+        setEducations(edu);
+      } else {
+        setEducations([{ ...emptyEdu }]);
+      }
     }
   }, [profile]);
 
@@ -111,11 +136,15 @@ export default function Profile() {
       ? formData.skills.split(",").map((s) => s.trim()).filter(Boolean)
       : [];
 
+    // Derive current_company/current_title from first current work experience
+    const currentWork = workExperiences.find((w) => w.is_current);
+
     updateProfile({
       first_name: formData.first_name || null,
       last_name: formData.last_name || null,
       full_name: [formData.first_name, formData.last_name].filter(Boolean).join(" ") || null,
       phone: formData.phone || null,
+      address: formData.address || null,
       city: formData.city || null,
       state: formData.state || null,
       zip: formData.zip || null,
@@ -126,15 +155,11 @@ export default function Profile() {
       work_authorization: formData.work_authorization || null,
       visa_status: formData.visa_status || null,
       experience_years: formData.experience_years ? Number(formData.experience_years) : null,
-      current_company: formData.current_company || null,
-      current_title: formData.current_title || null,
+      current_company: currentWork?.company || formData.current_company || null,
+      current_title: currentWork?.title || formData.current_title || null,
       skills: skillsArray,
-      education: {
-        school: formData.education_school,
-        degree: formData.education_degree,
-        major: formData.education_major,
-        graduation_year: formData.education_graduation_year,
-      },
+      work_experience: workExperiences.filter((w) => w.title || w.company),
+      education: educations.filter((e) => e.school || e.degree),
     } as any);
   };
 
@@ -144,6 +169,26 @@ export default function Profile() {
   };
 
   const set = (key: string, value: string) => setFormData((prev) => ({ ...prev, [key]: value }));
+
+  // Work experience helpers
+  const updateWork = (index: number, field: keyof WorkExperience, value: string | boolean) => {
+    setWorkExperiences((prev) => prev.map((w, i) => i === index ? { ...w, [field]: value } : w));
+  };
+  const addWork = () => setWorkExperiences((prev) => [...prev, { ...emptyWork }]);
+  const removeWork = (index: number) => {
+    if (workExperiences.length <= 1) return;
+    setWorkExperiences((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Education helpers
+  const updateEdu = (index: number, field: keyof Education, value: string) => {
+    setEducations((prev) => prev.map((e, i) => i === index ? { ...e, [field]: value } : e));
+  };
+  const addEdu = () => setEducations((prev) => [...prev, { ...emptyEdu }]);
+  const removeEdu = (index: number) => {
+    if (educations.length <= 1) return;
+    setEducations((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const SaveButton = () => (
     <div className="flex justify-end pt-4">
@@ -201,6 +246,10 @@ export default function Profile() {
                       <Input id="phone" placeholder="+1 (555) 123-4567" value={formData.phone} onChange={(e) => set("phone", e.target.value)} />
                     </div>
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Street Address</Label>
+                    <Input id="address" placeholder="123 Main St, Apt 4B" value={formData.address} onChange={(e) => set("address", e.target.value)} />
+                  </div>
                   <div className="grid gap-4 sm:grid-cols-3">
                     <div className="space-y-2">
                       <Label htmlFor="city">City</Label>
@@ -255,31 +304,79 @@ export default function Profile() {
             </CardContent>
           </Card>
 
-          {/* Work Experience & Authorization */}
+          {/* Work Experience */}
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-2">
-                <Briefcase className="h-5 w-5 text-muted-foreground" />
-                <CardTitle className="text-lg">Work</CardTitle>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="h-5 w-5 text-muted-foreground" />
+                    <CardTitle className="text-lg">Work Experience</CardTitle>
+                  </div>
+                  <CardDescription className="mt-1.5">Add your work history with dates</CardDescription>
+                </div>
+                <Button variant="outline" size="sm" onClick={addWork} type="button">
+                  <Plus className="h-4 w-4 mr-1" /> Add
+                </Button>
               </div>
-              <CardDescription>Current role, experience, and work authorization</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               {isLoading ? (
-                <div className="space-y-4">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
+                <div className="space-y-4">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
               ) : (
                 <>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="current_title">Current Title</Label>
-                      <Input id="current_title" placeholder="Software Engineer" value={formData.current_title} onChange={(e) => set("current_title", e.target.value)} />
+                  {workExperiences.map((work, idx) => (
+                    <div key={idx} className="space-y-4 p-4 rounded-lg border border-border bg-secondary/20 relative">
+                      {workExperiences.length > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="absolute top-2 right-2 text-destructive hover:text-destructive h-8 w-8 p-0"
+                          onClick={() => removeWork(idx)}
+                          type="button"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label>Job Title</Label>
+                          <Input placeholder="Software Engineer" value={work.title} onChange={(e) => updateWork(idx, "title", e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Company</Label>
+                          <Input placeholder="Acme Inc." value={work.company} onChange={(e) => updateWork(idx, "company", e.target.value)} />
+                        </div>
+                      </div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label>Start Date</Label>
+                          <Input type="month" value={work.start_date} onChange={(e) => updateWork(idx, "start_date", e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>End Date</Label>
+                          <Input
+                            type="month"
+                            value={work.end_date}
+                            onChange={(e) => updateWork(idx, "end_date", e.target.value)}
+                            disabled={work.is_current}
+                            placeholder={work.is_current ? "Present" : ""}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id={`current-${idx}`}
+                          checked={work.is_current}
+                          onCheckedChange={(checked) => updateWork(idx, "is_current", !!checked)}
+                        />
+                        <Label htmlFor={`current-${idx}`} className="text-sm cursor-pointer">I currently work here</Label>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="current_company">Current Company</Label>
-                      <Input id="current_company" placeholder="Acme Inc." value={formData.current_company} onChange={(e) => set("current_company", e.target.value)} />
-                    </div>
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-3">
+                  ))}
+
+                  {/* Authorization section */}
+                  <div className="grid gap-4 sm:grid-cols-3 pt-2">
                     <div className="space-y-2">
                       <Label htmlFor="experience_years">Years of Experience</Label>
                       <Input id="experience_years" type="number" min={0} placeholder="5" value={formData.experience_years} onChange={(e) => set("experience_years", e.target.value)} />
@@ -347,37 +444,59 @@ export default function Profile() {
           {/* Education */}
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-2">
-                <GraduationCap className="h-5 w-5 text-muted-foreground" />
-                <CardTitle className="text-lg">Education</CardTitle>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <GraduationCap className="h-5 w-5 text-muted-foreground" />
+                    <CardTitle className="text-lg">Education</CardTitle>
+                  </div>
+                  <CardDescription className="mt-1.5">Add your education history</CardDescription>
+                </div>
+                <Button variant="outline" size="sm" onClick={addEdu} type="button">
+                  <Plus className="h-4 w-4 mr-1" /> Add
+                </Button>
               </div>
-              <CardDescription>Your most recent or highest degree</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               {isLoading ? (
                 <div className="space-y-4">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
               ) : (
                 <>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="edu_school">School / University</Label>
-                      <Input id="edu_school" placeholder="MIT" value={formData.education_school} onChange={(e) => set("education_school", e.target.value)} />
+                  {educations.map((edu, idx) => (
+                    <div key={idx} className="space-y-4 p-4 rounded-lg border border-border bg-secondary/20 relative">
+                      {educations.length > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="absolute top-2 right-2 text-destructive hover:text-destructive h-8 w-8 p-0"
+                          onClick={() => removeEdu(idx)}
+                          type="button"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label>School / University</Label>
+                          <Input placeholder="MIT" value={edu.school} onChange={(e) => updateEdu(idx, "school", e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Degree</Label>
+                          <Input placeholder="Bachelor's" value={edu.degree} onChange={(e) => updateEdu(idx, "degree", e.target.value)} />
+                        </div>
+                      </div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label>Major / Field of Study</Label>
+                          <Input placeholder="Computer Science" value={edu.major} onChange={(e) => updateEdu(idx, "major", e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Graduation Year</Label>
+                          <Input placeholder="2023" value={edu.graduation_year} onChange={(e) => updateEdu(idx, "graduation_year", e.target.value)} />
+                        </div>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="edu_degree">Degree</Label>
-                      <Input id="edu_degree" placeholder="Bachelor's" value={formData.education_degree} onChange={(e) => set("education_degree", e.target.value)} />
-                    </div>
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="edu_major">Major / Field of Study</Label>
-                      <Input id="edu_major" placeholder="Computer Science" value={formData.education_major} onChange={(e) => set("education_major", e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="edu_year">Graduation Year</Label>
-                      <Input id="edu_year" placeholder="2023" value={formData.education_graduation_year} onChange={(e) => set("education_graduation_year", e.target.value)} />
-                    </div>
-                  </div>
+                  ))}
                   <SaveButton />
                 </>
               )}

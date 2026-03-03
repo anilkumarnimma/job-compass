@@ -4,12 +4,28 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
+export interface WorkExperience {
+  title: string;
+  company: string;
+  start_date: string;
+  end_date: string;
+  is_current: boolean;
+}
+
+export interface Education {
+  school: string;
+  degree: string;
+  major: string;
+  graduation_year: string;
+}
+
 export interface ProfileData {
   full_name: string | null;
   first_name: string | null;
   last_name: string | null;
   email: string;
   phone: string | null;
+  address: string | null;
   location: string | null;
   city: string | null;
   state: string | null;
@@ -23,12 +39,8 @@ export interface ProfileData {
   current_company: string | null;
   current_title: string | null;
   skills: string[] | null;
-  education: {
-    school?: string;
-    degree?: string;
-    major?: string;
-    graduation_year?: string;
-  } | null;
+  work_experience: WorkExperience[] | null;
+  education: Education[] | null;
   resume_url: string | null;
   resume_filename: string | null;
   is_premium: boolean;
@@ -193,6 +205,7 @@ export function useProfile() {
     profile,
     isLoading,
     updateProfile: updateProfileMutation.mutate,
+    updateProfileAsync: updateProfileMutation.mutateAsync,
     isUpdating: updateProfileMutation.isPending,
     uploadResume,
     downloadResume,
