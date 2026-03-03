@@ -59,6 +59,8 @@ Deno.serve(async (req) => {
     const education = Array.isArray(educationRaw) ? educationRaw : [];
     const workExperienceRaw = profile.work_experience;
     const workExperience = Array.isArray(workExperienceRaw) ? workExperienceRaw : [];
+    const certificationsRaw = profile.certifications;
+    const certifications = Array.isArray(certificationsRaw) ? certificationsRaw : [];
 
     const structured = {
       user: { id: user.id, email: user.email || "" },
@@ -94,6 +96,12 @@ Deno.serve(async (req) => {
           degree: e.degree || "",
           major: e.major || "",
           graduation_year: e.graduation_year || "",
+        })),
+        certifications: certifications.map((c: any) => ({
+          name: c.name || "",
+          issuer: c.issuer || "",
+          date_obtained: c.date_obtained || "",
+          expiration_date: c.expiration_date || "",
         })),
         resume_url: profile.resume_url || "",
         resume_filename: profile.resume_filename || "",
