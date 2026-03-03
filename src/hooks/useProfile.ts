@@ -24,6 +24,7 @@ export interface ProfileData {
   first_name: string | null;
   last_name: string | null;
   email: string;
+  contact_email: string | null;
   phone: string | null;
   address: string | null;
   location: string | null;
