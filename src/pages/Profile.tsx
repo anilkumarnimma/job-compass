@@ -718,6 +718,23 @@ export default function Profile() {
               )}
             </CardContent>
           </Card>
+          {/* Account / Security */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <User className="h-5 w-5 text-muted-foreground" />
+                <CardTitle className="text-lg">Account / Security</CardTitle>
+              </div>
+              <CardDescription>Login and billing email (read-only)</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="account_email">Account Email</Label>
+                <Input id="account_email" value={profile?.email || user.email || ""} disabled className="bg-muted" />
+                <p className="text-xs text-muted-foreground">Used for login, authentication, and billing. Cannot be changed here.</p>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Debug Role Section */}
           <Card className="border-dashed border-accent/50 bg-accent/5">
