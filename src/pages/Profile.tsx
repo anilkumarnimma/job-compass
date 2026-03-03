@@ -111,6 +111,8 @@ export default function Profile() {
       const edu = profile.education;
       if (Array.isArray(edu) && edu.length > 0) setEducations(edu);
       else setEducations([{ ...emptyEdu }]);
+      const certs = (profile as any).certifications;
+      if (Array.isArray(certs) && certs.length > 0) setCertifications(certs);
     }
   }, [profile]);
 
