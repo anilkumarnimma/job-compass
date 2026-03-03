@@ -398,12 +398,12 @@ export default function Profile() {
                 <>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="first_name">First Name<ResumeTag field="first_name" /></Label>
-                      <Input id="first_name" placeholder={placeholderFor("first_name", "John")} value={formData.first_name} onChange={(e) => set("first_name", e.target.value)} />
+                      <Label htmlFor="first_name">First Name</Label>
+                      <Input id="first_name" placeholder="John" value={formData.first_name} onChange={(e) => set("first_name", e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="last_name">Last Name<ResumeTag field="last_name" /></Label>
-                      <Input id="last_name" placeholder={placeholderFor("last_name", "Doe")} value={formData.last_name} onChange={(e) => set("last_name", e.target.value)} />
+                      <Label htmlFor="last_name">Last Name</Label>
+                      <Input id="last_name" placeholder="Doe" value={formData.last_name} onChange={(e) => set("last_name", e.target.value)} />
                     </div>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -412,26 +412,26 @@ export default function Profile() {
                       <Input id="email" value={profile?.email || user.email || ""} disabled className="bg-muted" />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Phone<ResumeTag field="phone" /></Label>
-                      <Input id="phone" placeholder={placeholderFor("phone", "+1 (555) 123-4567")} value={formData.phone} onChange={(e) => set("phone", e.target.value)} />
+                      <Label htmlFor="phone">Phone</Label>
+                      <Input id="phone" placeholder="+1 (555) 123-4567" value={formData.phone} onChange={(e) => set("phone", e.target.value)} />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="address">Street Address<ResumeTag field="address" /></Label>
-                    <Input id="address" placeholder={placeholderFor("address", "123 Main St, Apt 4B")} value={formData.address} onChange={(e) => set("address", e.target.value)} />
+                    <Label htmlFor="address">Street Address</Label>
+                    <Input id="address" placeholder="123 Main St, Apt 4B" value={formData.address} onChange={(e) => set("address", e.target.value)} />
                   </div>
                   <div className="grid gap-4 sm:grid-cols-3">
                     <div className="space-y-2">
-                      <Label htmlFor="city">City<ResumeTag field="city" /></Label>
-                      <Input id="city" placeholder={placeholderFor("city", "San Francisco")} value={formData.city} onChange={(e) => set("city", e.target.value)} />
+                      <Label htmlFor="city">City</Label>
+                      <Input id="city" placeholder="San Francisco" value={formData.city} onChange={(e) => set("city", e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="state">State<ResumeTag field="state" /></Label>
-                      <Input id="state" placeholder={placeholderFor("state", "CA")} value={formData.state} onChange={(e) => set("state", e.target.value)} />
+                      <Label htmlFor="state">State</Label>
+                      <Input id="state" placeholder="CA" value={formData.state} onChange={(e) => set("state", e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="zip">ZIP Code<ResumeTag field="zip" /></Label>
-                      <Input id="zip" placeholder={placeholderFor("zip", "94102")} value={formData.zip} onChange={(e) => set("zip", e.target.value)} />
+                      <Label htmlFor="zip">ZIP Code</Label>
+                      <Input id="zip" placeholder="94102" value={formData.zip} onChange={(e) => set("zip", e.target.value)} />
                     </div>
                   </div>
                   <SaveButton />
@@ -453,17 +453,17 @@ export default function Profile() {
               {isLoading ? <div className="space-y-4">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div> : (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="linkedin">LinkedIn URL<ResumeTag field="linkedin_url" /></Label>
-                    <Input id="linkedin" placeholder={placeholderFor("linkedin_url", "https://linkedin.com/in/username")} value={formData.linkedin_url} onChange={(e) => set("linkedin_url", e.target.value)} />
+                    <Label htmlFor="linkedin">LinkedIn URL</Label>
+                    <Input id="linkedin" placeholder="https://linkedin.com/in/username" value={formData.linkedin_url} onChange={(e) => set("linkedin_url", e.target.value)} />
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="github">GitHub URL<ResumeTag field="github_url" /></Label>
-                      <Input id="github" placeholder={placeholderFor("github_url", "https://github.com/username")} value={formData.github_url} onChange={(e) => set("github_url", e.target.value)} />
+                      <Label htmlFor="github">GitHub URL</Label>
+                      <Input id="github" placeholder="https://github.com/username" value={formData.github_url} onChange={(e) => set("github_url", e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="portfolio">Portfolio URL<ResumeTag field="portfolio_url" /></Label>
-                      <Input id="portfolio" placeholder={placeholderFor("portfolio_url", "https://mysite.com")} value={formData.portfolio_url} onChange={(e) => set("portfolio_url", e.target.value)} />
+                      <Label htmlFor="portfolio">Portfolio URL</Label>
+                      <Input id="portfolio" placeholder="https://mysite.com" value={formData.portfolio_url} onChange={(e) => set("portfolio_url", e.target.value)} />
                     </div>
                   </div>
                   <SaveButton />
@@ -479,7 +479,7 @@ export default function Profile() {
                 <div>
                   <div className="flex items-center gap-2">
                     <Briefcase className="h-5 w-5 text-muted-foreground" />
-                    <CardTitle className="text-lg">Work Experience<ResumeTag field="work_experience" /></CardTitle>
+                    <CardTitle className="text-lg">Work Experience</CardTitle>
                   </div>
                   <CardDescription className="mt-1.5">Add your work history with dates</CardDescription>
                 </div>
@@ -512,7 +512,7 @@ export default function Profile() {
                   ))}
                   <div className="grid gap-4 sm:grid-cols-3 pt-2">
                     <div className="space-y-2">
-                      <Label htmlFor="experience_years">Years of Experience<ResumeTag field="experience_years" /></Label>
+                      <Label htmlFor="experience_years">Years of Experience</Label>
                       <Input id="experience_years" type="number" min={0} placeholder="5" value={formData.experience_years} onChange={(e) => set("experience_years", e.target.value)} />
                     </div>
                     <div className="space-y-2">
@@ -543,7 +543,7 @@ export default function Profile() {
                 <div>
                   <div className="flex items-center gap-2">
                     <GraduationCap className="h-5 w-5 text-muted-foreground" />
-                    <CardTitle className="text-lg">Education<ResumeTag field="education" /></CardTitle>
+                    <CardTitle className="text-lg">Education</CardTitle>
                   </div>
                   <CardDescription className="mt-1.5">Add your education history</CardDescription>
                 </div>
@@ -579,7 +579,7 @@ export default function Profile() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-muted-foreground" />
-                <CardTitle className="text-lg">Skills<ResumeTag field="skills" /></CardTitle>
+                <CardTitle className="text-lg">Skills</CardTitle>
               </div>
               <CardDescription>Comma-separated list of your key skills</CardDescription>
             </CardHeader>
@@ -588,7 +588,7 @@ export default function Profile() {
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="skills">Skills</Label>
-                    <Input id="skills" placeholder={placeholderFor("skills", "React, TypeScript, Node.js, AWS")} value={formData.skills} onChange={(e) => set("skills", e.target.value)} />
+                    <Input id="skills" placeholder="React, TypeScript, Node.js, AWS" value={formData.skills} onChange={(e) => set("skills", e.target.value)} />
                   </div>
                   {formData.skills && (
                     <div className="flex flex-wrap gap-2">
@@ -610,7 +610,7 @@ export default function Profile() {
                 <div>
                   <div className="flex items-center gap-2">
                     <Award className="h-5 w-5 text-muted-foreground" />
-                    <CardTitle className="text-lg">Certifications<ResumeTag field="certifications" /></CardTitle>
+                    <CardTitle className="text-lg">Certifications</CardTitle>
                   </div>
                   <CardDescription className="mt-1.5">Professional certifications (optional)</CardDescription>
                 </div>
