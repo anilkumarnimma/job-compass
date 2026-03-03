@@ -306,6 +306,7 @@ export type Database = {
           address: string | null
           certifications: Json | null
           city: string | null
+          contact_email: string | null
           country: string | null
           created_at: string
           current_company: string | null
@@ -346,6 +347,7 @@ export type Database = {
           address?: string | null
           certifications?: Json | null
           city?: string | null
+          contact_email?: string | null
           country?: string | null
           created_at?: string
           current_company?: string | null
@@ -386,6 +388,7 @@ export type Database = {
           address?: string | null
           certifications?: Json | null
           city?: string | null
+          contact_email?: string | null
           country?: string | null
           created_at?: string
           current_company?: string | null
