@@ -85,6 +85,12 @@ export default function Profile() {
     current_company: "",
     current_title: "",
     skills: "",
+    gender: "",
+    race_ethnicity: "",
+    hispanic_latino: "",
+    veteran_status: "",
+    disability_status: "",
+    military_service: "",
   });
 
   const [workExperiences, setWorkExperiences] = useState<WorkExperience[]>([{ ...emptyWork }]);
