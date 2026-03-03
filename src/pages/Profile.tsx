@@ -139,6 +139,7 @@ export default function Profile() {
       skills: skillsArray,
       work_experience: workExperiences.filter((w) => w.title || w.company),
       education: educations.filter((e) => e.school || e.degree),
+      certifications: certifications.filter((c) => c.name),
       gender: formData.gender || null, race_ethnicity: formData.race_ethnicity || null,
       hispanic_latino: formData.hispanic_latino || null, veteran_status: formData.veteran_status || null,
       disability_status: formData.disability_status || null, military_service: formData.military_service || null,
