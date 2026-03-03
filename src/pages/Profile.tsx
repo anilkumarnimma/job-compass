@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { Navigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { useProfile, ProfileData, WorkExperience, Education } from "@/hooks/useProfile";
+import { useToast } from "@/hooks/use-toast";
 import { useResumeParser, ExtractedResumeData } from "@/hooks/useResumeParser";
 import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
 import { ResumeReviewDialog } from "@/components/ResumeReviewDialog";
@@ -57,11 +59,12 @@ const emptyCert: Certification = { name: "", issuer: "", date_obtained: "", expi
 export default function Profile() {
   const { user, isLoading: authLoading } = useAuth();
   const { profile, isLoading, updateProfile, isUpdating, uploadResume, downloadResume, deleteResume, isUploading } = useProfile();
+  const { toast } = useToast();
   const { parseResume, isParsing, extractedData, clearExtracted } = useResumeParser();
   const { data: effectiveRole, isLoading: roleLoading } = useUserRole();
   const { data: allRoles } = useAllUserRoles();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const resumeAutoFillRef = useRef<HTMLInputElement>(null);
+  const reuploadRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     first_name: "", last_name: "", phone: "", address: "", city: "", state: "", zip: "",
@@ -76,7 +79,7 @@ export default function Profile() {
   const [workExperiences, setWorkExperiences] = useState<WorkExperience[]>([{ ...emptyWork }]);
   const [educations, setEducations] = useState<Education[]>([{ ...emptyEdu }]);
   const [certifications, setCertifications] = useState<Certification[]>([]);
-  const [resumeFilledFields, setResumeFilledFields] = useState<Set<string>>(new Set());
+  const [isDownloadingResume, setIsDownloadingResume] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<{ label: string; field: string; oldValue: string; newValue: string }[]>([]);
   const [pendingExtracted, setPendingExtracted] = useState<ExtractedResumeData | null>(null);
@@ -142,13 +145,8 @@ export default function Profile() {
     } as any);
   };
 
-  const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) uploadResume(file);
-  };
-
-  // Auto-fill flow
-  const handleAutoFillUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // First-time upload: upload + autofill
+  const handleFirstUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setPendingFile(file);
@@ -157,11 +155,33 @@ export default function Profile() {
     buildReviewChanges(extracted);
   };
 
-  const handleReRunAutofill = async () => {
-    if (!profile?.resume_url) return;
-    // Re-download the existing resume and parse
-    // For simplicity, ask user to re-upload
-    resumeAutoFillRef.current?.click();
+  // Re-upload: replace resume + autofill
+  const handleReupload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadResume(file);
+    setPendingFile(null);
+    const extracted = await parseResume(file);
+    if (!extracted) return;
+    buildReviewChanges(extracted);
+  };
+
+  // Autofill again using existing stored resume
+  const handleAutofillExisting = async () => {
+    if (!profile?.resume_url || !user) return;
+    setIsDownloadingResume(true);
+    try {
+      const { data, error } = await supabase.storage.from("resumes").download(profile.resume_url);
+      if (error) throw error;
+      const file = new File([data], profile.resume_filename || "resume.pdf", { type: data.type });
+      const extracted = await parseResume(file);
+      if (!extracted) return;
+      buildReviewChanges(extracted);
+    } catch (err: any) {
+      toast({ title: "Failed to read resume", description: err.message, variant: "destructive" });
+    } finally {
+      setIsDownloadingResume(false);
+    }
   };
 
   const buildReviewChanges = (extracted: ExtractedResumeData) => {
@@ -271,10 +291,9 @@ export default function Profile() {
       filled.add("certifications");
     }
 
-    setResumeFilledFields(filled);
     setShowReview(false);
 
-    // Also upload the file as resume if we have a pending file
+    // Upload the file as resume if we have a pending file (first-time flow)
     if (pendingFile) {
       await uploadResume(pendingFile);
       setPendingFile(null);
@@ -292,13 +311,6 @@ export default function Profile() {
   const addCert = () => setCertifications(p => [...p, { ...emptyCert }]);
   const removeCert = (i: number) => setCertifications(p => p.filter((_, idx) => idx !== i));
 
-  const ResumeTag = ({ field }: { field: string }) =>
-    resumeFilledFields.has(field) ? <Badge variant="outline" className="text-[10px] ml-2 text-primary border-primary/30">Filled from Resume</Badge> : null;
-
-  const placeholderFor = (field: string, defaultPh: string) =>
-    resumeFilledFields.size > 0 && !resumeFilledFields.has(field)
-      ? "Not found in resume — enter manually"
-      : defaultPh;
 
   const SaveButton = () => (
     <div className="flex justify-end pt-4">
@@ -327,50 +339,46 @@ export default function Profile() {
             <CardContent>
               {isLoading ? <Skeleton className="h-24 w-full" /> : (
                 <div className="space-y-4">
-                  <input type="file" ref={fileInputRef} accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleResumeUpload} className="hidden" />
-                  <input type="file" ref={resumeAutoFillRef} accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleAutoFillUpload} className="hidden" />
+                  <input type="file" ref={fileInputRef} accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleFirstUpload} className="hidden" />
+                  <input type="file" ref={reuploadRef} accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleReupload} className="hidden" />
 
                   {profile?.resume_filename ? (
-                    <div className="flex items-center justify-between p-4 bg-background rounded-lg border border-border">
-                      <div className="flex items-center gap-3">
-                        <FileText className="h-8 w-8 text-primary" />
-                        <div>
-                          <p className="font-medium text-foreground">{profile.resume_filename}</p>
-                          <p className="text-sm text-muted-foreground">Uploaded resume</p>
+                    <>
+                      <div className="flex items-center justify-between p-4 bg-background rounded-lg border border-border">
+                        <div className="flex items-center gap-3">
+                          <FileText className="h-8 w-8 text-primary" />
+                          <div>
+                            <p className="font-medium text-foreground">{profile.resume_filename}</p>
+                            <p className="text-sm text-muted-foreground">Uploaded resume</p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex gap-2 flex-wrap">
                         <Button variant="outline" size="sm" onClick={downloadResume}>
                           <Download className="h-4 w-4 mr-1" /> Download
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
-                          {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Upload className="h-4 w-4 mr-1" /> Replace</>}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button onClick={handleAutofillExisting} disabled={isParsing || isDownloadingResume} className="flex-1">
+                          {isParsing || isDownloadingResume ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Parsing Resume...</> : <><Wand2 className="h-4 w-4 mr-2" />Auto-fill from Resume</>}
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={deleteResume} className="text-destructive hover:text-destructive">
+                        <Button variant="outline" onClick={() => reuploadRef.current?.click()} disabled={isUploading || isParsing}>
+                          {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Upload className="h-4 w-4 mr-1" />Re-upload</>}
+                        </Button>
+                        <Button variant="ghost" onClick={deleteResume} className="text-destructive hover:text-destructive">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                    </div>
+                    </>
                   ) : (
-                    <div onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 hover:bg-secondary/30 transition-colors">
-                      {isUploading ? (
-                        <><Loader2 className="h-10 w-10 text-muted-foreground animate-spin mb-3" /><p className="text-muted-foreground">Uploading...</p></>
-                      ) : (
-                        <><Upload className="h-10 w-10 text-muted-foreground mb-3" /><p className="font-medium text-foreground">Click to upload resume</p><p className="text-sm text-muted-foreground mt-1">PDF or DOCX files</p></>
-                      )}
-                    </div>
+                    <>
+                      <div onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 hover:bg-secondary/30 transition-colors">
+                        {isUploading || isParsing ? (
+                          <><Loader2 className="h-10 w-10 text-muted-foreground animate-spin mb-3" /><p className="text-muted-foreground">{isParsing ? "Parsing..." : "Uploading..."}</p></>
+                        ) : (
+                          <><Upload className="h-10 w-10 text-muted-foreground mb-3" /><p className="font-medium text-foreground">Click to upload resume</p><p className="text-sm text-muted-foreground mt-1">PDF or DOCX — will auto-fill your profile</p></>
+                        )}
+                      </div>
+                    </>
                   )}
-
-                  <div className="flex gap-2">
-                    <Button onClick={() => resumeAutoFillRef.current?.click()} disabled={isParsing} className="flex-1">
-                      {isParsing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Parsing Resume...</> : <><Wand2 className="h-4 w-4 mr-2" />Auto-fill from Resume</>}
-                    </Button>
-                    {profile?.resume_filename && (
-                      <Button variant="outline" onClick={() => resumeAutoFillRef.current?.click()} disabled={isParsing}>
-                        Re-run Auto-fill
-                      </Button>
-                    )}
-                  </div>
                 </div>
               )}
             </CardContent>
@@ -390,12 +398,12 @@ export default function Profile() {
                 <>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="first_name">First Name<ResumeTag field="first_name" /></Label>
-                      <Input id="first_name" placeholder={placeholderFor("first_name", "John")} value={formData.first_name} onChange={(e) => set("first_name", e.target.value)} />
+                      <Label htmlFor="first_name">First Name</Label>
+                      <Input id="first_name" placeholder="John" value={formData.first_name} onChange={(e) => set("first_name", e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="last_name">Last Name<ResumeTag field="last_name" /></Label>
-                      <Input id="last_name" placeholder={placeholderFor("last_name", "Doe")} value={formData.last_name} onChange={(e) => set("last_name", e.target.value)} />
+                      <Label htmlFor="last_name">Last Name</Label>
+                      <Input id="last_name" placeholder="Doe" value={formData.last_name} onChange={(e) => set("last_name", e.target.value)} />
                     </div>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -404,26 +412,26 @@ export default function Profile() {
                       <Input id="email" value={profile?.email || user.email || ""} disabled className="bg-muted" />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Phone<ResumeTag field="phone" /></Label>
-                      <Input id="phone" placeholder={placeholderFor("phone", "+1 (555) 123-4567")} value={formData.phone} onChange={(e) => set("phone", e.target.value)} />
+                      <Label htmlFor="phone">Phone</Label>
+                      <Input id="phone" placeholder="+1 (555) 123-4567" value={formData.phone} onChange={(e) => set("phone", e.target.value)} />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="address">Street Address<ResumeTag field="address" /></Label>
-                    <Input id="address" placeholder={placeholderFor("address", "123 Main St, Apt 4B")} value={formData.address} onChange={(e) => set("address", e.target.value)} />
+                    <Label htmlFor="address">Street Address</Label>
+                    <Input id="address" placeholder="123 Main St, Apt 4B" value={formData.address} onChange={(e) => set("address", e.target.value)} />
                   </div>
                   <div className="grid gap-4 sm:grid-cols-3">
                     <div className="space-y-2">
-                      <Label htmlFor="city">City<ResumeTag field="city" /></Label>
-                      <Input id="city" placeholder={placeholderFor("city", "San Francisco")} value={formData.city} onChange={(e) => set("city", e.target.value)} />
+                      <Label htmlFor="city">City</Label>
+                      <Input id="city" placeholder="San Francisco" value={formData.city} onChange={(e) => set("city", e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="state">State<ResumeTag field="state" /></Label>
-                      <Input id="state" placeholder={placeholderFor("state", "CA")} value={formData.state} onChange={(e) => set("state", e.target.value)} />
+                      <Label htmlFor="state">State</Label>
+                      <Input id="state" placeholder="CA" value={formData.state} onChange={(e) => set("state", e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="zip">ZIP Code<ResumeTag field="zip" /></Label>
-                      <Input id="zip" placeholder={placeholderFor("zip", "94102")} value={formData.zip} onChange={(e) => set("zip", e.target.value)} />
+                      <Label htmlFor="zip">ZIP Code</Label>
+                      <Input id="zip" placeholder="94102" value={formData.zip} onChange={(e) => set("zip", e.target.value)} />
                     </div>
                   </div>
                   <SaveButton />
@@ -445,17 +453,17 @@ export default function Profile() {
               {isLoading ? <div className="space-y-4">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div> : (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="linkedin">LinkedIn URL<ResumeTag field="linkedin_url" /></Label>
-                    <Input id="linkedin" placeholder={placeholderFor("linkedin_url", "https://linkedin.com/in/username")} value={formData.linkedin_url} onChange={(e) => set("linkedin_url", e.target.value)} />
+                    <Label htmlFor="linkedin">LinkedIn URL</Label>
+                    <Input id="linkedin" placeholder="https://linkedin.com/in/username" value={formData.linkedin_url} onChange={(e) => set("linkedin_url", e.target.value)} />
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="github">GitHub URL<ResumeTag field="github_url" /></Label>
-                      <Input id="github" placeholder={placeholderFor("github_url", "https://github.com/username")} value={formData.github_url} onChange={(e) => set("github_url", e.target.value)} />
+                      <Label htmlFor="github">GitHub URL</Label>
+                      <Input id="github" placeholder="https://github.com/username" value={formData.github_url} onChange={(e) => set("github_url", e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="portfolio">Portfolio URL<ResumeTag field="portfolio_url" /></Label>
-                      <Input id="portfolio" placeholder={placeholderFor("portfolio_url", "https://mysite.com")} value={formData.portfolio_url} onChange={(e) => set("portfolio_url", e.target.value)} />
+                      <Label htmlFor="portfolio">Portfolio URL</Label>
+                      <Input id="portfolio" placeholder="https://mysite.com" value={formData.portfolio_url} onChange={(e) => set("portfolio_url", e.target.value)} />
                     </div>
                   </div>
                   <SaveButton />
@@ -471,7 +479,7 @@ export default function Profile() {
                 <div>
                   <div className="flex items-center gap-2">
                     <Briefcase className="h-5 w-5 text-muted-foreground" />
-                    <CardTitle className="text-lg">Work Experience<ResumeTag field="work_experience" /></CardTitle>
+                    <CardTitle className="text-lg">Work Experience</CardTitle>
                   </div>
                   <CardDescription className="mt-1.5">Add your work history with dates</CardDescription>
                 </div>
@@ -504,7 +512,7 @@ export default function Profile() {
                   ))}
                   <div className="grid gap-4 sm:grid-cols-3 pt-2">
                     <div className="space-y-2">
-                      <Label htmlFor="experience_years">Years of Experience<ResumeTag field="experience_years" /></Label>
+                      <Label htmlFor="experience_years">Years of Experience</Label>
                       <Input id="experience_years" type="number" min={0} placeholder="5" value={formData.experience_years} onChange={(e) => set("experience_years", e.target.value)} />
                     </div>
                     <div className="space-y-2">
@@ -535,7 +543,7 @@ export default function Profile() {
                 <div>
                   <div className="flex items-center gap-2">
                     <GraduationCap className="h-5 w-5 text-muted-foreground" />
-                    <CardTitle className="text-lg">Education<ResumeTag field="education" /></CardTitle>
+                    <CardTitle className="text-lg">Education</CardTitle>
                   </div>
                   <CardDescription className="mt-1.5">Add your education history</CardDescription>
                 </div>
@@ -571,7 +579,7 @@ export default function Profile() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-muted-foreground" />
-                <CardTitle className="text-lg">Skills<ResumeTag field="skills" /></CardTitle>
+                <CardTitle className="text-lg">Skills</CardTitle>
               </div>
               <CardDescription>Comma-separated list of your key skills</CardDescription>
             </CardHeader>
@@ -580,7 +588,7 @@ export default function Profile() {
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="skills">Skills</Label>
-                    <Input id="skills" placeholder={placeholderFor("skills", "React, TypeScript, Node.js, AWS")} value={formData.skills} onChange={(e) => set("skills", e.target.value)} />
+                    <Input id="skills" placeholder="React, TypeScript, Node.js, AWS" value={formData.skills} onChange={(e) => set("skills", e.target.value)} />
                   </div>
                   {formData.skills && (
                     <div className="flex flex-wrap gap-2">
@@ -602,7 +610,7 @@ export default function Profile() {
                 <div>
                   <div className="flex items-center gap-2">
                     <Award className="h-5 w-5 text-muted-foreground" />
-                    <CardTitle className="text-lg">Certifications<ResumeTag field="certifications" /></CardTitle>
+                    <CardTitle className="text-lg">Certifications</CardTitle>
                   </div>
                   <CardDescription className="mt-1.5">Professional certifications (optional)</CardDescription>
                 </div>
