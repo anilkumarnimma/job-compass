@@ -61,7 +61,7 @@ export default function Profile() {
   const { data: effectiveRole, isLoading: roleLoading } = useUserRole();
   const { data: allRoles } = useAllUserRoles();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const resumeAutoFillRef = useRef<HTMLInputElement>(null);
+  const reuploadRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     first_name: "", last_name: "", phone: "", address: "", city: "", state: "", zip: "",
@@ -76,7 +76,7 @@ export default function Profile() {
   const [workExperiences, setWorkExperiences] = useState<WorkExperience[]>([{ ...emptyWork }]);
   const [educations, setEducations] = useState<Education[]>([{ ...emptyEdu }]);
   const [certifications, setCertifications] = useState<Certification[]>([]);
-  const [resumeFilledFields, setResumeFilledFields] = useState<Set<string>>(new Set());
+  const [isDownloadingResume, setIsDownloadingResume] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<{ label: string; field: string; oldValue: string; newValue: string }[]>([]);
   const [pendingExtracted, setPendingExtracted] = useState<ExtractedResumeData | null>(null);
@@ -142,13 +142,8 @@ export default function Profile() {
     } as any);
   };
 
-  const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) uploadResume(file);
-  };
-
-  // Auto-fill flow
-  const handleAutoFillUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // First-time upload: upload + autofill
+  const handleFirstUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setPendingFile(file);
@@ -157,11 +152,33 @@ export default function Profile() {
     buildReviewChanges(extracted);
   };
 
-  const handleReRunAutofill = async () => {
-    if (!profile?.resume_url) return;
-    // Re-download the existing resume and parse
-    // For simplicity, ask user to re-upload
-    resumeAutoFillRef.current?.click();
+  // Re-upload: replace resume + autofill
+  const handleReupload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadResume(file);
+    setPendingFile(null);
+    const extracted = await parseResume(file);
+    if (!extracted) return;
+    buildReviewChanges(extracted);
+  };
+
+  // Autofill again using existing stored resume
+  const handleAutofillExisting = async () => {
+    if (!profile?.resume_url || !user) return;
+    setIsDownloadingResume(true);
+    try {
+      const { data, error } = await supabase.storage.from("resumes").download(profile.resume_url);
+      if (error) throw error;
+      const file = new File([data], profile.resume_filename || "resume.pdf", { type: data.type });
+      const extracted = await parseResume(file);
+      if (!extracted) return;
+      buildReviewChanges(extracted);
+    } catch (err: any) {
+      toast({ title: "Failed to read resume", description: err.message, variant: "destructive" });
+    } finally {
+      setIsDownloadingResume(false);
+    }
   };
 
   const buildReviewChanges = (extracted: ExtractedResumeData) => {
@@ -271,10 +288,9 @@ export default function Profile() {
       filled.add("certifications");
     }
 
-    setResumeFilledFields(filled);
     setShowReview(false);
 
-    // Also upload the file as resume if we have a pending file
+    // Upload the file as resume if we have a pending file (first-time flow)
     if (pendingFile) {
       await uploadResume(pendingFile);
       setPendingFile(null);
@@ -292,13 +308,6 @@ export default function Profile() {
   const addCert = () => setCertifications(p => [...p, { ...emptyCert }]);
   const removeCert = (i: number) => setCertifications(p => p.filter((_, idx) => idx !== i));
 
-  const ResumeTag = ({ field }: { field: string }) =>
-    resumeFilledFields.has(field) ? <Badge variant="outline" className="text-[10px] ml-2 text-primary border-primary/30">Filled from Resume</Badge> : null;
-
-  const placeholderFor = (field: string, defaultPh: string) =>
-    resumeFilledFields.size > 0 && !resumeFilledFields.has(field)
-      ? "Not found in resume — enter manually"
-      : defaultPh;
 
   const SaveButton = () => (
     <div className="flex justify-end pt-4">
