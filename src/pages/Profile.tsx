@@ -67,7 +67,7 @@ export default function Profile() {
   const reuploadRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
-    first_name: "", last_name: "", phone: "", address: "", city: "", state: "", zip: "",
+    first_name: "", last_name: "", contact_email: "", phone: "", address: "", city: "", state: "", zip: "",
     linkedin_url: "", github_url: "", portfolio_url: "",
     work_authorization: "", visa_status: "",
     experience_years: "" as string | number,
@@ -89,6 +89,7 @@ export default function Profile() {
     if (profile) {
       setFormData({
         first_name: profile.first_name || "", last_name: profile.last_name || "",
+        contact_email: (profile as any).contact_email || "",
         phone: profile.phone || "", address: (profile as any).address || "",
         city: profile.city || "", state: profile.state || "", zip: profile.zip || "",
         linkedin_url: profile.linkedin_url || "", github_url: profile.github_url || "",
@@ -129,6 +130,7 @@ export default function Profile() {
     updateProfile({
       first_name: formData.first_name || null, last_name: formData.last_name || null,
       full_name: [formData.first_name, formData.last_name].filter(Boolean).join(" ") || null,
+      contact_email: formData.contact_email || null,
       phone: formData.phone || null, address: formData.address || null,
       city: formData.city || null, state: formData.state || null, zip: formData.zip || null,
       location: [formData.city, formData.state].filter(Boolean).join(", ") || null,
@@ -192,7 +194,7 @@ export default function Profile() {
     const fieldMap: { field: string; label: string; extractedKey: keyof ExtractedResumeData; currentValue: string }[] = [
       { field: "first_name", label: "First Name", extractedKey: "first_name", currentValue: formData.first_name },
       { field: "last_name", label: "Last Name", extractedKey: "last_name", currentValue: formData.last_name },
-      { field: "email", label: "Email", extractedKey: "email", currentValue: profile?.email || "" },
+      { field: "contact_email", label: "Contact Email", extractedKey: "email", currentValue: formData.contact_email },
       { field: "phone", label: "Phone", extractedKey: "phone", currentValue: formData.phone },
       { field: "city", label: "City", extractedKey: "city", currentValue: formData.city },
       { field: "state", label: "State", extractedKey: "state", currentValue: formData.state },
@@ -258,6 +260,10 @@ export default function Profile() {
 
     const updates: Record<string, string> = {};
     const simpleFields = ["first_name", "last_name", "phone", "city", "state", "zip", "address", "linkedin_url", "github_url", "portfolio_url"] as const;
+    // Map extracted email to contact_email
+    if (e.email) {
+      setFormData(prev => ({ ...prev, contact_email: e.email as string }));
+    }
     for (const f of simpleFields) {
       if (e[f]) { updates[f] = e[f] as string; filled.add(f); }
     }
