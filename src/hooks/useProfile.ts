@@ -6,11 +6,29 @@ import { useToast } from "@/hooks/use-toast";
 
 export interface ProfileData {
   full_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
   email: string;
   phone: string | null;
   location: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
   linkedin_url: string | null;
+  github_url: string | null;
   portfolio_url: string | null;
+  work_authorization: string | null;
+  visa_status: string | null;
+  experience_years: number | null;
+  current_company: string | null;
+  current_title: string | null;
+  skills: string[] | null;
+  education: {
+    school?: string;
+    degree?: string;
+    major?: string;
+    graduation_year?: string;
+  } | null;
   resume_url: string | null;
   resume_filename: string | null;
   is_premium: boolean;
@@ -34,7 +52,7 @@ export function useProfile() {
         .single();
       
       if (error) throw error;
-      return data as ProfileData;
+      return data as unknown as ProfileData;
     },
     enabled: !!user,
     staleTime: 0,
@@ -47,7 +65,7 @@ export function useProfile() {
       
       const { error } = await supabase
         .from("profiles")
-        .update(updates)
+        .update(updates as any)
         .eq("user_id", user.id);
       
       if (error) throw error;
@@ -85,7 +103,6 @@ export function useProfile() {
     try {
       const filePath = `${user.id}/${file.name}`;
       
-      // Delete old resume if exists
       if (profile?.resume_url) {
         const oldPath = profile.resume_url.split("/").slice(-2).join("/");
         await supabase.storage.from("resumes").remove([oldPath]);
@@ -96,10 +113,6 @@ export function useProfile() {
         .upload(filePath, file, { upsert: true });
       
       if (uploadError) throw uploadError;
-      
-      const { data: { publicUrl } } = supabase.storage
-        .from("resumes")
-        .getPublicUrl(filePath);
       
       await updateProfileMutation.mutateAsync({
         resume_url: filePath,
