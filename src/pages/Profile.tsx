@@ -417,14 +417,20 @@ export default function Profile() {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input id="email" value={profile?.email || user.email || ""} disabled className="bg-muted" />
+                      <Label htmlFor="contact_email">Contact Email</Label>
+                      <Input id="contact_email" placeholder="email@example.com" value={formData.contact_email} onChange={(e) => set("contact_email", e.target.value)} />
+                      <p className="text-xs text-muted-foreground">Used for job applications and autofill</p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone</Label>
                       <Input id="phone" placeholder="+1 (555) 123-4567" value={formData.phone} onChange={(e) => set("phone", e.target.value)} />
                     </div>
                   </div>
+                  {formData.contact_email && formData.contact_email !== (profile?.email || user.email || "") && (
+                    <p className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400 p-2 rounded">
+                      Job applications will use <strong>{formData.contact_email}</strong>. Your account uses <strong>{profile?.email || user.email}</strong>.
+                    </p>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="address">Street Address</Label>
                     <Input id="address" placeholder="123 Main St, Apt 4B" value={formData.address} onChange={(e) => set("address", e.target.value)} />
