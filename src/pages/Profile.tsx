@@ -736,6 +736,9 @@ export default function Profile() {
             </CardContent>
           </Card>
 
+          {/* Final Save */}
+          <SaveButton />
+
           {/* Debug Role Section */}
           <Card className="border-dashed border-accent/50 bg-accent/5">
             <CardHeader>
