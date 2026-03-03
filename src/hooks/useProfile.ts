@@ -41,6 +41,7 @@ export interface ProfileData {
   skills: string[] | null;
   work_experience: WorkExperience[] | null;
   education: Education[] | null;
+  certifications: { name: string; issuer: string; date_obtained: string; expiration_date: string }[] | null;
   resume_url: string | null;
   resume_filename: string | null;
   is_premium: boolean;
