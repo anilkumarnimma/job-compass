@@ -309,27 +309,33 @@ export type Database = {
           created_at: string
           current_company: string | null
           current_title: string | null
+          disability_status: string | null
           education: Json | null
           email: string
           employer_id: string | null
           experience_years: number | null
           first_name: string | null
           full_name: string | null
+          gender: string | null
           github_url: string | null
+          hispanic_latino: string | null
           id: string
           is_active: boolean
           is_premium: boolean
           last_name: string | null
           linkedin_url: string | null
           location: string | null
+          military_service: string | null
           phone: string | null
           portfolio_url: string | null
+          race_ethnicity: string | null
           resume_filename: string | null
           resume_url: string | null
           skills: string[] | null
           state: string | null
           updated_at: string
           user_id: string
+          veteran_status: string | null
           visa_status: string | null
           work_authorization: string | null
           work_experience: Json | null
@@ -342,27 +348,33 @@ export type Database = {
           created_at?: string
           current_company?: string | null
           current_title?: string | null
+          disability_status?: string | null
           education?: Json | null
           email: string
           employer_id?: string | null
           experience_years?: number | null
           first_name?: string | null
           full_name?: string | null
+          gender?: string | null
           github_url?: string | null
+          hispanic_latino?: string | null
           id?: string
           is_active?: boolean
           is_premium?: boolean
           last_name?: string | null
           linkedin_url?: string | null
           location?: string | null
+          military_service?: string | null
           phone?: string | null
           portfolio_url?: string | null
+          race_ethnicity?: string | null
           resume_filename?: string | null
           resume_url?: string | null
           skills?: string[] | null
           state?: string | null
           updated_at?: string
           user_id: string
+          veteran_status?: string | null
           visa_status?: string | null
           work_authorization?: string | null
           work_experience?: Json | null
@@ -375,27 +387,33 @@ export type Database = {
           created_at?: string
           current_company?: string | null
           current_title?: string | null
+          disability_status?: string | null
           education?: Json | null
           email?: string
           employer_id?: string | null
           experience_years?: number | null
           first_name?: string | null
           full_name?: string | null
+          gender?: string | null
           github_url?: string | null
+          hispanic_latino?: string | null
           id?: string
           is_active?: boolean
           is_premium?: boolean
           last_name?: string | null
           linkedin_url?: string | null
           location?: string | null
+          military_service?: string | null
           phone?: string | null
           portfolio_url?: string | null
+          race_ethnicity?: string | null
           resume_filename?: string | null
           resume_url?: string | null
           skills?: string[] | null
           state?: string | null
           updated_at?: string
           user_id?: string
+          veteran_status?: string | null
           visa_status?: string | null
           work_authorization?: string | null
           work_experience?: Json | null

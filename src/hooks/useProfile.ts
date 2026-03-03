@@ -44,6 +44,12 @@ export interface ProfileData {
   resume_url: string | null;
   resume_filename: string | null;
   is_premium: boolean;
+  gender: string | null;
+  race_ethnicity: string | null;
+  hispanic_latino: string | null;
+  veteran_status: string | null;
+  disability_status: string | null;
+  military_service: string | null;
 }
 
 export function useProfile() {

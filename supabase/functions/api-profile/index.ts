@@ -98,6 +98,12 @@ Deno.serve(async (req) => {
         resume_url: profile.resume_url || "",
         resume_filename: profile.resume_filename || "",
         is_premium: profile.is_premium || false,
+        gender: profile.gender || "",
+        race_ethnicity: profile.race_ethnicity || "",
+        hispanic_latino: profile.hispanic_latino || "",
+        veteran_status: profile.veteran_status || "",
+        disability_status: profile.disability_status || "",
+        military_service: profile.military_service || "",
       },
     };
 

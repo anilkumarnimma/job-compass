@@ -35,6 +35,29 @@ const VISA_STATUS_OPTIONS = [
   "Will need sponsorship in future",
 ];
 
+const GENDER_OPTIONS = ["Male", "Female", "Non-binary", "Other", "Prefer not to say"];
+const RACE_ETHNICITY_OPTIONS = [
+  "American Indian or Alaska Native",
+  "Asian",
+  "Black or African American",
+  "Native Hawaiian or Other Pacific Islander",
+  "White",
+  "Two or More Races",
+  "Prefer not to say",
+];
+const HISPANIC_LATINO_OPTIONS = ["Yes", "No", "Prefer not to say"];
+const VETERAN_OPTIONS = [
+  "I am not a protected veteran",
+  "I identify as one or more of the classifications of a protected veteran",
+  "Prefer not to say",
+];
+const DISABILITY_OPTIONS = [
+  "Yes, I have a disability (or previously had a disability)",
+  "No, I do not have a disability",
+  "Prefer not to say",
+];
+const MILITARY_OPTIONS = ["Yes", "No", "Prefer not to say"];
+
 const emptyWork: WorkExperience = { title: "", company: "", start_date: "", end_date: "", is_current: false };
 const emptyEdu: Education = { school: "", degree: "", major: "", graduation_year: "" };
 
@@ -62,6 +85,12 @@ export default function Profile() {
     current_company: "",
     current_title: "",
     skills: "",
+    gender: "",
+    race_ethnicity: "",
+    hispanic_latino: "",
+    veteran_status: "",
+    disability_status: "",
+    military_service: "",
   });
 
   const [workExperiences, setWorkExperiences] = useState<WorkExperience[]>([{ ...emptyWork }]);
@@ -86,6 +115,12 @@ export default function Profile() {
         current_company: profile.current_company || "",
         current_title: profile.current_title || "",
         skills: (profile.skills || []).join(", "),
+        gender: (profile as any).gender || "",
+        race_ethnicity: (profile as any).race_ethnicity || "",
+        hispanic_latino: (profile as any).hispanic_latino || "",
+        veteran_status: (profile as any).veteran_status || "",
+        disability_status: (profile as any).disability_status || "",
+        military_service: (profile as any).military_service || "",
       });
 
       const we = profile.work_experience;
@@ -160,6 +195,12 @@ export default function Profile() {
       skills: skillsArray,
       work_experience: workExperiences.filter((w) => w.title || w.company),
       education: educations.filter((e) => e.school || e.degree),
+      gender: formData.gender || null,
+      race_ethnicity: formData.race_ethnicity || null,
+      hispanic_latino: formData.hispanic_latino || null,
+      veteran_status: formData.veteran_status || null,
+      disability_status: formData.disability_status || null,
+      military_service: formData.military_service || null,
     } as any);
   };
 
@@ -559,6 +600,98 @@ export default function Profile() {
                     </div>
                   )}
                 </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* EEO / Demographics */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <User className="h-5 w-5 text-muted-foreground" />
+                <CardTitle className="text-lg">Equal Opportunity (Optional)</CardTitle>
+              </div>
+              <CardDescription>Voluntary self-identification — used for autofill on job applications</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {isLoading ? (
+                <div className="space-y-4">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
+              ) : (
+                <>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Gender</Label>
+                      <Select value={formData.gender} onValueChange={(v) => set("gender", v)}>
+                        <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                        <SelectContent>
+                          {GENDER_OPTIONS.map((opt) => (
+                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Race / Ethnicity</Label>
+                      <Select value={formData.race_ethnicity} onValueChange={(v) => set("race_ethnicity", v)}>
+                        <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                        <SelectContent>
+                          {RACE_ETHNICITY_OPTIONS.map((opt) => (
+                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="space-y-2">
+                      <Label>Hispanic or Latino</Label>
+                      <Select value={formData.hispanic_latino} onValueChange={(v) => set("hispanic_latino", v)}>
+                        <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                        <SelectContent>
+                          {HISPANIC_LATINO_OPTIONS.map((opt) => (
+                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Veteran Status</Label>
+                      <Select value={formData.veteran_status} onValueChange={(v) => set("veteran_status", v)}>
+                        <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                        <SelectContent>
+                          {VETERAN_OPTIONS.map((opt) => (
+                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Disability Status</Label>
+                      <Select value={formData.disability_status} onValueChange={(v) => set("disability_status", v)}>
+                        <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                        <SelectContent>
+                          {DISABILITY_OPTIONS.map((opt) => (
+                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Have you served in the military?</Label>
+                      <Select value={formData.military_service} onValueChange={(v) => set("military_service", v)}>
+                        <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                        <SelectContent>
+                          {MILITARY_OPTIONS.map((opt) => (
+                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <SaveButton />
+                </>
               )}
             </CardContent>
           </Card>
