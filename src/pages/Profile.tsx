@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useResumeParser, ExtractedResumeData } from "@/hooks/useResumeParser";
 import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
 import { ResumeReviewDialog } from "@/components/ResumeReviewDialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -63,7 +64,7 @@ export default function Profile() {
   const { data: effectiveRole, isLoading: roleLoading } = useUserRole();
   const { data: allRoles } = useAllUserRoles();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const reuploadRef = useRef<HTMLInputElement>(null);
+  
 
   const [isEditing, setIsEditing] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
@@ -813,6 +814,23 @@ export default function Profile() {
       </main>
 
       <ResumeReviewDialog open={showReview} onOpenChange={setShowReview} changes={pendingChanges} onApply={applyExtracted} />
+
+      <AlertDialog open={showAutofillPrompt} onOpenChange={setShowAutofillPrompt}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Auto-fill profile from resume?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your resume was uploaded successfully. Would you like to extract details and auto-fill your profile?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleAutofillPromptNo}>No, thanks</AlertDialogCancel>
+            <AlertDialogAction onClick={handleAutofillPromptYes}>
+              <Wand2 className="h-4 w-4 mr-1" /> Yes, auto-fill
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
     </div>
   );
