@@ -661,27 +661,29 @@ export default function Profile() {
           {/* 6. Skills */}
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-muted-foreground" />
-                <CardTitle className="text-lg">Skills</CardTitle>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-muted-foreground" />
+                    <CardTitle className="text-lg">Skills</CardTitle>
+                  </div>
+                  <CardDescription>Comma-separated list of your key skills</CardDescription>
+                </div>
+                <EditToggle section="skills" />
               </div>
-              <CardDescription>Comma-separated list of your key skills</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {isLoading ? <Skeleton className="h-10 w-full" /> : (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="skills">Skills</Label>
-                    <Input id="skills" placeholder="React, TypeScript, Node.js, AWS" value={formData.skills} onChange={(e) => set("skills", e.target.value)} />
-                  </div>
-                  {formData.skills && (
-                    <div className="flex flex-wrap gap-2">
-                      {formData.skills.split(",").map((s) => s.trim()).filter(Boolean).map((skill, i) => (
-                        <Badge key={i} variant="secondary">{skill}</Badge>
-                      ))}
-                    </div>
-                  )}
-                </>
+              {isLoading ? <Skeleton className="h-10 w-full" /> : isEditing("skills") ? (
+                <div className="space-y-2">
+                  <Label htmlFor="skills">Skills</Label>
+                  <Input id="skills" placeholder="React, TypeScript, Node.js, AWS" value={formData.skills} onChange={(e) => set("skills", e.target.value)} />
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {formData.skills ? formData.skills.split(",").map((s) => s.trim()).filter(Boolean).map((skill, i) => (
+                    <Badge key={i} variant="secondary">{skill}</Badge>
+                  )) : <p className="text-sm text-muted-foreground italic">No skills added</p>}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -697,26 +699,40 @@ export default function Profile() {
                   </div>
                   <CardDescription className="mt-1.5">Professional certifications (optional)</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" onClick={addCert} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>
+                <div className="flex gap-1">
+                  {isEditing("certs") && <Button variant="outline" size="sm" onClick={addCert} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>}
+                  <EditToggle section="certs" />
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {certifications.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">No certifications added. Click "Add" to add one.</p>
+              {isEditing("certs") ? (
+                certifications.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">No certifications added. Click "Add" to add one.</p>
+                ) : (
+                  certifications.map((cert, idx) => (
+                    <div key={idx} className="space-y-4 p-4 rounded-lg border border-border bg-secondary/20 relative">
+                      <Button variant="ghost" size="sm" className="absolute top-2 right-2 text-destructive hover:text-destructive h-8 w-8 p-0" onClick={() => removeCert(idx)} type="button"><Trash2 className="h-4 w-4" /></Button>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2"><Label>Certification Name</Label><Input placeholder="AWS Solutions Architect" value={cert.name} onChange={(e) => updateCert(idx, "name", e.target.value)} /></div>
+                        <div className="space-y-2"><Label>Issuer</Label><Input placeholder="Amazon Web Services" value={cert.issuer} onChange={(e) => updateCert(idx, "issuer", e.target.value)} /></div>
+                      </div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2"><Label>Date Obtained</Label><Input type="month" value={cert.date_obtained} onChange={(e) => updateCert(idx, "date_obtained", e.target.value)} /></div>
+                        <div className="space-y-2"><Label>Expiration Date (optional)</Label><Input type="month" value={cert.expiration_date} onChange={(e) => updateCert(idx, "expiration_date", e.target.value)} /></div>
+                      </div>
+                    </div>
+                  ))
+                )
               ) : (
-                certifications.map((cert, idx) => (
-                  <div key={idx} className="space-y-4 p-4 rounded-lg border border-border bg-secondary/20 relative">
-                    <Button variant="ghost" size="sm" className="absolute top-2 right-2 text-destructive hover:text-destructive h-8 w-8 p-0" onClick={() => removeCert(idx)} type="button"><Trash2 className="h-4 w-4" /></Button>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-2"><Label>Certification Name</Label><Input placeholder="AWS Solutions Architect" value={cert.name} onChange={(e) => updateCert(idx, "name", e.target.value)} /></div>
-                      <div className="space-y-2"><Label>Issuer</Label><Input placeholder="Amazon Web Services" value={cert.issuer} onChange={(e) => updateCert(idx, "issuer", e.target.value)} /></div>
+                <div className="space-y-3">
+                  {certifications.filter(c => c.name).length > 0 ? certifications.filter(c => c.name).map((c, i) => (
+                    <div key={i} className="p-3 rounded-lg border border-border bg-secondary/10">
+                      <p className="font-medium text-sm text-foreground">{c.name}</p>
+                      <p className="text-xs text-muted-foreground">{c.issuer || "—"} {c.date_obtained ? `• ${c.date_obtained}` : ""}</p>
                     </div>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-2"><Label>Date Obtained</Label><Input type="month" value={cert.date_obtained} onChange={(e) => updateCert(idx, "date_obtained", e.target.value)} /></div>
-                      <div className="space-y-2"><Label>Expiration Date (optional)</Label><Input type="month" value={cert.expiration_date} onChange={(e) => updateCert(idx, "expiration_date", e.target.value)} /></div>
-                    </div>
-                  </div>
-                ))
+                  )) : <p className="text-sm text-muted-foreground italic">No certifications added</p>}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -724,14 +740,19 @@ export default function Profile() {
           {/* 8. EEO / Demographics */}
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-2">
-                <User className="h-5 w-5 text-muted-foreground" />
-                <CardTitle className="text-lg">Equal Opportunity (Optional)</CardTitle>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <User className="h-5 w-5 text-muted-foreground" />
+                    <CardTitle className="text-lg">Equal Opportunity (Optional)</CardTitle>
+                  </div>
+                  <CardDescription>Voluntary self-identification — used for autofill on job applications</CardDescription>
+                </div>
+                <EditToggle section="eeo" />
               </div>
-              <CardDescription>Voluntary self-identification — used for autofill on job applications</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {isLoading ? <div className="space-y-4">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div> : (
+              {isLoading ? <div className="space-y-4">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div> : isEditing("eeo") ? (
                 <>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
@@ -782,6 +803,15 @@ export default function Profile() {
                     </div>
                   </div>
                 </>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <DisplayField label="Gender" value={formData.gender} />
+                  <DisplayField label="Race / Ethnicity" value={formData.race_ethnicity} />
+                  <DisplayField label="Hispanic or Latino" value={formData.hispanic_latino} />
+                  <DisplayField label="Veteran Status" value={formData.veteran_status} />
+                  <DisplayField label="Disability Status" value={formData.disability_status} />
+                  <DisplayField label="Military Service" value={formData.military_service} />
+                </div>
               )}
             </CardContent>
           </Card>
