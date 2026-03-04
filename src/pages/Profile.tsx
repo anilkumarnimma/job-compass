@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Navigate, useBlocker } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { useProfile, ProfileData, WorkExperience, Education } from "@/hooks/useProfile";
@@ -144,9 +144,6 @@ export default function Profile() {
     if (profile) populateFromProfile(profile);
   }, [profile, populateFromProfile]);
 
-  // Navigation blocker for unsaved changes
-  const blocker = useBlocker(isEditing && isDirty);
-  
   // Browser beforeunload warning
   useEffect(() => {
     if (!isEditing || !isDirty) return;
