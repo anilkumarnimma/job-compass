@@ -413,14 +413,19 @@ export default function Profile() {
           {/* 2. Personal Details */}
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-2">
-                <User className="h-5 w-5 text-muted-foreground" />
-                <CardTitle className="text-lg">Personal Details</CardTitle>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <User className="h-5 w-5 text-muted-foreground" />
+                    <CardTitle className="text-lg">Personal Details</CardTitle>
+                  </div>
+                  <CardDescription>Name, contact, and address details</CardDescription>
+                </div>
+                <EditToggle section="personal" />
               </div>
-              <CardDescription>Name, contact, and address details</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {isLoading ? <div className="space-y-4">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div> : (
+              {isLoading ? <div className="space-y-4">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div> : isEditing("personal") ? (
                 <>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
@@ -467,6 +472,17 @@ export default function Profile() {
                     </div>
                   </div>
                 </>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <DisplayField label="First Name" value={formData.first_name} />
+                  <DisplayField label="Last Name" value={formData.last_name} />
+                  <DisplayField label="Contact Email" value={formData.contact_email} />
+                  <DisplayField label="Phone" value={formData.phone} />
+                  <DisplayField label="Street Address" value={formData.address} />
+                  <DisplayField label="City" value={formData.city} />
+                  <DisplayField label="State" value={formData.state} />
+                  <DisplayField label="ZIP Code" value={formData.zip} />
+                </div>
               )}
             </CardContent>
           </Card>
@@ -474,14 +490,19 @@ export default function Profile() {
           {/* 3. Professional Links */}
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-2">
-                <Link2 className="h-5 w-5 text-muted-foreground" />
-                <CardTitle className="text-lg">Professional Links</CardTitle>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Link2 className="h-5 w-5 text-muted-foreground" />
+                    <CardTitle className="text-lg">Professional Links</CardTitle>
+                  </div>
+                  <CardDescription>LinkedIn, GitHub, and portfolio URLs</CardDescription>
+                </div>
+                <EditToggle section="links" />
               </div>
-              <CardDescription>LinkedIn, GitHub, and portfolio URLs</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {isLoading ? <div className="space-y-4">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div> : (
+              {isLoading ? <div className="space-y-4">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div> : isEditing("links") ? (
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="linkedin">LinkedIn URL</Label>
@@ -498,6 +519,12 @@ export default function Profile() {
                     </div>
                   </div>
                 </>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <DisplayField label="LinkedIn" value={formData.linkedin_url} />
+                  <DisplayField label="GitHub" value={formData.github_url} />
+                  <DisplayField label="Portfolio" value={formData.portfolio_url} />
+                </div>
               )}
             </CardContent>
           </Card>
@@ -513,11 +540,14 @@ export default function Profile() {
                   </div>
                   <CardDescription className="mt-1.5">Add your work history with dates</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" onClick={addWork} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>
+                <div className="flex gap-1">
+                  {isEditing("work") && <Button variant="outline" size="sm" onClick={addWork} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>}
+                  <EditToggle section="work" />
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {isLoading ? <div className="space-y-4">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div> : (
+              {isLoading ? <div className="space-y-4">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div> : isEditing("work") ? (
                 <>
                   {workExperiences.map((work, idx) => (
                     <div key={idx} className="space-y-4 p-4 rounded-lg border border-border bg-secondary/20 relative">
@@ -561,6 +591,20 @@ export default function Profile() {
                     </div>
                   </div>
                 </>
+              ) : (
+                <div className="space-y-3">
+                  {workExperiences.filter(w => w.title || w.company).length > 0 ? workExperiences.filter(w => w.title || w.company).map((w, i) => (
+                    <div key={i} className="p-3 rounded-lg border border-border bg-secondary/10">
+                      <p className="font-medium text-sm text-foreground">{w.title || "Untitled"} <span className="text-muted-foreground font-normal">@ {w.company || "—"}</span></p>
+                      <p className="text-xs text-muted-foreground">{w.start_date || "?"} — {w.is_current ? "Present" : w.end_date || "?"}</p>
+                    </div>
+                  )) : <p className="text-sm text-muted-foreground italic">No work experience added</p>}
+                  <div className="grid gap-4 sm:grid-cols-3 pt-2">
+                    <DisplayField label="Years of Experience" value={String(formData.experience_years || "")} />
+                    <DisplayField label="Work Authorization" value={formData.work_authorization} />
+                    <DisplayField label="Visa Sponsorship" value={formData.visa_status} />
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -576,9 +620,43 @@ export default function Profile() {
                   </div>
                   <CardDescription className="mt-1.5">Add your education history</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" onClick={addEdu} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>
+                <div className="flex gap-1">
+                  {isEditing("education") && <Button variant="outline" size="sm" onClick={addEdu} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>}
+                  <EditToggle section="education" />
+                </div>
               </div>
             </CardHeader>
+            <CardContent className="space-y-6">
+              {isLoading ? <div className="space-y-4">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div> : isEditing("education") ? (
+                <>
+                  {educations.map((edu, idx) => (
+                    <div key={idx} className="space-y-4 p-4 rounded-lg border border-border bg-secondary/20 relative">
+                      {educations.length > 1 && (
+                        <Button variant="ghost" size="sm" className="absolute top-2 right-2 text-destructive hover:text-destructive h-8 w-8 p-0" onClick={() => removeEdu(idx)} type="button"><Trash2 className="h-4 w-4" /></Button>
+                      )}
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2"><Label>School / University</Label><Input placeholder="MIT" value={edu.school} onChange={(e) => updateEdu(idx, "school", e.target.value)} /></div>
+                        <div className="space-y-2"><Label>Degree</Label><Input placeholder="Bachelor's" value={edu.degree} onChange={(e) => updateEdu(idx, "degree", e.target.value)} /></div>
+                      </div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2"><Label>Major / Field of Study</Label><Input placeholder="Computer Science" value={edu.major} onChange={(e) => updateEdu(idx, "major", e.target.value)} /></div>
+                        <div className="space-y-2"><Label>Graduation Year</Label><Input placeholder="2023" value={edu.graduation_year} onChange={(e) => updateEdu(idx, "graduation_year", e.target.value)} /></div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <div className="space-y-3">
+                  {educations.filter(e => e.school || e.degree).length > 0 ? educations.filter(e => e.school || e.degree).map((e, i) => (
+                    <div key={i} className="p-3 rounded-lg border border-border bg-secondary/10">
+                      <p className="font-medium text-sm text-foreground">{e.degree || "Degree"} {e.major ? `in ${e.major}` : ""}</p>
+                      <p className="text-xs text-muted-foreground">{e.school || "—"} {e.graduation_year ? `• ${e.graduation_year}` : ""}</p>
+                    </div>
+                  )) : <p className="text-sm text-muted-foreground italic">No education added</p>}
+                </div>
+              )}
+            </CardContent>
+          </Card>
             <CardContent className="space-y-6">
               {isLoading ? <div className="space-y-4">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div> : (
                 <>
