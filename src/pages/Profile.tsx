@@ -83,6 +83,7 @@ export default function Profile() {
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [isDownloadingResume, setIsDownloadingResume] = useState(false);
   const [showReview, setShowReview] = useState(false);
+  const [showAutofillPrompt, setShowAutofillPrompt] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<{ label: string; field: string; oldValue: string; newValue: string }[]>([]);
   const [pendingExtracted, setPendingExtracted] = useState<ExtractedResumeData | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
