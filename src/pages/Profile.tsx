@@ -338,7 +338,7 @@ export default function Profile() {
     setIsDirty(true);
 
     if (pendingFile) {
-      await uploadResume(pendingFile);
+      await uploadResume(pendingFile, { silent: true });
       setPendingFile(null);
     }
   };
