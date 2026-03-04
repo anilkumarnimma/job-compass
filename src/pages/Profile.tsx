@@ -6,7 +6,7 @@ import { useProfile, ProfileData, WorkExperience, Education } from "@/hooks/useP
 import { useToast } from "@/hooks/use-toast";
 import { useResumeParser, ExtractedResumeData } from "@/hooks/useResumeParser";
 import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
-import { ResumeReviewDialog } from "@/components/ResumeReviewDialog";
+
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -83,9 +83,7 @@ export default function Profile() {
   const [educations, setEducations] = useState<Education[]>([{ ...emptyEdu }]);
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [isDownloadingResume, setIsDownloadingResume] = useState(false);
-  const [showReview, setShowReview] = useState(false);
   const [showAutofillPrompt, setShowAutofillPrompt] = useState(false);
-  const [pendingChanges, setPendingChanges] = useState<{ label: string; field: string; oldValue: string; newValue: string }[]>([]);
   const [pendingExtracted, setPendingExtracted] = useState<ExtractedResumeData | null>(null);
   
 
