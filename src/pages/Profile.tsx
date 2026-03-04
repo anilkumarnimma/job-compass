@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -16,10 +16,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import {
   User, FileText, Upload, Download, Trash2, Loader2, Bug,
-  Link2, Briefcase, GraduationCap, Sparkles, Plus, Wand2, Award, Pencil, X, Check,
+  Link2, Briefcase, GraduationCap, Sparkles, Plus, Wand2, Award, Pencil, X, Save, AlertCircle,
 } from "lucide-react";
 
 const WORK_AUTH_OPTIONS = [
@@ -58,11 +57,61 @@ const emptyCert: Certification = { name: "", issuer: "", date_obtained: "", expi
 
 type SectionKey = "personal" | "links" | "experience" | "education" | "skills" | "certifications" | "eeo";
 
+// Helper: derive form data from profile
+function profileToFormData(profile: ProfileData | null | undefined, userEmail?: string) {
+  return {
+    first_name: profile?.first_name || "",
+    last_name: profile?.last_name || "",
+    contact_email: (profile as any)?.contact_email || "",
+    phone: profile?.phone || "",
+    address: (profile as any)?.address || "",
+    city: profile?.city || "",
+    state: profile?.state || "",
+    zip: profile?.zip || "",
+    linkedin_url: profile?.linkedin_url || "",
+    github_url: profile?.github_url || "",
+    portfolio_url: profile?.portfolio_url || "",
+    work_authorization: profile?.work_authorization || "",
+    visa_status: profile?.visa_status || "",
+    experience_years: (profile?.experience_years ?? "") as string | number,
+    current_company: profile?.current_company || "",
+    current_title: profile?.current_title || "",
+    skills: (profile?.skills || []).join(", "),
+    gender: (profile as any)?.gender || "",
+    race_ethnicity: (profile as any)?.race_ethnicity || "",
+    hispanic_latino: (profile as any)?.hispanic_latino || "",
+    veteran_status: (profile as any)?.veteran_status || "",
+    disability_status: (profile as any)?.disability_status || "",
+    military_service: (profile as any)?.military_service || "",
+  };
+}
+
+function profileToWorkExperiences(profile: ProfileData | null | undefined): WorkExperience[] {
+  const we = profile?.work_experience;
+  if (Array.isArray(we) && we.length > 0) return JSON.parse(JSON.stringify(we));
+  if (profile?.current_title || profile?.current_company) {
+    return [{ title: profile.current_title || "", company: profile.current_company || "", start_date: "", end_date: "", is_current: true }];
+  }
+  return [{ ...emptyWork }];
+}
+
+function profileToEducations(profile: ProfileData | null | undefined): Education[] {
+  const edu = profile?.education;
+  if (Array.isArray(edu) && edu.length > 0) return JSON.parse(JSON.stringify(edu));
+  return [{ ...emptyEdu }];
+}
+
+function profileToCertifications(profile: ProfileData | null | undefined): Certification[] {
+  const certs = (profile as any)?.certifications;
+  if (Array.isArray(certs) && certs.length > 0) return JSON.parse(JSON.stringify(certs));
+  return [];
+}
+
 export default function Profile() {
   const { user, isLoading: authLoading } = useAuth();
   const { profile, isLoading, updateProfile, isUpdating, uploadResume, downloadResume, deleteResume, isUploading } = useProfile();
   const { toast } = useToast();
-  const { parseResume, isParsing, extractedData, clearExtracted } = useResumeParser();
+  const { parseResume, isParsing } = useResumeParser();
   const { data: effectiveRole, isLoading: roleLoading } = useUserRole();
   const { data: allRoles } = useAllUserRoles();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -72,26 +121,7 @@ export default function Profile() {
     personal: false, links: false, experience: false, education: false, skills: false, certifications: false, eeo: false,
   });
 
-  // Snapshot for cancel
-  const [snapshot, setSnapshot] = useState<{
-    formData: typeof initialFormData;
-    workExperiences: WorkExperience[];
-    educations: Education[];
-    certifications: Certification[];
-  } | null>(null);
-
-  const initialFormData = {
-    first_name: "", last_name: "", contact_email: "", phone: "", address: "", city: "", state: "", zip: "",
-    linkedin_url: "", github_url: "", portfolio_url: "",
-    work_authorization: "", visa_status: "",
-    experience_years: "" as string | number,
-    current_company: "", current_title: "", skills: "",
-    gender: "", race_ethnicity: "", hispanic_latino: "",
-    veteran_status: "", disability_status: "", military_service: "",
-  };
-
-  const [formData, setFormData] = useState(initialFormData);
-
+  const [formData, setFormData] = useState(profileToFormData(null));
   const [workExperiences, setWorkExperiences] = useState<WorkExperience[]>([{ ...emptyWork }]);
   const [educations, setEducations] = useState<Education[]>([{ ...emptyEdu }]);
   const [certifications, setCertifications] = useState<Certification[]>([]);
@@ -101,37 +131,31 @@ export default function Profile() {
   const [pendingExtracted, setPendingExtracted] = useState<ExtractedResumeData | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
 
+  // Populate form from profile on load
   useEffect(() => {
     if (profile) {
-      setFormData({
-        first_name: profile.first_name || "", last_name: profile.last_name || "",
-        contact_email: (profile as any).contact_email || "",
-        phone: profile.phone || "", address: (profile as any).address || "",
-        city: profile.city || "", state: profile.state || "", zip: profile.zip || "",
-        linkedin_url: profile.linkedin_url || "", github_url: profile.github_url || "",
-        portfolio_url: profile.portfolio_url || "",
-        work_authorization: profile.work_authorization || "", visa_status: profile.visa_status || "",
-        experience_years: profile.experience_years ?? "",
-        current_company: profile.current_company || "", current_title: profile.current_title || "",
-        skills: (profile.skills || []).join(", "),
-        gender: (profile as any).gender || "", race_ethnicity: (profile as any).race_ethnicity || "",
-        hispanic_latino: (profile as any).hispanic_latino || "",
-        veteran_status: (profile as any).veteran_status || "",
-        disability_status: (profile as any).disability_status || "",
-        military_service: (profile as any).military_service || "",
-      });
-      const we = profile.work_experience;
-      if (Array.isArray(we) && we.length > 0) setWorkExperiences(we);
-      else if (profile.current_title || profile.current_company) {
-        setWorkExperiences([{ title: profile.current_title || "", company: profile.current_company || "", start_date: "", end_date: "", is_current: true }]);
-      } else setWorkExperiences([{ ...emptyWork }]);
-      const edu = profile.education;
-      if (Array.isArray(edu) && edu.length > 0) setEducations(edu);
-      else setEducations([{ ...emptyEdu }]);
-      const certs = (profile as any).certifications;
-      if (Array.isArray(certs) && certs.length > 0) setCertifications(certs);
+      setFormData(profileToFormData(profile, user?.email));
+      setWorkExperiences(profileToWorkExperiences(profile));
+      setEducations(profileToEducations(profile));
+      setCertifications(profileToCertifications(profile));
     }
   }, [profile]);
+
+  // Detect unsaved changes
+  const hasUnsavedChanges = useMemo(() => {
+    if (!profile) return false;
+    const saved = profileToFormData(profile, user?.email);
+    for (const key of Object.keys(saved) as (keyof typeof saved)[]) {
+      if (String(formData[key] ?? "") !== String(saved[key] ?? "")) return true;
+    }
+    const savedWork = profileToWorkExperiences(profile);
+    if (JSON.stringify(workExperiences) !== JSON.stringify(savedWork)) return true;
+    const savedEdu = profileToEducations(profile);
+    if (JSON.stringify(educations) !== JSON.stringify(savedEdu)) return true;
+    const savedCerts = profileToCertifications(profile);
+    if (JSON.stringify(certifications) !== JSON.stringify(savedCerts)) return true;
+    return false;
+  }, [profile, formData, workExperiences, educations, certifications, user?.email]);
 
   if (authLoading) {
     return (<div className="min-h-screen bg-background"><Header /><main className="container max-w-3xl mx-auto px-4 py-8"><Skeleton className="h-8 w-48 mb-6" /><Skeleton className="h-96 w-full" /></main></div>);
@@ -141,35 +165,35 @@ export default function Profile() {
   const set = (key: string, value: string) => setFormData((prev) => ({ ...prev, [key]: value }));
 
   const startEditing = (section: SectionKey) => {
-    // Take a snapshot of current state for cancel
-    setSnapshot({
-      formData: { ...formData },
-      workExperiences: JSON.parse(JSON.stringify(workExperiences)),
-      educations: JSON.parse(JSON.stringify(educations)),
-      certifications: JSON.parse(JSON.stringify(certifications)),
-    });
     setEditingSections(prev => ({ ...prev, [section]: true }));
   };
 
+  // Cancel: revert that section's fields to last saved DB values
   const cancelEditing = (section: SectionKey) => {
-    // Restore from snapshot
-    if (snapshot) {
-      setFormData(snapshot.formData);
-      setWorkExperiences(snapshot.workExperiences);
-      setEducations(snapshot.educations);
-      setCertifications(snapshot.certifications);
+    if (profile) {
+      const saved = profileToFormData(profile, user?.email);
+      if (section === "personal") {
+        setFormData(prev => ({ ...prev, first_name: saved.first_name, last_name: saved.last_name, contact_email: saved.contact_email, phone: saved.phone, address: saved.address, city: saved.city, state: saved.state, zip: saved.zip }));
+      } else if (section === "links") {
+        setFormData(prev => ({ ...prev, linkedin_url: saved.linkedin_url, github_url: saved.github_url, portfolio_url: saved.portfolio_url }));
+      } else if (section === "experience") {
+        setFormData(prev => ({ ...prev, experience_years: saved.experience_years, work_authorization: saved.work_authorization, visa_status: saved.visa_status }));
+        setWorkExperiences(profileToWorkExperiences(profile));
+      } else if (section === "education") {
+        setEducations(profileToEducations(profile));
+      } else if (section === "skills") {
+        setFormData(prev => ({ ...prev, skills: saved.skills }));
+      } else if (section === "certifications") {
+        setCertifications(profileToCertifications(profile));
+      } else if (section === "eeo") {
+        setFormData(prev => ({ ...prev, gender: saved.gender, race_ethnicity: saved.race_ethnicity, hispanic_latino: saved.hispanic_latino, veteran_status: saved.veteran_status, disability_status: saved.disability_status, military_service: saved.military_service }));
+      }
     }
     setEditingSections(prev => ({ ...prev, [section]: false }));
-    setSnapshot(null);
   };
 
-  const saveSection = (section: SectionKey) => {
-    handleSave();
-    setEditingSections(prev => ({ ...prev, [section]: false }));
-    setSnapshot(null);
-  };
-
-  const handleSave = () => {
+  // Global save: persist ALL draft values to DB, switch all sections to read-only
+  const handleGlobalSave = () => {
     const skillsArray = formData.skills ? formData.skills.split(",").map((s) => s.trim()).filter(Boolean) : [];
     const currentWork = workExperiences.find((w) => w.is_current);
     updateProfile({
@@ -193,9 +217,11 @@ export default function Profile() {
       hispanic_latino: formData.hispanic_latino || null, veteran_status: formData.veteran_status || null,
       disability_status: formData.disability_status || null, military_service: formData.military_service || null,
     } as any);
+    // Switch all sections to read-only
+    setEditingSections({ personal: false, links: false, experience: false, education: false, skills: false, certifications: false, eeo: false });
   };
 
-  // First-time upload: upload + autofill
+  // First-time upload: upload file + autofill draft
   const handleFirstUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -205,7 +231,7 @@ export default function Profile() {
     buildReviewChanges(extracted);
   };
 
-  // Re-upload: replace resume + autofill
+  // Re-upload: replace resume file + autofill draft
   const handleReupload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -298,15 +324,14 @@ export default function Profile() {
     setShowReview(true);
   };
 
+  // Apply extracted data to draft ONLY (no DB save)
   const applyExtracted = async () => {
     if (!pendingExtracted) return;
     const e = pendingExtracted;
 
     const updates: Record<string, string> = {};
     const simpleFields = ["first_name", "last_name", "phone", "city", "state", "zip", "address", "linkedin_url", "github_url", "portfolio_url"] as const;
-    if (e.email) {
-      setFormData(prev => ({ ...prev, contact_email: e.email as string }));
-    }
+    if (e.email) updates.contact_email = e.email;
     for (const f of simpleFields) {
       if (e[f]) { updates[f] = e[f] as string; }
     }
@@ -340,10 +365,16 @@ export default function Profile() {
 
     setShowReview(false);
 
+    // Upload the file to storage only (no profile DB save)
     if (pendingFile) {
       await uploadResume(pendingFile);
       setPendingFile(null);
     }
+
+    toast({
+      title: "Fields pre-filled",
+      description: "Review the changes and click \"Save Changes\" to persist.",
+    });
   };
 
   // Helpers
@@ -359,17 +390,13 @@ export default function Profile() {
 
   const isEditing = (section: SectionKey) => editingSections[section];
 
+  // Edit / Cancel controls per section (no per-section Save)
   const SectionEditControls = ({ section }: { section: SectionKey }) => {
     if (isEditing(section)) {
       return (
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" onClick={() => cancelEditing(section)} className="h-8 px-2 text-muted-foreground">
-            <X className="h-4 w-4 mr-1" /> Cancel
-          </Button>
-          <Button variant="default" size="sm" onClick={() => saveSection(section)} disabled={isUpdating} className="h-8 px-3">
-            {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Check className="h-4 w-4 mr-1" /> Save</>}
-          </Button>
-        </div>
+        <Button variant="ghost" size="sm" onClick={() => cancelEditing(section)} className="h-8 px-2 text-muted-foreground">
+          <X className="h-4 w-4 mr-1" /> Cancel
+        </Button>
       );
     }
     return (
@@ -428,15 +455,13 @@ export default function Profile() {
                       </div>
                     </>
                   ) : (
-                    <>
-                      <div onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 hover:bg-secondary/30 transition-colors">
-                        {isUploading || isParsing ? (
-                          <><Loader2 className="h-10 w-10 text-muted-foreground animate-spin mb-3" /><p className="text-muted-foreground">{isParsing ? "Parsing..." : "Uploading..."}</p></>
-                        ) : (
-                          <><Upload className="h-10 w-10 text-muted-foreground mb-3" /><p className="font-medium text-foreground">Click to upload resume</p><p className="text-sm text-muted-foreground mt-1">PDF or DOCX — will auto-fill your profile</p></>
-                        )}
-                      </div>
-                    </>
+                    <div onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 hover:bg-secondary/30 transition-colors">
+                      {isUploading || isParsing ? (
+                        <><Loader2 className="h-10 w-10 text-muted-foreground animate-spin mb-3" /><p className="text-muted-foreground">{isParsing ? "Parsing..." : "Uploading..."}</p></>
+                      ) : (
+                        <><Upload className="h-10 w-10 text-muted-foreground mb-3" /><p className="font-medium text-foreground">Click to upload resume</p><p className="text-sm text-muted-foreground mt-1">PDF or DOCX — will auto-fill your profile</p></>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
@@ -843,6 +868,22 @@ export default function Profile() {
               )}
             </CardContent>
           </Card>
+
+          {/* Global Save Changes button */}
+          <div className="sticky bottom-6 flex justify-center pt-2">
+            <div className="flex items-center gap-3 bg-background/95 backdrop-blur-sm border border-border rounded-lg px-6 py-3 shadow-lg">
+              {hasUnsavedChanges && (
+                <span className="flex items-center gap-1.5 text-sm text-amber-600 dark:text-amber-400">
+                  <AlertCircle className="h-4 w-4" />
+                  Unsaved changes
+                </span>
+              )}
+              <Button onClick={handleGlobalSave} disabled={isUpdating || !hasUnsavedChanges} size="lg">
+                {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                Save Changes
+              </Button>
+            </div>
+          </div>
         </div>
       </main>
 
