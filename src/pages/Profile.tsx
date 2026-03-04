@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import {
   User, FileText, Upload, Download, Trash2, Loader2, Bug,
-  Link2, Briefcase, GraduationCap, Sparkles, Plus, Wand2, Award,
+  Link2, Briefcase, GraduationCap, Sparkles, Plus, Wand2, Award, Pencil, X,
 } from "lucide-react";
 
 const WORK_AUTH_OPTIONS = [
@@ -84,6 +84,10 @@ export default function Profile() {
   const [pendingChanges, setPendingChanges] = useState<{ label: string; field: string; oldValue: string; newValue: string }[]>([]);
   const [pendingExtracted, setPendingExtracted] = useState<ExtractedResumeData | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [editingSections, setEditingSections] = useState<Record<string, boolean>>({});
+
+  const toggleEdit = (section: string) => setEditingSections(prev => ({ ...prev, [section]: !prev[section] }));
+  const isEditing = (section: string) => !!editingSections[section];
 
   useEffect(() => {
     if (profile) {
