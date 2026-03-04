@@ -303,13 +303,11 @@ export default function Profile() {
     }
 
     setPendingExtracted(extracted);
-    setPendingChanges(changes);
-    setShowReview(true);
+    // Directly apply without review dialog
+    applyExtractedData(extracted);
   };
 
-  const applyExtracted = async () => {
-    if (!pendingExtracted) return;
-    const e = pendingExtracted;
+  const applyExtractedData = (e: ExtractedResumeData) => {
 
     const updates: Record<string, string> = {};
     const simpleFields = ["first_name", "last_name", "phone", "city", "state", "zip", "address", "linkedin_url", "github_url", "portfolio_url"] as const;
@@ -341,9 +339,9 @@ export default function Profile() {
       })));
     }
 
-    setShowReview(false);
     setIsEditing(true);
     setIsDirty(true);
+    toast({ title: "Profile auto-filled", description: "Resume data has been applied. Review and save your profile." });
   };
 
   // Helpers
@@ -812,8 +810,6 @@ export default function Profile() {
           </Card>
         </div>
       </main>
-
-      <ResumeReviewDialog open={showReview} onOpenChange={setShowReview} changes={pendingChanges} onApply={applyExtracted} />
 
       <AlertDialog open={showAutofillPrompt} onOpenChange={setShowAutofillPrompt}>
         <AlertDialogContent>
