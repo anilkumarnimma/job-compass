@@ -6,7 +6,7 @@ import { useProfile, ProfileData, WorkExperience, Education } from "@/hooks/useP
 import { useToast } from "@/hooks/use-toast";
 import { useResumeParser, ExtractedResumeData } from "@/hooks/useResumeParser";
 import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
-import { ResumeReviewDialog } from "@/components/ResumeReviewDialog";
+
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -83,9 +83,7 @@ export default function Profile() {
   const [educations, setEducations] = useState<Education[]>([{ ...emptyEdu }]);
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [isDownloadingResume, setIsDownloadingResume] = useState(false);
-  const [showReview, setShowReview] = useState(false);
   const [showAutofillPrompt, setShowAutofillPrompt] = useState(false);
-  const [pendingChanges, setPendingChanges] = useState<{ label: string; field: string; oldValue: string; newValue: string }[]>([]);
   const [pendingExtracted, setPendingExtracted] = useState<ExtractedResumeData | null>(null);
   
 
@@ -303,13 +301,11 @@ export default function Profile() {
     }
 
     setPendingExtracted(extracted);
-    setPendingChanges(changes);
-    setShowReview(true);
+    // Directly apply without review dialog
+    applyExtractedData(extracted);
   };
 
-  const applyExtracted = async () => {
-    if (!pendingExtracted) return;
-    const e = pendingExtracted;
+  const applyExtractedData = (e: ExtractedResumeData) => {
 
     const updates: Record<string, string> = {};
     const simpleFields = ["first_name", "last_name", "phone", "city", "state", "zip", "address", "linkedin_url", "github_url", "portfolio_url"] as const;
@@ -341,9 +337,9 @@ export default function Profile() {
       })));
     }
 
-    setShowReview(false);
     setIsEditing(true);
     setIsDirty(true);
+    toast({ title: "Profile auto-filled", description: "Resume data has been applied. Review and save your profile." });
   };
 
   // Helpers
@@ -812,8 +808,6 @@ export default function Profile() {
           </Card>
         </div>
       </main>
-
-      <ResumeReviewDialog open={showReview} onOpenChange={setShowReview} changes={pendingChanges} onApply={applyExtracted} />
 
       <AlertDialog open={showAutofillPrompt} onOpenChange={setShowAutofillPrompt}>
         <AlertDialogContent>
