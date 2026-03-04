@@ -343,11 +343,6 @@ export default function Profile() {
     setShowReview(false);
     setIsEditing(true);
     setIsDirty(true);
-
-    if (pendingFile) {
-      await uploadResume(pendingFile, { silent: true });
-      setPendingFile(null);
-    }
   };
 
   // Helpers
@@ -394,8 +389,7 @@ export default function Profile() {
             <CardContent>
               {isLoading ? <Skeleton className="h-24 w-full" /> : (
                 <div className="space-y-4">
-                  <input type="file" ref={fileInputRef} accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleFirstUpload} className="hidden" />
-                  <input type="file" ref={reuploadRef} accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleReupload} className="hidden" />
+                  <input type="file" ref={fileInputRef} accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleFileUpload} className="hidden" />
 
                   {profile?.resume_filename ? (
                     <>
