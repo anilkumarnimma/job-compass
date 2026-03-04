@@ -366,11 +366,6 @@ export default function Profile() {
               <Pencil className="h-4 w-4 mr-1" /> Edit Profile
             </Button>
           )}
-          {isEditing && isDirty && (
-            <Badge variant="secondary" className="text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400 border-amber-200">
-              Unsaved changes
-            </Badge>
-          )}
         </div>
 
         <div className="space-y-6">
@@ -766,15 +761,9 @@ export default function Profile() {
             </CardContent>
           </Card>
 
-          {/* Save / Cancel bar */}
+          {/* Save bar */}
           {isEditing && (
             <div className="flex items-center justify-end gap-3 sticky bottom-4 bg-background/95 backdrop-blur border border-border rounded-lg p-4 shadow-lg">
-              {isDirty && (
-                <span className="text-sm text-amber-600 dark:text-amber-400 mr-auto">You have unsaved changes</span>
-              )}
-              <Button variant="outline" onClick={handleCancel} disabled={isUpdating}>
-                <X className="h-4 w-4 mr-1" /> Cancel
-              </Button>
               <Button onClick={handleSave} disabled={isUpdating || !isDirty}>
                 {isUpdating ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving...</> : "Save Profile"}
               </Button>
