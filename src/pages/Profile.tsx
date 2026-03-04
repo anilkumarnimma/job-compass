@@ -17,10 +17,6 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
   User, FileText, Upload, Download, Trash2, Loader2, Bug,
   Link2, Briefcase, GraduationCap, Sparkles, Plus, Wand2, Award, Pencil, X,
 } from "lucide-react";
