@@ -657,28 +657,6 @@ export default function Profile() {
               )}
             </CardContent>
           </Card>
-            <CardContent className="space-y-6">
-              {isLoading ? <div className="space-y-4">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div> : (
-                <>
-                  {educations.map((edu, idx) => (
-                    <div key={idx} className="space-y-4 p-4 rounded-lg border border-border bg-secondary/20 relative">
-                      {educations.length > 1 && (
-                        <Button variant="ghost" size="sm" className="absolute top-2 right-2 text-destructive hover:text-destructive h-8 w-8 p-0" onClick={() => removeEdu(idx)} type="button"><Trash2 className="h-4 w-4" /></Button>
-                      )}
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="space-y-2"><Label>School / University</Label><Input placeholder="MIT" value={edu.school} onChange={(e) => updateEdu(idx, "school", e.target.value)} /></div>
-                        <div className="space-y-2"><Label>Degree</Label><Input placeholder="Bachelor's" value={edu.degree} onChange={(e) => updateEdu(idx, "degree", e.target.value)} /></div>
-                      </div>
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="space-y-2"><Label>Major / Field of Study</Label><Input placeholder="Computer Science" value={edu.major} onChange={(e) => updateEdu(idx, "major", e.target.value)} /></div>
-                        <div className="space-y-2"><Label>Graduation Year</Label><Input placeholder="2023" value={edu.graduation_year} onChange={(e) => updateEdu(idx, "graduation_year", e.target.value)} /></div>
-                      </div>
-                    </div>
-                  ))}
-                </>
-              )}
-            </CardContent>
-          </Card>
 
           {/* 6. Skills */}
           <Card>
