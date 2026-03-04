@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useResumeParser, ExtractedResumeData } from "@/hooks/useResumeParser";
 import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
 import { ResumeReviewDialog } from "@/components/ResumeReviewDialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -63,7 +64,7 @@ export default function Profile() {
   const { data: effectiveRole, isLoading: roleLoading } = useUserRole();
   const { data: allRoles } = useAllUserRoles();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const reuploadRef = useRef<HTMLInputElement>(null);
+  
 
   const [isEditing, setIsEditing] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
@@ -83,9 +84,10 @@ export default function Profile() {
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [isDownloadingResume, setIsDownloadingResume] = useState(false);
   const [showReview, setShowReview] = useState(false);
+  const [showAutofillPrompt, setShowAutofillPrompt] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<{ label: string; field: string; oldValue: string; newValue: string }[]>([]);
   const [pendingExtracted, setPendingExtracted] = useState<ExtractedResumeData | null>(null);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  
 
   // Saved state for cancel/revert
   const [savedFormData, setSavedFormData] = useState(formData);
@@ -211,23 +213,29 @@ export default function Profile() {
   };
 
   // Resume handlers
-  const handleFirstUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setPendingFile(file);
-    const extracted = await parseResume(file);
-    if (!extracted) return;
-    buildReviewChanges(extracted);
+    // Reset the input so the same file can be re-selected
+    e.target.value = "";
+    try {
+      await uploadResume(file);
+      // After successful upload, ask if user wants to autofill
+      setShowAutofillPrompt(true);
+    } catch {
+      // uploadResume already shows error toast
+    }
   };
 
-  const handleReupload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    await uploadResume(file);
-    setPendingFile(null);
-    const extracted = await parseResume(file);
-    if (!extracted) return;
-    buildReviewChanges(extracted);
+  const handleAutofillPromptYes = async () => {
+    setShowAutofillPrompt(false);
+    if (!profile?.resume_url && !user) return;
+    // Trigger autofill from the just-uploaded resume
+    handleAutofillExisting();
+  };
+
+  const handleAutofillPromptNo = () => {
+    setShowAutofillPrompt(false);
   };
 
   const handleAutofillExisting = async () => {
@@ -336,11 +344,6 @@ export default function Profile() {
     setShowReview(false);
     setIsEditing(true);
     setIsDirty(true);
-
-    if (pendingFile) {
-      await uploadResume(pendingFile, { silent: true });
-      setPendingFile(null);
-    }
   };
 
   // Helpers
@@ -387,8 +390,7 @@ export default function Profile() {
             <CardContent>
               {isLoading ? <Skeleton className="h-24 w-full" /> : (
                 <div className="space-y-4">
-                  <input type="file" ref={fileInputRef} accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleFirstUpload} className="hidden" />
-                  <input type="file" ref={reuploadRef} accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleReupload} className="hidden" />
+                  <input type="file" ref={fileInputRef} accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleFileUpload} className="hidden" />
 
                   {profile?.resume_filename ? (
                     <>
@@ -408,7 +410,7 @@ export default function Profile() {
                         <Button onClick={handleAutofillExisting} disabled={isParsing || isDownloadingResume} className="flex-1">
                           {isParsing || isDownloadingResume ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Parsing Resume...</> : <><Wand2 className="h-4 w-4 mr-2" />Auto-fill from Resume</>}
                         </Button>
-                        <Button variant="outline" onClick={() => reuploadRef.current?.click()} disabled={isUploading || isParsing}>
+                        <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading || isParsing}>
                           {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Upload className="h-4 w-4 mr-1" />Re-upload</>}
                         </Button>
                         <Button variant="ghost" onClick={deleteResume} className="text-destructive hover:text-destructive">
@@ -812,6 +814,23 @@ export default function Profile() {
       </main>
 
       <ResumeReviewDialog open={showReview} onOpenChange={setShowReview} changes={pendingChanges} onApply={applyExtracted} />
+
+      <AlertDialog open={showAutofillPrompt} onOpenChange={setShowAutofillPrompt}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Auto-fill profile from resume?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your resume was uploaded successfully. Would you like to extract details and auto-fill your profile?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleAutofillPromptNo}>No, thanks</AlertDialogCancel>
+            <AlertDialogAction onClick={handleAutofillPromptYes}>
+              <Wand2 className="h-4 w-4 mr-1" /> Yes, auto-fill
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
     </div>
   );
