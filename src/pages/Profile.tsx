@@ -130,15 +130,20 @@ export default function Profile() {
     setEducations(edu);
     setSavedEdu(edu);
 
-    const certs = p.certifications;
-    const c = Array.isArray(certs) && certs.length > 0 ? certs : [];
+    const certsRaw = p.certifications;
+    const c: Certification[] = Array.isArray(certsRaw) ? certsRaw.map((cert: any) => ({
+      name: cert.name || "", issuer: cert.issuer || "",
+      date_obtained: cert.date_obtained || "", expiration_date: cert.expiration_date || "",
+    })) : [];
     setCertifications(c);
     setSavedCerts(c);
   }, []);
 
   useEffect(() => {
+    // Don't overwrite form if user is actively editing (e.g. after resume autofill triggers a profile refetch)
+    if (isEditing) return;
     if (profile) populateFromProfile(profile);
-  }, [profile, populateFromProfile]);
+  }, [profile, populateFromProfile, isEditing]);
 
   // Browser beforeunload warning
   useEffect(() => {
@@ -333,7 +338,7 @@ export default function Profile() {
     setIsDirty(true);
 
     if (pendingFile) {
-      await uploadResume(pendingFile);
+      await uploadResume(pendingFile, { silent: true });
       setPendingFile(null);
     }
   };
