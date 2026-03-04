@@ -87,7 +87,7 @@ export default function Profile() {
   const [showAutofillPrompt, setShowAutofillPrompt] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<{ label: string; field: string; oldValue: string; newValue: string }[]>([]);
   const [pendingExtracted, setPendingExtracted] = useState<ExtractedResumeData | null>(null);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  
 
   // Saved state for cancel/revert
   const [savedFormData, setSavedFormData] = useState(formData);
