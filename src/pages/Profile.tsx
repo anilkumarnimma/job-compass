@@ -409,7 +409,7 @@ export default function Profile() {
                         <Button onClick={handleAutofillExisting} disabled={isParsing || isDownloadingResume} className="flex-1">
                           {isParsing || isDownloadingResume ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Parsing Resume...</> : <><Wand2 className="h-4 w-4 mr-2" />Auto-fill from Resume</>}
                         </Button>
-                        <Button variant="outline" onClick={() => reuploadRef.current?.click()} disabled={isUploading || isParsing}>
+                        <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading || isParsing}>
                           {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Upload className="h-4 w-4 mr-1" />Re-upload</>}
                         </Button>
                         <Button variant="ghost" onClick={deleteResume} className="text-destructive hover:text-destructive">
