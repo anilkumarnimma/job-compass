@@ -10,7 +10,8 @@ import {
   CheckCircle2,
   TrendingUp,
   PieChart,
-  AlertCircle
+  AlertCircle,
+  Sparkles
 } from "lucide-react";
 
 const features = [
@@ -60,63 +61,81 @@ export default function Index() {
   return (
     <Layout showFooter={true}>
       {/* Hero Section */}
-      <section className="py-20 md:py-28">
-        <div className="container max-w-6xl mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center animate-fade-in">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-sm font-medium mb-6">
-              <Briefcase className="h-4 w-4" />
+      <section className="relative py-24 md:py-32 overflow-hidden noise-bg">
+        <div className="container max-w-6xl mx-auto px-4 relative z-10">
+          <div className="max-w-3xl mx-auto text-center">
+            <div 
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium mb-8 stagger-fade-in border border-accent/20"
+            >
+              <Sparkles className="h-4 w-4" />
               Your job search, simplified
             </div>
             
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-6">
+            <h1 
+              className="font-display text-5xl md:text-6xl lg:text-7xl font-extrabold text-foreground leading-[1.1] mb-6 stagger-fade-in"
+              style={{ animationDelay: "100ms" }}
+            >
               Find Your Next
-              <span className="block text-accent">Dream Job</span>
+              <span className="block text-accent mt-1">Dream Job</span>
             </h1>
             
-              <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-                Search curated job listings, apply with one click, and automatically track 
-                all your applications in one clean dashboard.
-              </p>
+            <p 
+              className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed stagger-fade-in"
+              style={{ animationDelay: "200ms" }}
+            >
+              Search curated job listings, apply with one click, and automatically track 
+              all your applications in one clean dashboard.
+            </p>
               
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                <Link to="/dashboard">
-                  <Button variant="accent" size="lg" className="w-full sm:w-auto">
-                    Browse Jobs
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link to="/auth">
-                  <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                    Create Account
-                  </Button>
-                </Link>
-              </div>
+            <div 
+              className="flex flex-col sm:flex-row items-center justify-center gap-4 stagger-fade-in"
+              style={{ animationDelay: "300ms" }}
+            >
+              <Link to="/dashboard">
+                <Button size="lg" className="w-full sm:w-auto rounded-full px-8 bg-accent text-accent-foreground hover:bg-accent/90 shadow-sm hover:shadow-glow transition-all duration-300 group">
+                  Browse Jobs
+                  <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+                </Button>
+              </Link>
+              <Link to="/auth">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto rounded-full px-8 border-border hover:bg-secondary">
+                  Create Account
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
+        
+        {/* Decorative gradient orbs */}
+        <div className="absolute top-20 left-10 w-72 h-72 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-accent/3 rounded-full blur-3xl pointer-events-none" />
       </section>
 
       {/* Hiring Signals Section */}
-      <section className="py-12 bg-muted/30 border-y border-border/40">
+      <section className="py-16 border-y border-border/30">
         <div className="container max-w-6xl mx-auto px-4">
-          <div className="text-center mb-8">
-            <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2">
-              How Sociax.tech helps you see real hiring signals
+          <div className="text-center mb-10">
+            <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3">
+              Real-time hiring signals
             </h2>
+            <p className="text-muted-foreground max-w-lg mx-auto">
+              See what's happening in the job market right now with Sociax.tech
+            </p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-4 max-w-3xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-5 max-w-4xl mx-auto">
             {hiringSignals.map((signal, index) => (
               <div 
                 key={signal.title}
-                className="flex items-start gap-3 p-4 rounded-xl bg-background border border-border/60 animate-slide-up"
-                style={{ animationDelay: `${index * 80}ms` }}
+                className="flex items-start gap-4 p-5 rounded-2xl bg-card border border-border/50 card-glow stagger-fade-in"
+                style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="h-9 w-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
-                  <signal.icon className="h-4 w-4 text-accent" />
+                <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+                  <signal.icon className="h-5 w-5 text-accent" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground text-sm mb-0.5">{signal.title}</h3>
-                  <p className="text-muted-foreground text-xs leading-snug">{signal.description}</p>
+                  <h3 className="font-display font-semibold text-foreground text-sm mb-1">{signal.title}</h3>
+                  <p className="text-muted-foreground text-xs leading-relaxed">{signal.description}</p>
                 </div>
               </div>
             ))}
@@ -125,14 +144,14 @@ export default function Index() {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 bg-card border-y border-border/60">
+      <section className="py-20">
         <div className="container max-w-6xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+          <div className="text-center mb-14">
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
               Everything you need to land your next role
             </h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">
-            Stop juggling spreadsheets. Sociax.tech keeps everything organized.
+            <p className="text-muted-foreground max-w-xl mx-auto text-lg">
+              Stop juggling spreadsheets. Sociax.tech keeps everything organized.
             </p>
           </div>
           
@@ -140,14 +159,14 @@ export default function Index() {
             {features.map((feature, index) => (
               <div 
                 key={feature.title}
-                className="p-6 rounded-xl bg-background border border-border/60 animate-slide-up"
+                className="p-7 rounded-2xl bg-card border border-border/50 card-glow stagger-fade-in"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center mb-4">
-                  <feature.icon className="h-5 w-5 text-accent" />
+                <div className="h-12 w-12 rounded-xl bg-accent/10 flex items-center justify-center mb-5">
+                  <feature.icon className="h-6 w-6 text-accent" />
                 </div>
-                <h3 className="font-semibold text-foreground text-lg mb-2">{feature.title}</h3>
-                <p className="text-muted-foreground text-sm">{feature.description}</p>
+                <h3 className="font-display font-bold text-foreground text-xl mb-2">{feature.title}</h3>
+                <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -155,45 +174,55 @@ export default function Index() {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-16">
+      <section className="py-20 border-y border-border/30">
         <div className="container max-w-6xl mx-auto px-4">
-          <div className="flex flex-col lg:flex-row items-center gap-12">
+          <div className="flex flex-col lg:flex-row items-center gap-16">
             <div className="flex-1">
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-5">
                 Streamline your job search
               </h2>
-              <p className="text-muted-foreground mb-6">
-             Sociax.tech makes it easy to find, apply, and track opportunities 
-               so you can focus on what matters: landing interviews.
+              <p className="text-muted-foreground mb-8 text-lg leading-relaxed">
+                Sociax.tech makes it easy to find, apply, and track opportunities 
+                so you can focus on what matters: landing interviews.
               </p>
-              <ul className="space-y-3">
-                {benefits.map((benefit) => (
-                  <li key={benefit} className="flex items-center gap-3 text-foreground">
+              <ul className="space-y-4">
+                {benefits.map((benefit, i) => (
+                  <li 
+                    key={benefit} 
+                    className="flex items-center gap-3 text-foreground stagger-fade-in"
+                    style={{ animationDelay: `${i * 80}ms` }}
+                  >
                     <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
-                    {benefit}
+                    <span className="text-lg">{benefit}</span>
                   </li>
                 ))}
               </ul>
             </div>
             <div className="flex-1 w-full max-w-md">
-              <div className="bg-card rounded-2xl border border-border/60 p-6 shadow-elevated">
+              <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-premium card-glow">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="h-10 w-10 rounded-lg bg-accent flex items-center justify-center">
+                  <div className="h-11 w-11 rounded-xl bg-accent flex items-center justify-center">
                     <Briefcase className="h-5 w-5 text-accent-foreground" />
                   </div>
                   <div>
-                    <p className="font-semibold text-foreground">Senior Developer</p>
+                    <p className="font-display font-semibold text-foreground">Senior Developer</p>
                     <p className="text-sm text-muted-foreground">TechCorp Inc.</p>
                   </div>
                 </div>
-                <div className="flex gap-2 mb-4">
-                  <span className="px-2 py-1 rounded-full bg-success/10 text-success text-xs font-medium">
-                    Actively Reviewing
+                <div className="flex gap-2 mb-5">
+                  <span className="px-3 py-1 rounded-full bg-success-bg text-success-text text-xs font-medium">
+                    ● Actively Reviewing
+                  </span>
+                  <span className="px-3 py-1 rounded-full bg-secondary text-foreground text-xs font-medium">
+                    Remote
                   </span>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="accent" size="sm" className="flex-1">Apply Now</Button>
-                  <Button variant="outline" size="sm">Save</Button>
+                  <Button size="sm" className="flex-1 rounded-full bg-accent text-accent-foreground hover:bg-accent/90 group">
+                    Apply Now
+                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                  </Button>
+                  <Button variant="outline" size="sm" className="rounded-full">Save</Button>
                 </div>
               </div>
             </div>
@@ -202,24 +231,25 @@ export default function Index() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-primary">
-        <div className="container max-w-6xl mx-auto px-4 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-primary-foreground mb-4">
+      <section className="py-20 relative overflow-hidden noise-bg">
+        <div className="container max-w-6xl mx-auto px-4 text-center relative z-10">
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-5">
             Ready to start your job search?
           </h2>
-          <p className="text-primary-foreground/80 mb-8 max-w-xl mx-auto">
+          <p className="text-muted-foreground mb-10 max-w-xl mx-auto text-lg">
             Join thousands of job seekers who use Sociax.tech to find and land their dream jobs.
           </p>
           <Link to="/dashboard">
             <Button 
               size="lg" 
-              className="bg-accent text-accent-foreground hover:bg-accent/90"
+              className="rounded-full px-10 bg-accent text-accent-foreground hover:bg-accent/90 shadow-sm hover:shadow-glow transition-all duration-300 group"
             >
               Get Started Free
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
             </Button>
           </Link>
         </div>
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
       </section>
     </Layout>
   );

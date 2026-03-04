@@ -111,7 +111,7 @@ export default function Dashboard() {
           <div className="flex-1 max-w-[600px]">
             {/* Header */}
             <div className="mb-6">
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
+              <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-1">
                 Job Board
               </h1>
               <p className="text-muted-foreground text-sm">

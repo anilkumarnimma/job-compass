@@ -25,6 +25,19 @@ export function CompanyLogo({ logoUrl, companyName, size = "md", className }: Co
       .toUpperCase();
   };
 
+  // Generate a gradient based on company name
+  const getGradient = (name: string) => {
+    const hash = name.split("").reduce((acc, c) => c.charCodeAt(0) + acc, 0);
+    const gradients = [
+      "from-accent/20 to-accent/5",
+      "from-success/20 to-success/5",
+      "from-destructive/20 to-destructive/5",
+      "from-accent/15 to-success/10",
+      "from-primary/10 to-accent/10",
+    ];
+    return gradients[hash % gradients.length];
+  };
+
   return (
     <Avatar className={cn(sizeClasses[size], "rounded-xl shrink-0", className)}>
       {logoUrl ? (
@@ -33,12 +46,15 @@ export function CompanyLogo({ logoUrl, companyName, size = "md", className }: Co
           alt={`${companyName} logo`}
           className="object-cover"
           onError={(e) => {
-            // Hide broken image, fallback will show
             (e.target as HTMLImageElement).style.display = "none";
           }}
         />
       ) : null}
-      <AvatarFallback className="rounded-xl bg-secondary text-secondary-foreground font-medium">
+      <AvatarFallback className={cn(
+        "rounded-xl font-display font-semibold bg-gradient-to-br",
+        getGradient(companyName),
+        "text-foreground"
+      )}>
         {companyName ? getInitials(companyName) : <Building2 className="h-4 w-4" />}
       </AvatarFallback>
     </Avatar>

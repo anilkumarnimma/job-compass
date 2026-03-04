@@ -5,7 +5,7 @@ import { Job } from "@/types/job";
 import { useJobContext } from "@/context/JobContext";
 import { useAuth } from "@/context/AuthContext";
 import { CompanyLogo } from "@/components/CompanyLogo";
-import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, Calendar } from "lucide-react";
+import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, Calendar, ArrowRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -14,9 +14,10 @@ interface JobCardProps {
   job: Job;
   onViewDetails?: (job: Job) => void;
   onTap?: (job: Job) => void;
+  style?: React.CSSProperties;
 }
 
-export function JobCard({ job, onViewDetails, onTap }: JobCardProps) {
+export function JobCard({ job, onViewDetails, onTap, style }: JobCardProps) {
   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -26,23 +27,14 @@ export function JobCard({ job, onViewDetails, onTap }: JobCardProps) {
 
   const handleSaveClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-    if (saved) {
-      unsaveJob(job.id);
-    } else {
-      saveJob(job);
-    }
+    if (!user) { navigate("/auth"); return; }
+    if (saved) unsaveJob(job.id);
+    else saveJob(job);
   };
 
   const handleApplyClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
+    if (!user) { navigate("/auth"); return; }
     applyToJob(job);
   };
 
@@ -59,47 +51,56 @@ export function JobCard({ job, onViewDetails, onTap }: JobCardProps) {
     }
   };
 
+  // Determine job type badge color
+  const getLocationBadge = () => {
+    const loc = job.location.toLowerCase();
+    if (loc.includes("remote")) return "bg-success-bg text-success-text";
+    if (loc.includes("hybrid")) return "bg-tab-selected-bg text-tab-selected-text";
+    return "bg-secondary text-foreground";
+  };
+
   return (
     <Card 
-      className="group p-5 transition-all duration-[160ms] ease-out border border-border bg-card hover:shadow-md hover:border-border/80 rounded-xl cursor-pointer"
+      className="group p-5 border border-border/60 bg-card card-glow rounded-2xl cursor-pointer overflow-hidden relative"
       onClick={handleCardClick}
+      style={style}
     >
-      {/* Header Row: Logo + Title/Company/Time + Badge */}
-      <div className="flex items-start gap-3 mb-3">
+      {/* Header Row */}
+      <div className="flex items-start gap-3.5 mb-3">
         <CompanyLogo 
           logoUrl={job.company_logo} 
           companyName={job.company} 
           size="md"
-          className="rounded-lg shrink-0"
+          className="rounded-xl shrink-0"
         />
         
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <h3 
-                className="font-semibold text-foreground text-base leading-tight cursor-pointer hover:text-accent transition-colors"
+                className="font-display font-semibold text-foreground text-base leading-tight cursor-pointer hover:text-accent transition-colors duration-200"
                 onClick={handleTitleClick}
               >
-                {job.title.toLowerCase()}
+                {job.title}
               </h3>
-              <p className="text-muted-foreground text-sm">{job.company.toLowerCase()}</p>
+              <p className="text-muted-foreground text-sm mt-0.5">{job.company}</p>
               <p className="text-muted-foreground text-xs flex items-center gap-1 mt-0.5">
                 <Clock className="h-3 w-3" />
-                Posted {formatDistanceToNow(job.posted_date, { addSuffix: false })} ago
+                {formatDistanceToNow(job.posted_date, { addSuffix: true })}
               </p>
             </div>
             {job.is_reviewing && (
               <Badge 
-                className="shrink-0 px-2 py-1 text-[11px] font-medium bg-success-bg text-success-text border-0 rounded-md whitespace-nowrap"
+                className="shrink-0 px-2.5 py-1 text-[11px] font-medium bg-success-bg text-success-text border-0 rounded-full whitespace-nowrap animate-fade-in"
               >
-                Actively Reviewing
+                ● Actively Reviewing
               </Badge>
             )}
           </div>
         </div>
       </div>
 
-      {/* Description with hover tooltip */}
+      {/* Description */}
       <div className="mb-3">
         <TooltipProvider delayDuration={300}>
           <Tooltip>
@@ -109,7 +110,7 @@ export function JobCard({ job, onViewDetails, onTap }: JobCardProps) {
                   {job.description}
                 </p>
                 {job.description.length > 100 && (
-                  <span className="text-xs text-primary hover:text-primary/80 font-medium mt-0.5 inline-block">
+                  <span className="text-xs text-accent hover:text-accent/80 font-medium mt-0.5 inline-block transition-colors">
                     ...more
                   </span>
                 )}
@@ -119,7 +120,7 @@ export function JobCard({ job, onViewDetails, onTap }: JobCardProps) {
               <TooltipContent 
                 side="top" 
                 align="start" 
-                className="max-w-[400px] p-3 text-sm leading-relaxed"
+                className="max-w-[400px] p-3 text-sm leading-relaxed rounded-xl shadow-premium"
               >
                 {job.description}
               </TooltipContent>
@@ -128,41 +129,41 @@ export function JobCard({ job, onViewDetails, onTap }: JobCardProps) {
         </TooltipProvider>
       </div>
 
-      {/* Meta Row - Inline chips with icons */}
+      {/* Meta Row */}
       <div className="flex flex-wrap items-center gap-2 mb-3">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-secondary text-foreground text-xs font-medium">
+        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${getLocationBadge()}`}>
           <MapPin className="h-3.5 w-3.5" />
           {job.location}
         </span>
         
         {job.salary_range && (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-success-bg text-success-text text-xs font-medium">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-xs font-semibold">
             <DollarSign className="h-3.5 w-3.5" />
             {job.salary_range}
           </span>
         )}
         
-        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-secondary text-foreground text-xs font-medium">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary text-foreground text-xs font-medium">
           <Clock className="h-3.5 w-3.5" />
           {job.employment_type}
         </span>
         
         {job.experience_years && (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-secondary text-foreground text-xs font-medium">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary text-foreground text-xs font-medium">
             <Calendar className="h-3.5 w-3.5" />
             {job.experience_years}
           </span>
         )}
       </div>
 
-      {/* Skills - Clean inline pills */}
+      {/* Skills */}
       {job.skills.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-4">
           {job.skills.slice(0, 6).map((skill) => (
             <Badge 
               key={skill} 
               variant="outline" 
-              className="text-xs font-normal px-2.5 py-1 rounded-md bg-secondary/50 text-foreground border-border/50 hover:bg-secondary transition-colors"
+              className="text-xs font-normal px-2.5 py-1 rounded-full bg-secondary/50 text-foreground border-border/40 hover:bg-secondary transition-colors"
             >
               {skill}
             </Badge>
@@ -170,7 +171,7 @@ export function JobCard({ job, onViewDetails, onTap }: JobCardProps) {
           {job.skills.length > 6 && (
             <Badge 
               variant="outline" 
-              className="text-xs font-normal px-2.5 py-1 rounded-md text-muted-foreground"
+              className="text-xs font-normal px-2.5 py-1 rounded-full text-muted-foreground"
             >
               +{job.skills.length - 6} more
             </Badge>
@@ -178,33 +179,35 @@ export function JobCard({ job, onViewDetails, onTap }: JobCardProps) {
         </div>
       )}
 
-      {/* Actions - Centered */}
-      <div className="flex items-center justify-center gap-3 pt-3 border-t border-border/50">
+      {/* Actions */}
+      <div className="flex items-center justify-between gap-3 pt-3 border-t border-border/30">
         <Button
           variant="ghost"
           size="sm"
           onClick={handleSaveClick}
-          className={`h-8 px-3 text-sm font-normal gap-1.5 ${saved ? "text-accent" : "text-muted-foreground hover:text-foreground"}`}
+          className={`h-9 px-3 text-sm font-normal gap-1.5 rounded-full transition-all duration-200 ${
+            saved ? "text-accent" : "text-muted-foreground hover:text-foreground"
+          }`}
         >
-          {saved ? (
-            <BookmarkCheck className="h-4 w-4" />
-          ) : (
-            <Bookmark className="h-4 w-4" />
-          )}
-          Save
+          {saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
+          {saved ? "Saved" : "Save"}
         </Button>
         <Button
-          variant={applied ? "outline" : "default"}
           size="sm"
           onClick={handleApplyClick}
           disabled={applied}
-          className={`h-8 px-4 text-sm font-medium ${
+          className={`h-9 px-5 text-sm font-medium rounded-full gap-1.5 group/btn transition-all duration-200 ${
             applied 
-              ? "bg-secondary/80 text-foreground border-border hover:bg-secondary" 
-              : "bg-foreground text-background hover:bg-foreground/90"
+              ? "bg-secondary text-foreground border border-border cursor-default" 
+              : "bg-accent text-accent-foreground hover:bg-accent/90 shadow-sm hover:shadow-glow"
           }`}
         >
-          {applied ? "Applied" : "Apply"}
+          {applied ? "Applied ✓" : (
+            <>
+              Apply Now
+              <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover/btn:translate-x-0.5" />
+            </>
+          )}
         </Button>
       </div>
     </Card>
