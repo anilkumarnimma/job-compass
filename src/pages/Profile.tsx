@@ -212,23 +212,29 @@ export default function Profile() {
   };
 
   // Resume handlers
-  const handleFirstUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setPendingFile(file);
-    const extracted = await parseResume(file);
-    if (!extracted) return;
-    buildReviewChanges(extracted);
+    // Reset the input so the same file can be re-selected
+    e.target.value = "";
+    try {
+      await uploadResume(file);
+      // After successful upload, ask if user wants to autofill
+      setShowAutofillPrompt(true);
+    } catch {
+      // uploadResume already shows error toast
+    }
   };
 
-  const handleReupload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    await uploadResume(file);
-    setPendingFile(null);
-    const extracted = await parseResume(file);
-    if (!extracted) return;
-    buildReviewChanges(extracted);
+  const handleAutofillPromptYes = async () => {
+    setShowAutofillPrompt(false);
+    if (!profile?.resume_url && !user) return;
+    // Trigger autofill from the just-uploaded resume
+    handleAutofillExisting();
+  };
+
+  const handleAutofillPromptNo = () => {
+    setShowAutofillPrompt(false);
   };
 
   const handleAutofillExisting = async () => {
