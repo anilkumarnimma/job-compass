@@ -137,8 +137,10 @@ export default function Profile() {
   }, []);
 
   useEffect(() => {
+    // Don't overwrite form if user is actively editing (e.g. after resume autofill triggers a profile refetch)
+    if (isEditing) return;
     if (profile) populateFromProfile(profile);
-  }, [profile, populateFromProfile]);
+  }, [profile, populateFromProfile, isEditing]);
 
   // Browser beforeunload warning
   useEffect(() => {
