@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { Navigate } from "react-router-dom";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Navigate, useBlocker } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { useProfile, ProfileData, WorkExperience, Education } from "@/hooks/useProfile";
@@ -16,10 +16,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   User, FileText, Upload, Download, Trash2, Loader2, Bug,
-  Link2, Briefcase, GraduationCap, Sparkles, Plus, Wand2, Award,
+  Link2, Briefcase, GraduationCap, Sparkles, Plus, Wand2, Award, Pencil, X,
 } from "lucide-react";
 
 const WORK_AUTH_OPTIONS = [
@@ -66,6 +69,9 @@ export default function Profile() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const reuploadRef = useRef<HTMLInputElement>(null);
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+
   const [formData, setFormData] = useState({
     first_name: "", last_name: "", contact_email: "", phone: "", address: "", city: "", state: "", zip: "",
     linkedin_url: "", github_url: "", portfolio_url: "",
@@ -85,44 +91,93 @@ export default function Profile() {
   const [pendingExtracted, setPendingExtracted] = useState<ExtractedResumeData | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
 
+  // Saved state for cancel/revert
+  const [savedFormData, setSavedFormData] = useState(formData);
+  const [savedWork, setSavedWork] = useState(workExperiences);
+  const [savedEdu, setSavedEdu] = useState(educations);
+  const [savedCerts, setSavedCerts] = useState(certifications);
+
+  const populateFromProfile = useCallback((p: any) => {
+    const fd = {
+      first_name: p.first_name || "", last_name: p.last_name || "",
+      contact_email: p.contact_email || "",
+      phone: p.phone || "", address: p.address || "",
+      city: p.city || "", state: p.state || "", zip: p.zip || "",
+      linkedin_url: p.linkedin_url || "", github_url: p.github_url || "",
+      portfolio_url: p.portfolio_url || "",
+      work_authorization: p.work_authorization || "", visa_status: p.visa_status || "",
+      experience_years: p.experience_years ?? "",
+      current_company: p.current_company || "", current_title: p.current_title || "",
+      skills: (p.skills || []).join(", "),
+      gender: p.gender || "", race_ethnicity: p.race_ethnicity || "",
+      hispanic_latino: p.hispanic_latino || "",
+      veteran_status: p.veteran_status || "",
+      disability_status: p.disability_status || "",
+      military_service: p.military_service || "",
+    };
+    setFormData(fd);
+    setSavedFormData(fd);
+
+    let we: WorkExperience[];
+    const weRaw = p.work_experience;
+    if (Array.isArray(weRaw) && weRaw.length > 0) we = weRaw;
+    else if (p.current_title || p.current_company) {
+      we = [{ title: p.current_title || "", company: p.current_company || "", start_date: "", end_date: "", is_current: true }];
+    } else we = [{ ...emptyWork }];
+    setWorkExperiences(we);
+    setSavedWork(we);
+
+    let edu: Education[];
+    const eduRaw = p.education;
+    if (Array.isArray(eduRaw) && eduRaw.length > 0) edu = eduRaw;
+    else edu = [{ ...emptyEdu }];
+    setEducations(edu);
+    setSavedEdu(edu);
+
+    const certs = p.certifications;
+    const c = Array.isArray(certs) && certs.length > 0 ? certs : [];
+    setCertifications(c);
+    setSavedCerts(c);
+  }, []);
+
   useEffect(() => {
-    if (profile) {
-      setFormData({
-        first_name: profile.first_name || "", last_name: profile.last_name || "",
-        contact_email: (profile as any).contact_email || "",
-        phone: profile.phone || "", address: (profile as any).address || "",
-        city: profile.city || "", state: profile.state || "", zip: profile.zip || "",
-        linkedin_url: profile.linkedin_url || "", github_url: profile.github_url || "",
-        portfolio_url: profile.portfolio_url || "",
-        work_authorization: profile.work_authorization || "", visa_status: profile.visa_status || "",
-        experience_years: profile.experience_years ?? "",
-        current_company: profile.current_company || "", current_title: profile.current_title || "",
-        skills: (profile.skills || []).join(", "),
-        gender: (profile as any).gender || "", race_ethnicity: (profile as any).race_ethnicity || "",
-        hispanic_latino: (profile as any).hispanic_latino || "",
-        veteran_status: (profile as any).veteran_status || "",
-        disability_status: (profile as any).disability_status || "",
-        military_service: (profile as any).military_service || "",
-      });
-      const we = profile.work_experience;
-      if (Array.isArray(we) && we.length > 0) setWorkExperiences(we);
-      else if (profile.current_title || profile.current_company) {
-        setWorkExperiences([{ title: profile.current_title || "", company: profile.current_company || "", start_date: "", end_date: "", is_current: true }]);
-      } else setWorkExperiences([{ ...emptyWork }]);
-      const edu = profile.education;
-      if (Array.isArray(edu) && edu.length > 0) setEducations(edu);
-      else setEducations([{ ...emptyEdu }]);
-      const certs = (profile as any).certifications;
-      if (Array.isArray(certs) && certs.length > 0) setCertifications(certs);
-    }
-  }, [profile]);
+    if (profile) populateFromProfile(profile);
+  }, [profile, populateFromProfile]);
+
+  // Navigation blocker for unsaved changes
+  const blocker = useBlocker(isEditing && isDirty);
+  
+  // Browser beforeunload warning
+  useEffect(() => {
+    if (!isEditing || !isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isEditing, isDirty]);
 
   if (authLoading) {
     return (<div className="min-h-screen bg-background"><Header /><main className="container max-w-3xl mx-auto px-4 py-8"><Skeleton className="h-8 w-48 mb-6" /><Skeleton className="h-96 w-full" /></main></div>);
   }
   if (!user) return <Navigate to="/auth" replace />;
 
-  const set = (key: string, value: string) => setFormData((prev) => ({ ...prev, [key]: value }));
+  const set = (key: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
+    setIsDirty(true);
+  };
+
+  const handleEdit = () => {
+    setIsEditing(true);
+    setIsDirty(false);
+  };
+
+  const handleCancel = () => {
+    setFormData(savedFormData);
+    setWorkExperiences(savedWork);
+    setEducations(savedEdu);
+    setCertifications(savedCerts);
+    setIsEditing(false);
+    setIsDirty(false);
+  };
 
   const handleSave = () => {
     const skillsArray = formData.skills ? formData.skills.split(",").map((s) => s.trim()).filter(Boolean) : [];
@@ -148,9 +203,16 @@ export default function Profile() {
       hispanic_latino: formData.hispanic_latino || null, veteran_status: formData.veteran_status || null,
       disability_status: formData.disability_status || null, military_service: formData.military_service || null,
     } as any);
+    // After save, update saved state and exit edit mode
+    setSavedFormData(formData);
+    setSavedWork(workExperiences);
+    setSavedEdu(educations);
+    setSavedCerts(certifications);
+    setIsEditing(false);
+    setIsDirty(false);
   };
 
-  // First-time upload: upload + autofill
+  // Resume handlers
   const handleFirstUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -160,7 +222,6 @@ export default function Profile() {
     buildReviewChanges(extracted);
   };
 
-  // Re-upload: replace resume + autofill
   const handleReupload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -171,7 +232,6 @@ export default function Profile() {
     buildReviewChanges(extracted);
   };
 
-  // Autofill again using existing stored resume
   const handleAutofillExisting = async () => {
     if (!profile?.resume_url || !user) return;
     setIsDownloadingResume(true);
@@ -214,35 +274,23 @@ export default function Profile() {
 
     if (extracted.skills && extracted.skills.length > 0) {
       const newSkills = extracted.skills.join(", ");
-      if (newSkills !== formData.skills) {
-        changes.push({ label: "Skills", field: "skills", oldValue: formData.skills, newValue: newSkills });
-      }
+      if (newSkills !== formData.skills) changes.push({ label: "Skills", field: "skills", oldValue: formData.skills, newValue: newSkills });
     }
-
     if (extracted.experience_years != null) {
       const newVal = String(extracted.experience_years);
       const oldVal = String(formData.experience_years);
-      if (newVal !== oldVal) {
-        changes.push({ label: "Years of Experience", field: "experience_years", oldValue: oldVal, newValue: newVal });
-      }
+      if (newVal !== oldVal) changes.push({ label: "Years of Experience", field: "experience_years", oldValue: oldVal, newValue: newVal });
     }
-
     if (extracted.work_experience && extracted.work_experience.length > 0) {
       const summary = extracted.work_experience.map(w => `${w.title} @ ${w.company}`).join("; ");
       const oldSummary = workExperiences.filter(w => w.title || w.company).map(w => `${w.title} @ ${w.company}`).join("; ");
-      if (summary !== oldSummary) {
-        changes.push({ label: "Work Experience", field: "work_experience", oldValue: oldSummary || "(empty)", newValue: summary });
-      }
+      if (summary !== oldSummary) changes.push({ label: "Work Experience", field: "work_experience", oldValue: oldSummary || "(empty)", newValue: summary });
     }
-
     if (extracted.education && extracted.education.length > 0) {
       const summary = extracted.education.map(e => `${e.degree || ""} ${e.major || ""} @ ${e.school}`).join("; ");
       const oldSummary = educations.filter(e => e.school || e.degree).map(e => `${e.degree} ${e.major} @ ${e.school}`).join("; ");
-      if (summary !== oldSummary) {
-        changes.push({ label: "Education", field: "education", oldValue: oldSummary || "(empty)", newValue: summary });
-      }
+      if (summary !== oldSummary) changes.push({ label: "Education", field: "education", oldValue: oldSummary || "(empty)", newValue: summary });
     }
-
     if (extracted.certifications && extracted.certifications.length > 0) {
       const summary = extracted.certifications.map(c => c.name).join(", ");
       changes.push({ label: "Certifications", field: "certifications", oldValue: "", newValue: summary });
@@ -256,53 +304,41 @@ export default function Profile() {
   const applyExtracted = async () => {
     if (!pendingExtracted) return;
     const e = pendingExtracted;
-    const filled = new Set<string>();
 
     const updates: Record<string, string> = {};
     const simpleFields = ["first_name", "last_name", "phone", "city", "state", "zip", "address", "linkedin_url", "github_url", "portfolio_url"] as const;
-    // Map extracted email to contact_email
-    if (e.email) {
-      setFormData(prev => ({ ...prev, contact_email: e.email as string }));
-    }
+    if (e.email) updates["contact_email"] = e.email;
     for (const f of simpleFields) {
-      if (e[f]) { updates[f] = e[f] as string; filled.add(f); }
+      if (e[f]) updates[f] = e[f] as string;
     }
     if (Object.keys(updates).length > 0) setFormData(prev => ({ ...prev, ...updates }));
 
-    if (e.skills && e.skills.length > 0) {
-      setFormData(prev => ({ ...prev, skills: e.skills!.join(", ") }));
-      filled.add("skills");
-    }
-    if (e.experience_years != null) {
-      setFormData(prev => ({ ...prev, experience_years: e.experience_years! }));
-      filled.add("experience_years");
-    }
+    if (e.skills && e.skills.length > 0) setFormData(prev => ({ ...prev, skills: e.skills!.join(", ") }));
+    if (e.experience_years != null) setFormData(prev => ({ ...prev, experience_years: e.experience_years! }));
     if (e.work_experience && e.work_experience.length > 0) {
       setWorkExperiences(e.work_experience.map(w => ({
         title: w.title || "", company: w.company || "",
         start_date: w.start_date || "", end_date: w.end_date || "",
         is_current: w.is_current || false,
       })));
-      filled.add("work_experience");
     }
     if (e.education && e.education.length > 0) {
       setEducations(e.education.map(ed => ({
         school: ed.school || "", degree: ed.degree || "",
         major: ed.major || "", graduation_year: ed.graduation_year || "",
       })));
-      filled.add("education");
     }
     if (e.certifications && e.certifications.length > 0) {
       setCertifications(e.certifications.map(c => ({
         name: c.name || "", issuer: c.issuer || "",
         date_obtained: c.date_obtained || "", expiration_date: c.expiration_date || "",
       })));
-      filled.add("certifications");
     }
 
     setShowReview(false);
+    setIsEditing(true);
+    setIsDirty(true);
 
-    // Upload the file as resume if we have a pending file (first-time flow)
     if (pendingFile) {
       await uploadResume(pendingFile);
       setPendingFile(null);
@@ -310,30 +346,35 @@ export default function Profile() {
   };
 
   // Helpers
-  const updateWork = (i: number, f: keyof WorkExperience, v: string | boolean) => setWorkExperiences(p => p.map((w, idx) => idx === i ? { ...w, [f]: v } : w));
-  const addWork = () => setWorkExperiences(p => [...p, { ...emptyWork }]);
-  const removeWork = (i: number) => { if (workExperiences.length > 1) setWorkExperiences(p => p.filter((_, idx) => idx !== i)); };
-  const updateEdu = (i: number, f: keyof Education, v: string) => setEducations(p => p.map((e, idx) => idx === i ? { ...e, [f]: v } : e));
-  const addEdu = () => setEducations(p => [...p, { ...emptyEdu }]);
-  const removeEdu = (i: number) => { if (educations.length > 1) setEducations(p => p.filter((_, idx) => idx !== i)); };
-  const updateCert = (i: number, f: keyof Certification, v: string) => setCertifications(p => p.map((c, idx) => idx === i ? { ...c, [f]: v } : c));
-  const addCert = () => setCertifications(p => [...p, { ...emptyCert }]);
-  const removeCert = (i: number) => setCertifications(p => p.filter((_, idx) => idx !== i));
+  const updateWork = (i: number, f: keyof WorkExperience, v: string | boolean) => { setWorkExperiences(p => p.map((w, idx) => idx === i ? { ...w, [f]: v } : w)); setIsDirty(true); };
+  const addWork = () => { setWorkExperiences(p => [...p, { ...emptyWork }]); setIsDirty(true); };
+  const removeWork = (i: number) => { if (workExperiences.length > 1) { setWorkExperiences(p => p.filter((_, idx) => idx !== i)); setIsDirty(true); } };
+  const updateEdu = (i: number, f: keyof Education, v: string) => { setEducations(p => p.map((e, idx) => idx === i ? { ...e, [f]: v } : e)); setIsDirty(true); };
+  const addEdu = () => { setEducations(p => [...p, { ...emptyEdu }]); setIsDirty(true); };
+  const removeEdu = (i: number) => { if (educations.length > 1) { setEducations(p => p.filter((_, idx) => idx !== i)); setIsDirty(true); } };
+  const updateCert = (i: number, f: keyof Certification, v: string) => { setCertifications(p => p.map((c, idx) => idx === i ? { ...c, [f]: v } : c)); setIsDirty(true); };
+  const addCert = () => { setCertifications(p => [...p, { ...emptyCert }]); setIsDirty(true); };
+  const removeCert = (i: number) => { setCertifications(p => p.filter((_, idx) => idx !== i)); setIsDirty(true); };
 
-
-  const SaveButton = () => (
-    <div className="flex justify-end pt-4">
-      <Button onClick={handleSave} disabled={isUpdating}>
-        {isUpdating ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving...</> : "Save Changes"}
-      </Button>
-    </div>
-  );
+  const disabled = !isEditing;
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container max-w-3xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-foreground mb-6">My Profile</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-foreground">My Profile</h1>
+          {!isEditing && !isLoading && (
+            <Button variant="outline" size="sm" onClick={handleEdit}>
+              <Pencil className="h-4 w-4 mr-1" /> Edit Profile
+            </Button>
+          )}
+          {isEditing && isDirty && (
+            <Badge variant="secondary" className="text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400 border-amber-200">
+              Unsaved changes
+            </Badge>
+          )}
+        </div>
 
         <div className="space-y-6">
           {/* 1. Resume Upload / Auto-Fill */}
@@ -378,15 +419,13 @@ export default function Profile() {
                       </div>
                     </>
                   ) : (
-                    <>
-                      <div onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 hover:bg-secondary/30 transition-colors">
-                        {isUploading || isParsing ? (
-                          <><Loader2 className="h-10 w-10 text-muted-foreground animate-spin mb-3" /><p className="text-muted-foreground">{isParsing ? "Parsing..." : "Uploading..."}</p></>
-                        ) : (
-                          <><Upload className="h-10 w-10 text-muted-foreground mb-3" /><p className="font-medium text-foreground">Click to upload resume</p><p className="text-sm text-muted-foreground mt-1">PDF or DOCX — will auto-fill your profile</p></>
-                        )}
-                      </div>
-                    </>
+                    <div onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 hover:bg-secondary/30 transition-colors">
+                      {isUploading || isParsing ? (
+                        <><Loader2 className="h-10 w-10 text-muted-foreground animate-spin mb-3" /><p className="text-muted-foreground">{isParsing ? "Parsing..." : "Uploading..."}</p></>
+                      ) : (
+                        <><Upload className="h-10 w-10 text-muted-foreground mb-3" /><p className="font-medium text-foreground">Click to upload resume</p><p className="text-sm text-muted-foreground mt-1">PDF or DOCX — will auto-fill your profile</p></>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
@@ -408,22 +447,22 @@ export default function Profile() {
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="first_name">First Name</Label>
-                      <Input id="first_name" placeholder="John" value={formData.first_name} onChange={(e) => set("first_name", e.target.value)} />
+                      <Input id="first_name" placeholder="John" value={formData.first_name} onChange={(e) => set("first_name", e.target.value)} disabled={disabled} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="last_name">Last Name</Label>
-                      <Input id="last_name" placeholder="Doe" value={formData.last_name} onChange={(e) => set("last_name", e.target.value)} />
+                      <Input id="last_name" placeholder="Doe" value={formData.last_name} onChange={(e) => set("last_name", e.target.value)} disabled={disabled} />
                     </div>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="contact_email">Contact Email</Label>
-                      <Input id="contact_email" placeholder="email@example.com" value={formData.contact_email} onChange={(e) => set("contact_email", e.target.value)} />
+                      <Input id="contact_email" placeholder="email@example.com" value={formData.contact_email} onChange={(e) => set("contact_email", e.target.value)} disabled={disabled} />
                       <p className="text-xs text-muted-foreground">Used for job applications and autofill</p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone</Label>
-                      <Input id="phone" placeholder="+1 (555) 123-4567" value={formData.phone} onChange={(e) => set("phone", e.target.value)} />
+                      <Input id="phone" placeholder="+1 (555) 123-4567" value={formData.phone} onChange={(e) => set("phone", e.target.value)} disabled={disabled} />
                     </div>
                   </div>
                   {formData.contact_email && formData.contact_email !== (profile?.email || user.email || "") && (
@@ -433,23 +472,22 @@ export default function Profile() {
                   )}
                   <div className="space-y-2">
                     <Label htmlFor="address">Street Address</Label>
-                    <Input id="address" placeholder="123 Main St, Apt 4B" value={formData.address} onChange={(e) => set("address", e.target.value)} />
+                    <Input id="address" placeholder="123 Main St, Apt 4B" value={formData.address} onChange={(e) => set("address", e.target.value)} disabled={disabled} />
                   </div>
                   <div className="grid gap-4 sm:grid-cols-3">
                     <div className="space-y-2">
                       <Label htmlFor="city">City</Label>
-                      <Input id="city" placeholder="San Francisco" value={formData.city} onChange={(e) => set("city", e.target.value)} />
+                      <Input id="city" placeholder="San Francisco" value={formData.city} onChange={(e) => set("city", e.target.value)} disabled={disabled} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="state">State</Label>
-                      <Input id="state" placeholder="CA" value={formData.state} onChange={(e) => set("state", e.target.value)} />
+                      <Input id="state" placeholder="CA" value={formData.state} onChange={(e) => set("state", e.target.value)} disabled={disabled} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="zip">ZIP Code</Label>
-                      <Input id="zip" placeholder="94102" value={formData.zip} onChange={(e) => set("zip", e.target.value)} />
+                      <Input id="zip" placeholder="94102" value={formData.zip} onChange={(e) => set("zip", e.target.value)} disabled={disabled} />
                     </div>
                   </div>
-                  <SaveButton />
                 </>
               )}
             </CardContent>
@@ -469,19 +507,18 @@ export default function Profile() {
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="linkedin">LinkedIn URL</Label>
-                    <Input id="linkedin" placeholder="https://linkedin.com/in/username" value={formData.linkedin_url} onChange={(e) => set("linkedin_url", e.target.value)} />
+                    <Input id="linkedin" placeholder="https://linkedin.com/in/username" value={formData.linkedin_url} onChange={(e) => set("linkedin_url", e.target.value)} disabled={disabled} />
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="github">GitHub URL</Label>
-                      <Input id="github" placeholder="https://github.com/username" value={formData.github_url} onChange={(e) => set("github_url", e.target.value)} />
+                      <Input id="github" placeholder="https://github.com/username" value={formData.github_url} onChange={(e) => set("github_url", e.target.value)} disabled={disabled} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="portfolio">Portfolio URL</Label>
-                      <Input id="portfolio" placeholder="https://mysite.com" value={formData.portfolio_url} onChange={(e) => set("portfolio_url", e.target.value)} />
+                      <Input id="portfolio" placeholder="https://mysite.com" value={formData.portfolio_url} onChange={(e) => set("portfolio_url", e.target.value)} disabled={disabled} />
                     </div>
                   </div>
-                  <SaveButton />
                 </>
               )}
             </CardContent>
@@ -498,7 +535,7 @@ export default function Profile() {
                   </div>
                   <CardDescription className="mt-1.5">Add your work history with dates</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" onClick={addWork} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>
+                {isEditing && <Button variant="outline" size="sm" onClick={addWork} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>}
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -506,21 +543,21 @@ export default function Profile() {
                 <>
                   {workExperiences.map((work, idx) => (
                     <div key={idx} className="space-y-4 p-4 rounded-lg border border-border bg-secondary/20 relative">
-                      {workExperiences.length > 1 && (
+                      {isEditing && workExperiences.length > 1 && (
                         <Button variant="ghost" size="sm" className="absolute top-2 right-2 text-destructive hover:text-destructive h-8 w-8 p-0" onClick={() => removeWork(idx)} type="button">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       )}
                       <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="space-y-2"><Label>Job Title</Label><Input placeholder="Software Engineer" value={work.title} onChange={(e) => updateWork(idx, "title", e.target.value)} /></div>
-                        <div className="space-y-2"><Label>Company</Label><Input placeholder="Acme Inc." value={work.company} onChange={(e) => updateWork(idx, "company", e.target.value)} /></div>
+                        <div className="space-y-2"><Label>Job Title</Label><Input placeholder="Software Engineer" value={work.title} onChange={(e) => updateWork(idx, "title", e.target.value)} disabled={disabled} /></div>
+                        <div className="space-y-2"><Label>Company</Label><Input placeholder="Acme Inc." value={work.company} onChange={(e) => updateWork(idx, "company", e.target.value)} disabled={disabled} /></div>
                       </div>
                       <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="space-y-2"><Label>Start Date</Label><Input type="month" value={work.start_date} onChange={(e) => updateWork(idx, "start_date", e.target.value)} /></div>
-                        <div className="space-y-2"><Label>End Date</Label><Input type="month" value={work.end_date} onChange={(e) => updateWork(idx, "end_date", e.target.value)} disabled={work.is_current} placeholder={work.is_current ? "Present" : ""} /></div>
+                        <div className="space-y-2"><Label>Start Date</Label><Input type="month" value={work.start_date} onChange={(e) => updateWork(idx, "start_date", e.target.value)} disabled={disabled} /></div>
+                        <div className="space-y-2"><Label>End Date</Label><Input type="month" value={work.end_date} onChange={(e) => updateWork(idx, "end_date", e.target.value)} disabled={disabled || work.is_current} placeholder={work.is_current ? "Present" : ""} /></div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Checkbox id={`current-${idx}`} checked={work.is_current} onCheckedChange={(checked) => updateWork(idx, "is_current", !!checked)} />
+                        <Checkbox id={`current-${idx}`} checked={work.is_current} onCheckedChange={(checked) => updateWork(idx, "is_current", !!checked)} disabled={disabled} />
                         <Label htmlFor={`current-${idx}`} className="text-sm cursor-pointer">I currently work here</Label>
                       </div>
                     </div>
@@ -528,24 +565,23 @@ export default function Profile() {
                   <div className="grid gap-4 sm:grid-cols-3 pt-2">
                     <div className="space-y-2">
                       <Label htmlFor="experience_years">Years of Experience</Label>
-                      <Input id="experience_years" type="number" min={0} placeholder="5" value={formData.experience_years} onChange={(e) => set("experience_years", e.target.value)} />
+                      <Input id="experience_years" type="number" min={0} placeholder="5" value={formData.experience_years} onChange={(e) => set("experience_years", e.target.value)} disabled={disabled} />
                     </div>
                     <div className="space-y-2">
                       <Label>Work Authorization</Label>
-                      <Select value={formData.work_authorization} onValueChange={(v) => set("work_authorization", v)}>
+                      <Select value={formData.work_authorization} onValueChange={(v) => set("work_authorization", v)} disabled={disabled}>
                         <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
                         <SelectContent>{WORK_AUTH_OPTIONS.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
                       <Label>Visa Sponsorship</Label>
-                      <Select value={formData.visa_status} onValueChange={(v) => set("visa_status", v)}>
+                      <Select value={formData.visa_status} onValueChange={(v) => set("visa_status", v)} disabled={disabled}>
                         <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
                         <SelectContent>{VISA_STATUS_OPTIONS.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
                   </div>
-                  <SaveButton />
                 </>
               )}
             </CardContent>
@@ -562,7 +598,7 @@ export default function Profile() {
                   </div>
                   <CardDescription className="mt-1.5">Add your education history</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" onClick={addEdu} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>
+                {isEditing && <Button variant="outline" size="sm" onClick={addEdu} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>}
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -570,20 +606,19 @@ export default function Profile() {
                 <>
                   {educations.map((edu, idx) => (
                     <div key={idx} className="space-y-4 p-4 rounded-lg border border-border bg-secondary/20 relative">
-                      {educations.length > 1 && (
+                      {isEditing && educations.length > 1 && (
                         <Button variant="ghost" size="sm" className="absolute top-2 right-2 text-destructive hover:text-destructive h-8 w-8 p-0" onClick={() => removeEdu(idx)} type="button"><Trash2 className="h-4 w-4" /></Button>
                       )}
                       <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="space-y-2"><Label>School / University</Label><Input placeholder="MIT" value={edu.school} onChange={(e) => updateEdu(idx, "school", e.target.value)} /></div>
-                        <div className="space-y-2"><Label>Degree</Label><Input placeholder="Bachelor's" value={edu.degree} onChange={(e) => updateEdu(idx, "degree", e.target.value)} /></div>
+                        <div className="space-y-2"><Label>School / University</Label><Input placeholder="MIT" value={edu.school} onChange={(e) => updateEdu(idx, "school", e.target.value)} disabled={disabled} /></div>
+                        <div className="space-y-2"><Label>Degree</Label><Input placeholder="Bachelor's" value={edu.degree} onChange={(e) => updateEdu(idx, "degree", e.target.value)} disabled={disabled} /></div>
                       </div>
                       <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="space-y-2"><Label>Major / Field of Study</Label><Input placeholder="Computer Science" value={edu.major} onChange={(e) => updateEdu(idx, "major", e.target.value)} /></div>
-                        <div className="space-y-2"><Label>Graduation Year</Label><Input placeholder="2023" value={edu.graduation_year} onChange={(e) => updateEdu(idx, "graduation_year", e.target.value)} /></div>
+                        <div className="space-y-2"><Label>Major / Field of Study</Label><Input placeholder="Computer Science" value={edu.major} onChange={(e) => updateEdu(idx, "major", e.target.value)} disabled={disabled} /></div>
+                        <div className="space-y-2"><Label>Graduation Year</Label><Input placeholder="2023" value={edu.graduation_year} onChange={(e) => updateEdu(idx, "graduation_year", e.target.value)} disabled={disabled} /></div>
                       </div>
                     </div>
                   ))}
-                  <SaveButton />
                 </>
               )}
             </CardContent>
@@ -603,7 +638,7 @@ export default function Profile() {
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="skills">Skills</Label>
-                    <Input id="skills" placeholder="React, TypeScript, Node.js, AWS" value={formData.skills} onChange={(e) => set("skills", e.target.value)} />
+                    <Input id="skills" placeholder="React, TypeScript, Node.js, AWS" value={formData.skills} onChange={(e) => set("skills", e.target.value)} disabled={disabled} />
                   </div>
                   {formData.skills && (
                     <div className="flex flex-wrap gap-2">
@@ -612,7 +647,6 @@ export default function Profile() {
                       ))}
                     </div>
                   )}
-                  <SaveButton />
                 </>
               )}
             </CardContent>
@@ -629,23 +663,23 @@ export default function Profile() {
                   </div>
                   <CardDescription className="mt-1.5">Professional certifications (optional)</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" onClick={addCert} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>
+                {isEditing && <Button variant="outline" size="sm" onClick={addCert} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>}
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
               {certifications.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">No certifications added. Click "Add" to add one.</p>
+                <p className="text-sm text-muted-foreground text-center py-4">No certifications added.{isEditing ? ' Click "Add" to add one.' : ''}</p>
               ) : (
                 certifications.map((cert, idx) => (
                   <div key={idx} className="space-y-4 p-4 rounded-lg border border-border bg-secondary/20 relative">
-                    <Button variant="ghost" size="sm" className="absolute top-2 right-2 text-destructive hover:text-destructive h-8 w-8 p-0" onClick={() => removeCert(idx)} type="button"><Trash2 className="h-4 w-4" /></Button>
+                    {isEditing && <Button variant="ghost" size="sm" className="absolute top-2 right-2 text-destructive hover:text-destructive h-8 w-8 p-0" onClick={() => removeCert(idx)} type="button"><Trash2 className="h-4 w-4" /></Button>}
                     <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-2"><Label>Certification Name</Label><Input placeholder="AWS Solutions Architect" value={cert.name} onChange={(e) => updateCert(idx, "name", e.target.value)} /></div>
-                      <div className="space-y-2"><Label>Issuer</Label><Input placeholder="Amazon Web Services" value={cert.issuer} onChange={(e) => updateCert(idx, "issuer", e.target.value)} /></div>
+                      <div className="space-y-2"><Label>Certification Name</Label><Input placeholder="AWS Solutions Architect" value={cert.name} onChange={(e) => updateCert(idx, "name", e.target.value)} disabled={disabled} /></div>
+                      <div className="space-y-2"><Label>Issuer</Label><Input placeholder="Amazon Web Services" value={cert.issuer} onChange={(e) => updateCert(idx, "issuer", e.target.value)} disabled={disabled} /></div>
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-2"><Label>Date Obtained</Label><Input type="month" value={cert.date_obtained} onChange={(e) => updateCert(idx, "date_obtained", e.target.value)} /></div>
-                      <div className="space-y-2"><Label>Expiration Date (optional)</Label><Input type="month" value={cert.expiration_date} onChange={(e) => updateCert(idx, "expiration_date", e.target.value)} /></div>
+                      <div className="space-y-2"><Label>Date Obtained</Label><Input type="month" value={cert.date_obtained} onChange={(e) => updateCert(idx, "date_obtained", e.target.value)} disabled={disabled} /></div>
+                      <div className="space-y-2"><Label>Expiration Date (optional)</Label><Input type="month" value={cert.expiration_date} onChange={(e) => updateCert(idx, "expiration_date", e.target.value)} disabled={disabled} /></div>
                     </div>
                   </div>
                 ))
@@ -668,14 +702,14 @@ export default function Profile() {
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label>Gender</Label>
-                      <Select value={formData.gender} onValueChange={(v) => set("gender", v)}>
+                      <Select value={formData.gender} onValueChange={(v) => set("gender", v)} disabled={disabled}>
                         <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
                         <SelectContent>{GENDER_OPTIONS.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
                       <Label>Race / Ethnicity</Label>
-                      <Select value={formData.race_ethnicity} onValueChange={(v) => set("race_ethnicity", v)}>
+                      <Select value={formData.race_ethnicity} onValueChange={(v) => set("race_ethnicity", v)} disabled={disabled}>
                         <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
                         <SelectContent>{RACE_ETHNICITY_OPTIONS.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                       </Select>
@@ -684,21 +718,21 @@ export default function Profile() {
                   <div className="grid gap-4 sm:grid-cols-3">
                     <div className="space-y-2">
                       <Label>Hispanic or Latino</Label>
-                      <Select value={formData.hispanic_latino} onValueChange={(v) => set("hispanic_latino", v)}>
+                      <Select value={formData.hispanic_latino} onValueChange={(v) => set("hispanic_latino", v)} disabled={disabled}>
                         <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
                         <SelectContent>{HISPANIC_LATINO_OPTIONS.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
                       <Label>Veteran Status</Label>
-                      <Select value={formData.veteran_status} onValueChange={(v) => set("veteran_status", v)}>
+                      <Select value={formData.veteran_status} onValueChange={(v) => set("veteran_status", v)} disabled={disabled}>
                         <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
                         <SelectContent>{VETERAN_OPTIONS.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
                       <Label>Disability Status</Label>
-                      <Select value={formData.disability_status} onValueChange={(v) => set("disability_status", v)}>
+                      <Select value={formData.disability_status} onValueChange={(v) => set("disability_status", v)} disabled={disabled}>
                         <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
                         <SelectContent>{DISABILITY_OPTIONS.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                       </Select>
@@ -707,17 +741,17 @@ export default function Profile() {
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label>Have you served in the military?</Label>
-                      <Select value={formData.military_service} onValueChange={(v) => set("military_service", v)}>
+                      <Select value={formData.military_service} onValueChange={(v) => set("military_service", v)} disabled={disabled}>
                         <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
                         <SelectContent>{MILITARY_OPTIONS.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
                   </div>
-                  <SaveButton />
                 </>
               )}
             </CardContent>
           </Card>
+
           {/* Account / Security */}
           <Card>
             <CardHeader>
@@ -736,8 +770,20 @@ export default function Profile() {
             </CardContent>
           </Card>
 
-          {/* Final Save */}
-          <SaveButton />
+          {/* Save / Cancel bar */}
+          {isEditing && (
+            <div className="flex items-center justify-end gap-3 sticky bottom-4 bg-background/95 backdrop-blur border border-border rounded-lg p-4 shadow-lg">
+              {isDirty && (
+                <span className="text-sm text-amber-600 dark:text-amber-400 mr-auto">You have unsaved changes</span>
+              )}
+              <Button variant="outline" onClick={handleCancel} disabled={isUpdating}>
+                <X className="h-4 w-4 mr-1" /> Cancel
+              </Button>
+              <Button onClick={handleSave} disabled={isUpdating || !isDirty}>
+                {isUpdating ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving...</> : "Save Profile"}
+              </Button>
+            </div>
+          )}
 
           {/* Debug Role Section */}
           <Card className="border-dashed border-accent/50 bg-accent/5">
@@ -768,6 +814,20 @@ export default function Profile() {
       </main>
 
       <ResumeReviewDialog open={showReview} onOpenChange={setShowReview} changes={pendingChanges} onApply={applyExtracted} />
+
+      {/* Navigation blocker dialog */}
+      <AlertDialog open={blocker.state === "blocked"}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
+            <AlertDialogDescription>You have unsaved profile changes. Are you sure you want to leave? Your changes will be lost.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => blocker.reset?.()}>Stay</AlertDialogCancel>
+            <AlertDialogAction onClick={() => blocker.proceed?.()}>Leave</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
