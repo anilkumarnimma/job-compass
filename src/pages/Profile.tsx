@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Navigate, useBlocker } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { useProfile, ProfileData, WorkExperience, Education } from "@/hooks/useProfile";
@@ -16,10 +16,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import {
   User, FileText, Upload, Download, Trash2, Loader2, Bug,
   Link2, Briefcase, GraduationCap, Sparkles, Plus, Wand2, Award, Pencil, X,
@@ -144,9 +140,6 @@ export default function Profile() {
     if (profile) populateFromProfile(profile);
   }, [profile, populateFromProfile]);
 
-  // Navigation blocker for unsaved changes
-  const blocker = useBlocker(isEditing && isDirty);
-  
   // Browser beforeunload warning
   useEffect(() => {
     if (!isEditing || !isDirty) return;
@@ -815,19 +808,6 @@ export default function Profile() {
 
       <ResumeReviewDialog open={showReview} onOpenChange={setShowReview} changes={pendingChanges} onApply={applyExtracted} />
 
-      {/* Navigation blocker dialog */}
-      <AlertDialog open={blocker.state === "blocked"}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
-            <AlertDialogDescription>You have unsaved profile changes. Are you sure you want to leave? Your changes will be lost.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => blocker.reset?.()}>Stay</AlertDialogCancel>
-            <AlertDialogAction onClick={() => blocker.proceed?.()}>Leave</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
