@@ -327,9 +327,22 @@ export default function Profile() {
 
   const SaveButton = () => (
     <div className="flex justify-end pt-4">
-      <Button onClick={handleSave} disabled={isUpdating}>
-        {isUpdating ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving...</> : "Save Changes"}
+      <Button onClick={handleSave} disabled={isUpdating} size="lg">
+        {isUpdating ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving...</> : "Save All Changes"}
       </Button>
+    </div>
+  );
+
+  const EditToggle = ({ section }: { section: string }) => (
+    <Button variant="ghost" size="sm" onClick={() => toggleEdit(section)} className="gap-1">
+      {isEditing(section) ? <><X className="h-4 w-4" /> Close</> : <><Pencil className="h-4 w-4" /> Edit</>}
+    </Button>
+  );
+
+  const DisplayField = ({ label, value }: { label: string; value: string }) => (
+    <div className="space-y-1">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-sm text-foreground">{value || <span className="text-muted-foreground italic">Not set</span>}</p>
     </div>
   );
 
