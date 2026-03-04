@@ -106,8 +106,9 @@ export function useProfile() {
     },
   });
 
-  const uploadResume = async (file: File) => {
+  const uploadResume = async (file: File, options?: { silent?: boolean }) => {
     if (!user) throw new Error("Not authenticated");
+    const silent = options?.silent ?? false;
     
     const allowedTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
     if (!allowedTypes.includes(file.type)) {
@@ -140,10 +141,12 @@ export function useProfile() {
         resume_filename: file.name,
       });
       
-      toast({
-        title: "Resume uploaded",
-        description: "Your resume has been saved.",
-      });
+      if (!silent) {
+        toast({
+          title: "Resume uploaded",
+          description: "Your resume has been saved.",
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Upload failed",
