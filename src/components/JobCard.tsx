@@ -9,6 +9,7 @@ import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, ArrowRight } from "
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useRef, useCallback } from "react";
 
 interface JobCardProps {
   job: Job;
@@ -22,6 +23,7 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style }: JobCar
   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const saved = isSaved(job.id);
   const applied = isApplied(job.id);
@@ -52,6 +54,20 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style }: JobCar
     }
   };
 
+  // Subtle 3D tilt
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    cardRef.current.style.transform = `perspective(800px) rotateY(${x * 3}deg) rotateX(${-y * 3}deg) translateY(-2px)`;
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    if (!cardRef.current) return;
+    cardRef.current.style.transform = "perspective(800px) rotateY(0deg) rotateX(0deg) translateY(0px)";
+  }, []);
+
   const getLocationBadge = () => {
     const loc = job.location.toLowerCase();
     if (loc.includes("remote")) return "bg-success-bg text-success-text";
@@ -61,24 +77,35 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style }: JobCar
 
   return (
     <motion.div
-      whileHover={{ scale: 1.02, y: -2 }}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
       whileTap={{ scale: 0.99 }}
       transition={{ type: "spring", stiffness: 350, damping: 25 }}
     >
     <Card
-      className={`group p-5 border bg-card rounded-2xl cursor-pointer overflow-hidden relative transition-shadow duration-200 hover:shadow-card-hover hover:border-accent/30 ${
-        isSelected ? "border-accent ring-1 ring-accent/30 bg-accent/5 shadow-card-hover" : "border-border/60 shadow-card"
+      ref={cardRef}
+      className={`group p-5 border bg-card/80 backdrop-blur-sm rounded-2xl cursor-pointer overflow-hidden relative transition-all duration-300 ${
+        isSelected 
+          ? "border-accent ring-1 ring-accent/30 bg-accent/5 shadow-[0_0_20px_hsl(var(--accent)/0.15)]" 
+          : "border-border/40 shadow-card hover:shadow-[0_8px_30px_hsl(var(--glow-accent)/0.1)] hover:border-accent/25"
       }`}
       onClick={handleCardClick}
-      style={style}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{ ...style, transition: "transform 0.2s ease, box-shadow 0.3s ease, border-color 0.3s ease" }}
     >
+      {/* Shimmer sweep on hover */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none overflow-hidden rounded-2xl">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-accent/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+      </div>
+
       {/* Header Row */}
-      <div className="flex items-start gap-3.5 mb-3">
+      <div className="flex items-start gap-3.5 mb-3 relative z-10">
         <CompanyLogo
           logoUrl={job.company_logo}
           companyName={job.company}
           size="md"
-          className="rounded-xl shrink-0"
+          className="rounded-xl shrink-0 ring-1 ring-border/30"
         />
 
         <div className="flex-1 min-w-0">
@@ -103,8 +130,8 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style }: JobCar
               </p>
             </div>
             {job.is_reviewing && (
-              <Badge className="shrink-0 px-2.5 py-1 text-[11px] font-medium bg-success-bg text-success-text border-0 rounded-full whitespace-nowrap">
-                ● Actively Reviewing
+              <Badge className="shrink-0 px-2.5 py-1 text-[11px] font-medium bg-success-bg text-success-text border-0 rounded-full whitespace-nowrap animate-pulse">
+                ● Reviewing
               </Badge>
             )}
           </div>
@@ -112,7 +139,7 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style }: JobCar
       </div>
 
       {/* Meta Row */}
-      <div className="flex flex-wrap items-center gap-2 mb-3">
+      <div className="flex flex-wrap items-center gap-2 mb-3 relative z-10">
         <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${getLocationBadge()}`}>
           <MapPin className="h-3.5 w-3.5" />
           {job.location}
@@ -133,12 +160,12 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style }: JobCar
 
       {/* Skills - max 5 visible + N more */}
       {job.skills.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-4">
+        <div className="flex flex-wrap gap-1.5 mb-4 relative z-10">
           {job.skills.slice(0, 5).map((skill) => (
             <Badge
               key={skill}
               variant="outline"
-              className="text-xs font-normal px-2.5 py-1 rounded-full bg-secondary/50 text-foreground border-border/40 hover:bg-secondary transition-colors"
+              className="text-xs font-normal px-2.5 py-1 rounded-full bg-secondary/50 text-foreground border-border/40 hover:bg-accent/10 hover:text-accent hover:border-accent/30 transition-all duration-200"
             >
               {skill}
             </Badge>
@@ -152,7 +179,7 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style }: JobCar
       )}
 
       {/* Actions */}
-      <div className="flex items-center justify-between gap-3 pt-3 border-t border-border/30">
+      <div className="flex items-center justify-between gap-3 pt-3 border-t border-border/30 relative z-10">
         <Button
           variant="ghost"
           size="sm"
@@ -171,7 +198,7 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style }: JobCar
           className={`h-9 px-5 text-sm font-medium rounded-full gap-1.5 group/btn transition-all duration-200 active:scale-95 ${
             applied
               ? "bg-secondary text-foreground border border-border cursor-default"
-              : "bg-accent text-accent-foreground hover:bg-accent/90 shadow-sm hover:shadow-glow"
+              : "bg-accent text-accent-foreground hover:bg-accent/90 shadow-sm hover:shadow-glow btn-glow"
           }`}
         >
           {applied ? "Applied ✓" : (
