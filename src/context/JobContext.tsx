@@ -3,7 +3,6 @@ import { useApplications, useSavedJobs, useJobActions, useTotalApplicationCount 
 import { useProfile } from "@/hooks/useProfile";
 import { Application, SavedJob, Job } from "@/types/job";
 import { emitWidgetEvent } from "@/hooks/useWidgetTracker";
-import { Application, SavedJob, Job } from "@/types/job";
 
 interface JobContextType {
   applications: Application[];
