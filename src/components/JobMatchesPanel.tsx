@@ -41,7 +41,7 @@ export function JobMatchesPanel() {
 
   if (profileLoading || isLoading) {
     return (
-      <div className="rounded-xl border border-border/60 bg-card p-4 space-y-2.5">
+      <div className="rounded-xl border border-border/60 bg-card p-4 space-y-2.5 max-w-[600px]">
         <Skeleton className="h-4 w-32" />
         <Skeleton className="h-3 w-40" />
         <Skeleton className="h-6 w-full" />
