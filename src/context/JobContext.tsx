@@ -27,7 +27,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
   const { data: applications = [], isLoading: appsLoading } = useApplications();
   const { data: savedJobs = [], isLoading: savedLoading } = useSavedJobs();
   const { data: totalAppCount = 0 } = useTotalApplicationCount();
-  const { applyToJob: rawApply, saveJob, unsaveJob, removeAppliedJob } = useJobActions();
+  const { applyToJob: rawApply, saveJob: rawSave, unsaveJob, removeAppliedJob } = useJobActions();
   const { profile } = useProfile();
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [showApplyConfirm, setShowApplyConfirm] = useState(false);
