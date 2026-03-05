@@ -7,6 +7,8 @@ import { Briefcase, Menu, X, LogOut, Shield, User, Crown, ChevronDown, Sparkles 
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ProfileAvatar } from "@/components/ProfileAvatar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -102,20 +104,28 @@ export function Header() {
                   </Button>
                 )}
                 {(!isEmployer || isFounder) && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="rounded-full h-9 px-3 text-muted-foreground hover:text-foreground gap-1.5"
-                      >
-                        <User className="h-4 w-4" />
-                        <span className="hidden lg:inline">Profile</span>
-                        <ChevronDown className="h-3.5 w-3.5" />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="rounded-full h-9 px-2 text-muted-foreground hover:text-foreground gap-1.5"
+                    >
+                      <ProfileAvatar size="sm" showPicker={false} />
+                      <span className="hidden lg:inline">Profile</span>
+                      <ChevronDown className="h-3.5 w-3.5" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56 rounded-xl border-border/50 shadow-premium">
-                      <DropdownMenuItem onClick={() => navigate("/profile")} className="rounded-lg">
+                  <DropdownMenuContent align="end" className="w-56 rounded-xl border-border/50 shadow-premium">
+                    <div className="flex items-center gap-3 px-2 py-2">
+                      <ProfileAvatar size="md" showPicker={true} />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-foreground">{profile?.full_name || profile?.first_name || "User"}</span>
+                        <span className="text-xs text-muted-foreground">{user?.email}</span>
+                      </div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate("/profile")} className="rounded-lg">
                         <User className="h-4 w-4 mr-2" />
                         My Profile
                       </DropdownMenuItem>
