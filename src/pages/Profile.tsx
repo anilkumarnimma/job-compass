@@ -814,6 +814,19 @@ export default function Profile() {
               )}
             </CardContent>
           </Card>
+          </div>
+
+          {/* Right column - ATS Panel (sticky) */}
+          <div className="hidden lg:block">
+            <div className="sticky top-8">
+              <ProfileAtsPanel />
+            </div>
+          </div>
+
+          {/* Mobile ATS - shown below form on small screens */}
+          <div className="lg:hidden">
+            <ProfileAtsPanel />
+          </div>
         </div>
       </main>
 
