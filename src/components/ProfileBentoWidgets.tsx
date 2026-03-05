@@ -1,13 +1,25 @@
 import { useMemo, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useJobContext } from "@/context/JobContext";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Briefcase, Bookmark, Target, TrendingUp, Sparkles, Camera } from "lucide-react";
+import { Briefcase, Bookmark, Target, TrendingUp, Sparkles, Camera, Upload, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+const PRESET_AVATARS = [
+  "/avatars/avatar-1.png",
+  "/avatars/avatar-2.png",
+  "/avatars/avatar-3.png",
+  "/avatars/avatar-4.png",
+  "/avatars/avatar-5.png",
+  "/avatars/avatar-6.png",
+  "/avatars/avatar-7.png",
+  "/avatars/avatar-8.png",
+];
 
 export function ProfileWelcomeBanner() {
   const { user } = useAuth();
@@ -16,6 +28,7 @@ export function ProfileWelcomeBanner() {
   const { toast } = useToast();
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
   const profileCompletion = useMemo(() => {
     if (!profile) return 0;
@@ -100,7 +113,7 @@ export function ProfileWelcomeBanner() {
                 <p className="text-white/70 text-[10px] truncate">{profile.current_title}</p>
               )}
             </div>
-            {/* Camera overlay - must be after name overlay for z-index */}
+            {/* Camera overlay - opens avatar picker */}
             <input
               type="file"
               ref={photoInputRef}
@@ -109,13 +122,65 @@ export function ProfileWelcomeBanner() {
               className="hidden"
             />
             <button
-              onClick={(e) => { e.stopPropagation(); photoInputRef.current?.click(); }}
+              onClick={(e) => { e.stopPropagation(); setShowAvatarPicker(true); }}
               disabled={uploading}
               className="absolute top-2 right-2 z-20 w-8 h-8 rounded-full bg-foreground/80 text-background flex items-center justify-center opacity-80 hover:opacity-100 transition-opacity shadow-md cursor-pointer"
             >
               <Camera className="h-4 w-4" />
             </button>
           </div>
+
+          {/* Avatar Picker Dialog */}
+          <Dialog open={showAvatarPicker} onOpenChange={setShowAvatarPicker}>
+            <DialogContent className="sm:max-w-md rounded-3xl">
+              <DialogHeader>
+                <DialogTitle className="font-display text-lg">Choose your avatar</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <p className="text-xs text-muted-foreground font-medium">Pick a character</p>
+                <div className="grid grid-cols-4 gap-3">
+                  {PRESET_AVATARS.map((url, i) => (
+                    <motion.button
+                      key={url}
+                      whileHover={{ scale: 1.08 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={async () => {
+                        await updateProfileAsync({ avatar_url: url } as any);
+                        toast({ title: "Avatar updated!" });
+                        setShowAvatarPicker(false);
+                      }}
+                      className={`rounded-2xl overflow-hidden border-2 transition-all cursor-pointer ${
+                        avatarUrl === url ? "border-accent shadow-[0_0_12px_hsl(var(--accent)/0.3)]" : "border-border/40 hover:border-accent/50"
+                      }`}
+                    >
+                      <img src={url} alt={`Avatar ${i + 1}`} className="w-full h-full object-cover aspect-square" />
+                    </motion.button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-3 pt-2 border-t border-border/40">
+                  <button
+                    onClick={() => { photoInputRef.current?.click(); setShowAvatarPicker(false); }}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full border border-border/50 text-sm font-medium text-foreground hover:bg-secondary transition-colors cursor-pointer"
+                  >
+                    <Upload className="h-4 w-4" />
+                    Upload photo
+                  </button>
+                  {avatarUrl && (
+                    <button
+                      onClick={async () => {
+                        await updateProfileAsync({ avatar_url: null } as any);
+                        toast({ title: "Avatar removed" });
+                        setShowAvatarPicker(false);
+                      }}
+                      className="px-4 py-2.5 rounded-full text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* Right side: Welcome + Stats */}
           <div className="flex-1 min-w-0">
