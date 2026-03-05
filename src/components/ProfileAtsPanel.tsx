@@ -194,30 +194,30 @@ export function ProfileAtsPanel({ formProfile }: ProfileAtsPanelProps = {}) {
             {(result.matched_keywords.length > 0 || result.missing_keywords.length > 0) && (
               <Card className="rounded-3xl">
                 <CardContent className="pt-5 pb-4 space-y-4">
-                  {result.matched_keywords.length > 0 && (
+                  {result.missing_keywords.length > 0 && (
                     <div>
                       <h4 className="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                        Matched ({result.matched_keywords.length})
+                        <XCircle className="h-3.5 w-3.5 text-red-500" />
+                        Recommended Skills ({result.missing_keywords.length})
                       </h4>
                       <div className="flex flex-wrap gap-1">
-                        {result.matched_keywords.map((kw, i) => (
-                          <Badge key={i} variant="secondary" className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-0 text-[10px] rounded-full px-2 py-0.5">
+                        {result.missing_keywords.map((kw, i) => (
+                          <Badge key={i} variant="secondary" className="bg-red-500/10 text-red-700 dark:text-red-400 border-0 text-[10px] rounded-full px-2 py-0.5">
                             {kw}
                           </Badge>
                         ))}
                       </div>
                     </div>
                   )}
-                  {result.missing_keywords.length > 0 && (
+                  {result.matched_keywords.length > 0 && (
                     <div>
                       <h4 className="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
-                        <XCircle className="h-3.5 w-3.5 text-red-500" />
-                        Missing ({result.missing_keywords.length})
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                        Strong Skills ({result.matched_keywords.length})
                       </h4>
                       <div className="flex flex-wrap gap-1">
-                        {result.missing_keywords.map((kw, i) => (
-                          <Badge key={i} variant="secondary" className="bg-red-500/10 text-red-700 dark:text-red-400 border-0 text-[10px] rounded-full px-2 py-0.5">
+                        {result.matched_keywords.map((kw, i) => (
+                          <Badge key={i} variant="secondary" className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-0 text-[10px] rounded-full px-2 py-0.5">
                             {kw}
                           </Badge>
                         ))}
