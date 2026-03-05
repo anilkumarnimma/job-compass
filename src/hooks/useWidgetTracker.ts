@@ -1,7 +1,4 @@
-import { create } from "zustand";
-
-// We'll use a simple event-based system instead of zustand since it's not installed.
-// Use a custom event bus for widget communication.
+// Custom event bus for widget communication (localStorage-backed)
 
 const CHALLENGE_STORAGE_KEY = "jobpulse_daily_challenge";
 const POMODORO_STORAGE_KEY = "jobpulse_pomodoro";
@@ -148,9 +145,9 @@ type WidgetListener = (type: WidgetEventType) => void;
 
 const listeners: Set<WidgetListener> = new Set();
 
-export function onWidgetEvent(listener: WidgetListener) {
+export function onWidgetEvent(listener: WidgetListener): () => void {
   listeners.add(listener);
-  return () => listeners.delete(listener);
+  return () => { listeners.delete(listener); };
 }
 
 export function emitWidgetEvent(type: WidgetEventType) {
