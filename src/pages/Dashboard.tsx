@@ -11,31 +11,45 @@ import { useJobSearchPaginated } from "@/hooks/useJobSearchPaginated";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useJobContext } from "@/context/JobContext";
 import { Job } from "@/types/job";
-import { X, ChevronDown } from "lucide-react";
+import { X, ChevronDown, CalendarIcon } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
 
 import { cn } from "@/lib/utils";
 
-type DateFilter = "all" | "today" | "yesterday";
+type DateFilter = "all" | "today" | "yesterday" | "custom";
 
-function getDateRange(filter: DateFilter): { dateFrom: string | null; dateTo: string | null } {
+function getDateRange(filter: DateFilter, customDate?: Date | undefined): { dateFrom: string | null; dateTo: string | null } {
   if (filter === "all") return { dateFrom: null, dateTo: null };
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   if (filter === "today") {
     return { dateFrom: today.toISOString().split("T")[0], dateTo: null };
   }
-  // yesterday
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-  return {
-    dateFrom: yesterday.toISOString().split("T")[0],
-    dateTo: today.toISOString().split("T")[0],
-  };
+  if (filter === "yesterday") {
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    return {
+      dateFrom: yesterday.toISOString().split("T")[0],
+      dateTo: today.toISOString().split("T")[0],
+    };
+  }
+  // custom date
+  if (filter === "custom" && customDate) {
+    const from = new Date(customDate.getFullYear(), customDate.getMonth(), customDate.getDate());
+    const to = new Date(from);
+    to.setDate(to.getDate() + 1);
+    return {
+      dateFrom: from.toISOString().split("T")[0],
+      dateTo: to.toISOString().split("T")[0],
+    };
+  }
+  return { dateFrom: null, dateTo: null };
 }
 
 export default function Dashboard() {
@@ -48,6 +62,7 @@ export default function Dashboard() {
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const [companyFilter, setCompanyFilter] = useState<string | null>(null);
   const [allTimeDropdownOpen, setAllTimeDropdownOpen] = useState(false);
+  const [customDate, setCustomDate] = useState<Date | undefined>(undefined);
   const [fallbackActive, setFallbackActive] = useState(false);
   
   const isMobile = useIsMobile();
@@ -78,12 +93,12 @@ export default function Dashboard() {
   }, [debouncedSearch, roleFilter, companyFilter]);
 
   // Reset page when search/filters change
-  const { dateFrom, dateTo } = getDateRange(dateFilter);
+  const { dateFrom, dateTo } = getDateRange(dateFilter, customDate);
 
   useEffect(() => {
     setCurrentPage(1);
     setFallbackActive(false);
-  }, [combinedSearchQuery, dateFilter]);
+  }, [combinedSearchQuery, dateFilter, customDate]);
 
   // Primary query with selected date filter
   const {
@@ -132,12 +147,26 @@ export default function Dashboard() {
   }, []);
 
   const handleDateSelect = useCallback((value: DateFilter) => {
+    if (value !== "custom") setCustomDate(undefined);
     setDateFilter(value);
     setAllTimeDropdownOpen(false);
   }, []);
 
+  const handleCustomDateSelect = useCallback((date: Date | undefined) => {
+    if (date) {
+      setCustomDate(date);
+      setDateFilter("custom");
+    }
+  }, []);
+
+  const handleClearCustomDate = useCallback(() => {
+    setCustomDate(undefined);
+    setDateFilter("all");
+    setAllTimeDropdownOpen(false);
+  }, []);
+
   const hasActiveFilter = roleFilter || companyFilter;
-  const fallbackLabel = dateFilter === "today" ? "today" : "yesterday";
+  const fallbackLabel = dateFilter === "today" ? "today" : dateFilter === "yesterday" ? "yesterday" : customDate ? format(customDate, "MMM d") : "";
 
   return (
     <Layout>
@@ -193,30 +222,69 @@ export default function Dashboard() {
                   <button
                     className={cn(
                       "px-3 py-1.5 text-xs font-medium rounded-full border transition-colors inline-flex items-center gap-1",
-                      dateFilter === "all" || fallbackActive
+                      (dateFilter === "all" || dateFilter === "custom" || fallbackActive)
                         ? "bg-accent text-accent-foreground border-accent"
                         : "bg-card text-muted-foreground border-border hover:border-accent/50"
                     )}
                   >
-                    All time
+                    {dateFilter === "custom" && customDate ? format(customDate, "MMM d") : "All time"}
                     <ChevronDown className="h-3 w-3" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent align="start" className="w-36 p-1">
-                  {(["today", "yesterday", "all"] as DateFilter[]).map((opt) => (
+                <PopoverContent align="start" className="w-auto p-2">
+                  <div className="flex flex-col gap-1 mb-2">
                     <button
-                      key={opt}
-                      onClick={() => handleDateSelect(opt)}
+                      onClick={() => handleDateSelect("all")}
                       className={cn(
                         "w-full text-left px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-                        dateFilter === opt && !fallbackActive
+                        dateFilter === "all" && !fallbackActive
                           ? "bg-accent text-accent-foreground"
                           : "text-foreground hover:bg-secondary"
                       )}
                     >
-                      {opt === "all" ? "All time" : opt === "today" ? "Today" : "Yesterday"}
+                      All time
                     </button>
-                  ))}
+                    <button
+                      onClick={() => handleDateSelect("today")}
+                      className={cn(
+                        "w-full text-left px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                        dateFilter === "today" && !fallbackActive
+                          ? "bg-accent text-accent-foreground"
+                          : "text-foreground hover:bg-secondary"
+                      )}
+                    >
+                      Today
+                    </button>
+                    <button
+                      onClick={() => handleDateSelect("yesterday")}
+                      className={cn(
+                        "w-full text-left px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                        dateFilter === "yesterday" && !fallbackActive
+                          ? "bg-accent text-accent-foreground"
+                          : "text-foreground hover:bg-secondary"
+                      )}
+                    >
+                      Yesterday
+                    </button>
+                  </div>
+                  <div className="border-t border-border pt-2">
+                    <p className="text-xs text-muted-foreground px-2 mb-1">Pick a date</p>
+                    <Calendar
+                      mode="single"
+                      selected={customDate}
+                      onSelect={handleCustomDateSelect}
+                      disabled={(date) => date > new Date()}
+                      className="p-1 pointer-events-auto"
+                    />
+                    {customDate && (
+                      <button
+                        onClick={handleClearCustomDate}
+                        className="w-full text-center px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        Clear date
+                      </button>
+                    )}
+                  </div>
                 </PopoverContent>
               </Popover>
             </div>
