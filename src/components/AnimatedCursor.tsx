@@ -94,6 +94,9 @@ export function AnimatedCursor() {
       {/* Hide default cursor globally */}
       <style>{`
         *, *::before, *::after { cursor: none !important; }
+        [data-socia-chat] *, [data-socia-chat] *::before, [data-socia-chat] *::after { cursor: auto !important; }
+        [data-socia-chat] input { cursor: text !important; }
+        [data-socia-chat] button { cursor: pointer !important; }
       `}</style>
     </>
   );

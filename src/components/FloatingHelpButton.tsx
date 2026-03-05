@@ -79,7 +79,7 @@ export function FloatingHelpButton() {
     <>
       <Button
         onClick={handleClick}
-        className="fixed bottom-6 right-6 h-14 px-5 rounded-full shadow-lg bg-primary hover:bg-primary/90 z-50"
+        className="fixed bottom-6 right-[104px] h-14 px-5 rounded-full shadow-lg bg-primary hover:bg-primary/90 z-50"
         size="lg"
       >
         <HelpCircle className="h-5 w-5 mr-2" />
