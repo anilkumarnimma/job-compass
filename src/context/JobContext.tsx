@@ -2,6 +2,7 @@ import { createContext, useContext, ReactNode, useMemo, useState, useCallback } 
 import { useApplications, useSavedJobs, useJobActions, useTotalApplicationCount } from "@/hooks/useJobStore";
 import { useProfile } from "@/hooks/useProfile";
 import { Application, SavedJob, Job } from "@/types/job";
+import { emitWidgetEvent } from "@/hooks/useWidgetTracker";
 
 interface JobContextType {
   applications: Application[];
@@ -26,7 +27,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
   const { data: applications = [], isLoading: appsLoading } = useApplications();
   const { data: savedJobs = [], isLoading: savedLoading } = useSavedJobs();
   const { data: totalAppCount = 0 } = useTotalApplicationCount();
-  const { applyToJob: rawApply, saveJob, unsaveJob, removeAppliedJob } = useJobActions();
+  const { applyToJob: rawApply, saveJob: rawSave, unsaveJob, removeAppliedJob } = useJobActions();
   const { profile } = useProfile();
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [showApplyConfirm, setShowApplyConfirm] = useState(false);
@@ -60,6 +61,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
   const confirmApply = useCallback(() => {
     if (pendingJob) {
       rawApply(pendingJob);
+      emitWidgetEvent("apply");
     }
     setPendingJob(null);
     setShowApplyConfirm(false);
@@ -78,7 +80,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
     applyToJob,
     confirmApply,
     cancelApply,
-    saveJob,
+    saveJob: (job: any) => { rawSave(job); emitWidgetEvent("save"); },
     unsaveJob,
     removeAppliedJob,
     isApplied,
