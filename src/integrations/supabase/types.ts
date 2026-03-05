@@ -314,6 +314,7 @@ export type Database = {
           disability_status: string | null
           education: Json | null
           email: string
+          emoji_avatar: string | null
           employer_id: string | null
           experience_years: number | null
           first_name: string | null
@@ -355,6 +356,7 @@ export type Database = {
           disability_status?: string | null
           education?: Json | null
           email: string
+          emoji_avatar?: string | null
           employer_id?: string | null
           experience_years?: number | null
           first_name?: string | null
@@ -396,6 +398,7 @@ export type Database = {
           disability_status?: string | null
           education?: Json | null
           email?: string
+          emoji_avatar?: string | null
           employer_id?: string | null
           experience_years?: number | null
           first_name?: string | null
