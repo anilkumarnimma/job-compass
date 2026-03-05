@@ -374,7 +374,7 @@ export default function Profile() {
             <h1 className="text-2xl font-bold text-foreground">My Profile</h1>
           </div>
           {!isEditing && !isLoading && (
-            <Button variant="outline" size="sm" onClick={handleEdit}>
+            <Button variant="outline" size="sm" className="rounded-full" onClick={handleEdit}>
               <Pencil className="h-4 w-4 mr-1" /> Edit Profile
             </Button>
           )}
@@ -382,7 +382,7 @@ export default function Profile() {
 
         <div className="space-y-6">
           {/* 1. Resume Upload / Auto-Fill */}
-          <Card className="border-primary/20 bg-primary/5">
+          <Card className="border-primary/20 bg-primary/5 rounded-3xl">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <FileText className="h-5 w-5 text-primary" />
@@ -405,18 +405,18 @@ export default function Profile() {
                             <p className="text-sm text-muted-foreground">Uploaded resume</p>
                           </div>
                         </div>
-                        <Button variant="outline" size="sm" onClick={downloadResume}>
+                       <Button variant="outline" size="sm" className="rounded-full" onClick={downloadResume}>
                           <Download className="h-4 w-4 mr-1" /> Download
                         </Button>
                       </div>
                       <div className="flex gap-2">
-                        <Button onClick={handleAutofillExisting} disabled={isParsing || isDownloadingResume} className="flex-1">
+                        <Button onClick={handleAutofillExisting} disabled={isParsing || isDownloadingResume} className="flex-1 rounded-full">
                           {isParsing || isDownloadingResume ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Parsing Resume...</> : <><Wand2 className="h-4 w-4 mr-2" />Auto-fill from Resume</>}
                         </Button>
-                        <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading || isParsing}>
+                        <Button variant="outline" className="rounded-full" onClick={() => fileInputRef.current?.click()} disabled={isUploading || isParsing}>
                           {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Upload className="h-4 w-4 mr-1" />Re-upload</>}
                         </Button>
-                        <Button variant="ghost" onClick={deleteResume} className="text-destructive hover:text-destructive">
+                        <Button variant="ghost" onClick={deleteResume} className="text-destructive hover:text-destructive rounded-full">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
