@@ -116,7 +116,7 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <AppRoutes />
-              <FloatingHelpButton />
+              
               <MobileBottomNav />
               <SociaAIOrb />
             </BrowserRouter>
