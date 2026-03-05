@@ -46,6 +46,8 @@ export interface ProfileData {
   resume_url: string | null;
   resume_filename: string | null;
   is_premium: boolean;
+  avatar_url: string | null;
+  emoji_avatar: string | null;
   gender: string | null;
   race_ethnicity: string | null;
   hispanic_latino: string | null;

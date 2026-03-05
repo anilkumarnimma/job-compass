@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export function ProfileWelcomeBanner() {
   const { user } = useAuth();
-  const { profile, isLoading, updateProfile } = useProfile();
+  const { profile, isLoading, updateProfileAsync } = useProfile();
   const { applications, savedJobs } = useJobContext();
   const { toast } = useToast();
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -32,8 +32,8 @@ export function ProfileWelcomeBanner() {
   if (isLoading || !user) return null;
 
   const name = profile?.first_name || profile?.full_name || "there";
-  const emojiAvatar = (profile as any)?.emoji_avatar as string | null;
-  const avatarUrl = (profile as any)?.avatar_url as string | null;
+  const emojiAvatar = profile?.emoji_avatar as string | null;
+  const avatarUrl = profile?.avatar_url as string | null;
   const initials = getInitials(profile?.full_name || profile?.first_name || user?.email || "");
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,10 +52,10 @@ export function ProfileWelcomeBanner() {
       const ext = file.name.split(".").pop();
       const filePath = `${user.id}/avatar.${ext}`;
       const { error: uploadError } = await supabase.storage.from("avatars").upload(filePath, file, { upsert: true });
-      if (uploadError) throw uploadError;
+      if (uploadError) { console.error("Avatar upload error:", uploadError); throw uploadError; }
 
       const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
-      updateProfile({ avatar_url: publicUrl } as any);
+      await updateProfileAsync({ avatar_url: publicUrl } as any);
       toast({ title: "Photo updated!" });
     } catch (err: any) {
       toast({ title: "Upload failed", description: err.message, variant: "destructive" });
@@ -104,7 +104,7 @@ export function ProfileWelcomeBanner() {
             <button
               onClick={() => photoInputRef.current?.click()}
               disabled={uploading}
-              className="absolute bottom-1.5 right-1.5 w-8 h-8 rounded-full bg-foreground/80 text-background flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md cursor-pointer"
+              className="absolute bottom-1.5 right-1.5 w-8 h-8 rounded-full bg-foreground/80 text-background flex items-center justify-center opacity-80 hover:opacity-100 transition-opacity shadow-md cursor-pointer"
             >
               <Camera className="h-4 w-4" />
             </button>
