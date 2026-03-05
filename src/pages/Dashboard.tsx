@@ -21,6 +21,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { JobMatchesPanel } from "@/components/JobMatchesPanel";
 
 type DateFilter = "all" | "today" | "yesterday" | "custom";
 
