@@ -4,18 +4,18 @@ import { Layout } from "@/components/Layout";
 import { HeroParticles } from "@/components/HeroParticles";
 import { AnimatedCounter } from "@/components/AnimatedCounter";
 import { FloatingHeroTags } from "@/components/FloatingHeroTags";
-import { 
-  Briefcase, 
-  Search, 
-  BookmarkCheck, 
-  Zap, 
+import {
+  Briefcase,
+  Search,
+  BookmarkCheck,
+  Zap,
   ArrowRight,
   CheckCircle2,
   TrendingUp,
   PieChart,
   AlertCircle,
   Sparkles,
-  ChevronDown
+  ChevronDown,
 } from "lucide-react";
 import { motion, useInView } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
@@ -78,20 +78,23 @@ function AnimatedPlaceholder() {
 
   useEffect(() => {
     const target = placeholderTitles[idx];
-    const timeout = setTimeout(() => {
-      if (!isDeleting) {
-        setText(target.slice(0, text.length + 1));
-        if (text.length + 1 === target.length) {
-          setTimeout(() => setIsDeleting(true), 1500);
+    const timeout = setTimeout(
+      () => {
+        if (!isDeleting) {
+          setText(target.slice(0, text.length + 1));
+          if (text.length + 1 === target.length) {
+            setTimeout(() => setIsDeleting(true), 1500);
+          }
+        } else {
+          setText(target.slice(0, text.length - 1));
+          if (text.length === 0) {
+            setIsDeleting(false);
+            setIdx((prev) => (prev + 1) % placeholderTitles.length);
+          }
         }
-      } else {
-        setText(target.slice(0, text.length - 1));
-        if (text.length === 0) {
-          setIsDeleting(false);
-          setIdx((prev) => (prev + 1) % placeholderTitles.length);
-        }
-      }
-    }, isDeleting ? 40 : 80);
+      },
+      isDeleting ? 40 : 80,
+    );
     return () => clearTimeout(timeout);
   }, [text, isDeleting, idx]);
 
@@ -120,15 +123,18 @@ export default function Index() {
       <section className="relative py-28 md:py-40 overflow-hidden hero-mesh-bg">
         <HeroParticles />
         <FloatingHeroTags />
-        
+
         {/* Gradient orbs */}
         <div className="absolute top-10 left-[10%] w-[500px] h-[500px] bg-accent/10 rounded-full blur-[120px] pointer-events-none animate-pulse-slow" />
-        <div className="absolute bottom-0 right-[10%] w-[600px] h-[600px] bg-purple-500/8 rounded-full blur-[150px] pointer-events-none animate-pulse-slow" style={{ animationDelay: "1s" }} />
+        <div
+          className="absolute bottom-0 right-[10%] w-[600px] h-[600px] bg-purple-500/8 rounded-full blur-[150px] pointer-events-none animate-pulse-slow"
+          style={{ animationDelay: "1s" }}
+        />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-accent/5 rounded-full blur-[100px] pointer-events-none" />
-        
+
         <div className="container max-w-6xl mx-auto px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ duration: 0.5 }}
@@ -137,25 +143,25 @@ export default function Index() {
               <Sparkles className="h-4 w-4 animate-pulse" />
               Your job search, simplified
             </motion.div>
-            
+
             <motion.h1
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.1 }}
               className="font-display text-5xl md:text-6xl lg:text-7xl font-extrabold text-foreground leading-[1.08] mb-6"
             >
-              Land the Career
-              <span className="block hero-gradient-text mt-1">You Deserve</span>
+              Built for the one
+              <span className="block hero-gradient-text mt-1">Who Gets the Offer.</span>
             </motion.h1>
-            
+
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.25 }}
               className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed"
             >
-              Search curated job listings, apply with one click, and automatically track 
-              all your applications in one clean dashboard.
+              Search curated job listings, apply with one click, and automatically track all your applications in one
+              clean dashboard.
             </motion.p>
 
             {/* Glowing search bar */}
@@ -171,7 +177,10 @@ export default function Index() {
                   <div className="relative flex items-center h-14 bg-card/80 backdrop-blur-md border border-border/60 rounded-full px-5 shadow-elevated group-hover:border-accent/40 transition-all duration-300">
                     <Search className="h-5 w-5 text-muted-foreground mr-3 shrink-0" />
                     <span className="text-muted-foreground/60 text-base truncate">
-                      Search for <span className="text-accent font-medium"><AnimatedPlaceholder /></span>
+                      Search for{" "}
+                      <span className="text-accent font-medium">
+                        <AnimatedPlaceholder />
+                      </span>
                     </span>
                     <div className="ml-auto shrink-0">
                       <span className="bg-accent text-accent-foreground px-4 py-2 rounded-full text-sm font-medium shadow-glow group-hover:shadow-[0_0_20px_hsl(var(--accent)/0.4)] transition-shadow">
@@ -182,28 +191,35 @@ export default function Index() {
                 </div>
               </Link>
             </motion.div>
-              
-            <motion.div 
+
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.45 }}
               className="flex flex-col sm:flex-row items-center justify-center gap-4"
             >
               <Link to="/dashboard">
-                <Button size="lg" className="w-full sm:w-auto rounded-full px-8 bg-accent text-accent-foreground hover:bg-accent/90 shadow-glow hover:shadow-[0_0_40px_-5px_hsl(var(--accent)/0.4)] transition-all duration-300 group btn-glow">
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto rounded-full px-8 bg-accent text-accent-foreground hover:bg-accent/90 shadow-glow hover:shadow-[0_0_40px_-5px_hsl(var(--accent)/0.4)] transition-all duration-300 group btn-glow"
+                >
                   Browse Jobs
                   <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
                 </Button>
               </Link>
               <Link to="/auth">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto rounded-full px-8 border-border/60 hover:bg-secondary backdrop-blur-sm">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full sm:w-auto rounded-full px-8 border-border/60 hover:bg-secondary backdrop-blur-sm"
+                >
                   Create Account
                 </Button>
               </Link>
             </motion.div>
           </div>
         </div>
-        
+
         {/* Stats ticker */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -235,10 +251,7 @@ export default function Index() {
           transition={{ delay: 1.2 }}
           className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
         >
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-          >
+          <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}>
             <ChevronDown className="h-6 w-6 text-muted-foreground/40" />
           </motion.div>
         </motion.div>
@@ -257,7 +270,7 @@ export default function Index() {
               </p>
             </div>
           </ScrollReveal>
-          
+
           <div className="grid md:grid-cols-3 gap-5 max-w-4xl mx-auto">
             {hiringSignals.map((signal, index) => (
               <ScrollReveal key={signal.title} delay={index * 0.1}>
@@ -289,7 +302,7 @@ export default function Index() {
               </p>
             </div>
           </ScrollReveal>
-          
+
           <div className="grid md:grid-cols-3 gap-6">
             {features.map((feature, index) => (
               <ScrollReveal key={feature.title} delay={index * 0.12}>
@@ -316,8 +329,8 @@ export default function Index() {
                   Streamline your job search
                 </h2>
                 <p className="text-muted-foreground mb-8 text-lg leading-relaxed">
-                  Sociax.tech makes it easy to find, apply, and track opportunities 
-                  so you can focus on what matters: landing interviews.
+                  Sociax.tech makes it easy to find, apply, and track opportunities so you can focus on what matters:
+                  landing interviews.
                 </p>
               </ScrollReveal>
               <ul className="space-y-4">
@@ -352,11 +365,16 @@ export default function Index() {
                     </span>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" className="flex-1 rounded-full bg-accent text-accent-foreground hover:bg-accent/90 group btn-glow">
+                    <Button
+                      size="sm"
+                      className="flex-1 rounded-full bg-accent text-accent-foreground hover:bg-accent/90 group btn-glow"
+                    >
                       Apply Now
                       <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                     </Button>
-                    <Button variant="outline" size="sm" className="rounded-full">Save</Button>
+                    <Button variant="outline" size="sm" className="rounded-full">
+                      Save
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -378,8 +396,8 @@ export default function Index() {
               Join thousands of job seekers who use Sociax.tech to find and land their dream jobs.
             </p>
             <Link to="/dashboard">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="rounded-full px-10 bg-accent text-accent-foreground hover:bg-accent/90 shadow-glow hover:shadow-[0_0_40px_-5px_hsl(var(--accent)/0.4)] transition-all duration-300 group btn-glow"
               >
                 Get Started Free
