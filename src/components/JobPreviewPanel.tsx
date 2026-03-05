@@ -126,7 +126,9 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
         result={result}
         isChecking={isChecking}
       />
-        {/* Meta Chips */}
+
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto min-h-0 p-5">
         <div className="flex flex-wrap gap-2 mb-5">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-chip-bg text-xs text-muted-foreground">
             <MapPin className="h-3.5 w-3.5" />
