@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Moon, Sun } from "lucide-react";
+import { Moon, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
@@ -44,32 +44,50 @@ export function ThemeToggle() {
           <AnimatePresence mode="wait" initial={false}>
             {dark ? (
               <motion.div
-                key="moon"
+                key="flame"
                 initial={{ rotate: -90, scale: 0, opacity: 0 }}
                 animate={{ rotate: 0, scale: 1, opacity: 1 }}
                 exit={{ rotate: 90, scale: 0, opacity: 0 }}
                 transition={{ duration: 0.3, ease: "easeInOut" }}
                 className="absolute inset-0 flex items-center justify-center"
               >
-                <Moon className="h-4 w-4 text-accent" />
+                {/* Glow ring behind the flame */}
+                <motion.div
+                  className="absolute rounded-full"
+                  style={{
+                    width: 28,
+                    height: 28,
+                    background: "radial-gradient(circle, hsl(var(--accent) / 0.25) 0%, transparent 70%)",
+                  }}
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    opacity: [0.6, 1, 0.6],
+                  }}
+                  transition={{
+                    duration: 2.5,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                />
+                <Flame className="h-4 w-4 text-accent relative z-10 drop-shadow-[0_0_6px_hsl(var(--accent)/0.5)]" />
               </motion.div>
             ) : (
               <motion.div
-                key="sun"
+                key="moon"
                 initial={{ rotate: 90, scale: 0, opacity: 0 }}
                 animate={{ rotate: 0, scale: 1, opacity: 1 }}
                 exit={{ rotate: -90, scale: 0, opacity: 0 }}
                 transition={{ duration: 0.3, ease: "easeInOut" }}
                 className="absolute inset-0 flex items-center justify-center"
               >
-                <Sun className="h-4 w-4 text-amber-500" />
+                <Moon className="h-4 w-4 text-muted-foreground" />
               </motion.div>
             )}
           </AnimatePresence>
         </Button>
       </TooltipTrigger>
       <TooltipContent side="bottom" className="text-xs">
-        {dark ? "Dark Mode" : "Light Mode"}
+        {dark ? "Light Mode" : "Dark Mode"}
       </TooltipContent>
     </Tooltip>
   );
