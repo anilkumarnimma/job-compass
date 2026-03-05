@@ -93,7 +93,14 @@ export function ProfileWelcomeBanner() {
                 </div>
               )}
             </div>
-            {/* Camera overlay */}
+            {/* Name overlay at bottom */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent rounded-b-2xl px-3 py-2 pointer-events-none">
+              <p className="text-white font-display font-bold text-sm truncate">{profile?.full_name || name}</p>
+              {profile?.current_title && (
+                <p className="text-white/70 text-[10px] truncate">{profile.current_title}</p>
+              )}
+            </div>
+            {/* Camera overlay - must be after name overlay for z-index */}
             <input
               type="file"
               ref={photoInputRef}
@@ -102,19 +109,12 @@ export function ProfileWelcomeBanner() {
               className="hidden"
             />
             <button
-              onClick={() => photoInputRef.current?.click()}
+              onClick={(e) => { e.stopPropagation(); photoInputRef.current?.click(); }}
               disabled={uploading}
-              className="absolute bottom-1.5 right-1.5 w-8 h-8 rounded-full bg-foreground/80 text-background flex items-center justify-center opacity-80 hover:opacity-100 transition-opacity shadow-md cursor-pointer"
+              className="absolute top-2 right-2 z-20 w-8 h-8 rounded-full bg-foreground/80 text-background flex items-center justify-center opacity-80 hover:opacity-100 transition-opacity shadow-md cursor-pointer"
             >
               <Camera className="h-4 w-4" />
             </button>
-            {/* Name overlay at bottom */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent rounded-b-2xl px-3 py-2">
-              <p className="text-white font-display font-bold text-sm truncate">{profile?.full_name || name}</p>
-              {profile?.current_title && (
-                <p className="text-white/70 text-[10px] truncate">{profile.current_title}</p>
-              )}
-            </div>
           </div>
 
           {/* Right side: Welcome + Stats */}
