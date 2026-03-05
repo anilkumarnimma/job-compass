@@ -436,7 +436,7 @@ export default function Profile() {
           </Card>
 
           {/* 2. Personal Details */}
-          <Card>
+          <Card className="rounded-3xl">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <User className="h-5 w-5 text-muted-foreground" />
@@ -497,7 +497,7 @@ export default function Profile() {
           </Card>
 
           {/* 3. Professional Links */}
-          <Card>
+          <Card className="rounded-3xl">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Link2 className="h-5 w-5 text-muted-foreground" />
@@ -528,7 +528,7 @@ export default function Profile() {
           </Card>
 
           {/* 4. Work Experience */}
-          <Card>
+          <Card className="rounded-3xl">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
@@ -538,7 +538,7 @@ export default function Profile() {
                   </div>
                   <CardDescription className="mt-1.5">Add your work history with dates</CardDescription>
                 </div>
-                {isEditing && <Button variant="outline" size="sm" onClick={addWork} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>}
+                {isEditing && <Button variant="outline" size="sm" className="rounded-full" onClick={addWork} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>}
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
