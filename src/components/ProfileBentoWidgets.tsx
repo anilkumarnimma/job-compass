@@ -1,13 +1,25 @@
 import { useMemo, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useJobContext } from "@/context/JobContext";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Briefcase, Bookmark, Target, TrendingUp, Sparkles, Camera } from "lucide-react";
+import { Briefcase, Bookmark, Target, TrendingUp, Sparkles, Camera, Upload, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+const PRESET_AVATARS = [
+  "/avatars/avatar-1.png",
+  "/avatars/avatar-2.png",
+  "/avatars/avatar-3.png",
+  "/avatars/avatar-4.png",
+  "/avatars/avatar-5.png",
+  "/avatars/avatar-6.png",
+  "/avatars/avatar-7.png",
+  "/avatars/avatar-8.png",
+];
 
 export function ProfileWelcomeBanner() {
   const { user } = useAuth();
