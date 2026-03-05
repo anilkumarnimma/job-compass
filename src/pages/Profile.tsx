@@ -819,13 +819,29 @@ export default function Profile() {
           {/* Right column - ATS Panel (sticky) */}
           <div className="hidden lg:block">
             <div className="sticky top-8">
-              <ProfileAtsPanel />
+              <ProfileAtsPanel formProfile={{
+                skills: formData.skills ? formData.skills.split(",").map(s => s.trim()).filter(Boolean) : null,
+                experience_years: formData.experience_years ? Number(formData.experience_years) : null,
+                current_title: formData.current_title || null,
+                current_company: formData.current_company || null,
+                work_experience: workExperiences.filter(w => w.title || w.company),
+                education: educations.filter(e => e.school || e.degree),
+                certifications: certifications.filter(c => c.name),
+              }} />
             </div>
           </div>
 
           {/* Mobile ATS - shown below form on small screens */}
           <div className="lg:hidden">
-            <ProfileAtsPanel />
+            <ProfileAtsPanel formProfile={{
+              skills: formData.skills ? formData.skills.split(",").map(s => s.trim()).filter(Boolean) : null,
+              experience_years: formData.experience_years ? Number(formData.experience_years) : null,
+              current_title: formData.current_title || null,
+              current_company: formData.current_company || null,
+              work_experience: workExperiences.filter(w => w.title || w.company),
+              education: educations.filter(e => e.school || e.degree),
+              certifications: certifications.filter(c => c.name),
+            }} />
           </div>
         </div>
       </main>
