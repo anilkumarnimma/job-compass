@@ -10,6 +10,7 @@ import { FloatingHelpButton } from "@/components/FloatingHelpButton";
 import { IntroSplash } from "@/components/IntroSplash";
 import { AnimatedCursor } from "@/components/AnimatedCursor";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { AnimatedRoutes } from "@/components/AnimatedRoutes";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
@@ -35,6 +36,73 @@ const queryClient = new QueryClient({
   },
 });
 
+function AppRoutes() {
+  return (
+    <AnimatedRoutes>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/auth" element={<Auth />} />
+        
+        {/* User pages */}
+        <Route path="/dashboard" element={
+          <ProtectedRoute allowedRoles={["user", "employer", "founder"]}>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/recommendations" element={
+          <ProtectedRoute allowedRoles={["user", "employer", "founder"]}>
+            <Recommendations />
+          </ProtectedRoute>
+        } />
+        <Route path="/applied" element={
+          <ProtectedRoute allowedRoles={["user", "employer", "founder"]}>
+            <Applied />
+          </ProtectedRoute>
+        } />
+        <Route path="/saved" element={
+          <ProtectedRoute allowedRoles={["user", "employer", "founder"]}>
+            <Saved />
+          </ProtectedRoute>
+        } />
+        <Route path="/profile" element={
+          <ProtectedRoute allowedRoles={["user", "employer", "founder"]}>
+            <Profile />
+          </ProtectedRoute>
+        } />
+        
+        {/* Employer pages */}
+        <Route path="/employer" element={
+          <ProtectedRoute allowedRoles={["employer", "founder"]}>
+            <EmployerDashboard />
+          </ProtectedRoute>
+        } />
+        
+        {/* Founder-only pages */}
+        <Route path="/admin" element={
+          <ProtectedRoute allowedRoles={["founder"]}>
+            <Admin />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/import" element={
+          <ProtectedRoute allowedRoles={["founder"]}>
+            <AdminImport />
+          </ProtectedRoute>
+        } />
+        <Route path="/founder/employers" element={
+          <ProtectedRoute allowedRoles={["founder"]}>
+            <FounderEmployers />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/payment-success" element={<PaymentSuccess />} />
+        <Route path="/help" element={<Help />} />
+        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </AnimatedRoutes>
+  );
+}
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
@@ -46,66 +114,7 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                
-                {/* User pages - accessible by all authenticated roles */}
-                <Route path="/dashboard" element={
-                  <ProtectedRoute allowedRoles={["user", "employer", "founder"]}>
-                    <Dashboard />
-                  </ProtectedRoute>
-                } />
-                <Route path="/recommendations" element={
-                  <ProtectedRoute allowedRoles={["user", "employer", "founder"]}>
-                    <Recommendations />
-                  </ProtectedRoute>
-                } />
-                <Route path="/applied" element={
-                  <ProtectedRoute allowedRoles={["user", "employer", "founder"]}>
-                    <Applied />
-                  </ProtectedRoute>
-                } />
-                <Route path="/saved" element={
-                  <ProtectedRoute allowedRoles={["user", "employer", "founder"]}>
-                    <Saved />
-                  </ProtectedRoute>
-                } />
-                <Route path="/profile" element={
-                  <ProtectedRoute allowedRoles={["user", "employer", "founder"]}>
-                    <Profile />
-                  </ProtectedRoute>
-                } />
-                
-                {/* Employer pages - accessible by employers and founders */}
-                <Route path="/employer" element={
-                  <ProtectedRoute allowedRoles={["employer", "founder"]}>
-                    <EmployerDashboard />
-                  </ProtectedRoute>
-                } />
-                
-                {/* Founder-only pages */}
-                <Route path="/admin" element={
-                  <ProtectedRoute allowedRoles={["founder"]}>
-                    <Admin />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/import" element={
-                  <ProtectedRoute allowedRoles={["founder"]}>
-                    <AdminImport />
-                  </ProtectedRoute>
-                } />
-                <Route path="/founder/employers" element={
-                  <ProtectedRoute allowedRoles={["founder"]}>
-                    <FounderEmployers />
-                  </ProtectedRoute>
-                } />
-                
-                <Route path="/payment-success" element={<PaymentSuccess />} />
-                <Route path="/help" element={<Help />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <AppRoutes />
               <FloatingHelpButton />
               <MobileBottomNav />
             </BrowserRouter>

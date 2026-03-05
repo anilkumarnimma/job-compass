@@ -55,7 +55,7 @@ export function Header() {
   const navLinks = getNavLinks();
 
   return (
-    <header className="sticky top-0 z-50 glass-header border-b border-border/50">
+    <header className="sticky top-0 z-50 border-b border-border/30 bg-background/60 backdrop-blur-2xl backdrop-saturate-[1.8] supports-[backdrop-filter]:bg-background/40">
       <div className="container max-w-[1200px] mx-auto px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
