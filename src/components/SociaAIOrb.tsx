@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
-import { X, Minus, ArrowUp, Sparkles } from "lucide-react";
+import { X, Minus, ArrowUp, Sparkles, Loader2 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
 /* ─── tooltip text per route ─── */
 const tooltipForPath = (path: string) => {
@@ -20,6 +22,15 @@ const chipsForPath = (path: string) => {
   if (path.startsWith("/recommendations"))
     return ["Why these matches?", "Refine my preferences", "More like this"];
   return ["Help me job search", "Resume tips", "Interview prep"];
+};
+
+const pageContextFromPath = (path: string) => {
+  if (path.startsWith("/dashboard")) return "Job Search Dashboard — browsing job listings";
+  if (path === "/profile") return "My Profile — viewing/editing their resume and profile";
+  if (path.startsWith("/recommendations")) return "Job Recommendations — viewing AI-matched jobs";
+  if (path.startsWith("/saved")) return "Saved Jobs — reviewing bookmarked positions";
+  if (path.startsWith("/applied")) return "Applied Jobs — tracking applications";
+  return "Home page";
 };
 
 /* ─── typing animation hook ─── */
@@ -47,6 +58,95 @@ interface Message {
 
 const GREETING = "Hi! ✦ I'm Socia AI.\nHow can I help your job search today?";
 
+/* ─── SSE streaming helper ─── */
+async function streamSociaChat({
+  messages,
+  pageContext,
+  onDelta,
+  onDone,
+  onError,
+  signal,
+}: {
+  messages: { role: string; content: string }[];
+  pageContext: string;
+  onDelta: (text: string) => void;
+  onDone: () => void;
+  onError: (err: string) => void;
+  signal?: AbortSignal;
+}) {
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  const resp = await fetch(
+    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socia-chat`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      },
+      body: JSON.stringify({ messages, pageContext }),
+      signal,
+    }
+  );
+
+  if (!resp.ok) {
+    const body = await resp.json().catch(() => ({ error: "Request failed" }));
+    onError(body.error || `Error ${resp.status}`);
+    return;
+  }
+
+  if (!resp.body) { onError("No response stream"); return; }
+
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    let nlIdx: number;
+    while ((nlIdx = buffer.indexOf("\n")) !== -1) {
+      let line = buffer.slice(0, nlIdx);
+      buffer = buffer.slice(nlIdx + 1);
+      if (line.endsWith("\r")) line = line.slice(0, -1);
+      if (line.startsWith(":") || line.trim() === "") continue;
+      if (!line.startsWith("data: ")) continue;
+
+      const jsonStr = line.slice(6).trim();
+      if (jsonStr === "[DONE]") { onDone(); return; }
+
+      try {
+        const parsed = JSON.parse(jsonStr);
+        const content = parsed.choices?.[0]?.delta?.content;
+        if (content) onDelta(content);
+      } catch {
+        buffer = line + "\n" + buffer;
+        break;
+      }
+    }
+  }
+
+  // Flush remaining
+  if (buffer.trim()) {
+    for (let raw of buffer.split("\n")) {
+      if (!raw) continue;
+      if (raw.endsWith("\r")) raw = raw.slice(0, -1);
+      if (!raw.startsWith("data: ")) continue;
+      const jsonStr = raw.slice(6).trim();
+      if (jsonStr === "[DONE]") continue;
+      try {
+        const parsed = JSON.parse(jsonStr);
+        const content = parsed.choices?.[0]?.delta?.content;
+        if (content) onDelta(content);
+      } catch { /* partial */ }
+    }
+  }
+  onDone();
+}
+
 export const SociaAIOrb: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMorphing, setIsMorphing] = useState(false);
@@ -56,10 +156,13 @@ export const SociaAIOrb: React.FC = () => {
   const [isTypingGreeting, setIsTypingGreeting] = useState(false);
   const [showChips, setShowChips] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const chatBodyRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
   const location = useLocation();
   const isMobile = useIsMobile();
+  const { user } = useAuth();
 
   const greetingText = useTypewriter(GREETING, 25, isTypingGreeting);
 
@@ -67,11 +170,7 @@ export const SociaAIOrb: React.FC = () => {
   const handleOpen = useCallback(() => {
     if (isOpen || isMorphing) return;
     setIsMorphing(true);
-    // Step 1-2: morph starts via CSS
-    setTimeout(() => {
-      setIsOpen(true);
-    }, 80);
-    // Step 3: content fade-in
+    setTimeout(() => setIsOpen(true), 80);
     setTimeout(() => {
       setShowContent(true);
       setIsMorphing(false);
@@ -94,30 +193,66 @@ export const SociaAIOrb: React.FC = () => {
     }, 350);
   }, [isOpen, isMorphing]);
 
-  /* ─── minimize ─── */
   const handleMinimize = handleClose;
 
-  /* ─── send message ─── */
+  /* ─── send message with real AI ─── */
   const handleSend = useCallback(
     (text?: string) => {
       const msg = (text || input).trim();
-      if (!msg) return;
+      if (!msg || isStreaming) return;
+      
       const userMsg: Message = { id: crypto.randomUUID(), role: "user", text: msg };
       setMessages((prev) => [...prev, userMsg]);
       setInput("");
       setShowChips(false);
+      setIsStreaming(true);
 
-      // Simulated AI reply
-      setTimeout(() => {
-        const aiMsg: Message = {
-          id: crypto.randomUUID(),
-          role: "ai",
-          text: "I'm here to help! This feature is coming soon with full AI capabilities. ✦",
-        };
-        setMessages((prev) => [...prev, aiMsg]);
-      }, 1200);
+      // Build conversation history for AI
+      const conversationHistory = messages
+        .map((m) => ({
+          role: m.role === "ai" ? "assistant" : "user",
+          content: m.text,
+        }));
+      conversationHistory.push({ role: "user", content: msg });
+
+      const aiMsgId = crypto.randomUUID();
+      let accumulated = "";
+
+      // Add empty AI message
+      setMessages((prev) => [...prev, { id: aiMsgId, role: "ai", text: "" }]);
+
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      streamSociaChat({
+        messages: conversationHistory,
+        pageContext: pageContextFromPath(location.pathname),
+        signal: controller.signal,
+        onDelta: (chunk) => {
+          accumulated += chunk;
+          const current = accumulated;
+          setMessages((prev) =>
+            prev.map((m) => (m.id === aiMsgId ? { ...m, text: current } : m))
+          );
+        },
+        onDone: () => {
+          setIsStreaming(false);
+          abortRef.current = null;
+        },
+        onError: (err) => {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === aiMsgId
+                ? { ...m, text: `Sorry, something went wrong: ${err} ✦` }
+                : m
+            )
+          );
+          setIsStreaming(false);
+          abortRef.current = null;
+        },
+      });
     },
-    [input]
+    [input, isStreaming, messages, location.pathname]
   );
 
   /* scroll to bottom */
@@ -145,53 +280,41 @@ export const SociaAIOrb: React.FC = () => {
       <AnimatePresence>
         {!isOpen && !isMorphing && (
           <>
-            {/* Ring 3 — outermost, slow pulse */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, transition: { duration: 0.2 } }}
               className="absolute rounded-full pointer-events-none"
               style={{
-                width: 110,
-                height: 110,
-                top: "50%",
-                left: "50%",
-                marginTop: -55 + (isOpen ? 0 : 0),
-                marginLeft: -55,
+                width: 110, height: 110,
+                top: "50%", left: "50%",
+                marginTop: -55, marginLeft: -55,
                 background: "rgba(0,229,255,0.06)",
                 animation: "orbPulseSlow 3.5s ease-in-out infinite",
               }}
             />
-            {/* Ring 2 — mid pulse */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, transition: { duration: 0.2 } }}
               className="absolute rounded-full pointer-events-none"
               style={{
-                width: 88,
-                height: 88,
-                top: "50%",
-                left: "50%",
-                marginTop: -44,
-                marginLeft: -44,
+                width: 88, height: 88,
+                top: "50%", left: "50%",
+                marginTop: -44, marginLeft: -44,
                 background: "rgba(0,229,255,0.15)",
                 animation: "orbPulseMid 2.5s ease-in-out infinite",
               }}
             />
-            {/* Ring 1 — always visible */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, transition: { duration: 0.2 } }}
               className="absolute rounded-full pointer-events-none"
               style={{
-                width: 72,
-                height: 72,
-                top: "50%",
-                left: "50%",
-                marginTop: -36,
-                marginLeft: -36,
+                width: 72, height: 72,
+                top: "50%", left: "50%",
+                marginTop: -36, marginLeft: -36,
                 background: "rgba(0,229,255,0.3)",
               }}
             />
@@ -209,8 +332,7 @@ export const SociaAIOrb: React.FC = () => {
             transition={{ duration: 0.18 }}
             className="absolute pointer-events-none whitespace-nowrap text-xs font-medium px-3 py-1.5 rounded-full"
             style={{
-              bottom: 68,
-              right: 0,
+              bottom: 68, right: 0,
               background: "#1a1d27",
               color: "#fff",
               border: "1px solid rgba(0,229,255,0.25)",
@@ -237,7 +359,7 @@ export const SociaAIOrb: React.FC = () => {
             ? "0 0 0 1px rgba(0,229,255,0.1), 0 20px 60px rgba(0,0,0,0.6), 0 0 80px rgba(0,229,255,0.08)"
             : "0 0 20px rgba(0,229,255,0.3)",
           cursor: isOpen ? "default" : "pointer",
-          transformOrigin: isMobile ? "bottom right" : "bottom right",
+          transformOrigin: "bottom right",
           transition: `width 0.4s cubic-bezier(0.34,1.56,0.64,1),
                        height 0.4s cubic-bezier(0.34,1.56,0.64,1),
                        border-radius 0.35s ease,
@@ -251,7 +373,6 @@ export const SociaAIOrb: React.FC = () => {
         {/* ─── ORB INNER (sparkle + shimmer) ─── */}
         {!isOpen && !isMorphing && (
           <div className="absolute inset-0 flex items-center justify-center">
-            {/* Shimmer sweep */}
             <div
               className="absolute inset-0 rounded-full overflow-hidden pointer-events-none"
               style={{ animation: "orbShimmer 4s ease-in-out infinite" }}
@@ -259,16 +380,13 @@ export const SociaAIOrb: React.FC = () => {
               <div
                 className="absolute"
                 style={{
-                  width: "150%",
-                  height: "100%",
-                  top: 0,
-                  left: "-50%",
+                  width: "150%", height: "100%",
+                  top: 0, left: "-50%",
                   background: "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.25) 50%, transparent 60%)",
                   animation: "orbShimmerSweep 4s ease-in-out infinite",
                 }}
               />
             </div>
-            {/* Sparkle icon */}
             <Sparkles
               className="text-white relative z-10"
               size={22}
@@ -299,17 +417,14 @@ export const SociaAIOrb: React.FC = () => {
                   <div
                     className="rounded-full shrink-0"
                     style={{
-                      width: 16,
-                      height: 16,
+                      width: 16, height: 16,
                       background: "radial-gradient(circle, #00e5ff, #0077ff)",
                     }}
                   />
                   <div>
-                    <div className="text-white font-bold text-sm leading-tight">
-                      Socia AI
-                    </div>
+                    <div className="text-white font-bold text-sm leading-tight">Socia AI</div>
                     <div className="text-[11px] leading-tight" style={{ color: "rgba(255,255,255,0.4)" }}>
-                      Career Assistant
+                      {isStreaming ? "Thinking..." : "Career Assistant"}
                     </div>
                   </div>
                 </div>
@@ -359,8 +474,7 @@ export const SociaAIOrb: React.FC = () => {
                     <div
                       className="rounded-full shrink-0 mt-1"
                       style={{
-                        width: 20,
-                        height: 20,
+                        width: 20, height: 20,
                         background: "radial-gradient(circle, #00e5ff, #0077ff)",
                       }}
                     />
@@ -393,7 +507,8 @@ export const SociaAIOrb: React.FC = () => {
                         <button
                           key={chip}
                           onClick={() => handleSend(chip)}
-                          className="text-[12px] px-3 py-1.5 rounded-full transition-all duration-200"
+                          disabled={isStreaming}
+                          className="text-[12px] px-3 py-1.5 rounded-full transition-all duration-200 disabled:opacity-50"
                           style={{
                             border: "1px solid rgba(0,229,255,0.3)",
                             background: "rgba(0,229,255,0.05)",
@@ -425,8 +540,7 @@ export const SociaAIOrb: React.FC = () => {
                       <div
                         className="rounded-full shrink-0 mt-1"
                         style={{
-                          width: 20,
-                          height: 20,
+                          width: 20, height: 20,
                           background: "radial-gradient(circle, #00e5ff, #0077ff)",
                         }}
                       />
@@ -448,7 +562,12 @@ export const SociaAIOrb: React.FC = () => {
                             }
                       }
                     >
-                      {msg.text}
+                      {msg.text || (
+                        <span className="flex items-center gap-1.5 text-white/50">
+                          <Loader2 size={12} className="animate-spin" />
+                          Thinking...
+                        </span>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -461,6 +580,11 @@ export const SociaAIOrb: React.FC = () => {
                 transition={{ delay: 0.2, duration: 0.25 }}
                 className="shrink-0 p-3"
               >
+                {!user && (
+                  <div className="text-[11px] text-center mb-2" style={{ color: "rgba(255,255,255,0.4)" }}>
+                    Sign in for personalized career advice ✦
+                  </div>
+                )}
                 <div
                   className="flex items-center gap-2 rounded-xl px-3 py-2 transition-all duration-200"
                   style={{
@@ -482,18 +606,19 @@ export const SociaAIOrb: React.FC = () => {
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSend()}
                     placeholder="Ask anything..."
-                    className="flex-1 bg-transparent text-[13px] text-white placeholder:text-white/30 outline-none"
+                    disabled={isStreaming}
+                    className="flex-1 bg-transparent text-[13px] text-white placeholder:text-white/30 outline-none disabled:opacity-50"
                   />
                   <button
                     onClick={() => handleSend()}
-                    disabled={!input.trim()}
+                    disabled={!input.trim() || isStreaming}
                     className="p-1.5 rounded-lg transition-all duration-200 disabled:opacity-30"
                     style={{
-                      background: input.trim() ? "rgba(0,229,255,0.9)" : "rgba(0,229,255,0.2)",
+                      background: input.trim() && !isStreaming ? "rgba(0,229,255,0.9)" : "rgba(0,229,255,0.2)",
                       color: "#0d0f14",
                     }}
                   >
-                    <ArrowUp size={16} />
+                    {isStreaming ? <Loader2 size={16} className="animate-spin" /> : <ArrowUp size={16} />}
                   </button>
                 </div>
               </motion.div>
