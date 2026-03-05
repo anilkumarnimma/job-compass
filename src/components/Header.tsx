@@ -3,12 +3,13 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
 import { useProfile } from "@/hooks/useProfile";
-import { Briefcase, Menu, X, LogOut, Shield, User, Crown, ChevronDown, Sparkles } from "lucide-react";
+import { Briefcase, Menu, X, LogOut, Shield, User, Crown, ChevronDown, Sparkles, HelpCircle } from "lucide-react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
+import { FloatingHelpButton } from "@/components/FloatingHelpButton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   DropdownMenu,
@@ -97,6 +98,7 @@ export function Header() {
 
           {/* Right side */}
           <div className="hidden md:flex items-center gap-1.5 shrink-0 flex-nowrap">
+            <FloatingHelpButton variant="inline" />
             <ThemeToggle />
             
             {user ? (
