@@ -62,6 +62,7 @@ export default function Dashboard() {
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const [companyFilter, setCompanyFilter] = useState<string | null>(null);
   const [allTimeDropdownOpen, setAllTimeDropdownOpen] = useState(false);
+  const [customDate, setCustomDate] = useState<Date | undefined>(undefined);
   const [fallbackActive, setFallbackActive] = useState(false);
   
   const isMobile = useIsMobile();
