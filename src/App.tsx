@@ -12,6 +12,7 @@ import { AnimatedCursor } from "@/components/AnimatedCursor";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { AnimatedRoutes } from "@/components/AnimatedRoutes";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { SociaAIOrb } from "@/components/SociaAIOrb";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Applied from "./pages/Applied";
@@ -117,6 +118,7 @@ const App = () => (
               <AppRoutes />
               <FloatingHelpButton />
               <MobileBottomNav />
+              <SociaAIOrb />
             </BrowserRouter>
             </IntroSplash>
           </JobProvider>
