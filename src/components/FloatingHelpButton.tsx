@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useSupportTickets, CreateTicketData } from "@/hooks/useSupportTickets";
 import { Button } from "@/components/ui/button";
