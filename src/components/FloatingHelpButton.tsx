@@ -24,7 +24,11 @@ const SUBJECT_OPTIONS = [
   { value: "other", label: "Other" },
 ];
 
-export function FloatingHelpButton() {
+interface FloatingHelpButtonProps {
+  variant?: "floating" | "inline";
+}
+
+export function FloatingHelpButton({ variant = "floating" }: FloatingHelpButtonProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { createTicket, isCreating } = useSupportTickets();
@@ -77,14 +81,26 @@ export function FloatingHelpButton() {
 
   return (
     <>
-      <Button
-        onClick={handleClick}
-        className="fixed bottom-6 right-[104px] h-14 px-5 rounded-full shadow-lg bg-primary hover:bg-primary/90 z-50"
-        size="lg"
-      >
-        <HelpCircle className="h-5 w-5 mr-2" />
-        Need Help?
-      </Button>
+      {variant === "floating" ? (
+        <Button
+          onClick={handleClick}
+          className="fixed bottom-6 right-[104px] h-14 px-5 rounded-full shadow-lg bg-primary hover:bg-primary/90 z-50"
+          size="lg"
+        >
+          <HelpCircle className="h-5 w-5 mr-2" />
+          Need Help?
+        </Button>
+      ) : (
+        <Button
+          onClick={handleClick}
+          variant="outline"
+          size="sm"
+          className="rounded-full px-4 h-9 gap-1.5 border-border hover:border-foreground/30 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <HelpCircle className="h-4 w-4" />
+          Need Help?
+        </Button>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
