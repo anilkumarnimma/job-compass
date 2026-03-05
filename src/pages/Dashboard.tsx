@@ -222,30 +222,69 @@ export default function Dashboard() {
                   <button
                     className={cn(
                       "px-3 py-1.5 text-xs font-medium rounded-full border transition-colors inline-flex items-center gap-1",
-                      dateFilter === "all" || fallbackActive
+                      (dateFilter === "all" || dateFilter === "custom" || fallbackActive)
                         ? "bg-accent text-accent-foreground border-accent"
                         : "bg-card text-muted-foreground border-border hover:border-accent/50"
                     )}
                   >
-                    All time
+                    {dateFilter === "custom" && customDate ? format(customDate, "MMM d") : "All time"}
                     <ChevronDown className="h-3 w-3" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent align="start" className="w-36 p-1">
-                  {(["today", "yesterday", "all"] as DateFilter[]).map((opt) => (
+                <PopoverContent align="start" className="w-auto p-2">
+                  <div className="flex flex-col gap-1 mb-2">
                     <button
-                      key={opt}
-                      onClick={() => handleDateSelect(opt)}
+                      onClick={() => handleDateSelect("all")}
                       className={cn(
                         "w-full text-left px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-                        dateFilter === opt && !fallbackActive
+                        dateFilter === "all" && !fallbackActive
                           ? "bg-accent text-accent-foreground"
                           : "text-foreground hover:bg-secondary"
                       )}
                     >
-                      {opt === "all" ? "All time" : opt === "today" ? "Today" : "Yesterday"}
+                      All time
                     </button>
-                  ))}
+                    <button
+                      onClick={() => handleDateSelect("today")}
+                      className={cn(
+                        "w-full text-left px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                        dateFilter === "today" && !fallbackActive
+                          ? "bg-accent text-accent-foreground"
+                          : "text-foreground hover:bg-secondary"
+                      )}
+                    >
+                      Today
+                    </button>
+                    <button
+                      onClick={() => handleDateSelect("yesterday")}
+                      className={cn(
+                        "w-full text-left px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                        dateFilter === "yesterday" && !fallbackActive
+                          ? "bg-accent text-accent-foreground"
+                          : "text-foreground hover:bg-secondary"
+                      )}
+                    >
+                      Yesterday
+                    </button>
+                  </div>
+                  <div className="border-t border-border pt-2">
+                    <p className="text-xs text-muted-foreground px-2 mb-1">Pick a date</p>
+                    <Calendar
+                      mode="single"
+                      selected={customDate}
+                      onSelect={handleCustomDateSelect}
+                      disabled={(date) => date > new Date()}
+                      className="p-1 pointer-events-auto"
+                    />
+                    {customDate && (
+                      <button
+                        onClick={handleClearCustomDate}
+                        className="w-full text-center px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        Clear date
+                      </button>
+                    )}
+                  </div>
                 </PopoverContent>
               </Popover>
             </div>
