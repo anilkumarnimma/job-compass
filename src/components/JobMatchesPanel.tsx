@@ -56,21 +56,23 @@ export function JobMatchesPanel() {
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="rounded-xl border border-border/60 bg-card p-4 shadow-sm"
+        className="rounded-lg border border-border/60 bg-card p-3 shadow-sm"
       >
-        <div className="flex items-center gap-1.5 mb-1.5">
-          <Sparkles className="h-3.5 w-3.5 text-primary" />
-          <h3 className="text-xs font-semibold text-foreground">Job matches for you</h3>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            <h3 className="text-[13px] font-semibold text-foreground">Job matches for you</h3>
+          </div>
+          <button
+            onClick={() => navigate("/profile")}
+            className="text-[11px] font-medium px-3 py-1 rounded-md border border-border text-foreground hover:bg-secondary transition-colors"
+          >
+            Complete Profile
+          </button>
         </div>
-        <p className="text-[10px] text-muted-foreground mb-3">
+        <p className="text-[11px] text-muted-foreground mt-1">
           Add skills or upload a resume to get matches.
         </p>
-        <button
-          onClick={() => navigate("/profile")}
-          className="w-full text-[11px] font-medium px-3 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-        >
-          Complete Profile
-        </button>
       </motion.div>
     );
   }
@@ -86,49 +88,32 @@ export function JobMatchesPanel() {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="rounded-xl border border-border/40 bg-card p-4 shadow-[0_2px_12px_-4px_hsl(var(--foreground)/0.08)] hover:shadow-[0_4px_16px_-4px_hsl(var(--foreground)/0.12)] transition-all duration-300"
+      className="rounded-lg border border-border/40 bg-card p-3 shadow-sm"
     >
-      <div className="flex items-center gap-1.5 mb-0.5">
-        <Sparkles className="h-3.5 w-3.5 text-primary" />
-        <h3 className="text-xs font-semibold text-foreground">Job matches for you</h3>
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-1.5">
+          <Sparkles className="h-3.5 w-3.5 text-primary" />
+          <h3 className="text-[13px] font-semibold text-foreground">Job matches for you</h3>
+        </div>
+        <button
+          onClick={() => navigate("/recommendations")}
+          className="flex items-center gap-0.5 text-[11px] font-medium text-primary hover:text-primary/80 transition-colors"
+        >
+          View all
+          <ArrowRight className="h-3 w-3" />
+        </button>
       </div>
-      <p className="text-[10px] text-muted-foreground mb-3">Based on your resume + skills</p>
 
-      {/* Compact stats */}
-      <div className="space-y-1.5 mb-3">
+      {/* Inline stats */}
+      <div className="flex items-center gap-3 text-[11px]">
         {stats.map((s) => (
-          <div key={s.label} className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <s.icon className={cn("h-3 w-3", s.color)} />
-              <span className="text-[11px] text-foreground">{s.label}</span>
-            </div>
-            <span className={cn("text-[11px] font-semibold", s.color)}>{s.count}</span>
+          <div key={s.label} className="flex items-center gap-1">
+            <s.icon className={cn("h-3 w-3", s.color)} />
+            <span className={cn("font-semibold", s.color)}>{s.count}</span>
+            <span className="text-muted-foreground">{s.label.toLowerCase()}</span>
           </div>
         ))}
       </div>
-
-      {/* Top 3 matches */}
-      {topMatches.length > 0 && (
-        <div className="mb-3">
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Top matches</p>
-          <div className="space-y-1">
-            {topMatches.map((m, i) => (
-              <div key={i} className="flex items-center justify-between text-[11px]">
-                <span className="text-foreground truncate mr-2">• {m.title}</span>
-                <span className="text-primary font-semibold shrink-0">{m.percent}%</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <button
-        onClick={() => navigate("/recommendations")}
-        className="w-full flex items-center justify-center gap-1 text-[11px] font-medium px-3 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-      >
-        View matches
-        <ArrowRight className="h-3 w-3" />
-      </button>
     </motion.div>
   );
 }
