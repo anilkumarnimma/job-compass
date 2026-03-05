@@ -64,8 +64,8 @@ export default function Profile() {
   const { profile, isLoading, updateProfile, isUpdating, uploadResume, downloadResume, deleteResume, isUploading } = useProfile();
   const { toast } = useToast();
   const { parseResume, isParsing, extractedData, clearExtracted } = useResumeParser();
-  const { runCheck: runAtsCheck, isChecking: isAtsChecking, result: atsResult, clearResult: clearAtsResult } = useAtsCheck();
-  const [showAtsDialog, setShowAtsDialog] = useState(false);
+
+
   const { data: effectiveRole, isLoading: roleLoading } = useUserRole();
   const { data: allRoles } = useAllUserRoles();
   const fileInputRef = useRef<HTMLInputElement>(null);
