@@ -274,6 +274,7 @@ export default function Dashboard() {
               </Popover>
             </div>
           </div>
+        </div>
 
         {/* Fallback note */}
         <AnimatePresence>
