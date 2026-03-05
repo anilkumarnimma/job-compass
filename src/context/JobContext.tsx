@@ -2,6 +2,8 @@ import { createContext, useContext, ReactNode, useMemo, useState, useCallback } 
 import { useApplications, useSavedJobs, useJobActions, useTotalApplicationCount } from "@/hooks/useJobStore";
 import { useProfile } from "@/hooks/useProfile";
 import { Application, SavedJob, Job } from "@/types/job";
+import { emitWidgetEvent } from "@/hooks/useWidgetTracker";
+import { Application, SavedJob, Job } from "@/types/job";
 
 interface JobContextType {
   applications: Application[];

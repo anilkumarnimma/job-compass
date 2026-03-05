@@ -79,7 +79,6 @@ export function DailyChallengeCard() {
     const unsub = onWidgetEvent((type) => {
       setState((prev) => {
         if (prev.completed) return prev;
-        // Only increment if the event type matches the challenge type
         if (
           (prev.type === "apply" && type === "apply") ||
           (prev.type === "save" && type === "save") ||
@@ -93,7 +92,6 @@ export function DailyChallengeCard() {
 
           if (completed && !justCompletedRef.current) {
             justCompletedRef.current = true;
-            // Update streak
             const today = new Date().toISOString().split("T")[0];
             setStreak((s) => {
               const yesterday = new Date();
@@ -109,7 +107,6 @@ export function DailyChallengeCard() {
               saveStreakState(ns);
               return ns;
             });
-            // Update badges
             setBadges((b) => {
               const total = b.totalCompletions + 1;
               const nb = {
@@ -128,7 +125,7 @@ export function DailyChallengeCard() {
         return prev;
       });
     });
-    return unsub;
+    return () => { unsub(); };
   }, []);
 
   const progressPct = state.goal > 0 ? (state.progress / state.goal) * 100 : 0;

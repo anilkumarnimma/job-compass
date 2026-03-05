@@ -169,7 +169,7 @@ export function PomodoroTimerCard() {
         }));
       }
     });
-    return unsub;
+    return () => { unsub(); };
   }, []);
 
   const handlePreset = (seconds: number) => {
