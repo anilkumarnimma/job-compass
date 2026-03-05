@@ -76,7 +76,7 @@ export function TopHiringsPanelDisplay({ onFilterByRole }: TopHiringsPanelDispla
   }
 
   return (
-    <div className="p-4 rounded-2xl bg-gradient-to-br from-card via-card to-muted/10 border border-border/40 shadow-xl shadow-primary/5 relative overflow-hidden">
+    <div className="p-5 rounded-2xl bg-gradient-to-br from-card via-card to-muted/10 border border-border/40 shadow-xl shadow-primary/5 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-t from-primary/[0.02] to-transparent pointer-events-none" />
 
       <div className="relative">
@@ -87,8 +87,8 @@ export function TopHiringsPanelDisplay({ onFilterByRole }: TopHiringsPanelDispla
               <TrendingUp className="h-4 w-4 text-primary" />
             </div>
             <div className="min-w-0">
-              <h3 className="font-bold text-foreground text-sm tracking-tight whitespace-nowrap">Top Hirings Today</h3>
-              <p className="text-[11px] text-muted-foreground whitespace-nowrap">USA market snapshot</p>
+              <h3 className="font-bold text-foreground text-[15px] tracking-tight whitespace-nowrap">Top Hirings Today</h3>
+              <p className="text-xs text-muted-foreground whitespace-nowrap">USA market snapshot</p>
             </div>
           </div>
 
@@ -117,7 +117,7 @@ export function TopHiringsPanelDisplay({ onFilterByRole }: TopHiringsPanelDispla
           </div>
         ) : (
           <TooltipProvider delayDuration={100}>
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               {chartData.map((entry, index) => {
                 const isTop = index === 0;
                 const isHovered = hoveredIndex === index;
@@ -152,7 +152,7 @@ export function TopHiringsPanelDisplay({ onFilterByRole }: TopHiringsPanelDispla
                         </div>
 
                         {/* Bar */}
-                        <div className="h-2.5 w-full bg-muted/40 rounded-full overflow-hidden">
+                        <div className="h-3 w-full bg-muted/40 rounded-full overflow-hidden">
                           <div
                             className="h-full rounded-full transition-all duration-700 ease-out"
                             style={{
