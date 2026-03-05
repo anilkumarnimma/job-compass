@@ -41,7 +41,7 @@ export function JobMatchesPanel() {
 
   if (profileLoading || isLoading) {
     return (
-      <div className="rounded-xl border border-border/60 bg-card p-4 space-y-2.5">
+      <div className="rounded-xl border border-border/60 bg-card p-4 space-y-2.5 max-w-[600px]">
         <Skeleton className="h-4 w-32" />
         <Skeleton className="h-3 w-40" />
         <Skeleton className="h-6 w-full" />
@@ -56,7 +56,7 @@ export function JobMatchesPanel() {
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="rounded-lg border border-border/60 bg-card p-3 shadow-sm"
+        className="rounded-lg border border-border/60 bg-card p-3 shadow-sm max-w-[600px]"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
@@ -88,7 +88,7 @@ export function JobMatchesPanel() {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="rounded-lg border border-border/40 bg-card p-3 shadow-sm"
+      className="rounded-lg border border-border/40 bg-card p-3 shadow-sm max-w-[600px]"
     >
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-1.5">
