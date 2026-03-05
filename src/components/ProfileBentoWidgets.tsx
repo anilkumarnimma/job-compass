@@ -28,6 +28,7 @@ export function ProfileWelcomeBanner() {
   const { toast } = useToast();
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
   const profileCompletion = useMemo(() => {
     if (!profile) return 0;
