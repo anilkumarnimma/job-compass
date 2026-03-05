@@ -154,9 +154,8 @@ export function FloatingHeroTags() {
             onClick={() => handleClick(tag)}
             className="absolute pointer-events-auto
               px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap
-              bg-[hsl(0_0%_100%/0.06)] dark:bg-[hsl(0_0%_100%/0.06)]
-              bg-[hsl(0_0%_100%/0.8)] 
-              dark:text-foreground/70 text-foreground/70
+              bg-card/80 dark:bg-[hsl(0_0%_100%/0.06)]
+              text-foreground/70
               border border-transparent
               backdrop-blur-md
               hover:border-accent hover:text-accent hover:scale-110
