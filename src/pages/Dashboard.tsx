@@ -47,6 +47,8 @@ export default function Dashboard() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const [companyFilter, setCompanyFilter] = useState<string | null>(null);
+  const [allTimeDropdownOpen, setAllTimeDropdownOpen] = useState(false);
+  const [fallbackActive, setFallbackActive] = useState(false);
   
   const isMobile = useIsMobile();
   const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply } = useJobContext();
@@ -75,23 +77,23 @@ export default function Dashboard() {
     return parts.join(" ");
   }, [debouncedSearch, roleFilter, companyFilter]);
 
-  
-
   // Reset page when search/filters change
   const { dateFrom, dateTo } = getDateRange(dateFilter);
 
   useEffect(() => {
     setCurrentPage(1);
+    setFallbackActive(false);
   }, [combinedSearchQuery, dateFilter]);
 
+  // Primary query with selected date filter
   const {
     data,
     isLoading,
   } = useJobSearchPaginated({
     searchQuery: combinedSearchQuery,
     page: currentPage,
-    dateFrom,
-    dateTo,
+    dateFrom: fallbackActive ? null : dateFrom,
+    dateTo: fallbackActive ? null : dateTo,
   });
 
   const { isApplied } = useJobContext();
@@ -100,8 +102,12 @@ export default function Dashboard() {
     return (data?.jobs || []).filter((job) => !isApplied(job.id));
   }, [data, isApplied]);
 
-  const totalCount = data?.totalCount ?? 0;
-  const totalPages = data?.totalPages ?? 1;
+  // Detect 0 results and fallback to all time
+  useEffect(() => {
+    if (!isLoading && dateFilter !== "all" && !fallbackActive && data && data.totalCount === 0) {
+      setFallbackActive(true);
+    }
+  }, [isLoading, dateFilter, fallbackActive, data]);
 
   const handleJobTap = useCallback((job: Job) => {
     if (isMobile) {
@@ -211,17 +217,21 @@ export default function Dashboard() {
             />
           </div>
 
-          {/* Right Sidebar - Desktop only */}
-          <div className="hidden lg:block w-[480px] shrink-0">
-            <div className="sticky top-[88px] space-y-4">
+          {/* Right Panel - Job Preview + Sidebar (Desktop) */}
+          {!isMobile && (
+            <div className="hidden lg:flex gap-4 shrink-0">
+              {/* Wide Job Details Panel */}
               {selectedJob && (
-                <div className="border border-border rounded-xl bg-card overflow-hidden shadow-sm">
+                <div className="w-[520px] shrink-0 sticky top-[88px] self-start border border-border rounded-xl bg-card overflow-hidden shadow-sm max-h-[calc(100vh-112px)] overflow-y-auto">
                   <JobPreviewPanel job={selectedJob} />
                 </div>
               )}
-              <RightSidebar onFilterByRole={handleFilterByRole} />
+              {/* Narrow Widgets Sidebar */}
+              <div className="w-[260px] shrink-0 sticky top-[88px] self-start">
+                <RightSidebar onFilterByRole={handleFilterByRole} />
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
