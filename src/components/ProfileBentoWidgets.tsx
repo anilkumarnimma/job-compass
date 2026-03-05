@@ -104,7 +104,7 @@ export function ProfileWelcomeBanner() {
             <button
               onClick={() => photoInputRef.current?.click()}
               disabled={uploading}
-              className="absolute bottom-1.5 right-1.5 w-8 h-8 rounded-full bg-foreground/80 text-background flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md cursor-pointer"
+              className="absolute bottom-1.5 right-1.5 w-8 h-8 rounded-full bg-foreground/80 text-background flex items-center justify-center opacity-80 hover:opacity-100 transition-opacity shadow-md cursor-pointer"
             >
               <Camera className="h-4 w-4" />
             </button>
