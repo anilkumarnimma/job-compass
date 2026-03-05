@@ -265,7 +265,7 @@ export function PomodoroTimerCard() {
           <span className="text-sm font-bold text-white">Focus Session</span>
         </div>
         <span className="text-[11px] text-gray-500">
-          Session {state.sessionsToday + (state.isRunning && !state.isBreak ? 1 : 0)} of 4
+          {state.sessionsToday + (state.isRunning && !state.isBreak ? 1 : 0)} session{(state.sessionsToday + (state.isRunning && !state.isBreak ? 1 : 0)) !== 1 ? "s" : ""} today
         </span>
       </div>
 
