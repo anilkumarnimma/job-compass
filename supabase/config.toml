@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.ats-check]
 verify_jwt = false
+
+[functions.socia-chat]
+verify_jwt = false
