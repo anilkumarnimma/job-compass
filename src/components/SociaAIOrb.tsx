@@ -285,6 +285,7 @@ export const SociaAIOrb: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, transition: { duration: 0.15 } }}
               className="flex flex-col h-full"
+              data-socia-chat
             >
               {/* HEADER */}
               <motion.div
