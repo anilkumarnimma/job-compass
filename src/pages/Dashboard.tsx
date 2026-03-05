@@ -314,6 +314,11 @@ export default function Dashboard() {
               </div>
             )}
 
+            {/* Job Matches Panel */}
+            <div className="mb-5">
+              <JobMatchesPanel />
+            </div>
+
             {/* Job List */}
             <JobListPaginated
               jobs={jobs}
