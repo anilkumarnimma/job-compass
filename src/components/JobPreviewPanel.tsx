@@ -51,9 +51,9 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
   };
 
   return (
-    <div className="flex flex-col" style={{ height: 'calc(100vh - 120px)', maxHeight: '80vh' }}>
+    <div className="flex flex-col h-full">
       {/* Sticky Header */}
-      <div className="p-5 border-b border-border/50 shrink-0 bg-card/90 backdrop-blur-sm">
+      <div className="p-5 border-b border-border/50 shrink-0 bg-card/90 backdrop-blur-sm sticky top-0 z-10">
         <div className="flex items-start gap-4 mb-3">
           <CompanyLogo
             logoUrl={job.company_logo}
@@ -128,7 +128,7 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
       />
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto min-h-0 p-5">
+      <div className="flex-1 overflow-y-auto min-h-0 p-5 overscroll-contain">
         <div className="flex flex-wrap gap-2 mb-5">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-chip-bg text-xs text-muted-foreground">
             <MapPin className="h-3.5 w-3.5" />
