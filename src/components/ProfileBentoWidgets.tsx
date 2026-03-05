@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export function ProfileWelcomeBanner() {
   const { user } = useAuth();
-  const { profile, isLoading, updateProfile } = useProfile();
+  const { profile, isLoading, updateProfileAsync } = useProfile();
   const { applications, savedJobs } = useJobContext();
   const { toast } = useToast();
   const photoInputRef = useRef<HTMLInputElement>(null);
