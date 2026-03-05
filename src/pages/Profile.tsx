@@ -5,6 +5,8 @@ import { useAuth } from "@/context/AuthContext";
 import { useProfile, ProfileData, WorkExperience, Education } from "@/hooks/useProfile";
 import { useToast } from "@/hooks/use-toast";
 import { useResumeParser, ExtractedResumeData } from "@/hooks/useResumeParser";
+import { useAtsCheck } from "@/hooks/useAtsCheck";
+import { AtsCheckDialog } from "@/components/AtsCheckDialog";
 import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { ProfileWelcomeBanner, SkillsCloudWidget, QuickStatsWidget } from "@/components/ProfileBentoWidgets";
@@ -21,7 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   User, FileText, Upload, Download, Trash2, Loader2, Bug,
-  Link2, Briefcase, GraduationCap, Sparkles, Plus, Wand2, Award, Pencil, X,
+  Link2, Briefcase, GraduationCap, Sparkles, Plus, Wand2, Award, Pencil, X, Target,
 } from "lucide-react";
 
 const WORK_AUTH_OPTIONS = [
