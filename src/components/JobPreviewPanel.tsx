@@ -107,9 +107,9 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
             variant="ghost"
             size="sm"
             onClick={handleAtsCheck}
-            className="h-9 px-4 text-sm font-medium rounded-xl active:scale-95 text-muted-foreground hover:text-foreground hover:bg-secondary"
+            className="h-9 px-4 text-sm font-medium rounded-xl active:scale-95 text-accent hover:text-accent-foreground hover:bg-accent/20 animate-[ats-glow_2s_ease-in-out_infinite] relative"
           >
-            <Target className="h-4 w-4 mr-1.5" />ATS Check
+            <Target className="h-4 w-4 mr-1.5 animate-pulse" />ATS Check
           </Button>
 
           {job.is_reviewing && (
