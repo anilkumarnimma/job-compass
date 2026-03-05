@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.api-profile]
 verify_jwt = false
+
+[functions.ats-check]
+verify_jwt = false

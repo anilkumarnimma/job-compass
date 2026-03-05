@@ -5,6 +5,8 @@ import { useAuth } from "@/context/AuthContext";
 import { useProfile, ProfileData, WorkExperience, Education } from "@/hooks/useProfile";
 import { useToast } from "@/hooks/use-toast";
 import { useResumeParser, ExtractedResumeData } from "@/hooks/useResumeParser";
+import { useAtsCheck } from "@/hooks/useAtsCheck";
+import { AtsCheckDialog } from "@/components/AtsCheckDialog";
 import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { ProfileWelcomeBanner, SkillsCloudWidget, QuickStatsWidget } from "@/components/ProfileBentoWidgets";
@@ -21,7 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   User, FileText, Upload, Download, Trash2, Loader2, Bug,
-  Link2, Briefcase, GraduationCap, Sparkles, Plus, Wand2, Award, Pencil, X,
+  Link2, Briefcase, GraduationCap, Sparkles, Plus, Wand2, Award, Pencil, X, Target,
 } from "lucide-react";
 
 const WORK_AUTH_OPTIONS = [
@@ -63,6 +65,8 @@ export default function Profile() {
   const { profile, isLoading, updateProfile, isUpdating, uploadResume, downloadResume, deleteResume, isUploading } = useProfile();
   const { toast } = useToast();
   const { parseResume, isParsing, extractedData, clearExtracted } = useResumeParser();
+  const { runCheck: runAtsCheck, isChecking: isAtsChecking, result: atsResult, clearResult: clearAtsResult } = useAtsCheck();
+  const [showAtsDialog, setShowAtsDialog] = useState(false);
   const { data: effectiveRole, isLoading: roleLoading } = useUserRole();
   const { data: allRoles } = useAllUserRoles();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -434,6 +438,39 @@ export default function Profile() {
               )}
             </CardContent>
           </Card>
+
+          {/* ATS Compatibility Check */}
+          <Card className="border-accent/20 bg-accent/5 rounded-3xl">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Target className="h-5 w-5 text-accent" />
+                <CardTitle className="text-lg">ATS Compatibility Check</CardTitle>
+              </div>
+              <CardDescription>Paste any job description to see how well your profile matches</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                className="w-full rounded-full"
+                variant="outline"
+                onClick={() => {
+                  clearAtsResult();
+                  setShowAtsDialog(true);
+                }}
+              >
+                <Target className="h-4 w-4 mr-2" />
+                Check ATS Compatibility
+              </Button>
+            </CardContent>
+          </Card>
+
+          <AtsCheckDialog
+            open={showAtsDialog}
+            onOpenChange={setShowAtsDialog}
+            result={atsResult}
+            isChecking={isAtsChecking}
+            showCustomInput
+            onRunCustomCheck={(desc) => runAtsCheck({ job_description: desc })}
+          />
 
           {/* 2. Personal Details */}
           <Card className="rounded-3xl">

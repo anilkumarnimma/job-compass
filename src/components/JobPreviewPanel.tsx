@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { Job } from "@/types/job";
 import { useJobContext } from "@/context/JobContext";
 import { useAuth } from "@/context/AuthContext";
+import { useAtsCheck } from "@/hooks/useAtsCheck";
+import { AtsCheckDialog } from "@/components/AtsCheckDialog";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, BriefcaseBusiness } from "lucide-react";
+import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, BriefcaseBusiness, Target } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 
@@ -16,6 +19,8 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { runCheck, isChecking, result, clearResult } = useAtsCheck();
+  const [showAtsDialog, setShowAtsDialog] = useState(false);
 
   const saved = isSaved(job.id);
   const applied = isApplied(job.id);
@@ -32,6 +37,17 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
 
   const handleTitleClick = () => {
     window.open(job.external_apply_link, "_blank");
+  };
+
+  const handleAtsCheck = () => {
+    if (!user) { navigate("/auth"); return; }
+    clearResult();
+    setShowAtsDialog(true);
+    runCheck({
+      job_description: job.description,
+      job_title: job.title,
+      job_skills: job.skills,
+    });
   };
 
   return (
@@ -87,6 +103,15 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
             )}
           </Button>
 
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleAtsCheck}
+            className="h-9 px-4 text-sm font-medium rounded-xl active:scale-95 text-muted-foreground hover:text-foreground hover:bg-secondary"
+          >
+            <Target className="h-4 w-4 mr-1.5" />ATS Check
+          </Button>
+
           {job.is_reviewing && (
             <Badge className="ml-auto px-2.5 py-1.5 text-xs font-medium bg-success-bg text-success-text border-0 rounded-full">
               Actively Reviewing
@@ -95,9 +120,15 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
         </div>
       </div>
 
+      <AtsCheckDialog
+        open={showAtsDialog}
+        onOpenChange={setShowAtsDialog}
+        result={result}
+        isChecking={isChecking}
+      />
+
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto min-h-0 p-5">
-        {/* Meta Chips */}
         <div className="flex flex-wrap gap-2 mb-5">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-chip-bg text-xs text-muted-foreground">
             <MapPin className="h-3.5 w-3.5" />
