@@ -11,21 +11,21 @@ import { useJobSearchPaginated } from "@/hooks/useJobSearchPaginated";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useJobContext } from "@/context/JobContext";
 import { Job } from "@/types/job";
-import { X } from "lucide-react";
+import { X, SlidersHorizontal } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { cn } from "@/lib/utils";
 
 const DATE_FILTER_OPTIONS = [
-  { value: "all", label: "All time" },
   { value: "today", label: "Today" },
-  { value: "24h", label: "Last 24 hours" },
+  { value: "yesterday", label: "Yesterday" },
   { value: "3d", label: "Last 3 days" },
   { value: "7d", label: "Last 7 days" },
   { value: "30d", label: "Last 30 days" },
+  { value: "all", label: "All time" },
 ];
 
 function getDateFromFilter(filter: string): string | null {
@@ -34,8 +34,8 @@ function getDateFromFilter(filter: string): string | null {
   switch (filter) {
     case "today":
       return new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString().split("T")[0];
-    case "24h": {
-      const d = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    case "yesterday": {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
       return d.toISOString().split("T")[0];
     }
     case "3d": {
@@ -63,7 +63,7 @@ export default function Dashboard() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const [companyFilter, setCompanyFilter] = useState<string | null>(null);
-  const [dateFilter, setDateFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("today");
   const isMobile = useIsMobile();
   const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply } = useJobContext();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -163,30 +163,23 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* Posted Date Filter */}
+            {/* Posted Date Filter - pill buttons */}
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              <Select value={dateFilter} onValueChange={setDateFilter}>
-                <SelectTrigger className="h-9 w-[180px] rounded-full text-sm">
-                  <SelectValue placeholder="Posted Date" />
-                </SelectTrigger>
-                <SelectContent>
-                  {DATE_FILTER_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {dateFilter !== "all" && (
+              <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
+              {DATE_FILTER_OPTIONS.map((opt) => (
                 <button
-                  onClick={() => setDateFilter("all")}
-                  className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  key={opt.value}
+                  onClick={() => setDateFilter(opt.value)}
+                  className={cn(
+                    "h-8 px-3.5 text-sm rounded-full border transition-all duration-200",
+                    dateFilter === opt.value
+                      ? "bg-accent text-accent-foreground border-accent font-medium shadow-sm"
+                      : "bg-card text-muted-foreground border-border hover:border-accent/50 hover:text-foreground"
+                  )}
                 >
-                  <X className="h-3.5 w-3.5" />
-                  Clear
+                  {opt.label}
                 </button>
-              )}
+              ))}
             </div>
 
             {/* Active Role/Company Filters */}
