@@ -10,10 +10,12 @@ interface LayoutProps {
 
 export function Layout({ children, showHeader = true, showFooter = true }: LayoutProps) {
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col dashboard-gradient">
       {showHeader && <Header />}
-      <main className="flex-1">
-        {children}
+      <main className="flex-1 content-glow relative">
+        <div className="relative z-10">
+          {children}
+        </div>
       </main>
       {showFooter && <Footer />}
     </div>
