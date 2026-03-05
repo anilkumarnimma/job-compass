@@ -4,7 +4,6 @@ import { useAuth } from "@/context/AuthContext";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
 import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, BriefcaseBusiness } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -17,27 +16,17 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
   const navigate = useNavigate();
-  
+
   const saved = isSaved(job.id);
   const applied = isApplied(job.id);
 
   const handleSaveClick = () => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-    if (saved) {
-      unsaveJob(job.id);
-    } else {
-      saveJob(job);
-    }
+    if (!user) { navigate("/auth"); return; }
+    if (saved) unsaveJob(job.id); else saveJob(job);
   };
 
   const handleApplyClick = () => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
+    if (!user) { navigate("/auth"); return; }
     applyToJob(job);
   };
 
@@ -47,21 +36,18 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
 
   return (
     <div className="flex flex-col" style={{ height: 'calc(100vh - 120px)', maxHeight: '80vh' }}>
-      {/* Header */}
-      <div className="p-5 border-b border-border shrink-0">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Job Preview</span>
-        </div>
+      {/* Sticky Header */}
+      <div className="p-5 border-b border-border/50 shrink-0 bg-card/90 backdrop-blur-sm">
         <div className="flex items-start gap-4 mb-3">
-          <CompanyLogo 
-            logoUrl={job.company_logo} 
-            companyName={job.company} 
+          <CompanyLogo
+            logoUrl={job.company_logo}
+            companyName={job.company}
             size="lg"
             className="rounded-xl"
           />
           <div className="flex-1 min-w-0">
-            <h3 
-              className="font-bold text-foreground text-lg leading-tight line-clamp-2 cursor-pointer hover:text-accent transition-colors"
+            <h3
+              className="font-display font-bold text-foreground text-lg leading-tight line-clamp-2 cursor-pointer hover:text-accent transition-colors"
               onClick={handleTitleClick}
             >
               {job.title}
@@ -72,37 +58,64 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
             </p>
           </div>
         </div>
-        
-        {job.is_reviewing && (
-          <Badge 
-            className="px-2.5 py-1.5 text-xs font-medium bg-success-bg text-success-text border-0 rounded-full"
+
+        {/* Action Buttons - sticky with header */}
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            onClick={handleApplyClick}
+            className={`h-9 text-sm font-medium rounded-xl transition-all active:scale-95 ${
+              applied
+                ? "bg-secondary text-secondary-foreground px-5"
+                : "bg-accent hover:bg-accent/90 text-accent-foreground px-6 shadow-sm"
+            }`}
           >
-            Actively Reviewing
-          </Badge>
-        )}
+            {applied ? "Applied" : (
+              <><ExternalLink className="h-4 w-4 mr-1.5" />Apply</>
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSaveClick}
+            className={`h-9 px-4 text-sm font-medium rounded-xl active:scale-95 ${saved ? "text-accent" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
+          >
+            {saved ? (
+              <><BookmarkCheck className="h-4 w-4 mr-1.5" />Saved</>
+            ) : (
+              <><Bookmark className="h-4 w-4 mr-1.5" />Save</>
+            )}
+          </Button>
+
+          {job.is_reviewing && (
+            <Badge className="ml-auto px-2.5 py-1.5 text-xs font-medium bg-success-bg text-success-text border-0 rounded-full">
+              Actively Reviewing
+            </Badge>
+          )}
+        </div>
       </div>
 
-      {/* Scrollable Content - independently scrollable */}
+      {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto min-h-0 p-5">
-        {/* Meta Row - Chip Style */}
+        {/* Meta Chips */}
         <div className="flex flex-wrap gap-2 mb-5">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-chip-bg text-xs text-muted-foreground">
             <MapPin className="h-3.5 w-3.5" />
             {job.location}
           </span>
-          
+
           {job.salary_range && (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-success-bg text-xs text-success-text font-medium">
               <DollarSign className="h-3.5 w-3.5" />
               {job.salary_range}
             </span>
           )}
-          
+
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-chip-bg text-xs text-muted-foreground">
             <Briefcase className="h-3.5 w-3.5" />
             {job.employment_type}
           </span>
-          
+
           {job.experience_years && (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-chip-bg text-xs text-muted-foreground">
               <BriefcaseBusiness className="h-3.5 w-3.5" />
@@ -111,23 +124,23 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
           )}
         </div>
 
-        {/* Full Description */}
+        {/* Job Description - LinkedIn-style */}
         <div className="mb-5">
-          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Description</h4>
-          <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-line">
+          <h4 className="text-sm font-semibold text-foreground mb-3">About the role</h4>
+          <div className="text-sm leading-relaxed text-muted-foreground whitespace-pre-line prose prose-sm max-w-none">
             {job.description}
-          </p>
+          </div>
         </div>
 
         {/* Skills */}
         {job.skills.length > 0 && (
           <div className="mb-4">
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Skills</h4>
+            <h4 className="text-sm font-semibold text-foreground mb-3">Skills & Technologies</h4>
             <div className="flex flex-wrap gap-1.5">
               {job.skills.map((skill) => (
-                <Badge 
-                  key={skill} 
-                  variant="secondary" 
+                <Badge
+                  key={skill}
+                  variant="secondary"
                   className="text-xs font-normal px-2.5 py-1 rounded-full bg-chip-bg text-foreground border-0 hover:bg-secondary transition-colors"
                 >
                   {skill}
@@ -136,35 +149,6 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Actions - Fixed Bottom */}
-      <div className="p-5 border-t border-border flex items-center justify-end gap-2 shrink-0">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleSaveClick}
-          className={`h-10 px-4 text-sm font-medium rounded-xl ${saved ? "text-accent" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
-        >
-          {saved ? (
-            <><BookmarkCheck className="h-4 w-4 mr-1.5" />Saved</>
-          ) : (
-            <><Bookmark className="h-4 w-4 mr-1.5" />Save</>
-          )}
-        </Button>
-        <Button
-          size="sm"
-          onClick={handleApplyClick}
-          className={`h-10 text-sm font-medium rounded-xl ${
-            applied 
-              ? "bg-secondary text-secondary-foreground px-5" 
-              : "bg-accent hover:bg-accent/90 text-accent-foreground px-6 shadow-sm"
-          }`}
-        >
-          {applied ? "Applied" : (
-            <><ExternalLink className="h-4 w-4 mr-1.5" />Apply</>
-          )}
-        </Button>
       </div>
     </div>
   );
