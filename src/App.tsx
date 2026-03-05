@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { JobProvider } from "@/context/JobContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { FloatingHelpButton } from "@/components/FloatingHelpButton";
+
 import { IntroSplash } from "@/components/IntroSplash";
 import { AnimatedCursor } from "@/components/AnimatedCursor";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
