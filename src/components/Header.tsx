@@ -5,6 +5,7 @@ import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
 import { useProfile } from "@/hooks/useProfile";
 import { Briefcase, Menu, X, LogOut, Shield, User, Crown, ChevronDown, Sparkles } from "lucide-react";
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
@@ -70,17 +71,23 @@ export function Header() {
               <div className="flex items-center bg-secondary/70 rounded-full p-1 gap-0.5 backdrop-blur-sm">
                 {navLinks.map((link) => (
                   <Link key={link.path} to={link.path}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={`rounded-full px-5 h-8 font-medium transition-all duration-300 ${
-                        isActive(link.path)
-                          ? "bg-card text-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground hover:bg-transparent"
-                      }`}
+                    <motion.div
+                      whileHover={{ scale: 1.04, y: -1 }}
+                      whileTap={{ scale: 0.97 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 20 }}
                     >
-                      {link.label}
-                    </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`rounded-full px-5 h-8 font-medium transition-all duration-200 ${
+                          isActive(link.path)
+                            ? "bg-card text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground hover:bg-card/50"
+                        }`}
+                      >
+                        {link.label}
+                      </Button>
+                    </motion.div>
                   </Link>
                 ))}
               </div>
