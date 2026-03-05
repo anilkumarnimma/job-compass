@@ -344,7 +344,7 @@ export default function Dashboard() {
                 )}
               </AnimatePresence>
               {/* Narrow Widgets Sidebar */}
-              <div className="w-[240px] shrink-0 sticky top-[88px] self-start">
+              <div className="w-[280px] shrink-0 sticky top-[88px] self-start">
                 <RightSidebar onFilterByRole={handleFilterByRole} />
               </div>
             </div>

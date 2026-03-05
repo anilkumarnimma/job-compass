@@ -46,6 +46,7 @@ export function Header() {
     if (!user) return [];
     return [
       { path: "/dashboard", label: "Jobs" },
+      { path: "/recommendations", label: "Recommendations" },
       { path: "/applied", label: "Applied" },
       { path: "/saved", label: "Saved" },
     ];
