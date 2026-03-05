@@ -5,8 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useProfile, ProfileData, WorkExperience, Education } from "@/hooks/useProfile";
 import { useToast } from "@/hooks/use-toast";
 import { useResumeParser, ExtractedResumeData } from "@/hooks/useResumeParser";
-import { useAtsCheck } from "@/hooks/useAtsCheck";
-import { AtsCheckDialog } from "@/components/AtsCheckDialog";
+import { ProfileAtsPanel } from "@/components/ProfileAtsPanel";
 import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { ProfileWelcomeBanner, SkillsCloudWidget, QuickStatsWidget } from "@/components/ProfileBentoWidgets";
@@ -65,8 +64,8 @@ export default function Profile() {
   const { profile, isLoading, updateProfile, isUpdating, uploadResume, downloadResume, deleteResume, isUploading } = useProfile();
   const { toast } = useToast();
   const { parseResume, isParsing, extractedData, clearExtracted } = useResumeParser();
-  const { runCheck: runAtsCheck, isChecking: isAtsChecking, result: atsResult, clearResult: clearAtsResult } = useAtsCheck();
-  const [showAtsDialog, setShowAtsDialog] = useState(false);
+
+
   const { data: effectiveRole, isLoading: roleLoading } = useUserRole();
   const { data: allRoles } = useAllUserRoles();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -364,7 +363,7 @@ export default function Profile() {
    return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Header />
-      <main className="container max-w-3xl mx-auto px-4 py-8">
+      <main className="container max-w-6xl mx-auto px-4 py-8">
         {/* Bento welcome section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <ProfileWelcomeBanner />
@@ -383,8 +382,10 @@ export default function Profile() {
             </Button>
           )}
         </div>
-
-        <div className="space-y-6">
+        {/* Two-column layout: form left, ATS right */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
+          {/* Left column - Form */}
+          <div className="space-y-6">
           {/* 1. Resume Upload / Auto-Fill */}
           <Card className="border-primary/20 bg-primary/5 rounded-3xl">
             <CardHeader>
@@ -439,38 +440,6 @@ export default function Profile() {
             </CardContent>
           </Card>
 
-          {/* ATS Compatibility Check */}
-          <Card className="border-accent/20 bg-accent/5 rounded-3xl">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-accent" />
-                <CardTitle className="text-lg">ATS Compatibility Check</CardTitle>
-              </div>
-              <CardDescription>Paste any job description to see how well your profile matches</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button
-                className="w-full rounded-full"
-                variant="outline"
-                onClick={() => {
-                  clearAtsResult();
-                  setShowAtsDialog(true);
-                }}
-              >
-                <Target className="h-4 w-4 mr-2" />
-                Check ATS Compatibility
-              </Button>
-            </CardContent>
-          </Card>
-
-          <AtsCheckDialog
-            open={showAtsDialog}
-            onOpenChange={setShowAtsDialog}
-            result={atsResult}
-            isChecking={isAtsChecking}
-            showCustomInput
-            onRunCustomCheck={(desc) => runAtsCheck({ job_description: desc })}
-          />
 
           {/* 2. Personal Details */}
           <Card className="rounded-3xl">
@@ -845,6 +814,19 @@ export default function Profile() {
               )}
             </CardContent>
           </Card>
+          </div>
+
+          {/* Right column - ATS Panel (sticky) */}
+          <div className="hidden lg:block">
+            <div className="sticky top-8">
+              <ProfileAtsPanel />
+            </div>
+          </div>
+
+          {/* Mobile ATS - shown below form on small screens */}
+          <div className="lg:hidden">
+            <ProfileAtsPanel />
+          </div>
         </div>
       </main>
 
