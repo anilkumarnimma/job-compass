@@ -148,10 +148,10 @@ export default function Index() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.1 }}
-              className="font-display text-5xl md:text-6xl lg:text-7xl font-extrabold text-foreground leading-[1.08] mb-6"
+              className="font-display text-[32px] sm:text-[40px] md:text-[52px] lg:text-[64px] font-bold text-foreground leading-[1.12] tracking-[-0.02em] mb-6 max-w-[700px] mx-auto"
             >
               Built for the one
-              <span className="block hero-gradient-text mt-1">Who Gets the Offer.</span>
+              <span className="block hero-gradient-text">Who Gets the Offer.</span>
             </motion.h1>
 
             <motion.p
