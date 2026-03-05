@@ -51,10 +51,10 @@ export function ProfileWelcomeBanner() {
     try {
       const ext = file.name.split(".").pop();
       const filePath = `${user.id}/avatar.${ext}`;
-      const { error: uploadError } = await supabase.storage.from("resumes").upload(filePath, file, { upsert: true });
+      const { error: uploadError } = await supabase.storage.from("avatars").upload(filePath, file, { upsert: true });
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage.from("resumes").getPublicUrl(filePath);
+      const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
       updateProfile({ avatar_url: publicUrl } as any);
       toast({ title: "Photo updated!" });
     } catch (err: any) {
