@@ -1,6 +1,5 @@
 import { useState, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { useAuth } from "@/context/AuthContext";
 import { useSupportTickets, CreateTicketData } from "@/hooks/useSupportTickets";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +31,7 @@ interface FloatingHelpButtonProps {
 export function FloatingHelpButton({ variant = "floating" }: FloatingHelpButtonProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { createTicket, isCreating } = useSupportTickets();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [open, setOpen] = useState(false);
