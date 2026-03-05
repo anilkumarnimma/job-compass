@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Briefcase } from "lucide-react";
+import introImage from "@/assets/intro-splash.png";
 
 interface IntroSplashProps {
   children: React.ReactNode;
@@ -17,7 +17,7 @@ export function IntroSplash({ children }: IntroSplashProps) {
     const timer = setTimeout(() => {
       setShowSplash(false);
       sessionStorage.setItem("sociax_intro_seen", "1");
-    }, 2000);
+    }, 2600);
     return () => clearTimeout(timer);
   }, [showSplash]);
 
@@ -27,82 +27,54 @@ export function IntroSplash({ children }: IntroSplashProps) {
         {showSplash && (
           <motion.div
             key="splash"
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-background overflow-hidden"
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0a0a0a] overflow-hidden"
             initial={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 1.15 }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           >
-            {/* Animated ring portals */}
-            {[0, 1, 2].map((i) => (
-              <motion.div
-                key={i}
-                className="absolute rounded-full border border-accent/20"
-                style={{ width: 120 + i * 100, height: 120 + i * 100 }}
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{
-                  opacity: [0, 0.6, 0],
-                  scale: [0.5, 1.4, 2.2],
-                }}
-                transition={{
-                  duration: 1.8,
-                  delay: i * 0.25,
-                  ease: "easeOut",
-                }}
-              />
-            ))}
-
-            {/* Gradient glow behind logo */}
+            {/* Glow pulse behind image */}
             <motion.div
-              className="absolute w-40 h-40 rounded-full"
+              className="absolute w-48 h-48 rounded-full"
               style={{
-                background: "radial-gradient(circle, hsl(var(--accent) / 0.25) 0%, transparent 70%)",
+                background:
+                  "radial-gradient(circle, hsl(var(--accent) / 0.3) 0%, transparent 70%)",
               }}
               initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: [0, 1.5, 1], opacity: [0, 0.8, 0.4] }}
+              animate={{
+                scale: [0, 1.6, 1.2],
+                opacity: [0, 0.7, 0.35],
+              }}
               transition={{ duration: 1.4, ease: "easeOut" }}
             />
 
-            {/* Logo + text */}
-            <motion.div
-              className="flex flex-col items-center gap-4 relative z-10"
-              initial={{ opacity: 0, scale: 0.6, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            {/* Intro image */}
+            <motion.img
+              src={introImage}
+              alt="Loading"
+              className="relative z-10 w-28 h-28 object-contain select-none pointer-events-none"
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: [0.5, 1.08, 1] }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            />
+
+            {/* Brand name */}
+            <motion.span
+              className="absolute bottom-[38%] font-display text-xl font-bold text-white/90 tracking-tight"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.4 }}
             >
-              <motion.div
-                className="h-16 w-16 rounded-2xl bg-accent flex items-center justify-center shadow-lg"
-                animate={{ rotate: [0, -5, 5, 0] }}
-                transition={{ duration: 0.8, delay: 0.4, ease: "easeInOut" }}
-              >
-                <Briefcase className="h-8 w-8 text-accent-foreground" />
-              </motion.div>
-              <motion.span
-                className="font-display text-2xl font-bold text-foreground tracking-tight"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.35, duration: 0.4 }}
-              >
-                Sociax.tech
-              </motion.span>
-              {/* Subtle tagline */}
-              <motion.span
-                className="text-xs text-muted-foreground tracking-widest uppercase"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6, duration: 0.5 }}
-              >
-                Entering workspace…
-              </motion.span>
-            </motion.div>
+              Sociax.tech
+            </motion.span>
           </motion.div>
         )}
       </AnimatePresence>
 
       <motion.div
-        initial={showSplash ? { opacity: 0, scale: 0.98 } : { opacity: 1, scale: 1 }}
-        animate={{ opacity: 1, scale: 1 }}
+        initial={showSplash ? { opacity: 0 } : { opacity: 1 }}
+        animate={{ opacity: 1 }}
         transition={{
-          delay: showSplash ? 2.0 : 0,
+          delay: showSplash ? 2.6 : 0,
           duration: 0.5,
           ease: [0.22, 1, 0.36, 1],
         }}
