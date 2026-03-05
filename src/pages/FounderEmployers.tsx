@@ -22,6 +22,15 @@ import {
 } from "@/components/ui/select";
 import { HiringGraphManager } from "@/components/founder/HiringGraphManager";
 import { MarketAlertManager } from "@/components/founder/MarketAlertManager";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 
 export default function FounderEmployers() {
   const { user, isLoading: authLoading } = useAuth();
@@ -30,6 +39,8 @@ export default function FounderEmployers() {
   const updateRole = useUpdateUserRole();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const USERS_PER_PAGE = 20;
   const queryClient = useQueryClient();
   const isLoading = authLoading || permLoading;
   const isFounder = permissions?.isFounder;
@@ -47,6 +58,13 @@ export default function FounderEmployers() {
 
   // Exclude current founder from list (can't change own role)
   const otherUsers = filteredUsers.filter((u) => u.id !== user?.id);
+
+  // Pagination
+  const totalPages = Math.ceil(otherUsers.length / USERS_PER_PAGE);
+  const paginatedUsers = otherUsers.slice((currentPage - 1) * USERS_PER_PAGE, currentPage * USERS_PER_PAGE);
+
+  // Reset page when search changes
+  useMemo(() => { setCurrentPage(1); }, [searchQuery]);
 
   const handleRoleChange = async (userId: string, newRole: "user" | "employer" | "founder") => {
     await updateRole.mutateAsync({ userId, newRole });
