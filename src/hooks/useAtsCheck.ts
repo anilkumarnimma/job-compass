@@ -27,11 +27,24 @@ export function useAtsCheck() {
     job_description?: string;
     job_title?: string;
     job_skills?: string[];
+    /** Override profile data with current form state (unsaved edits) */
+    formProfile?: {
+      skills?: string[] | null;
+      experience_years?: number | null;
+      current_title?: string | null;
+      current_company?: string | null;
+      work_experience?: any[] | null;
+      education?: any[] | null;
+      certifications?: any[] | null;
+    };
   }): Promise<AtsCheckResult | null> => {
-    if (!profile) {
+    if (!profile && !params.formProfile) {
       toast({ title: "Profile required", description: "Please complete your profile before running an ATS check.", variant: "destructive" });
       return null;
     }
+
+    // Use form data if provided (unsaved edits), otherwise fall back to saved DB profile
+    const profileSource = params.formProfile || profile;
 
     setIsChecking(true);
     try {
@@ -41,13 +54,13 @@ export function useAtsCheck() {
           job_title: params.job_title || "",
           job_skills: params.job_skills || [],
           profile: {
-            skills: profile.skills,
-            experience_years: profile.experience_years,
-            current_title: profile.current_title,
-            current_company: profile.current_company,
-            work_experience: profile.work_experience,
-            education: profile.education,
-            certifications: profile.certifications,
+            skills: profileSource?.skills,
+            experience_years: profileSource?.experience_years,
+            current_title: profileSource?.current_title,
+            current_company: profileSource?.current_company,
+            work_experience: profileSource?.work_experience,
+            education: profileSource?.education,
+            certifications: profileSource?.certifications,
           },
         },
       });

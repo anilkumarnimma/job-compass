@@ -60,13 +60,26 @@ function ScoreRing({ score, label, icon: Icon }: { score: number; label: string;
   );
 }
 
-export function ProfileAtsPanel() {
+interface ProfileAtsPanelProps {
+  /** Current form data to use instead of saved DB profile */
+  formProfile?: {
+    skills?: string[] | null;
+    experience_years?: number | null;
+    current_title?: string | null;
+    current_company?: string | null;
+    work_experience?: any[] | null;
+    education?: any[] | null;
+    certifications?: any[] | null;
+  };
+}
+
+export function ProfileAtsPanel({ formProfile }: ProfileAtsPanelProps = {}) {
   const { runCheck, isChecking, result, clearResult } = useAtsCheck();
   const [customDescription, setCustomDescription] = useState("");
 
   const handleSubmit = () => {
     if (customDescription.trim()) {
-      runCheck({ job_description: customDescription.trim() });
+      runCheck({ job_description: customDescription.trim(), formProfile });
     }
   };
 
