@@ -8,6 +8,7 @@ import { CompanyLogo } from "@/components/CompanyLogo";
 import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, ArrowRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
 interface JobCardProps {
   job: Job;
@@ -59,8 +60,13 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style }: JobCar
   };
 
   return (
+    <motion.div
+      whileHover={{ scale: 1.02, y: -2 }}
+      whileTap={{ scale: 0.99 }}
+      transition={{ type: "spring", stiffness: 350, damping: 25 }}
+    >
     <Card
-      className={`group p-5 border bg-card rounded-2xl cursor-pointer overflow-hidden relative transition-all duration-200 hover:shadow-card-hover hover:scale-[1.01] hover:border-accent/30 ${
+      className={`group p-5 border bg-card rounded-2xl cursor-pointer overflow-hidden relative transition-shadow duration-200 hover:shadow-card-hover hover:border-accent/30 ${
         isSelected ? "border-accent ring-1 ring-accent/30 bg-accent/5 shadow-card-hover" : "border-border/60 shadow-card"
       }`}
       onClick={handleCardClick}
@@ -177,5 +183,6 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style }: JobCar
         </Button>
       </div>
     </Card>
+    </motion.div>
   );
 }
