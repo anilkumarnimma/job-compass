@@ -4,28 +4,34 @@ import { SearchBar } from "@/components/SearchBar";
 import { RightSidebar } from "@/components/RightSidebar";
 import { MobileJobPreviewSheet } from "@/components/MobileJobPreviewSheet";
 import { JobPreviewPanel } from "@/components/JobPreviewPanel";
-import { JobListInfinite } from "@/components/JobListInfinite";
+import { JobListPaginated } from "@/components/JobListPaginated";
 import { UpgradeDialog } from "@/components/UpgradeDialog";
 import { ApplyConfirmDialog } from "@/components/ApplyConfirmDialog";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { useJobSearch, useJobCounts } from "@/hooks/useJobSearch";
+import { useJobSearchPaginated } from "@/hooks/useJobSearchPaginated";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useJobContext } from "@/context/JobContext";
-import { Job, TabFilter } from "@/types/job";
-import { X } from "lucide-react";
+import { Job } from "@/types/job";
+import { X, CalendarIcon } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 export default function Dashboard() {
   const [searchInput, setSearchInput] = useState("");
-  const [activeTab, setActiveTab] = useState<TabFilter>("all");
+  const [currentPage, setCurrentPage] = useState(1);
   const [mobilePreviewJob, setMobilePreviewJob] = useState<Job | null>(null);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const [companyFilter, setCompanyFilter] = useState<string | null>(null);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const isMobile = useIsMobile();
   const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply } = useJobContext();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -43,10 +49,8 @@ export default function Dashboard() {
     }
   }, [searchParams, setSearchParams, toast]);
 
-  // Debounce search input by 300ms
   const debouncedSearch = useDebounce(searchInput, 300);
 
-  // Build the combined search query including filters
   const combinedSearchQuery = useMemo(() => {
     const parts: string[] = [];
     if (debouncedSearch.trim()) parts.push(debouncedSearch);
@@ -55,28 +59,29 @@ export default function Dashboard() {
     return parts.join(" ");
   }, [debouncedSearch, roleFilter, companyFilter]);
 
-  // Fetch jobs with infinite scroll
-  const {
-    data: jobsData,
-    isLoading,
-    isFetchingNextPage,
-    hasNextPage,
-    fetchNextPage,
-  } = useJobSearch({
-    searchQuery: combinedSearchQuery,
-    tab: activeTab,
-  });
+  // Reset page when search/filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [combinedSearchQuery, dateFrom, dateTo]);
 
-  // Fetch job counts for tabs
-  const { data: counts } = useJobCounts(combinedSearchQuery);
+  const {
+    data,
+    isLoading,
+  } = useJobSearchPaginated({
+    searchQuery: combinedSearchQuery,
+    page: currentPage,
+    dateFrom: dateFrom ? format(dateFrom, "yyyy-MM-dd") : null,
+    dateTo: dateTo ? format(dateTo, "yyyy-MM-dd") : null,
+  });
 
   const { isApplied } = useJobContext();
 
-  // Flatten pages into single array, excluding applied jobs
   const jobs = useMemo(() => {
-    const all = jobsData?.pages.flatMap((page) => page) || [];
-    return all.filter((job) => !isApplied(job.id));
-  }, [jobsData, isApplied]);
+    return (data?.jobs || []).filter((job) => !isApplied(job.id));
+  }, [data, isApplied]);
+
+  const totalCount = data?.totalCount ?? 0;
+  const totalPages = data?.totalPages ?? 1;
 
   const handleJobTap = useCallback((job: Job) => {
     if (isMobile) {
@@ -97,11 +102,13 @@ export default function Dashboard() {
     setCompanyFilter(null);
   }, []);
 
-  const handleTabChange = useCallback((value: string) => {
-    setActiveTab(value as TabFilter);
+  const clearDateFilters = useCallback(() => {
+    setDateFrom(undefined);
+    setDateTo(undefined);
   }, []);
 
   const hasActiveFilter = roleFilter || companyFilter;
+  const hasDateFilter = dateFrom || dateTo;
 
   return (
     <Layout>
@@ -115,12 +122,12 @@ export default function Dashboard() {
                 Job Board
               </h1>
               <p className="text-muted-foreground text-sm">
-                {counts?.total_count ?? 0} job{counts?.total_count !== 1 ? 's' : ''} available
+                {totalCount.toLocaleString()} job{totalCount !== 1 ? 's' : ''} available
               </p>
             </div>
 
             {/* Search */}
-            <div className="mb-5">
+            <div className="mb-4">
               <SearchBar
                 value={searchInput}
                 onChange={setSearchInput}
@@ -128,7 +135,70 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* Active Filters */}
+            {/* Date Range Filter */}
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "h-9 px-3 text-sm font-normal rounded-full gap-1.5",
+                      !dateFrom && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    {dateFrom ? format(dateFrom, "MMM dd, yyyy") : "From date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dateFrom}
+                    onSelect={setDateFrom}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "h-9 px-3 text-sm font-normal rounded-full gap-1.5",
+                      !dateTo && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    {dateTo ? format(dateTo, "MMM dd, yyyy") : "To date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dateTo}
+                    onSelect={setDateTo}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+
+              {hasDateFilter && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearDateFilters}
+                  className="h-9 px-2 text-sm text-muted-foreground hover:text-foreground rounded-full"
+                >
+                  <X className="h-3.5 w-3.5 mr-1" />
+                  Clear dates
+                </Button>
+              )}
+            </div>
+
+            {/* Active Role/Company Filters */}
             {hasActiveFilter && (
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-sm text-muted-foreground">Filtered by:</span>
@@ -155,60 +225,27 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* Tabs - Pill Style */}
-            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-              <TabsList className="w-full justify-start mb-5 h-auto p-1 bg-secondary/70 rounded-full">
-                <TabsTrigger 
-                  value="all" 
-                  className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-tab-selected-bg data-[state=active]:text-tab-selected-text data-[state=active]:shadow-none px-5 font-medium"
-                >
-                  All ({counts?.total_count ?? 0})
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="today" 
-                  className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-tab-selected-bg data-[state=active]:text-tab-selected-text data-[state=active]:shadow-none px-5 font-medium"
-                >
-                  Today ({counts?.today_count ?? 0})
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="yesterday" 
-                  className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-tab-selected-bg data-[state=active]:text-tab-selected-text data-[state=active]:shadow-none px-5 font-medium"
-                >
-                  Yesterday ({counts?.yesterday_count ?? 0})
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="week" 
-                  className="flex-1 sm:flex-none rounded-full data-[state=active]:bg-tab-selected-bg data-[state=active]:text-tab-selected-text data-[state=active]:shadow-none px-5 font-medium"
-                >
-                  This Week ({counts?.week_count ?? 0})
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value={activeTab} className="mt-0">
-                <JobListInfinite
-                  jobs={jobs}
-                  isLoading={isLoading}
-                  isFetchingNextPage={isFetchingNextPage}
-                  hasNextPage={hasNextPage ?? false}
-                  fetchNextPage={fetchNextPage}
-                  onTap={handleJobTap}
-                />
-              </TabsContent>
-            </Tabs>
+            {/* Job List with Pagination */}
+            <JobListPaginated
+              jobs={jobs}
+              isLoading={isLoading}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              onTap={handleJobTap}
+              selectedJobId={selectedJob?.id}
+            />
           </div>
 
           {/* Right Sidebar - Desktop only */}
           <div className="hidden lg:block w-[320px] shrink-0">
             <div className="sticky top-[88px] space-y-4">
-              {/* Job Preview Panel - shows when a job is selected */}
               {selectedJob && (
                 <div className="border border-border rounded-xl bg-card overflow-hidden shadow-sm">
                   <JobPreviewPanel job={selectedJob} />
                 </div>
               )}
-              <RightSidebar 
-                onFilterByRole={handleFilterByRole}
-              />
+              <RightSidebar onFilterByRole={handleFilterByRole} />
             </div>
           </div>
         </div>
