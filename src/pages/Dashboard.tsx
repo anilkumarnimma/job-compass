@@ -332,9 +332,10 @@ export default function Dashboard() {
         ) : (
           /* Desktop: CSS Grid 3-column layout */
           <div
-            className="grid gap-4"
+            className="grid gap-4 mx-auto"
             style={{
-              gridTemplateColumns: selectedJob ? '30% 45% 25%' : '70% 30%',
+              gridTemplateColumns: selectedJob ? '30% 45% 25%' : '1fr minmax(280px, 340px)',
+              maxWidth: selectedJob ? undefined : 1100,
               height: 'calc(100vh - 220px)',
             }}
           >
