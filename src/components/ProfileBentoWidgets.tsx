@@ -9,7 +9,7 @@ import { Briefcase, Bookmark, Target, TrendingUp, Sparkles } from "lucide-react"
 export function ProfileWelcomeBanner() {
   const { user } = useAuth();
   const { profile, isLoading } = useProfile();
-  const { appliedJobs, savedJobs } = useJobContext();
+  const { applications, savedJobs } = useJobContext();
 
   const profileCompletion = useMemo(() => {
     if (!profile) return 0;
@@ -39,7 +39,7 @@ export function ProfileWelcomeBanner() {
         <div className="absolute top-0 right-0 w-48 h-48 bg-accent/8 rounded-full blur-3xl pointer-events-none" />
         
         <div className="flex items-center gap-4 mb-5 relative z-10">
-          <ProfileAvatar size="lg" showPicker={false} />
+          <ProfileAvatar size="md" showPicker={false} />
           <div>
             <h2 className="font-display text-xl font-bold text-foreground">Welcome back, {name}!</h2>
             <p className="text-sm text-muted-foreground">Here's your job search overview</p>
@@ -48,7 +48,7 @@ export function ProfileWelcomeBanner() {
 
         <div className="grid grid-cols-3 gap-4 relative z-10">
           {[
-            { icon: Briefcase, value: appliedJobs?.length || 0, label: "Applied", color: "text-accent" },
+            { icon: Briefcase, value: applications?.length || 0, label: "Applied", color: "text-accent" },
             { icon: Bookmark, value: savedJobs?.length || 0, label: "Saved", color: "text-amber-500" },
             { icon: Target, value: `${profileCompletion}%`, label: "Profile", color: "text-success" },
           ].map((stat) => (
@@ -117,17 +117,16 @@ export function SkillsCloudWidget() {
 }
 
 export function QuickStatsWidget() {
-  const { appliedJobs } = useJobContext();
+  const { applications } = useJobContext();
   
   const stages = useMemo(() => {
-    const applied = appliedJobs?.filter(j => j.status === "applied")?.length || 0;
-    const total = appliedJobs?.length || 0;
+    const total = applications?.length || 0;
     return [
       { label: "Applied", count: total, color: "bg-accent" },
       { label: "In Review", count: Math.floor(total * 0.3), color: "bg-amber-500" },
       { label: "Interview", count: Math.floor(total * 0.1), color: "bg-success" },
     ];
-  }, [appliedJobs]);
+  }, [applications]);
 
   return (
     <motion.div
