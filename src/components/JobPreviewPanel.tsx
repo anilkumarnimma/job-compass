@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, BriefcaseBusiness } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -46,9 +46,9 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col" style={{ height: 'calc(100vh - 120px)', maxHeight: '80vh' }}>
       {/* Header */}
-      <div className="p-5 border-b border-border">
+      <div className="p-5 border-b border-border shrink-0">
         <div className="flex items-center gap-2 mb-4">
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Job Preview</span>
         </div>
@@ -82,16 +82,8 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
         )}
       </div>
 
-      {/* Scrollable Content */}
-      <ScrollArea className="flex-1 p-5" style={{ maxHeight: '220px' }}>
-        {/* Full Description */}
-        <div className="mb-5">
-          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Description</h4>
-          <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-line">
-            {job.description}
-          </p>
-        </div>
-
+      {/* Scrollable Content - independently scrollable */}
+      <div className="flex-1 overflow-y-auto min-h-0 p-5">
         {/* Meta Row - Chip Style */}
         <div className="flex flex-wrap gap-2 mb-5">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-chip-bg text-xs text-muted-foreground">
@@ -119,9 +111,17 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
           )}
         </div>
 
+        {/* Full Description */}
+        <div className="mb-5">
+          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Description</h4>
+          <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-line">
+            {job.description}
+          </p>
+        </div>
+
         {/* Skills */}
         {job.skills.length > 0 && (
-          <div>
+          <div className="mb-4">
             <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Skills</h4>
             <div className="flex flex-wrap gap-1.5">
               {job.skills.map((skill) => (
@@ -136,10 +136,10 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
             </div>
           </div>
         )}
-      </ScrollArea>
+      </div>
 
       {/* Actions - Fixed Bottom */}
-      <div className="p-5 border-t border-border flex items-center justify-end gap-2">
+      <div className="p-5 border-t border-border flex items-center justify-end gap-2 shrink-0">
         <Button
           variant="ghost"
           size="sm"
