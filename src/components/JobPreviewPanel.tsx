@@ -103,6 +103,15 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
             )}
           </Button>
 
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleAtsCheck}
+            className="h-9 px-4 text-sm font-medium rounded-xl active:scale-95 text-muted-foreground hover:text-foreground hover:bg-secondary"
+          >
+            <Target className="h-4 w-4 mr-1.5" />ATS Check
+          </Button>
+
           {job.is_reviewing && (
             <Badge className="ml-auto px-2.5 py-1.5 text-xs font-medium bg-success-bg text-success-text border-0 rounded-full">
               Actively Reviewing
@@ -111,8 +120,12 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
         </div>
       </div>
 
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto min-h-0 p-5">
+      <AtsCheckDialog
+        open={showAtsDialog}
+        onOpenChange={setShowAtsDialog}
+        result={result}
+        isChecking={isChecking}
+      />
         {/* Meta Chips */}
         <div className="flex flex-wrap gap-2 mb-5">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-chip-bg text-xs text-muted-foreground">
