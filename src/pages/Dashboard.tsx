@@ -11,16 +11,49 @@ import { useJobSearchPaginated } from "@/hooks/useJobSearchPaginated";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useJobContext } from "@/context/JobContext";
 import { Job } from "@/types/job";
-import { X, CalendarIcon } from "lucide-react";
+import { X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+
+const DATE_FILTER_OPTIONS = [
+  { value: "all", label: "All time" },
+  { value: "today", label: "Today" },
+  { value: "24h", label: "Last 24 hours" },
+  { value: "3d", label: "Last 3 days" },
+  { value: "7d", label: "Last 7 days" },
+  { value: "30d", label: "Last 30 days" },
+];
+
+function getDateFromFilter(filter: string): string | null {
+  if (filter === "all") return null;
+  const now = new Date();
+  switch (filter) {
+    case "today":
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString().split("T")[0];
+    case "24h": {
+      const d = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      return d.toISOString().split("T")[0];
+    }
+    case "3d": {
+      const d = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+      return d.toISOString().split("T")[0];
+    }
+    case "7d": {
+      const d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      return d.toISOString().split("T")[0];
+    }
+    case "30d": {
+      const d = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      return d.toISOString().split("T")[0];
+    }
+    default:
+      return null;
+  }
+}
 
 export default function Dashboard() {
   const [searchInput, setSearchInput] = useState("");
@@ -30,8 +63,7 @@ export default function Dashboard() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const [companyFilter, setCompanyFilter] = useState<string | null>(null);
-  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
-  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const [dateFilter, setDateFilter] = useState("all");
   const isMobile = useIsMobile();
   const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply } = useJobContext();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -59,10 +91,12 @@ export default function Dashboard() {
     return parts.join(" ");
   }, [debouncedSearch, roleFilter, companyFilter]);
 
+  const dateFrom = useMemo(() => getDateFromFilter(dateFilter), [dateFilter]);
+
   // Reset page when search/filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [combinedSearchQuery, dateFrom, dateTo]);
+  }, [combinedSearchQuery, dateFilter]);
 
   const {
     data,
@@ -70,8 +104,8 @@ export default function Dashboard() {
   } = useJobSearchPaginated({
     searchQuery: combinedSearchQuery,
     page: currentPage,
-    dateFrom: dateFrom ? format(dateFrom, "yyyy-MM-dd") : null,
-    dateTo: dateTo ? format(dateTo, "yyyy-MM-dd") : null,
+    dateFrom,
+    dateTo: null,
   });
 
   const { isApplied } = useJobContext();
@@ -102,13 +136,7 @@ export default function Dashboard() {
     setCompanyFilter(null);
   }, []);
 
-  const clearDateFilters = useCallback(() => {
-    setDateFrom(undefined);
-    setDateTo(undefined);
-  }, []);
-
   const hasActiveFilter = roleFilter || companyFilter;
-  const hasDateFilter = dateFrom || dateTo;
 
   return (
     <Layout>
@@ -131,70 +159,33 @@ export default function Dashboard() {
               <SearchBar
                 value={searchInput}
                 onChange={setSearchInput}
-                placeholder="Search by title, company, skills..."
+                placeholder="Search by job title, company, or skills"
               />
             </div>
 
-            {/* Date Range Filter */}
+            {/* Posted Date Filter */}
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "h-9 px-3 text-sm font-normal rounded-full gap-1.5",
-                      !dateFrom && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="h-3.5 w-3.5" />
-                    {dateFrom ? format(dateFrom, "MMM dd, yyyy") : "From date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dateFrom}
-                    onSelect={setDateFrom}
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
+              <Select value={dateFilter} onValueChange={setDateFilter}>
+                <SelectTrigger className="h-9 w-[180px] rounded-full text-sm">
+                  <SelectValue placeholder="Posted Date" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DATE_FILTER_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "h-9 px-3 text-sm font-normal rounded-full gap-1.5",
-                      !dateTo && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="h-3.5 w-3.5" />
-                    {dateTo ? format(dateTo, "MMM dd, yyyy") : "To date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dateTo}
-                    onSelect={setDateTo}
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-
-              {hasDateFilter && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearDateFilters}
-                  className="h-9 px-2 text-sm text-muted-foreground hover:text-foreground rounded-full"
+              {dateFilter !== "all" && (
+                <button
+                  onClick={() => setDateFilter("all")}
+                  className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <X className="h-3.5 w-3.5 mr-1" />
-                  Clear dates
-                </Button>
+                  <X className="h-3.5 w-3.5" />
+                  Clear
+                </button>
               )}
             </div>
 
@@ -238,7 +229,7 @@ export default function Dashboard() {
           </div>
 
           {/* Right Sidebar - Desktop only */}
-          <div className="hidden lg:block w-[320px] shrink-0">
+          <div className="hidden lg:block w-[380px] shrink-0">
             <div className="sticky top-[88px] space-y-4">
               {selectedJob && (
                 <div className="border border-border rounded-xl bg-card overflow-hidden shadow-sm">
