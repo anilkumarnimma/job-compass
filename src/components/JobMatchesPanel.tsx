@@ -86,7 +86,7 @@ export function JobMatchesPanel() {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="rounded-xl border border-border/60 bg-card p-4 shadow-sm hover:shadow-md transition-shadow"
+      className="rounded-xl border border-border/40 bg-card p-4 shadow-[0_2px_12px_-4px_hsl(var(--foreground)/0.08)] hover:shadow-[0_4px_16px_-4px_hsl(var(--foreground)/0.12)] transition-all duration-300"
     >
       <div className="flex items-center gap-1.5 mb-0.5">
         <Sparkles className="h-3.5 w-3.5 text-primary" />

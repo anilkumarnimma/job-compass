@@ -316,17 +316,33 @@ export default function Dashboard() {
           {/* Left Sidebar - Job Matches (desktop only) */}
           {!isMobile && (
             <div className="hidden lg:block w-[280px] shrink-0 sticky top-[88px] self-start">
-              <JobMatchesPanel />
+              <AnimatePresence mode="wait">
+                {!selectedJob && (
+                  <motion.div
+                    key="matches-panel"
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -16 }}
+                    transition={{ duration: 0.25, ease: "easeOut" }}
+                  >
+                    <JobMatchesPanel />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )}
 
           {/* Center - Job List */}
           <div className="flex-1 max-w-[600px] min-w-0">
             {/* Mobile: Job Matches stacked above */}
-            {isMobile && (
-              <div className="mb-4">
+            {isMobile && !selectedJob && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mb-4"
+              >
                 <JobMatchesPanel />
-              </div>
+              </motion.div>
             )}
 
             <JobListPaginated
@@ -347,12 +363,19 @@ export default function Dashboard() {
                 {selectedJob && (
                   <motion.div
                     key={selectedJob.id}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.2, ease: "easeOut" }}
-                    className="w-[580px] shrink-0 sticky top-[88px] self-start border border-border/50 rounded-2xl bg-card/80 backdrop-blur-sm overflow-hidden shadow-card max-h-[calc(100vh-112px)]"
+                    initial={{ opacity: 0, x: 24 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 24 }}
+                    transition={{ duration: 0.25, ease: "easeOut" }}
+                    className="w-[580px] shrink-0 sticky top-[88px] self-start border border-border/50 rounded-2xl bg-card/80 backdrop-blur-sm overflow-hidden shadow-card max-h-[calc(100vh-112px)] relative"
                   >
+                    <button
+                      onClick={() => setSelectedJob(null)}
+                      className="absolute top-3 right-3 z-10 p-1.5 rounded-lg bg-secondary/80 hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors backdrop-blur-sm"
+                      aria-label="Close preview"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
                     <JobPreviewPanel job={selectedJob} />
                   </motion.div>
                 )}
