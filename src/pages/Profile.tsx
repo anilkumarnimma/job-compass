@@ -374,7 +374,7 @@ export default function Profile() {
             <h1 className="text-2xl font-bold text-foreground">My Profile</h1>
           </div>
           {!isEditing && !isLoading && (
-            <Button variant="outline" size="sm" onClick={handleEdit}>
+            <Button variant="outline" size="sm" className="rounded-full" onClick={handleEdit}>
               <Pencil className="h-4 w-4 mr-1" /> Edit Profile
             </Button>
           )}
@@ -382,7 +382,7 @@ export default function Profile() {
 
         <div className="space-y-6">
           {/* 1. Resume Upload / Auto-Fill */}
-          <Card className="border-primary/20 bg-primary/5">
+          <Card className="border-primary/20 bg-primary/5 rounded-3xl">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <FileText className="h-5 w-5 text-primary" />
@@ -405,18 +405,18 @@ export default function Profile() {
                             <p className="text-sm text-muted-foreground">Uploaded resume</p>
                           </div>
                         </div>
-                        <Button variant="outline" size="sm" onClick={downloadResume}>
+                       <Button variant="outline" size="sm" className="rounded-full" onClick={downloadResume}>
                           <Download className="h-4 w-4 mr-1" /> Download
                         </Button>
                       </div>
                       <div className="flex gap-2">
-                        <Button onClick={handleAutofillExisting} disabled={isParsing || isDownloadingResume} className="flex-1">
+                        <Button onClick={handleAutofillExisting} disabled={isParsing || isDownloadingResume} className="flex-1 rounded-full">
                           {isParsing || isDownloadingResume ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Parsing Resume...</> : <><Wand2 className="h-4 w-4 mr-2" />Auto-fill from Resume</>}
                         </Button>
-                        <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading || isParsing}>
+                        <Button variant="outline" className="rounded-full" onClick={() => fileInputRef.current?.click()} disabled={isUploading || isParsing}>
                           {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Upload className="h-4 w-4 mr-1" />Re-upload</>}
                         </Button>
-                        <Button variant="ghost" onClick={deleteResume} className="text-destructive hover:text-destructive">
+                        <Button variant="ghost" onClick={deleteResume} className="text-destructive hover:text-destructive rounded-full">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -436,7 +436,7 @@ export default function Profile() {
           </Card>
 
           {/* 2. Personal Details */}
-          <Card>
+          <Card className="rounded-3xl">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <User className="h-5 w-5 text-muted-foreground" />
@@ -497,7 +497,7 @@ export default function Profile() {
           </Card>
 
           {/* 3. Professional Links */}
-          <Card>
+          <Card className="rounded-3xl">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Link2 className="h-5 w-5 text-muted-foreground" />
@@ -528,7 +528,7 @@ export default function Profile() {
           </Card>
 
           {/* 4. Work Experience */}
-          <Card>
+          <Card className="rounded-3xl">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
@@ -538,7 +538,7 @@ export default function Profile() {
                   </div>
                   <CardDescription className="mt-1.5">Add your work history with dates</CardDescription>
                 </div>
-                {isEditing && <Button variant="outline" size="sm" onClick={addWork} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>}
+                {isEditing && <Button variant="outline" size="sm" className="rounded-full" onClick={addWork} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>}
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -591,7 +591,7 @@ export default function Profile() {
           </Card>
 
           {/* 5. Education */}
-          <Card>
+          <Card className="rounded-3xl">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
@@ -601,7 +601,7 @@ export default function Profile() {
                   </div>
                   <CardDescription className="mt-1.5">Add your education history</CardDescription>
                 </div>
-                {isEditing && <Button variant="outline" size="sm" onClick={addEdu} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>}
+                {isEditing && <Button variant="outline" size="sm" className="rounded-full" onClick={addEdu} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>}
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -628,7 +628,7 @@ export default function Profile() {
           </Card>
 
           {/* 6. Skills */}
-          <Card>
+          <Card className="rounded-3xl">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-muted-foreground" />
@@ -656,7 +656,7 @@ export default function Profile() {
           </Card>
 
           {/* 7. Certifications */}
-          <Card>
+          <Card className="rounded-3xl">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
@@ -666,7 +666,7 @@ export default function Profile() {
                   </div>
                   <CardDescription className="mt-1.5">Professional certifications (optional)</CardDescription>
                 </div>
-                {isEditing && <Button variant="outline" size="sm" onClick={addCert} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>}
+                {isEditing && <Button variant="outline" size="sm" className="rounded-full" onClick={addCert} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>}
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -691,7 +691,7 @@ export default function Profile() {
           </Card>
 
           {/* 8. EEO / Demographics */}
-          <Card>
+          <Card className="rounded-3xl">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <User className="h-5 w-5 text-muted-foreground" />
@@ -756,7 +756,7 @@ export default function Profile() {
           </Card>
 
           {/* Account / Security */}
-          <Card>
+          <Card className="rounded-3xl">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <User className="h-5 w-5 text-muted-foreground" />
@@ -775,15 +775,16 @@ export default function Profile() {
 
           {/* Save bar */}
           {isEditing && (
-            <div className="flex items-center justify-end gap-3 sticky bottom-4 bg-background/95 backdrop-blur border border-border rounded-lg p-4 shadow-lg">
-              <Button onClick={handleSave} disabled={isUpdating || !isDirty}>
+            <div className="flex items-center justify-end gap-3 sticky bottom-4 bg-background/95 backdrop-blur border border-border rounded-2xl p-4 shadow-lg">
+              <Button variant="outline" className="rounded-full" onClick={handleCancel}>Cancel</Button>
+              <Button className="rounded-full" onClick={handleSave} disabled={isUpdating || !isDirty}>
                 {isUpdating ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving...</> : "Save Profile"}
               </Button>
             </div>
           )}
 
           {/* Debug Role Section */}
-          <Card className="border-dashed border-accent/50 bg-accent/5">
+          <Card className="border-dashed border-accent/50 bg-accent/5 rounded-3xl">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Bug className="h-5 w-5 text-accent" />
