@@ -21,6 +21,7 @@ import EmployerDashboard from "./pages/EmployerDashboard";
 import Profile from "./pages/Profile";
 import Help from "./pages/Help";
 import NotFound from "./pages/NotFound";
+import Recommendations from "./pages/Recommendations";
 import PaymentSuccess from "./pages/PaymentSuccess";
 
 const queryClient = new QueryClient({
@@ -50,6 +51,11 @@ const App = () => (
                 <Route path="/dashboard" element={
                   <ProtectedRoute allowedRoles={["user", "employer", "founder"]}>
                     <Dashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/recommendations" element={
+                  <ProtectedRoute allowedRoles={["user", "employer", "founder"]}>
+                    <Recommendations />
                   </ProtectedRoute>
                 } />
                 <Route path="/applied" element={
