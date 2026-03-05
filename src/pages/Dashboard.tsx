@@ -11,7 +11,7 @@ import { useJobSearchPaginated } from "@/hooks/useJobSearchPaginated";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useJobContext } from "@/context/JobContext";
 import { Job } from "@/types/job";
-import { X, SlidersHorizontal } from "lucide-react";
+import { X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
 import { useSearchParams } from "react-router-dom";
@@ -19,41 +19,6 @@ import { useToast } from "@/hooks/use-toast";
 
 import { cn } from "@/lib/utils";
 
-const DATE_FILTER_OPTIONS = [
-  { value: "today", label: "Today" },
-  { value: "yesterday", label: "Yesterday" },
-  { value: "3d", label: "Last 3 days" },
-  { value: "7d", label: "Last 7 days" },
-  { value: "30d", label: "Last 30 days" },
-  { value: "all", label: "All time" },
-];
-
-function getDateFromFilter(filter: string): string | null {
-  if (filter === "all") return null;
-  const now = new Date();
-  switch (filter) {
-    case "today":
-      return new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString().split("T")[0];
-    case "yesterday": {
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-      return d.toISOString().split("T")[0];
-    }
-    case "3d": {
-      const d = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
-      return d.toISOString().split("T")[0];
-    }
-    case "7d": {
-      const d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      return d.toISOString().split("T")[0];
-    }
-    case "30d": {
-      const d = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      return d.toISOString().split("T")[0];
-    }
-    default:
-      return null;
-  }
-}
 
 export default function Dashboard() {
   const [searchInput, setSearchInput] = useState("");
@@ -63,7 +28,7 @@ export default function Dashboard() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const [companyFilter, setCompanyFilter] = useState<string | null>(null);
-  const [dateFilter, setDateFilter] = useState("today");
+  
   const isMobile = useIsMobile();
   const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply } = useJobContext();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -91,12 +56,12 @@ export default function Dashboard() {
     return parts.join(" ");
   }, [debouncedSearch, roleFilter, companyFilter]);
 
-  const dateFrom = useMemo(() => getDateFromFilter(dateFilter), [dateFilter]);
+  
 
   // Reset page when search/filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [combinedSearchQuery, dateFilter]);
+  }, [combinedSearchQuery]);
 
   const {
     data,
@@ -104,7 +69,7 @@ export default function Dashboard() {
   } = useJobSearchPaginated({
     searchQuery: combinedSearchQuery,
     page: currentPage,
-    dateFrom,
+    dateFrom: null,
     dateTo: null,
   });
 
@@ -163,24 +128,6 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* Posted Date Filter - pill buttons */}
-            <div className="flex flex-wrap items-center gap-2 mb-4">
-              <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
-              {DATE_FILTER_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => setDateFilter(opt.value)}
-                  className={cn(
-                    "h-8 px-3.5 text-sm rounded-full border transition-all duration-200",
-                    dateFilter === opt.value
-                      ? "bg-accent text-accent-foreground border-accent font-medium shadow-sm"
-                      : "bg-card text-muted-foreground border-border hover:border-accent/50 hover:text-foreground"
-                  )}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
 
             {/* Active Role/Company Filters */}
             {hasActiveFilter && (
