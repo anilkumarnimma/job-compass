@@ -8,16 +8,16 @@ import { CompanyLogo } from "@/components/CompanyLogo";
 import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, Calendar, ArrowRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface JobCardProps {
   job: Job;
   onViewDetails?: (job: Job) => void;
   onTap?: (job: Job) => void;
+  isSelected?: boolean;
   style?: React.CSSProperties;
 }
 
-export function JobCard({ job, onViewDetails, onTap, style }: JobCardProps) {
+export function JobCard({ job, onViewDetails, onTap, isSelected, style }: JobCardProps) {
   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -61,7 +61,9 @@ export function JobCard({ job, onViewDetails, onTap, style }: JobCardProps) {
 
   return (
     <Card 
-      className="group p-5 border border-border/60 bg-card card-glow rounded-2xl cursor-pointer overflow-hidden relative"
+      className={`group p-5 border bg-card card-glow rounded-2xl cursor-pointer overflow-hidden relative transition-all duration-200 ${
+        isSelected ? "border-accent ring-1 ring-accent/30 bg-accent/5" : "border-border/60"
+      }`}
       onClick={handleCardClick}
       style={style}
     >
@@ -102,31 +104,14 @@ export function JobCard({ job, onViewDetails, onTap, style }: JobCardProps) {
 
       {/* Description */}
       <div className="mb-3">
-        <TooltipProvider delayDuration={300}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="cursor-default">
-                <p className="text-sm leading-relaxed text-muted-foreground line-clamp-2">
-                  {job.description}
-                </p>
-                {job.description.length > 100 && (
-                  <span className="text-xs text-accent hover:text-accent/80 font-medium mt-0.5 inline-block transition-colors">
-                    ...more
-                  </span>
-                )}
-              </div>
-            </TooltipTrigger>
-            {job.description.length > 100 && (
-              <TooltipContent 
-                side="top" 
-                align="start" 
-                className="max-w-[400px] p-3 text-sm leading-relaxed rounded-xl shadow-premium"
-              >
-                {job.description}
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
+        <p className="text-sm leading-relaxed text-muted-foreground line-clamp-2">
+          {job.description}
+        </p>
+        {job.description.length > 100 && (
+          <span className="text-xs text-accent hover:text-accent/80 font-medium mt-0.5 inline-block transition-colors">
+            ...more
+          </span>
+        )}
       </div>
 
       {/* Meta Row */}
