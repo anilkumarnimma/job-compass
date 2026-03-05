@@ -369,7 +369,7 @@ export default function Dashboard() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 24 }}
                   transition={{ duration: 0.25, ease: "easeOut" }}
-                  className="overflow-y-auto border border-border/50 rounded-2xl bg-card/80 backdrop-blur-sm shadow-card relative"
+                  className="overflow-hidden border border-border/50 rounded-2xl bg-card/80 backdrop-blur-sm shadow-card relative flex flex-col"
                   style={{ maxHeight: 'calc(100vh - 220px)' }}
                 >
                   <button
