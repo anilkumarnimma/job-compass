@@ -334,12 +334,12 @@ export default function Dashboard() {
           <div
             className="grid gap-4"
             style={{
-              gridTemplateColumns: selectedJob ? '30% 45% 25%' : '1fr',
+              gridTemplateColumns: selectedJob ? '30% 45% 25%' : '70% 30%',
               height: 'calc(100vh - 220px)',
             }}
           >
             {/* LEFT — Job List */}
-            <div className="overflow-y-auto pr-2 scrollbar-thin" style={{ maxHeight: 'calc(100vh - 220px)' }}>
+            <div className="overflow-y-auto pr-2" style={{ maxHeight: 'calc(100vh - 220px)' }}>
               {!selectedJob && (
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -360,7 +360,7 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* MIDDLE — Job Description */}
+            {/* MIDDLE — Job Description (only when job selected) */}
             {selectedJob && (
               <AnimatePresence mode="wait">
                 <motion.div
@@ -384,20 +384,10 @@ export default function Dashboard() {
               </AnimatePresence>
             )}
 
-            {/* Show empty state when no job selected in grid mode */}
-            {!selectedJob && (
-              <>
-                {/* Empty middle placeholder */}
-                <div className="hidden" />
-              </>
-            )}
-
-            {/* RIGHT — Sidebar */}
-            {selectedJob && (
-              <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 220px)' }}>
-                <RightSidebar onFilterByRole={handleFilterByRole} />
-              </div>
-            )}
+            {/* RIGHT — Sidebar (always visible) */}
+            <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 220px)' }}>
+              <RightSidebar onFilterByRole={handleFilterByRole} />
+            </div>
           </div>
         )}
       </motion.div>
