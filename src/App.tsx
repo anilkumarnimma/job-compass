@@ -9,6 +9,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { FloatingHelpButton } from "@/components/FloatingHelpButton";
 import { IntroSplash } from "@/components/IntroSplash";
 import { AnimatedCursor } from "@/components/AnimatedCursor";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
@@ -106,6 +107,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <FloatingHelpButton />
+              <MobileBottomNav />
             </BrowserRouter>
             </IntroSplash>
           </JobProvider>

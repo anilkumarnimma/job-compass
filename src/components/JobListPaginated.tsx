@@ -25,7 +25,9 @@ interface JobListPaginatedProps {
 
 function JobCardSkeleton() {
   return (
-    <div className="p-5 border border-border/60 bg-card rounded-2xl space-y-3 shadow-card">
+    <div className="p-5 border border-border/40 bg-card/80 backdrop-blur-sm rounded-2xl space-y-3 shadow-card overflow-hidden relative">
+      {/* Shimmer overlay */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-foreground/[0.03] to-transparent animate-shimmer bg-[length:200%_100%]" />
       <div className="flex items-start gap-3.5">
         <Skeleton className="h-11 w-11 rounded-xl shrink-0" />
         <div className="flex-1 space-y-2">
