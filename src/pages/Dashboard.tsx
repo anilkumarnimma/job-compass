@@ -47,7 +47,7 @@ function getDateRange(filter: DateFilter, customDate?: Date | undefined): { date
 
 const chipVariants = {
   inactive: { scale: 1 },
-  active: { scale: 1, transition: { type: "spring", stiffness: 400, damping: 25 } },
+  active: { scale: 1, transition: { type: "spring" as const, stiffness: 400, damping: 25 } },
   tap: { scale: 0.95 },
 };
 
