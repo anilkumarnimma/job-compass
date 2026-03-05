@@ -53,7 +53,9 @@ const chipVariants = {
 };
 
 export default function Dashboard() {
-  const [searchInput, setSearchInput] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialSearch = searchParams.get("search") || "";
+  const [searchInput, setSearchInput] = useState(initialSearch);
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [mobilePreviewJob, setMobilePreviewJob] = useState<Job | null>(null);
@@ -67,7 +69,6 @@ export default function Dashboard() {
 
   const isMobile = useIsMobile();
   const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply } = useJobContext();
-  const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
 
   useEffect(() => {
