@@ -93,7 +93,7 @@ export default function Dashboard() {
   }, [debouncedSearch, roleFilter, companyFilter]);
 
   // Reset page when search/filters change
-  const { dateFrom, dateTo } = getDateRange(dateFilter);
+  const { dateFrom, dateTo } = getDateRange(dateFilter, customDate);
 
   useEffect(() => {
     setCurrentPage(1);
