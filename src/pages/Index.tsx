@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/Layout";
 import { HeroParticles } from "@/components/HeroParticles";
 import { AnimatedCounter } from "@/components/AnimatedCounter";
+import { FloatingHeroTags } from "@/components/FloatingHeroTags";
 import { 
   Briefcase, 
   Search, 
@@ -118,6 +119,7 @@ export default function Index() {
       {/* Hero Section */}
       <section className="relative py-28 md:py-40 overflow-hidden hero-mesh-bg">
         <HeroParticles />
+        <FloatingHeroTags />
         
         {/* Gradient orbs */}
         <div className="absolute top-10 left-[10%] w-[500px] h-[500px] bg-accent/10 rounded-full blur-[120px] pointer-events-none animate-pulse-slow" />
