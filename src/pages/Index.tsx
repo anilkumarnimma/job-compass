@@ -75,8 +75,8 @@ export default function Index() {
               className="font-display text-5xl md:text-6xl lg:text-7xl font-extrabold text-foreground leading-[1.1] mb-6 stagger-fade-in"
               style={{ animationDelay: "100ms" }}
             >
-              Find Your Next
-              <span className="block text-accent mt-1">Dream Job</span>
+              Land the Career
+              <span className="block text-accent mt-1">You Deserve</span>
             </h1>
             
             <p 
