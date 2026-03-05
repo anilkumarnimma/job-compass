@@ -160,17 +160,17 @@ export default function Dashboard() {
   const fallbackLabel = dateFilter === "today" ? "today" : dateFilter === "yesterday" ? "yesterday" : customDate ? format(customDate, "MMM d") : "";
 
   return (
-    <Layout>
+    <Layout showFooter={false}>
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="w-full max-w-[1400px] mx-auto px-4 md:px-6 py-6"
+        className="w-full max-w-[1600px] mx-auto px-4 md:px-6 py-4"
       >
         {/* Header + Search + Filters (above columns) */}
-        <div className="mb-5">
-          <div className="mb-6">
-            <h1 className="font-display text-3xl md:text-4xl font-semibold tracking-tight text-foreground mb-1">
+        <div className="mb-4">
+          <div className="mb-4">
+            <h1 className="font-display text-2xl md:text-3xl font-semibold tracking-tight text-foreground mb-1">
               Job Board
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -178,7 +178,7 @@ export default function Dashboard() {
             </p>
           </div>
 
-          <div className="mb-5">
+          <div className="mb-4">
             <SearchBar
               value={searchInput}
               onChange={setSearchInput}
@@ -312,81 +312,94 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Three-column layout */}
-        <div className="flex gap-5 justify-center">
-          {/* Left Sidebar - Job Matches (desktop only) */}
-          {!isMobile && (
-            <div className="hidden lg:block w-[280px] shrink-0 sticky top-[88px] self-start">
-              <AnimatePresence mode="wait">
-                {!selectedJob && (
-                  <motion.div
-                    key="matches-panel"
-                    initial={{ opacity: 0, x: -12 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -16 }}
-                    transition={{ duration: 0.25, ease: "easeOut" }}
-                  >
-                    <JobMatchesPanel />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+        {/* ===== 3-Column LinkedIn-style Grid (Desktop) ===== */}
+        {isMobile ? (
+          /* Mobile: single column job list */
+          <div className="flex flex-col">
+            <JobMatchesPanel />
+            <div className="mt-4">
+              <JobListPaginated
+                jobs={jobs}
+                isLoading={isLoading}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                onTap={handleJobTap}
+                selectedJobId={selectedJob?.id}
+              />
             </div>
-          )}
+          </div>
+        ) : (
+          /* Desktop: CSS Grid 3-column layout */
+          <div
+            className="grid gap-4"
+            style={{
+              gridTemplateColumns: selectedJob ? '30% 45% 25%' : '1fr',
+              height: 'calc(100vh - 220px)',
+            }}
+          >
+            {/* LEFT — Job List */}
+            <div className="overflow-y-auto pr-2 scrollbar-thin" style={{ maxHeight: 'calc(100vh - 220px)' }}>
+              {!selectedJob && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="mb-4"
+                >
+                  <JobMatchesPanel />
+                </motion.div>
+              )}
+              <JobListPaginated
+                jobs={jobs}
+                isLoading={isLoading}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                onTap={handleJobTap}
+                selectedJobId={selectedJob?.id}
+              />
+            </div>
 
-          {/* Center - Job List */}
-          <div className="flex-1 max-w-[600px] min-w-0">
-            {/* Mobile: Job Matches stacked above */}
-            {isMobile && !selectedJob && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="mb-4"
-              >
-                <JobMatchesPanel />
-              </motion.div>
+            {/* MIDDLE — Job Description */}
+            {selectedJob && (
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={selectedJob.id}
+                  initial={{ opacity: 0, x: 24 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 24 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
+                  className="overflow-y-auto border border-border/50 rounded-2xl bg-card/80 backdrop-blur-sm shadow-card relative"
+                  style={{ maxHeight: 'calc(100vh - 220px)' }}
+                >
+                  <button
+                    onClick={() => setSelectedJob(null)}
+                    className="absolute top-3 right-3 z-10 p-1.5 rounded-lg bg-secondary/80 hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors backdrop-blur-sm"
+                    aria-label="Close preview"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                  <JobPreviewPanel job={selectedJob} />
+                </motion.div>
+              </AnimatePresence>
             )}
 
-            <JobListPaginated
-              jobs={jobs}
-              isLoading={isLoading}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              onTap={handleJobTap}
-              selectedJobId={selectedJob?.id}
-            />
-          </div>
+            {/* Show empty state when no job selected in grid mode */}
+            {!selectedJob && (
+              <>
+                {/* Empty middle placeholder */}
+                <div className="hidden" />
+              </>
+            )}
 
-          {/* Right Panel - Job Preview + Sidebar (Desktop) */}
-          {!isMobile && (
-            <div className="hidden lg:flex gap-5 shrink-0">
-              <AnimatePresence mode="wait">
-                {selectedJob && (
-                  <motion.div
-                    key={selectedJob.id}
-                    initial={{ opacity: 0, x: 24 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 24 }}
-                    transition={{ duration: 0.25, ease: "easeOut" }}
-                    className="w-[580px] shrink-0 sticky top-[88px] self-start border border-border/50 rounded-2xl bg-card/80 backdrop-blur-sm overflow-hidden shadow-card max-h-[calc(100vh-112px)] relative"
-                  >
-                    <button
-                      onClick={() => setSelectedJob(null)}
-                      className="absolute top-3 right-3 z-10 p-1.5 rounded-lg bg-secondary/80 hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors backdrop-blur-sm"
-                      aria-label="Close preview"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                    <JobPreviewPanel job={selectedJob} />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              <div className="w-[340px] shrink-0 sticky top-[88px] self-start">
+            {/* RIGHT — Sidebar */}
+            {selectedJob && (
+              <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 220px)' }}>
                 <RightSidebar onFilterByRole={handleFilterByRole} />
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </motion.div>
 
       <MobileJobPreviewSheet job={mobilePreviewJob} open={mobileSheetOpen} onOpenChange={setMobileSheetOpen} />
