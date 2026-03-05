@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useResumeParser, ExtractedResumeData } from "@/hooks/useResumeParser";
 import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
+import { ProfileWelcomeBanner, SkillsCloudWidget, QuickStatsWidget } from "@/components/ProfileBentoWidgets";
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Header } from "@/components/Header";
@@ -356,10 +357,17 @@ export default function Profile() {
 
   const disabled = !isEditing;
 
-  return (
-    <div className="min-h-screen bg-background">
+   return (
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Header />
       <main className="container max-w-3xl mx-auto px-4 py-8">
+        {/* Bento welcome section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <ProfileWelcomeBanner />
+          <SkillsCloudWidget />
+          <QuickStatsWidget />
+        </div>
+
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <ProfileAvatar size="md" showPicker={true} />
