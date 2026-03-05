@@ -6,15 +6,12 @@ const tags = [
   "React Developer", "UI/UX Designer", "Product Manager", "Data Analyst",
   "DevOps", "Full Stack", "Mobile Developer", "AI Engineer",
   "Blockchain", "Cyber Security",
-  "Hyderabad", "Bangalore", "Remote", "Mumbai", "Chennai", "Delhi", "Pune",
 ];
 
 const desktopPositions: { x: number; y: number }[] = [
-  { x: 5, y: 12 }, { x: 82, y: 8 }, { x: 8, y: 78 }, { x: 85, y: 82 },
-  { x: 2, y: 45 }, { x: 92, y: 45 }, { x: 18, y: 18 }, { x: 78, y: 20 },
-  { x: 15, y: 85 }, { x: 80, y: 75 }, { x: 3, y: 65 }, { x: 93, y: 30 },
-  { x: 22, y: 14 }, { x: 75, y: 80 }, { x: 10, y: 35 }, { x: 88, y: 60 },
-  { x: 25, y: 88 },
+  { x: 5, y: 18 }, { x: 82, y: 15 }, { x: 6, y: 72 }, { x: 86, y: 75 },
+  { x: 3, y: 45 }, { x: 93, y: 45 }, { x: 20, y: 25 }, { x: 78, y: 28 },
+  { x: 12, y: 82 }, { x: 82, y: 60 },
 ];
 
 const driftKeyframes = [
