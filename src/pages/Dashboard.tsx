@@ -169,13 +169,16 @@ export default function Dashboard() {
       >
         {/* Header + Search + Filters (above columns) */}
         <div className="mb-4">
-          <div className="mb-4">
-            <h1 className="font-display text-2xl md:text-3xl font-semibold tracking-tight text-foreground mb-1">
-              Job Board
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">{totalCount.toLocaleString()}</span> job{totalCount !== 1 ? 's' : ''} available
-            </p>
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h1 className="font-display text-2xl md:text-3xl font-semibold tracking-tight text-foreground mb-1">
+                Job Board
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">{totalCount.toLocaleString()}</span> job{totalCount !== 1 ? 's' : ''} available
+              </p>
+            </div>
+            <FloatingHelpButton variant="inline" />
           </div>
 
           <div className="mb-4">
@@ -375,7 +378,7 @@ export default function Dashboard() {
                 >
                   <button
                     onClick={() => setSelectedJob(null)}
-                    className="absolute top-3 right-3 z-10 p-1.5 rounded-lg bg-secondary/80 hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors backdrop-blur-sm"
+                    className="absolute top-3 right-3 z-20 p-1.5 rounded-lg bg-secondary/80 hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors backdrop-blur-sm"
                     aria-label="Close preview"
                   >
                     <X className="h-4 w-4" />
