@@ -22,6 +22,15 @@ import {
 } from "@/components/ui/select";
 import { HiringGraphManager } from "@/components/founder/HiringGraphManager";
 import { MarketAlertManager } from "@/components/founder/MarketAlertManager";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 
 export default function FounderEmployers() {
   const { user, isLoading: authLoading } = useAuth();
@@ -30,6 +39,8 @@ export default function FounderEmployers() {
   const updateRole = useUpdateUserRole();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const USERS_PER_PAGE = 20;
   const queryClient = useQueryClient();
   const isLoading = authLoading || permLoading;
   const isFounder = permissions?.isFounder;
@@ -47,6 +58,13 @@ export default function FounderEmployers() {
 
   // Exclude current founder from list (can't change own role)
   const otherUsers = filteredUsers.filter((u) => u.id !== user?.id);
+
+  // Pagination
+  const totalPages = Math.ceil(otherUsers.length / USERS_PER_PAGE);
+  const paginatedUsers = otherUsers.slice((currentPage - 1) * USERS_PER_PAGE, currentPage * USERS_PER_PAGE);
+
+  // Reset page when search changes
+  useMemo(() => { setCurrentPage(1); }, [searchQuery]);
 
   const handleRoleChange = async (userId: string, newRole: "user" | "employer" | "founder") => {
     await updateRole.mutateAsync({ userId, newRole });
@@ -173,7 +191,7 @@ export default function FounderEmployers() {
           </Card>
         ) : (
           <div className="space-y-3">
-            {otherUsers.map((userData) => (
+            {paginatedUsers.map((userData) => (
               <Card
                 key={userData.id}
                 className="p-4 border-border/60 hover:border-border transition-colors"
@@ -244,6 +262,43 @@ export default function FounderEmployers() {
                 </div>
               </Card>
             ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="py-6">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
+                    className={currentPage <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+                {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => i + 1).map((page) => (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      isActive={currentPage === page}
+                      onClick={() => setCurrentPage(page)}
+                      className="cursor-pointer"
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                {totalPages > 7 && <PaginationItem><PaginationEllipsis /></PaginationItem>}
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
+                    className={currentPage >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+            <p className="text-xs text-muted-foreground text-center mt-2">
+              Showing {(currentPage - 1) * USERS_PER_PAGE + 1}–{Math.min(currentPage * USERS_PER_PAGE, otherUsers.length)} of {otherUsers.length} users
+            </p>
           </div>
         )}
       </div>
