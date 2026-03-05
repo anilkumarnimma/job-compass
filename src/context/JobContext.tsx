@@ -61,6 +61,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
   const confirmApply = useCallback(() => {
     if (pendingJob) {
       rawApply(pendingJob);
+      emitWidgetEvent("apply");
     }
     setPendingJob(null);
     setShowApplyConfirm(false);
