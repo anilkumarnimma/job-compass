@@ -66,16 +66,16 @@ export function AnimatedCursor() {
         className="fixed top-0 left-0 pointer-events-none z-[9999] -translate-x-1/2 -translate-y-1/2 mix-blend-difference"
         style={{
           opacity: isVisible ? 1 : 0,
-          transition: "opacity 0.3s, width 0.25s, height 0.25s",
-          width: isHovering ? 40 : 10,
-          height: isHovering ? 40 : 10,
+          transition: "opacity 0.3s, width 0.2s, height 0.2s",
+          width: isHovering ? 28 : 6,
+          height: isHovering ? 28 : 6,
           borderRadius: "50%",
           background: isHovering
-            ? "hsl(var(--accent) / 0.25)"
+            ? "hsl(var(--accent) / 0.2)"
             : "hsl(var(--accent))",
           boxShadow: isHovering
-            ? "0 0 20px 6px hsl(var(--accent) / 0.3)"
-            : "0 0 8px 2px hsl(var(--accent) / 0.4)",
+            ? "0 0 12px 3px hsl(var(--accent) / 0.2)"
+            : "0 0 6px 1px hsl(var(--accent) / 0.3)",
         }}
       />
       {/* Trail */}
@@ -83,12 +83,12 @@ export function AnimatedCursor() {
         ref={trailRef}
         className="fixed top-0 left-0 pointer-events-none z-[9998] -translate-x-1/2 -translate-y-1/2"
         style={{
-          opacity: isVisible ? 0.4 : 0,
+          opacity: isVisible ? 0.3 : 0,
           transition: "opacity 0.3s, width 0.3s, height 0.3s",
-          width: isHovering ? 56 : 28,
-          height: isHovering ? 56 : 28,
+          width: isHovering ? 40 : 20,
+          height: isHovering ? 40 : 20,
           borderRadius: "50%",
-          border: "1px solid hsl(var(--accent) / 0.3)",
+          border: "1px solid hsl(var(--accent) / 0.2)",
         }}
       />
       {/* Hide default cursor globally */}
