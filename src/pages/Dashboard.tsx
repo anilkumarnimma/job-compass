@@ -11,31 +11,45 @@ import { useJobSearchPaginated } from "@/hooks/useJobSearchPaginated";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useJobContext } from "@/context/JobContext";
 import { Job } from "@/types/job";
-import { X, ChevronDown } from "lucide-react";
+import { X, ChevronDown, CalendarIcon } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
 
 import { cn } from "@/lib/utils";
 
-type DateFilter = "all" | "today" | "yesterday";
+type DateFilter = "all" | "today" | "yesterday" | "custom";
 
-function getDateRange(filter: DateFilter): { dateFrom: string | null; dateTo: string | null } {
+function getDateRange(filter: DateFilter, customDate?: Date | undefined): { dateFrom: string | null; dateTo: string | null } {
   if (filter === "all") return { dateFrom: null, dateTo: null };
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   if (filter === "today") {
     return { dateFrom: today.toISOString().split("T")[0], dateTo: null };
   }
-  // yesterday
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-  return {
-    dateFrom: yesterday.toISOString().split("T")[0],
-    dateTo: today.toISOString().split("T")[0],
-  };
+  if (filter === "yesterday") {
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    return {
+      dateFrom: yesterday.toISOString().split("T")[0],
+      dateTo: today.toISOString().split("T")[0],
+    };
+  }
+  // custom date
+  if (filter === "custom" && customDate) {
+    const from = new Date(customDate.getFullYear(), customDate.getMonth(), customDate.getDate());
+    const to = new Date(from);
+    to.setDate(to.getDate() + 1);
+    return {
+      dateFrom: from.toISOString().split("T")[0],
+      dateTo: to.toISOString().split("T")[0],
+    };
+  }
+  return { dateFrom: null, dateTo: null };
 }
 
 export default function Dashboard() {
