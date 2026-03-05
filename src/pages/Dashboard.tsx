@@ -19,10 +19,28 @@ import { useToast } from "@/hooks/use-toast";
 
 import { cn } from "@/lib/utils";
 
+type DateFilter = "all" | "today" | "yesterday";
+
+function getDateRange(filter: DateFilter): { dateFrom: string | null; dateTo: string | null } {
+  if (filter === "all") return { dateFrom: null, dateTo: null };
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (filter === "today") {
+    return { dateFrom: today.toISOString().split("T")[0], dateTo: null };
+  }
+  // yesterday
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  return {
+    dateFrom: yesterday.toISOString().split("T")[0],
+    dateTo: today.toISOString().split("T")[0],
+  };
+}
 
 export default function Dashboard() {
   const [searchInput, setSearchInput] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [mobilePreviewJob, setMobilePreviewJob] = useState<Job | null>(null);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -59,9 +77,11 @@ export default function Dashboard() {
   
 
   // Reset page when search/filters change
+  const { dateFrom, dateTo } = getDateRange(dateFilter);
+
   useEffect(() => {
     setCurrentPage(1);
-  }, [combinedSearchQuery]);
+  }, [combinedSearchQuery, dateFilter]);
 
   const {
     data,
@@ -69,8 +89,8 @@ export default function Dashboard() {
   } = useJobSearchPaginated({
     searchQuery: combinedSearchQuery,
     page: currentPage,
-    dateFrom: null,
-    dateTo: null,
+    dateFrom,
+    dateTo,
   });
 
   const { isApplied } = useJobContext();
@@ -128,6 +148,28 @@ export default function Dashboard() {
               />
             </div>
 
+            {/* Date Filter */}
+            <div className="flex items-center gap-1.5 mb-4">
+              {([
+                { value: "all" as DateFilter, label: "All time" },
+                { value: "today" as DateFilter, label: "Today" },
+                { value: "yesterday" as DateFilter, label: "Yesterday" },
+              ]).map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setDateFilter(opt.value)}
+                  className={cn(
+                    "px-3 py-1.5 text-xs font-medium rounded-full border transition-colors",
+                    dateFilter === opt.value
+                      ? "bg-accent text-accent-foreground border-accent"
+                      : "bg-card text-muted-foreground border-border hover:border-accent/50"
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
 
             {/* Active Role/Company Filters */}
             {hasActiveFilter && (
@@ -169,7 +211,7 @@ export default function Dashboard() {
           </div>
 
           {/* Right Sidebar - Desktop only */}
-          <div className="hidden lg:block w-[380px] shrink-0">
+          <div className="hidden lg:block w-[480px] shrink-0">
             <div className="sticky top-[88px] space-y-4">
               {selectedJob && (
                 <div className="border border-border rounded-xl bg-card overflow-hidden shadow-sm">
