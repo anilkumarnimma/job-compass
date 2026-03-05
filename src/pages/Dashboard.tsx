@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { Layout } from "@/components/Layout";
 import { SearchBar } from "@/components/SearchBar";
 import { RightSidebar } from "@/components/RightSidebar";
@@ -11,11 +11,12 @@ import { useJobSearchPaginated } from "@/hooks/useJobSearchPaginated";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useJobContext } from "@/context/JobContext";
 import { Job } from "@/types/job";
-import { X } from "lucide-react";
+import { X, ChevronDown } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import { cn } from "@/lib/utils";
 
