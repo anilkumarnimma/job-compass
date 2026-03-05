@@ -166,160 +166,169 @@ export default function Dashboard() {
         transition={{ duration: 0.4, ease: "easeOut" }}
         className="w-full max-w-[1400px] mx-auto px-4 md:px-6 py-6"
       >
-        <div className="flex gap-6 justify-center">
-          {/* Main Content - Left Column */}
-          <div className="flex-1 max-w-[600px] min-w-0">
-            {/* Header */}
-            <div className="mb-6">
-              <h1 className="font-display text-3xl md:text-4xl font-semibold tracking-tight text-foreground mb-1">
-                Job Board
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">{totalCount.toLocaleString()}</span> job{totalCount !== 1 ? 's' : ''} available
-              </p>
-            </div>
+        {/* Header + Search + Filters (above columns) */}
+        <div className="mb-5">
+          <div className="mb-6">
+            <h1 className="font-display text-3xl md:text-4xl font-semibold tracking-tight text-foreground mb-1">
+              Job Board
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">{totalCount.toLocaleString()}</span> job{totalCount !== 1 ? 's' : ''} available
+            </p>
+          </div>
 
-            {/* Search Bar */}
-            <div className="mb-5">
-              <SearchBar
-                value={searchInput}
-                onChange={setSearchInput}
-                placeholder="Search jobs by title, company, skills…"
-              />
-            </div>
+          <div className="mb-5">
+            <SearchBar
+              value={searchInput}
+              onChange={setSearchInput}
+              placeholder="Search jobs by title, company, skills…"
+            />
+          </div>
 
-            {/* Date Filter Chips */}
-            <div className="flex items-center gap-2 mb-5">
-              {(["today", "yesterday"] as const).map((filter) => {
-                const isActive = dateFilter === filter && !fallbackActive;
-                return (
-                  <motion.button
-                    key={filter}
-                    variants={chipVariants}
-                    initial="inactive"
-                    animate={isActive ? "active" : "inactive"}
-                    whileTap="tap"
-                    onClick={() => handleDateSelect(filter)}
-                    className={cn(
-                      "px-4 py-2 text-xs font-medium rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                      isActive
-                        ? "bg-foreground text-background border-foreground shadow-sm"
-                        : "bg-card text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground"
-                    )}
-                  >
-                    {filter === "today" ? "Today" : "Yesterday"}
-                  </motion.button>
-                );
-              })}
-
-              <Popover open={allTimeDropdownOpen} onOpenChange={setAllTimeDropdownOpen}>
-                <PopoverTrigger asChild>
-                  <motion.button
-                    variants={chipVariants}
-                    initial="inactive"
-                    animate={(dateFilter === "all" || dateFilter === "custom" || fallbackActive) ? "active" : "inactive"}
-                    whileTap="tap"
-                    className={cn(
-                      "px-4 py-2 text-xs font-medium rounded-full border transition-colors inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                      (dateFilter === "all" || dateFilter === "custom" || fallbackActive)
-                        ? "bg-foreground text-background border-foreground shadow-sm"
-                        : "bg-card text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground"
-                    )}
-                  >
-                    {dateFilter === "custom" && customDate ? `All time: ${format(customDate, "MMM d")}` : "All time"}
-                    <ChevronDown className="h-3 w-3" />
-                  </motion.button>
-                </PopoverTrigger>
-                <PopoverContent align="start" className="w-auto p-3 rounded-xl shadow-elevated border-border/60 bg-card/95 backdrop-blur-lg">
-                  <div className="flex flex-col gap-1 mb-2">
-                    {[
-                      { value: "all" as const, label: "All time" },
-                      { value: "today" as const, label: "Today" },
-                      { value: "yesterday" as const, label: "Yesterday" },
-                    ].map((opt) => (
-                      <button
-                        key={opt.value}
-                        onClick={() => handleDateSelect(opt.value)}
-                        className={cn(
-                          "w-full text-left px-3 py-2 text-xs font-medium rounded-lg transition-colors",
-                          dateFilter === opt.value && !fallbackActive
-                            ? "bg-foreground text-background"
-                            : "text-foreground hover:bg-secondary"
-                        )}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="border-t border-border pt-2">
-                    <p className="text-[11px] text-muted-foreground px-2 mb-1 font-medium">Pick a date</p>
-                    <Calendar
-                      mode="single"
-                      selected={customDate}
-                      onSelect={handleCustomDateSelect}
-                      disabled={(date) => date > new Date()}
-                      className="p-1 pointer-events-auto"
-                    />
-                    {customDate && (
-                      <button
-                        onClick={handleClearCustomDate}
-                        className="w-full text-center px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary mt-1"
-                      >
-                        Clear date
-                      </button>
-                    )}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            {/* Fallback note */}
-            <AnimatePresence>
-              {fallbackActive && (
-                <motion.p
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="text-xs text-muted-foreground mb-4 bg-secondary/50 px-3 py-2 rounded-lg border border-border/40"
+          <div className="flex items-center gap-2">
+            {(["today", "yesterday"] as const).map((filter) => {
+              const isActive = dateFilter === filter && !fallbackActive;
+              return (
+                <motion.button
+                  key={filter}
+                  variants={chipVariants}
+                  initial="inactive"
+                  animate={isActive ? "active" : "inactive"}
+                  whileTap="tap"
+                  onClick={() => handleDateSelect(filter)}
+                  className={cn(
+                    "px-4 py-2 text-xs font-medium rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    isActive
+                      ? "bg-foreground text-background border-foreground shadow-sm"
+                      : "bg-card text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground"
+                  )}
                 >
-                  No jobs posted {fallbackLabel} — showing All time results.
-                </motion.p>
-              )}
-            </AnimatePresence>
+                  {filter === "today" ? "Today" : "Yesterday"}
+                </motion.button>
+              );
+            })}
 
-            {/* Active Role/Company Filters */}
-            {hasActiveFilter && (
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-sm text-muted-foreground">Filtered by:</span>
-                {roleFilter && (
-                  <Badge
-                    variant="secondary"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/10 text-accent cursor-pointer hover:bg-accent/20 transition-colors"
-                    onClick={clearFilters}
-                  >
-                    Role: {roleFilter}
-                    <X className="h-3 w-3" />
-                  </Badge>
-                )}
-                {companyFilter && (
-                  <Badge
-                    variant="secondary"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary cursor-pointer hover:bg-primary/20 transition-colors"
-                    onClick={clearFilters}
-                  >
-                    Company: {companyFilter}
-                    <X className="h-3 w-3" />
-                  </Badge>
-                )}
+            <Popover open={allTimeDropdownOpen} onOpenChange={setAllTimeDropdownOpen}>
+              <PopoverTrigger asChild>
+                <motion.button
+                  variants={chipVariants}
+                  initial="inactive"
+                  animate={(dateFilter === "all" || dateFilter === "custom" || fallbackActive) ? "active" : "inactive"}
+                  whileTap="tap"
+                  className={cn(
+                    "px-4 py-2 text-xs font-medium rounded-full border transition-colors inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    (dateFilter === "all" || dateFilter === "custom" || fallbackActive)
+                      ? "bg-foreground text-background border-foreground shadow-sm"
+                      : "bg-card text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground"
+                  )}
+                >
+                  {dateFilter === "custom" && customDate ? `All time: ${format(customDate, "MMM d")}` : "All time"}
+                  <ChevronDown className="h-3 w-3" />
+                </motion.button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-auto p-3 rounded-xl shadow-elevated border-border/60 bg-card/95 backdrop-blur-lg">
+                <div className="flex flex-col gap-1 mb-2">
+                  {[
+                    { value: "all" as const, label: "All time" },
+                    { value: "today" as const, label: "Today" },
+                    { value: "yesterday" as const, label: "Yesterday" },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => handleDateSelect(opt.value)}
+                      className={cn(
+                        "w-full text-left px-3 py-2 text-xs font-medium rounded-lg transition-colors",
+                        dateFilter === opt.value && !fallbackActive
+                          ? "bg-foreground text-background"
+                          : "text-foreground hover:bg-secondary"
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="border-t border-border pt-2">
+                  <p className="text-[11px] text-muted-foreground px-2 mb-1 font-medium">Pick a date</p>
+                  <Calendar
+                    mode="single"
+                    selected={customDate}
+                    onSelect={handleCustomDateSelect}
+                    disabled={(date) => date > new Date()}
+                    className="p-1 pointer-events-auto"
+                  />
+                  {customDate && (
+                    <button
+                      onClick={handleClearCustomDate}
+                      className="w-full text-center px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary mt-1"
+                    >
+                      Clear date
+                    </button>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
+
+        {/* Fallback note */}
+        <AnimatePresence>
+          {fallbackActive && (
+            <motion.p
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="text-xs text-muted-foreground mb-4 bg-secondary/50 px-3 py-2 rounded-lg border border-border/40"
+            >
+              No jobs posted {fallbackLabel} — showing All time results.
+            </motion.p>
+          )}
+        </AnimatePresence>
+
+        {/* Active Role/Company Filters */}
+        {hasActiveFilter && (
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-sm text-muted-foreground">Filtered by:</span>
+            {roleFilter && (
+              <Badge
+                variant="secondary"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/10 text-accent cursor-pointer hover:bg-accent/20 transition-colors"
+                onClick={clearFilters}
+              >
+                Role: {roleFilter}
+                <X className="h-3 w-3" />
+              </Badge>
+            )}
+            {companyFilter && (
+              <Badge
+                variant="secondary"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary cursor-pointer hover:bg-primary/20 transition-colors"
+                onClick={clearFilters}
+              >
+                Company: {companyFilter}
+                <X className="h-3 w-3" />
+              </Badge>
+            )}
+          </div>
+        )}
+
+        {/* Three-column layout */}
+        <div className="flex gap-5 justify-center">
+          {/* Left Sidebar - Job Matches (desktop only) */}
+          {!isMobile && (
+            <div className="hidden lg:block w-[280px] shrink-0 sticky top-[88px] self-start">
+              <JobMatchesPanel />
+            </div>
+          )}
+
+          {/* Center - Job List */}
+          <div className="flex-1 max-w-[600px] min-w-0">
+            {/* Mobile: Job Matches stacked above */}
+            {isMobile && (
+              <div className="mb-4">
+                <JobMatchesPanel />
               </div>
             )}
 
-            {/* Job Matches Panel */}
-            <div className="mb-5">
-              <JobMatchesPanel />
-            </div>
-
-            {/* Job List */}
             <JobListPaginated
               jobs={jobs}
               isLoading={isLoading}
@@ -334,7 +343,6 @@ export default function Dashboard() {
           {/* Right Panel - Job Preview + Sidebar (Desktop) */}
           {!isMobile && (
             <div className="hidden lg:flex gap-5 shrink-0">
-              {/* Wide Job Details Panel */}
               <AnimatePresence mode="wait">
                 {selectedJob && (
                   <motion.div
@@ -349,7 +357,6 @@ export default function Dashboard() {
                   </motion.div>
                 )}
               </AnimatePresence>
-              {/* Narrow Widgets Sidebar */}
               <div className="w-[340px] shrink-0 sticky top-[88px] self-start">
                 <RightSidebar onFilterByRole={handleFilterByRole} />
               </div>
