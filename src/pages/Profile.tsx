@@ -6,6 +6,7 @@ import { useProfile, ProfileData, WorkExperience, Education } from "@/hooks/useP
 import { useToast } from "@/hooks/use-toast";
 import { useResumeParser, ExtractedResumeData } from "@/hooks/useResumeParser";
 import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
+import { ProfileAvatar } from "@/components/ProfileAvatar";
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Header } from "@/components/Header";
@@ -360,7 +361,10 @@ export default function Profile() {
       <Header />
       <main className="container max-w-3xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-foreground">My Profile</h1>
+          <div className="flex items-center gap-4">
+            <ProfileAvatar size="md" showPicker={true} />
+            <h1 className="text-2xl font-bold text-foreground">My Profile</h1>
+          </div>
           {!isEditing && !isLoading && (
             <Button variant="outline" size="sm" onClick={handleEdit}>
               <Pencil className="h-4 w-4 mr-1" /> Edit Profile
