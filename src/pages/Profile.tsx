@@ -382,8 +382,10 @@ export default function Profile() {
             </Button>
           )}
         </div>
-
-        <div className="space-y-6">
+        {/* Two-column layout: form left, ATS right */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
+          {/* Left column - Form */}
+          <div className="space-y-6">
           {/* 1. Resume Upload / Auto-Fill */}
           <Card className="border-primary/20 bg-primary/5 rounded-3xl">
             <CardHeader>
