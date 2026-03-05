@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { Job } from "@/types/job";
 import { useJobContext } from "@/context/JobContext";
 import { useAuth } from "@/context/AuthContext";
+import { useAtsCheck } from "@/hooks/useAtsCheck";
+import { AtsCheckDialog } from "@/components/AtsCheckDialog";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, BriefcaseBusiness } from "lucide-react";
+import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, BriefcaseBusiness, Target } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 
@@ -16,6 +19,8 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { runCheck, isChecking, result, clearResult } = useAtsCheck();
+  const [showAtsDialog, setShowAtsDialog] = useState(false);
 
   const saved = isSaved(job.id);
   const applied = isApplied(job.id);
@@ -32,6 +37,17 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
 
   const handleTitleClick = () => {
     window.open(job.external_apply_link, "_blank");
+  };
+
+  const handleAtsCheck = () => {
+    if (!user) { navigate("/auth"); return; }
+    clearResult();
+    setShowAtsDialog(true);
+    runCheck({
+      job_description: job.description,
+      job_title: job.title,
+      job_skills: job.skills,
+    });
   };
 
   return (
