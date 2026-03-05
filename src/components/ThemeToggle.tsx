@@ -66,7 +66,7 @@ export function ThemeToggle() {
         </Button>
       </TooltipTrigger>
       <TooltipContent side="bottom" className="text-xs">
-        {dark ? "Light Mode" : "Dark Mode"}
+        {dark ? "Dark Mode" : "Light Mode"}
       </TooltipContent>
     </Tooltip>
   );
