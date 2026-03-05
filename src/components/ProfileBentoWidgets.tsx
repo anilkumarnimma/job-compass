@@ -19,6 +19,14 @@ const PRESET_AVATARS = [
   "/avatars/avatar-6.png",
   "/avatars/avatar-7.png",
   "/avatars/avatar-8.png",
+  "/avatars/avatar-9.png",
+  "/avatars/avatar-10.png",
+  "/avatars/avatar-11.png",
+  "/avatars/avatar-12.png",
+  "/avatars/avatar-13.png",
+  "/avatars/avatar-14.png",
+  "/avatars/avatar-15.png",
+  "/avatars/avatar-16.png",
 ];
 
 export function ProfileWelcomeBanner() {

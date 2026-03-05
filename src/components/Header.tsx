@@ -126,7 +126,7 @@ export function Header() {
                     </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56 rounded-xl border-border/50 shadow-premium">
                     <div className="flex items-center gap-3 px-2 py-2">
-                      <ProfileAvatar size="md" showPicker={true} />
+                      <ProfileAvatar size="md" />
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-foreground">{profile?.full_name || profile?.first_name || "User"}</span>
                         <span className="text-xs text-muted-foreground">{user?.email}</span>
