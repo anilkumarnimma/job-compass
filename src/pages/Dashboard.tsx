@@ -147,12 +147,26 @@ export default function Dashboard() {
   }, []);
 
   const handleDateSelect = useCallback((value: DateFilter) => {
+    if (value !== "custom") setCustomDate(undefined);
     setDateFilter(value);
     setAllTimeDropdownOpen(false);
   }, []);
 
+  const handleCustomDateSelect = useCallback((date: Date | undefined) => {
+    if (date) {
+      setCustomDate(date);
+      setDateFilter("custom");
+    }
+  }, []);
+
+  const handleClearCustomDate = useCallback(() => {
+    setCustomDate(undefined);
+    setDateFilter("all");
+    setAllTimeDropdownOpen(false);
+  }, []);
+
   const hasActiveFilter = roleFilter || companyFilter;
-  const fallbackLabel = dateFilter === "today" ? "today" : "yesterday";
+  const fallbackLabel = dateFilter === "today" ? "today" : dateFilter === "yesterday" ? "yesterday" : customDate ? format(customDate, "MMM d") : "";
 
   return (
     <Layout>
