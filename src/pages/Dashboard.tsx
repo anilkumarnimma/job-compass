@@ -182,7 +182,7 @@ export default function Dashboard() {
             <FloatingHelpButton variant="inline" />
           </div>
 
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
             <div className="flex-1">
               <SearchBar
                 value={searchInput}
