@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +7,15 @@ import { CompanyLogo } from "@/components/CompanyLogo";
 import { Job } from "@/types/job";
 import { Loader2, Shield, Pencil, Trash2, Copy, Plus, FileSpreadsheet } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 
 interface AdminJobsListProps {
   jobs: Job[];
@@ -24,6 +34,8 @@ interface AdminJobsListProps {
   duplicateIsPending: boolean;
 }
 
+const JOBS_PER_PAGE = 20;
+
 export function AdminJobsList({
   jobs,
   isLoading,
@@ -40,6 +52,21 @@ export function AdminJobsList({
   onBulkUpload,
   duplicateIsPending,
 }: AdminJobsListProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.ceil(jobs.length / JOBS_PER_PAGE);
+  const paginatedJobs = useMemo(() => {
+    const start = (currentPage - 1) * JOBS_PER_PAGE;
+    return jobs.slice(start, start + JOBS_PER_PAGE);
+  }, [jobs, currentPage]);
+
+  // Reset to page 1 if jobs list shrinks
+  useMemo(() => {
+    if (currentPage > 1 && (currentPage - 1) * JOBS_PER_PAGE >= jobs.length) {
+      setCurrentPage(1);
+    }
+  }, [jobs.length]);
+
   if (isLoading) {
     return (
       <div className="text-center py-12">
@@ -73,9 +100,25 @@ export function AdminJobsList({
     );
   }
 
+  const getPageNumbers = () => {
+    const pages: (number | "ellipsis")[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push("ellipsis");
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (currentPage < totalPages - 2) pages.push("ellipsis");
+      pages.push(totalPages);
+    }
+    return pages;
+  };
+
   return (
     <div className="space-y-4">
-      {jobs.map((job) => (
+      {paginatedJobs.map((job) => (
         <Card key={job.id} className="p-5 border-border/60">
           <div className="flex items-start gap-4">
             <CompanyLogo
@@ -176,6 +219,48 @@ export function AdminJobsList({
           </div>
         </Card>
       ))}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="py-4">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
+                  className={currentPage <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              {getPageNumbers().map((page, idx) =>
+                page === "ellipsis" ? (
+                  <PaginationItem key={`ellipsis-${idx}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                ) : (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      isActive={currentPage === page}
+                      onClick={() => setCurrentPage(page as number)}
+                      className="cursor-pointer"
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
+                  className={currentPage >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+          <p className="text-xs text-muted-foreground text-center mt-2">
+            Showing {(currentPage - 1) * JOBS_PER_PAGE + 1}–{Math.min(currentPage * JOBS_PER_PAGE, jobs.length)} of {jobs.length} jobs
+          </p>
+        </div>
+      )}
     </div>
   );
 }
