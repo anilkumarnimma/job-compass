@@ -7,6 +7,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { JobProvider } from "@/context/JobContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { FloatingHelpButton } from "@/components/FloatingHelpButton";
+import { IntroSplash } from "@/components/IntroSplash";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
@@ -37,6 +38,7 @@ const App = () => (
       <TooltipProvider>
         <AuthProvider>
           <JobProvider>
+            <IntroSplash>
             <Toaster />
             <Sonner />
             <BrowserRouter>
@@ -97,6 +99,7 @@ const App = () => (
               </Routes>
               <FloatingHelpButton />
             </BrowserRouter>
+            </IntroSplash>
           </JobProvider>
         </AuthProvider>
       </TooltipProvider>
