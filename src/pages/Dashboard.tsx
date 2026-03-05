@@ -1,5 +1,4 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { FloatingHelpButton } from "@/components/FloatingHelpButton";
 import { Layout } from "@/components/Layout";
 import { SearchBar } from "@/components/SearchBar";
 import { RightSidebar } from "@/components/RightSidebar";
@@ -179,7 +178,7 @@ export default function Dashboard() {
                 <span className="font-medium text-foreground">{totalCount.toLocaleString()}</span> job{totalCount !== 1 ? 's' : ''} available
               </p>
             </div>
-            <FloatingHelpButton variant="inline" />
+            
           </div>
 
           <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">

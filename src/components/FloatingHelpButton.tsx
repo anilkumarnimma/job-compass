@@ -1,5 +1,4 @@
 import { useState, useRef } from "react";
-import { useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useSupportTickets, CreateTicketData } from "@/hooks/useSupportTickets";
 import { Button } from "@/components/ui/button";
@@ -32,7 +31,6 @@ interface FloatingHelpButtonProps {
 export function FloatingHelpButton({ variant = "floating" }: FloatingHelpButtonProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const { createTicket, isCreating } = useSupportTickets();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -46,9 +44,6 @@ export function FloatingHelpButton({ variant = "floating" }: FloatingHelpButtonP
   });
   const [screenshot, setScreenshot] = useState<File | null>(null);
 
-  // Hide floating variant on dashboard (inline version is used there)
-  const isDashboard = location.pathname.startsWith("/dashboard");
-  if (variant === "floating" && isDashboard) return null;
 
   const handleClick = () => {
     if (!user) {
