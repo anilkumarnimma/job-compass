@@ -56,7 +56,7 @@ export function JobMatchesPanel() {
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="rounded-lg border border-border/60 bg-card p-3 shadow-sm"
+        className="rounded-lg border border-border/60 bg-card p-3 shadow-sm max-w-[600px]"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
@@ -88,7 +88,7 @@ export function JobMatchesPanel() {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="rounded-lg border border-border/40 bg-card p-3 shadow-sm"
+      className="rounded-lg border border-border/40 bg-card p-3 shadow-sm max-w-[600px]"
     >
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-1.5">
