@@ -191,7 +191,7 @@ export default function FounderEmployers() {
           </Card>
         ) : (
           <div className="space-y-3">
-            {otherUsers.map((userData) => (
+            {paginatedUsers.map((userData) => (
               <Card
                 key={userData.id}
                 className="p-4 border-border/60 hover:border-border transition-colors"
@@ -262,6 +262,43 @@ export default function FounderEmployers() {
                 </div>
               </Card>
             ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="py-6">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
+                    className={currentPage <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+                {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => i + 1).map((page) => (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      isActive={currentPage === page}
+                      onClick={() => setCurrentPage(page)}
+                      className="cursor-pointer"
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                {totalPages > 7 && <PaginationItem><PaginationEllipsis /></PaginationItem>}
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
+                    className={currentPage >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+            <p className="text-xs text-muted-foreground text-center mt-2">
+              Showing {(currentPage - 1) * USERS_PER_PAGE + 1}–{Math.min(currentPage * USERS_PER_PAGE, otherUsers.length)} of {otherUsers.length} users
+            </p>
           </div>
         )}
       </div>
