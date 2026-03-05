@@ -11,7 +11,7 @@ import { useJobSearchPaginated } from "@/hooks/useJobSearchPaginated";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useJobContext } from "@/context/JobContext";
 import { Job } from "@/types/job";
-import { X, ChevronDown, CalendarIcon } from "lucide-react";
+import { X, ChevronDown } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
 import { useSearchParams } from "react-router-dom";
@@ -19,8 +19,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 type DateFilter = "all" | "today" | "yesterday" | "custom";
 
@@ -34,23 +34,22 @@ function getDateRange(filter: DateFilter, customDate?: Date | undefined): { date
   if (filter === "yesterday") {
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
-    return {
-      dateFrom: yesterday.toISOString().split("T")[0],
-      dateTo: today.toISOString().split("T")[0],
-    };
+    return { dateFrom: yesterday.toISOString().split("T")[0], dateTo: today.toISOString().split("T")[0] };
   }
-  // custom date
   if (filter === "custom" && customDate) {
     const from = new Date(customDate.getFullYear(), customDate.getMonth(), customDate.getDate());
     const to = new Date(from);
     to.setDate(to.getDate() + 1);
-    return {
-      dateFrom: from.toISOString().split("T")[0],
-      dateTo: to.toISOString().split("T")[0],
-    };
+    return { dateFrom: from.toISOString().split("T")[0], dateTo: to.toISOString().split("T")[0] };
   }
   return { dateFrom: null, dateTo: null };
 }
+
+const chipVariants = {
+  inactive: { scale: 1 },
+  active: { scale: 1, transition: { type: "spring" as const, stiffness: 400, damping: 25 } },
+  tap: { scale: 0.95 },
+};
 
 export default function Dashboard() {
   const [searchInput, setSearchInput] = useState("");
@@ -64,19 +63,15 @@ export default function Dashboard() {
   const [allTimeDropdownOpen, setAllTimeDropdownOpen] = useState(false);
   const [customDate, setCustomDate] = useState<Date | undefined>(undefined);
   const [fallbackActive, setFallbackActive] = useState(false);
-  
+
   const isMobile = useIsMobile();
   const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply } = useJobContext();
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
 
-  // Detect premium=true redirect from Stripe
   useEffect(() => {
     if (searchParams.get("premium") === "true") {
-      toast({
-        title: "🎉 Premium unlocked!",
-        description: "You can now apply to unlimited jobs.",
-      });
+      toast({ title: "🎉 Premium unlocked!", description: "You can now apply to unlimited jobs." });
       searchParams.delete("premium");
       setSearchParams(searchParams, { replace: true });
     }
@@ -92,7 +87,6 @@ export default function Dashboard() {
     return parts.join(" ");
   }, [debouncedSearch, roleFilter, companyFilter]);
 
-  // Reset page when search/filters change
   const { dateFrom, dateTo } = getDateRange(dateFilter, customDate);
 
   useEffect(() => {
@@ -100,11 +94,7 @@ export default function Dashboard() {
     setFallbackActive(false);
   }, [combinedSearchQuery, dateFilter, customDate]);
 
-  // Primary query with selected date filter
-  const {
-    data,
-    isLoading,
-  } = useJobSearchPaginated({
+  const { data, isLoading } = useJobSearchPaginated({
     searchQuery: combinedSearchQuery,
     page: currentPage,
     dateFrom: fallbackActive ? null : dateFrom,
@@ -117,7 +107,6 @@ export default function Dashboard() {
     return (data?.jobs || []).filter((job) => !isApplied(job.id));
   }, [data, isApplied]);
 
-  // Detect 0 results and fallback to all time
   useEffect(() => {
     if (!isLoading && dateFilter !== "all" && !fallbackActive && data && data.totalCount === 0) {
       setFallbackActive(true);
@@ -170,105 +159,99 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="w-full max-w-[1440px] mx-auto px-4 md:px-6 py-6">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="w-full max-w-[1400px] mx-auto px-4 md:px-6 py-6"
+      >
         <div className="flex gap-6 justify-center">
-          {/* Main Content */}
+          {/* Main Content - Left Column */}
           <div className="flex-1 max-w-[600px] min-w-0">
             {/* Header */}
             <div className="mb-6">
-              <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-1">
+              <h1 className="font-display text-3xl md:text-4xl font-semibold tracking-tight text-foreground mb-1">
                 Job Board
               </h1>
-              <p className="text-muted-foreground text-sm">
-                {totalCount.toLocaleString()} job{totalCount !== 1 ? 's' : ''} available
+              <p className="text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">{totalCount.toLocaleString()}</span> job{totalCount !== 1 ? 's' : ''} available
               </p>
             </div>
 
-            {/* Search */}
-            <div className="mb-4">
+            {/* Search Bar */}
+            <div className="mb-5">
               <SearchBar
                 value={searchInput}
                 onChange={setSearchInput}
-                placeholder="Search by job title, company, or skills"
+                placeholder="Search jobs by title, company, skills…"
               />
             </div>
 
-            {/* Date Filter: Today | Yesterday | All time (dropdown) */}
-            <div className="flex items-center gap-1.5 mb-4">
-              <button
-                onClick={() => handleDateSelect("today")}
-                className={cn(
-                  "px-3 py-1.5 text-xs font-medium rounded-full border transition-colors",
-                  dateFilter === "today" && !fallbackActive
-                    ? "bg-accent text-accent-foreground border-accent"
-                    : "bg-card text-muted-foreground border-border hover:border-accent/50"
-                )}
-              >
-                Today
-              </button>
-              <button
-                onClick={() => handleDateSelect("yesterday")}
-                className={cn(
-                  "px-3 py-1.5 text-xs font-medium rounded-full border transition-colors",
-                  dateFilter === "yesterday" && !fallbackActive
-                    ? "bg-accent text-accent-foreground border-accent"
-                    : "bg-card text-muted-foreground border-border hover:border-accent/50"
-                )}
-              >
-                Yesterday
-              </button>
-              <Popover open={allTimeDropdownOpen} onOpenChange={setAllTimeDropdownOpen}>
-                <PopoverTrigger asChild>
-                  <button
+            {/* Date Filter Chips */}
+            <div className="flex items-center gap-2 mb-5">
+              {(["today", "yesterday"] as const).map((filter) => {
+                const isActive = dateFilter === filter && !fallbackActive;
+                return (
+                  <motion.button
+                    key={filter}
+                    variants={chipVariants}
+                    initial="inactive"
+                    animate={isActive ? "active" : "inactive"}
+                    whileTap="tap"
+                    onClick={() => handleDateSelect(filter)}
                     className={cn(
-                      "px-3 py-1.5 text-xs font-medium rounded-full border transition-colors inline-flex items-center gap-1",
-                      (dateFilter === "all" || dateFilter === "custom" || fallbackActive)
-                        ? "bg-accent text-accent-foreground border-accent"
-                        : "bg-card text-muted-foreground border-border hover:border-accent/50"
+                      "px-4 py-2 text-xs font-medium rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      isActive
+                        ? "bg-foreground text-background border-foreground shadow-sm"
+                        : "bg-card text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground"
                     )}
                   >
-                    {dateFilter === "custom" && customDate ? format(customDate, "MMM d") : "All time"}
+                    {filter === "today" ? "Today" : "Yesterday"}
+                  </motion.button>
+                );
+              })}
+
+              <Popover open={allTimeDropdownOpen} onOpenChange={setAllTimeDropdownOpen}>
+                <PopoverTrigger asChild>
+                  <motion.button
+                    variants={chipVariants}
+                    initial="inactive"
+                    animate={(dateFilter === "all" || dateFilter === "custom" || fallbackActive) ? "active" : "inactive"}
+                    whileTap="tap"
+                    className={cn(
+                      "px-4 py-2 text-xs font-medium rounded-full border transition-colors inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      (dateFilter === "all" || dateFilter === "custom" || fallbackActive)
+                        ? "bg-foreground text-background border-foreground shadow-sm"
+                        : "bg-card text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground"
+                    )}
+                  >
+                    {dateFilter === "custom" && customDate ? `All time: ${format(customDate, "MMM d")}` : "All time"}
                     <ChevronDown className="h-3 w-3" />
-                  </button>
+                  </motion.button>
                 </PopoverTrigger>
-                <PopoverContent align="start" className="w-auto p-2">
+                <PopoverContent align="start" className="w-auto p-3 rounded-xl shadow-elevated border-border/60 bg-card/95 backdrop-blur-lg">
                   <div className="flex flex-col gap-1 mb-2">
-                    <button
-                      onClick={() => handleDateSelect("all")}
-                      className={cn(
-                        "w-full text-left px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-                        dateFilter === "all" && !fallbackActive
-                          ? "bg-accent text-accent-foreground"
-                          : "text-foreground hover:bg-secondary"
-                      )}
-                    >
-                      All time
-                    </button>
-                    <button
-                      onClick={() => handleDateSelect("today")}
-                      className={cn(
-                        "w-full text-left px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-                        dateFilter === "today" && !fallbackActive
-                          ? "bg-accent text-accent-foreground"
-                          : "text-foreground hover:bg-secondary"
-                      )}
-                    >
-                      Today
-                    </button>
-                    <button
-                      onClick={() => handleDateSelect("yesterday")}
-                      className={cn(
-                        "w-full text-left px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-                        dateFilter === "yesterday" && !fallbackActive
-                          ? "bg-accent text-accent-foreground"
-                          : "text-foreground hover:bg-secondary"
-                      )}
-                    >
-                      Yesterday
-                    </button>
+                    {[
+                      { value: "all" as const, label: "All time" },
+                      { value: "today" as const, label: "Today" },
+                      { value: "yesterday" as const, label: "Yesterday" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => handleDateSelect(opt.value)}
+                        className={cn(
+                          "w-full text-left px-3 py-2 text-xs font-medium rounded-lg transition-colors",
+                          dateFilter === opt.value && !fallbackActive
+                            ? "bg-foreground text-background"
+                            : "text-foreground hover:bg-secondary"
+                        )}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
                   </div>
                   <div className="border-t border-border pt-2">
-                    <p className="text-xs text-muted-foreground px-2 mb-1">Pick a date</p>
+                    <p className="text-[11px] text-muted-foreground px-2 mb-1 font-medium">Pick a date</p>
                     <Calendar
                       mode="single"
                       selected={customDate}
@@ -279,7 +262,7 @@ export default function Dashboard() {
                     {customDate && (
                       <button
                         onClick={handleClearCustomDate}
-                        className="w-full text-center px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                        className="w-full text-center px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary mt-1"
                       >
                         Clear date
                       </button>
@@ -290,18 +273,26 @@ export default function Dashboard() {
             </div>
 
             {/* Fallback note */}
-            {fallbackActive && (
-              <p className="text-xs text-muted-foreground mb-3">
-                No jobs posted {fallbackLabel} — showing All time results.
-              </p>
-            )}
+            <AnimatePresence>
+              {fallbackActive && (
+                <motion.p
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="text-xs text-muted-foreground mb-4 bg-secondary/50 px-3 py-2 rounded-lg border border-border/40"
+                >
+                  No jobs posted {fallbackLabel} — showing All time results.
+                </motion.p>
+              )}
+            </AnimatePresence>
+
             {/* Active Role/Company Filters */}
             {hasActiveFilter && (
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-sm text-muted-foreground">Filtered by:</span>
                 {roleFilter && (
-                  <Badge 
-                    variant="secondary" 
+                  <Badge
+                    variant="secondary"
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/10 text-accent cursor-pointer hover:bg-accent/20 transition-colors"
                     onClick={clearFilters}
                   >
@@ -310,8 +301,8 @@ export default function Dashboard() {
                   </Badge>
                 )}
                 {companyFilter && (
-                  <Badge 
-                    variant="secondary" 
+                  <Badge
+                    variant="secondary"
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary cursor-pointer hover:bg-primary/20 transition-colors"
                     onClick={clearFilters}
                   >
@@ -322,7 +313,7 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* Job List with Pagination */}
+            {/* Job List */}
             <JobListPaginated
               jobs={jobs}
               isLoading={isLoading}
@@ -336,38 +327,34 @@ export default function Dashboard() {
 
           {/* Right Panel - Job Preview + Sidebar (Desktop) */}
           {!isMobile && (
-            <div className="hidden lg:flex gap-4 shrink-0">
+            <div className="hidden lg:flex gap-5 shrink-0">
               {/* Wide Job Details Panel */}
-              {selectedJob && (
-                <div className="w-[520px] shrink-0 sticky top-[88px] self-start border border-border rounded-xl bg-card overflow-hidden shadow-sm max-h-[calc(100vh-112px)] overflow-y-auto">
-                  <JobPreviewPanel job={selectedJob} />
-                </div>
-              )}
+              <AnimatePresence mode="wait">
+                {selectedJob && (
+                  <motion.div
+                    key={selectedJob.id}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="w-[580px] shrink-0 sticky top-[88px] self-start border border-border/50 rounded-2xl bg-card/80 backdrop-blur-sm overflow-hidden shadow-card max-h-[calc(100vh-112px)]"
+                  >
+                    <JobPreviewPanel job={selectedJob} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
               {/* Narrow Widgets Sidebar */}
-              <div className="w-[260px] shrink-0 sticky top-[88px] self-start">
+              <div className="w-[240px] shrink-0 sticky top-[88px] self-start">
                 <RightSidebar onFilterByRole={handleFilterByRole} />
               </div>
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
 
-      {/* Mobile Job Preview Sheet */}
-      <MobileJobPreviewSheet 
-        job={mobilePreviewJob}
-        open={mobileSheetOpen}
-        onOpenChange={setMobileSheetOpen}
-      />
-
-      {/* Upgrade dialog */}
+      <MobileJobPreviewSheet job={mobilePreviewJob} open={mobileSheetOpen} onOpenChange={setMobileSheetOpen} />
       <UpgradeDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog} />
-
-      {/* Apply confirmation dialog */}
-      <ApplyConfirmDialog
-        open={showApplyConfirm}
-        onConfirm={confirmApply}
-        onCancel={cancelApply}
-      />
+      <ApplyConfirmDialog open={showApplyConfirm} onConfirm={confirmApply} onCancel={cancelApply} />
     </Layout>
   );
 }

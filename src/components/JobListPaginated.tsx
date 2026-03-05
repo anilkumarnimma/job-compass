@@ -2,6 +2,7 @@ import { Job } from "@/types/job";
 import { JobCard } from "@/components/JobCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search } from "lucide-react";
+import { motion } from "framer-motion";
 import {
   Pagination,
   PaginationContent,
@@ -24,7 +25,7 @@ interface JobListPaginatedProps {
 
 function JobCardSkeleton() {
   return (
-    <div className="p-5 border border-border/60 bg-card rounded-2xl space-y-3">
+    <div className="p-5 border border-border/60 bg-card rounded-2xl space-y-3 shadow-card">
       <div className="flex items-start gap-3.5">
         <Skeleton className="h-11 w-11 rounded-xl shrink-0" />
         <div className="flex-1 space-y-2">
@@ -33,7 +34,6 @@ function JobCardSkeleton() {
           <Skeleton className="h-3 w-1/3" />
         </div>
       </div>
-      <Skeleton className="h-10 w-full rounded-lg" />
       <div className="flex gap-2">
         <Skeleton className="h-7 w-20 rounded-full" />
         <Skeleton className="h-7 w-24 rounded-full" />
@@ -65,9 +65,14 @@ export function JobListPaginated({
     return (
       <div className="flex flex-col gap-4 max-w-[600px]">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} style={{ animationDelay: `${i * 80}ms` }} className="stagger-fade-in">
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.08, duration: 0.3 }}
+          >
             <JobCardSkeleton />
-          </div>
+          </motion.div>
         ))}
       </div>
     );
@@ -75,17 +80,20 @@ export function JobListPaginated({
 
   if (jobs.length === 0) {
     return (
-      <div className="text-center py-20 max-w-sm mx-auto">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="text-center py-20 max-w-sm mx-auto"
+      >
         <div className="h-20 w-20 rounded-2xl bg-secondary flex items-center justify-center mx-auto mb-5">
           <Search className="h-8 w-8 text-muted-foreground/50" />
         </div>
         <h3 className="font-display font-semibold text-foreground text-lg mb-2">No jobs found</h3>
         <p className="text-muted-foreground text-sm">Try adjusting your search or filters to find what you're looking for.</p>
-      </div>
+      </motion.div>
     );
   }
 
-  // Generate page numbers to show
   const getPageNumbers = () => {
     const pages: (number | "ellipsis")[] = [];
     if (totalPages <= 7) {
@@ -105,16 +113,16 @@ export function JobListPaginated({
   return (
     <div className="flex flex-col gap-4 max-w-[600px]">
       {jobs.map((job, index) => (
-        <div
+        <motion.div
           key={job.id}
-          className="stagger-fade-in"
-          style={{ animationDelay: `${Math.min(index, 8) * 60}ms` }}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: Math.min(index, 8) * 0.05, duration: 0.35, ease: "easeOut" }}
         >
           <JobCard job={job} onTap={onTap} isSelected={selectedJobId === job.id} />
-        </div>
+        </motion.div>
       ))}
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="py-4">
           <Pagination>

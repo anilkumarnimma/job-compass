@@ -8,7 +8,7 @@ interface SearchBarProps {
   onSearch?: () => void;
 }
 
-export function SearchBar({ value, onChange, placeholder = "Search by job title, company, or skills", onSearch }: SearchBarProps) {
+export function SearchBar({ value, onChange, placeholder = "Search jobs by title, company, skills…", onSearch }: SearchBarProps) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       onSearch?.();
@@ -24,7 +24,7 @@ export function SearchBar({ value, onChange, placeholder = "Search by job title,
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
-        className="pl-12 h-12 bg-card border-border/60 rounded-2xl text-base shadow-soft focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all duration-300 placeholder:text-muted-foreground/60"
+        className="pl-12 h-12 bg-card border-border/60 rounded-full text-base shadow-soft focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all duration-300 placeholder:text-muted-foreground/50"
       />
     </div>
   );
