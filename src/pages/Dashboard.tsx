@@ -109,6 +109,9 @@ export default function Dashboard() {
     }
   }, [isLoading, dateFilter, fallbackActive, data]);
 
+  const totalCount = data?.totalCount ?? 0;
+  const totalPages = data?.totalPages ?? 1;
+
   const handleJobTap = useCallback((job: Job) => {
     if (isMobile) {
       setMobilePreviewJob(job);
@@ -128,14 +131,20 @@ export default function Dashboard() {
     setCompanyFilter(null);
   }, []);
 
+  const handleDateSelect = useCallback((value: DateFilter) => {
+    setDateFilter(value);
+    setAllTimeDropdownOpen(false);
+  }, []);
+
   const hasActiveFilter = roleFilter || companyFilter;
+  const fallbackLabel = dateFilter === "today" ? "today" : "yesterday";
 
   return (
     <Layout>
-      <div className="w-full max-w-[1280px] mx-auto px-4 md:px-6 py-6">
-        <div className="flex gap-8 justify-center">
+      <div className="w-full max-w-[1440px] mx-auto px-4 md:px-6 py-6">
+        <div className="flex gap-6 justify-center">
           {/* Main Content */}
-          <div className="flex-1 max-w-[600px]">
+          <div className="flex-1 max-w-[600px] min-w-0">
             {/* Header */}
             <div className="mb-6">
               <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-1">
@@ -155,29 +164,69 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* Date Filter */}
+            {/* Date Filter: Today | Yesterday | All time (dropdown) */}
             <div className="flex items-center gap-1.5 mb-4">
-              {([
-                { value: "all" as DateFilter, label: "All time" },
-                { value: "today" as DateFilter, label: "Today" },
-                { value: "yesterday" as DateFilter, label: "Yesterday" },
-              ]).map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => setDateFilter(opt.value)}
-                  className={cn(
-                    "px-3 py-1.5 text-xs font-medium rounded-full border transition-colors",
-                    dateFilter === opt.value
-                      ? "bg-accent text-accent-foreground border-accent"
-                      : "bg-card text-muted-foreground border-border hover:border-accent/50"
-                  )}
-                >
-                  {opt.label}
-                </button>
-              ))}
+              <button
+                onClick={() => handleDateSelect("today")}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-medium rounded-full border transition-colors",
+                  dateFilter === "today" && !fallbackActive
+                    ? "bg-accent text-accent-foreground border-accent"
+                    : "bg-card text-muted-foreground border-border hover:border-accent/50"
+                )}
+              >
+                Today
+              </button>
+              <button
+                onClick={() => handleDateSelect("yesterday")}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-medium rounded-full border transition-colors",
+                  dateFilter === "yesterday" && !fallbackActive
+                    ? "bg-accent text-accent-foreground border-accent"
+                    : "bg-card text-muted-foreground border-border hover:border-accent/50"
+                )}
+              >
+                Yesterday
+              </button>
+              <Popover open={allTimeDropdownOpen} onOpenChange={setAllTimeDropdownOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    className={cn(
+                      "px-3 py-1.5 text-xs font-medium rounded-full border transition-colors inline-flex items-center gap-1",
+                      dateFilter === "all" || fallbackActive
+                        ? "bg-accent text-accent-foreground border-accent"
+                        : "bg-card text-muted-foreground border-border hover:border-accent/50"
+                    )}
+                  >
+                    All time
+                    <ChevronDown className="h-3 w-3" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-36 p-1">
+                  {(["today", "yesterday", "all"] as DateFilter[]).map((opt) => (
+                    <button
+                      key={opt}
+                      onClick={() => handleDateSelect(opt)}
+                      className={cn(
+                        "w-full text-left px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                        dateFilter === opt && !fallbackActive
+                          ? "bg-accent text-accent-foreground"
+                          : "text-foreground hover:bg-secondary"
+                      )}
+                    >
+                      {opt === "all" ? "All time" : opt === "today" ? "Today" : "Yesterday"}
+                    </button>
+                  ))}
+                </PopoverContent>
+              </Popover>
             </div>
 
-
+            {/* Fallback note */}
+            {fallbackActive && (
+              <p className="text-xs text-muted-foreground mb-3">
+                No jobs posted {fallbackLabel} — showing All time results.
+              </p>
+            )}
             {/* Active Role/Company Filters */}
             {hasActiveFilter && (
               <div className="flex items-center gap-2 mb-4">
