@@ -98,7 +98,7 @@ export default function Dashboard() {
   useEffect(() => {
     setCurrentPage(1);
     setFallbackActive(false);
-  }, [combinedSearchQuery, dateFilter]);
+  }, [combinedSearchQuery, dateFilter, customDate]);
 
   // Primary query with selected date filter
   const {
