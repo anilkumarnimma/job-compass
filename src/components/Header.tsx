@@ -56,7 +56,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/30 bg-background/60 backdrop-blur-2xl backdrop-saturate-[1.8] supports-[backdrop-filter]:bg-background/40">
-      <div className="container max-w-[1200px] mx-auto px-6">
+      <div className="max-w-[1400px] mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
@@ -69,7 +69,7 @@ export function Header() {
           {/* Desktop Navigation */}
           {navLinks.length > 0 && (
             <nav className="hidden md:flex items-center absolute left-1/2 -translate-x-1/2">
-              <div className="flex items-center bg-secondary/50 rounded-full p-0.5 gap-0.5 backdrop-blur-sm border border-border/20">
+              <div className="flex items-center bg-secondary/50 rounded-full p-0.5 gap-1.5 backdrop-blur-sm border border-border/20">
                 {navLinks.map((link) => (
                   <Link key={link.path} to={link.path}>
                     <motion.div
