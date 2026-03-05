@@ -65,7 +65,7 @@ export function JobMatchesPanel() {
           </div>
           <button
             onClick={() => navigate("/profile")}
-            className="text-[11px] font-medium px-3 py-1 rounded-md border border-border text-foreground hover:bg-secondary transition-colors"
+            className="text-[11px] font-medium px-3 py-1 rounded-md border border-border bg-background text-foreground hover:bg-secondary transition-colors"
           >
             Complete Profile
           </button>
