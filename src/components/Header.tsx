@@ -68,22 +68,22 @@ export function Header() {
 
           {/* Desktop Navigation */}
           {navLinks.length > 0 && (
-            <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
-              <div className="flex items-center bg-secondary/70 rounded-full p-1 gap-0.5 backdrop-blur-sm">
+            <nav className="hidden md:flex items-center absolute left-1/2 -translate-x-1/2">
+              <div className="flex items-center bg-secondary/50 rounded-full p-0.5 gap-0.5 backdrop-blur-sm border border-border/20">
                 {navLinks.map((link) => (
                   <Link key={link.path} to={link.path}>
                     <motion.div
-                      whileHover={{ scale: 1.04, y: -1 }}
+                      whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.97 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
                     >
                       <Button
                         variant="ghost"
                         size="sm"
-                        className={`rounded-full px-5 h-8 font-medium transition-all duration-200 ${
+                        className={`rounded-full px-4 h-7 text-[13px] font-medium transition-all duration-200 ${
                           isActive(link.path)
                             ? "bg-card text-foreground shadow-sm"
-                            : "text-muted-foreground hover:text-foreground hover:bg-card/50"
+                            : "text-muted-foreground hover:text-foreground hover:bg-card/40"
                         }`}
                       >
                         {link.label}
@@ -96,7 +96,7 @@ export function Header() {
           )}
 
           {/* Right side */}
-          <div className="hidden md:flex items-center gap-2 shrink-0 flex-nowrap">
+          <div className="hidden md:flex items-center gap-1.5 shrink-0 flex-nowrap">
             <ThemeToggle />
             
             {user ? (
@@ -104,10 +104,10 @@ export function Header() {
                 {!isPremium && !isFounder && !isEmployer && (
                   <Button
                     size="sm"
-                    className="rounded-full h-9 px-4 bg-accent hover:bg-accent/90 text-accent-foreground shadow-sm hover:shadow-glow transition-all duration-300"
+                    className="rounded-full h-8 px-3 text-[12px] bg-accent hover:bg-accent/90 text-accent-foreground shadow-sm hover:shadow-glow transition-all duration-300"
                     onClick={() => window.open(STRIPE_LINK, "_blank")}
                   >
-                    <Sparkles className="h-4 w-4 mr-1.5" />
+                    <Sparkles className="h-3.5 w-3.5 mr-1" />
                     Upgrade
                   </Button>
                 )}
@@ -117,11 +117,11 @@ export function Header() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="rounded-full h-9 px-2 text-muted-foreground hover:text-foreground gap-1.5"
+                      className="rounded-full h-8 px-2 text-muted-foreground hover:text-foreground gap-1"
                     >
                       <ProfileAvatar size="sm" showPicker={false} />
-                      <span className="hidden lg:inline">Profile</span>
-                      <ChevronDown className="h-3.5 w-3.5" />
+                      <span className="hidden lg:inline text-[13px]">Profile</span>
+                      <ChevronDown className="h-3 w-3" />
                       </Button>
                     </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56 rounded-xl border-border/50 shadow-premium">
@@ -166,13 +166,13 @@ export function Header() {
                 {isEmployer && !isFounder && (
                   <>
                     <Link to="/employer">
-                      <Button variant="outline" size="sm" className="rounded-full h-9 px-4 border-border hover:bg-secondary">
-                        <Shield className="h-4 w-4 mr-1.5" />
+                      <Button variant="outline" size="sm" className="rounded-full h-8 px-3 text-[12px] border-border hover:bg-secondary">
+                        <Shield className="h-3.5 w-3.5 mr-1" />
                         Admin
                       </Button>
                     </Link>
-                    <Button variant="ghost" size="sm" onClick={handleSignOut} className="rounded-full h-9 px-3 text-destructive hover:text-destructive">
-                      <LogOut className="h-4 w-4" />
+                    <Button variant="ghost" size="sm" onClick={handleSignOut} className="rounded-full h-8 px-2.5 text-destructive hover:text-destructive">
+                      <LogOut className="h-3.5 w-3.5" />
                     </Button>
                   </>
                 )}
@@ -180,14 +180,14 @@ export function Header() {
                 {isFounder && (
                   <>
                     <Link to="/founder/employers">
-                      <Button variant="outline" size="sm" className="rounded-full h-9 px-4 border-border hover:bg-secondary">
-                        <Crown className="h-4 w-4 mr-1.5" />
+                      <Button variant="outline" size="sm" className="rounded-full h-8 px-3 text-[12px] border-border hover:bg-secondary">
+                        <Crown className="h-3.5 w-3.5 mr-1" />
                         Founder
                       </Button>
                     </Link>
                     <Link to="/admin">
-                      <Button variant="outline" size="sm" className="rounded-full h-9 px-4 border-border hover:bg-secondary">
-                        <Shield className="h-4 w-4 mr-1.5" />
+                      <Button variant="outline" size="sm" className="rounded-full h-8 px-3 text-[12px] border-border hover:bg-secondary">
+                        <Shield className="h-3.5 w-3.5 mr-1" />
                         Admin
                       </Button>
                     </Link>
