@@ -32,8 +32,13 @@ interface FloatingHelpButtonProps {
 export function FloatingHelpButton({ variant = "floating" }: FloatingHelpButtonProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { createTicket, isCreating } = useSupportTickets();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Hide floating variant on dashboard (inline version is used there)
+  const isDashboard = location.pathname.startsWith("/dashboard");
+  if (variant === "floating" && isDashboard) return null;
   
   const [open, setOpen] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
