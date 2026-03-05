@@ -438,38 +438,6 @@ export default function Profile() {
             </CardContent>
           </Card>
 
-          {/* ATS Compatibility Check */}
-          <Card className="border-accent/20 bg-accent/5 rounded-3xl">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-accent" />
-                <CardTitle className="text-lg">ATS Compatibility Check</CardTitle>
-              </div>
-              <CardDescription>Paste any job description to see how well your profile matches</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button
-                className="w-full rounded-full"
-                variant="outline"
-                onClick={() => {
-                  clearAtsResult();
-                  setShowAtsDialog(true);
-                }}
-              >
-                <Target className="h-4 w-4 mr-2" />
-                Check ATS Compatibility
-              </Button>
-            </CardContent>
-          </Card>
-
-          <AtsCheckDialog
-            open={showAtsDialog}
-            onOpenChange={setShowAtsDialog}
-            result={atsResult}
-            isChecking={isAtsChecking}
-            showCustomInput
-            onRunCustomCheck={(desc) => runAtsCheck({ job_description: desc })}
-          />
 
           {/* 2. Personal Details */}
           <Card className="rounded-3xl">
