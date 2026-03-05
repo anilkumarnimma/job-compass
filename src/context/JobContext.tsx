@@ -80,7 +80,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
     applyToJob,
     confirmApply,
     cancelApply,
-    saveJob,
+    saveJob: (job: any) => { rawSave(job); emitWidgetEvent("save"); },
     unsaveJob,
     removeAppliedJob,
     isApplied,
