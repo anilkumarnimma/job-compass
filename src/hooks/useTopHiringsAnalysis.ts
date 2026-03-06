@@ -11,7 +11,7 @@ export function useTopHiringsAnalysis() {
   return useQuery({
     queryKey: ["top-hirings-analysis"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_top_hiring_roles", {
+      const { data, error } = await supabase.rpc("get_top_hiring_roles" as any, {
         max_roles: 5,
       });
 
