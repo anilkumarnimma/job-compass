@@ -334,33 +334,88 @@ export default function Profile() {
     for (const f of simpleFields) {
       if (e[f]) updates[f] = e[f] as string;
     }
-    if (Object.keys(updates).length > 0) setFormData(prev => ({ ...prev, ...updates }));
 
-    if (e.skills && e.skills.length > 0) setFormData(prev => ({ ...prev, skills: e.skills!.join(", ") }));
-    if (e.experience_years != null) setFormData(prev => ({ ...prev, experience_years: e.experience_years! }));
+    // Build the new form data
+    let newFormData = { ...formData, ...updates };
+    if (e.skills && e.skills.length > 0) newFormData = { ...newFormData, skills: e.skills.join(", ") };
+    if (e.experience_years != null) newFormData = { ...newFormData, experience_years: e.experience_years };
+    setFormData(newFormData);
+
+    let newWork = workExperiences;
     if (e.work_experience && e.work_experience.length > 0) {
-      setWorkExperiences(e.work_experience.map(w => ({
+      newWork = e.work_experience.map(w => ({
         title: w.title || "", company: w.company || "",
         start_date: w.start_date || "", end_date: w.end_date || "",
         is_current: w.is_current || false,
-      })));
+      }));
+      setWorkExperiences(newWork);
     }
+    let newEdu = educations;
     if (e.education && e.education.length > 0) {
-      setEducations(e.education.map(ed => ({
+      newEdu = e.education.map(ed => ({
         school: ed.school || "", degree: ed.degree || "",
         major: ed.major || "", graduation_year: ed.graduation_year || "",
-      })));
+      }));
+      setEducations(newEdu);
     }
+    let newCerts = certifications;
     if (e.certifications && e.certifications.length > 0) {
-      setCertifications(e.certifications.map(c => ({
+      newCerts = e.certifications.map(c => ({
         name: c.name || "", issuer: c.issuer || "",
         date_obtained: c.date_obtained || "", expiration_date: c.expiration_date || "",
-      })));
+      }));
+      setCertifications(newCerts);
     }
 
+    // Auto-save to DB immediately so data persists across navigation
+    const skillsArray = newFormData.skills ? newFormData.skills.split(",").map((s) => s.trim()).filter(Boolean) : [];
+    const currentWork = newWork.find((w) => w.is_current);
+    const filteredWork = newWork.filter((w) => w.title || w.company);
+    const filteredEdu = newEdu.filter((ed) => ed.school || ed.degree);
+    const filteredCerts = newCerts.filter((c) => c.name);
+
+    updateProfile({
+      first_name: newFormData.first_name || null, last_name: newFormData.last_name || null,
+      full_name: [newFormData.first_name, newFormData.last_name].filter(Boolean).join(" ") || null,
+      contact_email: newFormData.contact_email || null,
+      phone: newFormData.phone || null, address: newFormData.address || null,
+      city: newFormData.city || null, state: newFormData.state || null, zip: newFormData.zip || null,
+      location: [newFormData.city, newFormData.state].filter(Boolean).join(", ") || null,
+      linkedin_url: newFormData.linkedin_url || null, github_url: newFormData.github_url || null,
+      portfolio_url: newFormData.portfolio_url || null,
+      work_authorization: newFormData.work_authorization || null, visa_status: newFormData.visa_status || null,
+      experience_years: newFormData.experience_years ? Number(newFormData.experience_years) : null,
+      current_company: currentWork?.company || newFormData.current_company || null,
+      current_title: currentWork?.title || newFormData.current_title || null,
+      skills: skillsArray,
+      work_experience: filteredWork,
+      education: filteredEdu,
+      certifications: filteredCerts,
+      gender: newFormData.gender || null, race_ethnicity: newFormData.race_ethnicity || null,
+      hispanic_latino: newFormData.hispanic_latino || null, veteran_status: newFormData.veteran_status || null,
+      disability_status: newFormData.disability_status || null, military_service: newFormData.military_service || null,
+    } as any);
+
+    // Update saved state so cancel reverts to this
+    setSavedFormData(newFormData);
+    setSavedWork(newWork);
+    setSavedEdu(newEdu);
+    setSavedCerts(newCerts);
+
     setIsEditing(true);
-    setIsDirty(true);
-    toast({ title: "Profile auto-filled", description: "Resume data has been applied. Review and save your profile." });
+    setIsDirty(false);
+    toast({ title: "Profile auto-filled & saved", description: "Resume data has been applied and saved to your profile." });
+
+    // Trigger resume intelligence analysis in the background
+    if (skillsArray.length > 0 || filteredWork.length > 0) {
+      analyzeResume({
+        skills: skillsArray,
+        workExperience: filteredWork,
+        education: filteredEdu,
+        currentTitle: currentWork?.title || newFormData.current_title || undefined,
+        experienceYears: newFormData.experience_years ? Number(newFormData.experience_years) : undefined,
+      });
+    }
   };
 
   // Helpers
