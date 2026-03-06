@@ -6,7 +6,6 @@ import { useIsUSUser } from "@/hooks/useIsUSUser";
 
 const allNavItems = [
   { path: "/dashboard", icon: Search, label: "Jobs" },
-  { path: "/visa-jobs", icon: Globe, label: "Visa", usOnly: true },
   { path: "/saved", icon: Heart, label: "Saved" },
   { path: "/applied", icon: Briefcase, label: "Applied" },
   { path: "/profile", icon: User, label: "Profile" },
