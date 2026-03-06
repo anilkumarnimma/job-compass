@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { HiringGraphManager } from "@/components/founder/HiringGraphManager";
 import { MarketAlertManager } from "@/components/founder/MarketAlertManager";
+import { EmailNotificationManager } from "@/components/founder/EmailNotificationManager";
 import {
   Pagination,
   PaginationContent,
@@ -131,6 +132,13 @@ export default function FounderEmployers() {
         {/* Market Alert Manager - Founder Only */}
         <div className="mb-8">
           <MarketAlertManager />
+        </div>
+
+        {/* Email Notification Manager - Founder Only */}
+        <div className="mb-8">
+          <EmailNotificationManager
+            users={otherUsers.map((u) => ({ id: u.id, email: u.email, full_name: u.full_name }))}
+          />
         </div>
 
         {/* Header */}

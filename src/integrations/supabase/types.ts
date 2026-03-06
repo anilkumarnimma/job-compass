@@ -49,6 +49,42 @@ export type Database = {
           },
         ]
       }
+      email_notification_preferences: {
+        Row: {
+          created_at: string
+          daily_digest_enabled: boolean
+          id: string
+          matched_jobs_enabled: boolean
+          new_jobs_enabled: boolean
+          sponsorship_jobs_enabled: boolean
+          unsubscribed_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          daily_digest_enabled?: boolean
+          id?: string
+          matched_jobs_enabled?: boolean
+          new_jobs_enabled?: boolean
+          sponsorship_jobs_enabled?: boolean
+          unsubscribed_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          daily_digest_enabled?: boolean
+          id?: string
+          matched_jobs_enabled?: boolean
+          new_jobs_enabled?: boolean
+          sponsorship_jobs_enabled?: boolean
+          unsubscribed_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       employer_permissions: {
         Row: {
           can_delete_jobs: boolean
