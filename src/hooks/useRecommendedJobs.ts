@@ -28,7 +28,7 @@ function parseJob(row: any): Job {
 function extractKeywords(profile: any): string[] {
   const keywords: string[] = [];
 
-  // Skills
+  // Skills from profile
   if (profile.skills?.length) {
     keywords.push(...profile.skills);
   }
@@ -47,8 +47,24 @@ function extractKeywords(profile: any): string[] {
     }
   }
 
+  // Resume intelligence data (covers cases where resume was uploaded but form wasn't saved)
+  const intel = profile.resume_intelligence;
+  if (intel) {
+    if (intel.topSkills?.length) keywords.push(...intel.topSkills);
+    if (intel.secondarySkills?.length) keywords.push(...intel.secondarySkills);
+    if (intel.primaryStack?.length) keywords.push(...intel.primaryStack);
+    if (intel.primaryRole) {
+      keywords.push(...intel.primaryRole.split(/[\s,/]+/).filter((w: string) => w.length > 2));
+    }
+    if (intel.jobTitlesToTarget?.length) {
+      for (const title of intel.jobTitlesToTarget) {
+        keywords.push(...title.split(/[\s,/]+/).filter((w: string) => w.length > 2));
+      }
+    }
+  }
+
   // Deduplicate, lowercase
-  return [...new Set(keywords.map((k: string) => k.toLowerCase()))].slice(0, 15);
+  return [...new Set(keywords.map((k: string) => k.toLowerCase()))].slice(0, 30);
 }
 
 function scoreJob(job: Job, keywords: string[], profileLocation?: string | null): { score: number; matchedSkills: string[] } {
