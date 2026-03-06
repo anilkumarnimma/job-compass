@@ -1,4 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
+import { useProfile } from "@/hooks/useProfile";
+import { calculateMatchesForJobs } from "@/lib/jobMatcher";
 import { Layout } from "@/components/Layout";
 import { SearchBar } from "@/components/SearchBar";
 import { RightSidebar } from "@/components/RightSidebar";
