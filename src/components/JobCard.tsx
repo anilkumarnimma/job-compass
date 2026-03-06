@@ -160,8 +160,6 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
               )}
               {landingProbability && (
                 <LandingProbabilityBadge result={landingProbability} compact />
-                  {matchResult.tierLabel}
-                </span>
               )}
               {!matchResult && job.is_reviewing && (
                 <Badge className="shrink-0 px-2.5 py-1 text-[11px] font-medium bg-success-bg text-success-text border-0 rounded-full whitespace-nowrap animate-pulse">
