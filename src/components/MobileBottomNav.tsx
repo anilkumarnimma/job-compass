@@ -1,11 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
-import { Briefcase, Search, Heart, User, Sparkles } from "lucide-react";
+import { Briefcase, Search, Heart, User, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 
 const navItems = [
   { path: "/dashboard", icon: Search, label: "Jobs" },
-  { path: "/recommendations", icon: Sparkles, label: "For You" },
+  { path: "/visa-jobs", icon: Globe, label: "Visa" },
   { path: "/saved", icon: Heart, label: "Saved" },
   { path: "/applied", icon: Briefcase, label: "Applied" },
   { path: "/profile", icon: User, label: "Profile" },

@@ -24,6 +24,8 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { JobMatchesPanel } from "@/components/JobMatchesPanel";
+import { VisaFilterPills } from "@/components/VisaFilterPills";
+import { VisaFilter, filterJobsByVisa } from "@/lib/visaSponsorship";
 
 type DateFilter = "all" | "today" | "yesterday" | "custom";
 
@@ -68,6 +70,7 @@ export default function Dashboard() {
   const [allTimeDropdownOpen, setAllTimeDropdownOpen] = useState(false);
   const [customDate, setCustomDate] = useState<Date | undefined>(undefined);
   const [fallbackActive, setFallbackActive] = useState(false);
+  const [visaFilter, setVisaFilter] = useState<VisaFilter>("all");
 
   const isMobile = useIsMobile();
   const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply } = useJobContext();
@@ -107,7 +110,8 @@ export default function Dashboard() {
 
   const { profile } = useProfile();
 
-  const jobs = data?.jobs || [];
+  const rawJobs = data?.jobs || [];
+  const jobs = useMemo(() => filterJobsByVisa(rawJobs, visaFilter), [rawJobs, visaFilter]);
 
   const matchResults = useMemo(
     () => calculateMatchesForJobs(jobs, profile?.resume_intelligence),
@@ -283,6 +287,7 @@ export default function Dashboard() {
               </Popover>
             </div>
           </div>
+          <VisaFilterPills value={visaFilter} onChange={setVisaFilter} />
         </div>
 
         {/* Fallback note */}

@@ -12,6 +12,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, BriefcaseBusiness, Target } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { analyzeVisaSponsorship } from "@/lib/visaSponsorship";
+import { VisaSponsorshipBadge } from "@/components/VisaSponsorshipBadge";
 
 interface JobPreviewPanelProps {
   job: Job;
@@ -176,6 +178,8 @@ export function JobPreviewPanel({ job, matchResult }: JobPreviewPanelProps) {
               {job.experience_years}
             </span>
           )}
+
+          <VisaSponsorshipBadge result={analyzeVisaSponsorship(job)} />
         </div>
 
         {/* Job Description - LinkedIn-style */}

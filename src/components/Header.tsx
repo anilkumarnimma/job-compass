@@ -47,6 +47,7 @@ export function Header() {
     if (!user) return [];
     return [
       { path: "/dashboard", label: "Jobs" },
+      { path: "/visa-jobs", label: "🌐 Visa Jobs" },
       { path: "/recommendations", label: "Recommendations" },
       { path: "/applied", label: "Applied" },
       { path: "/saved", label: "Saved" },
