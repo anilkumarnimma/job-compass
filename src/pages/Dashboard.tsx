@@ -103,7 +103,7 @@ export default function Dashboard() {
     dateTo: fallbackActive ? null : dateTo,
   });
 
-  const { isApplied } = useJobContext();
+  
 
   const jobs = data?.jobs || [];
 
@@ -158,7 +158,7 @@ export default function Dashboard() {
   const fallbackLabel = dateFilter === "today" ? "today" : dateFilter === "yesterday" ? "yesterday" : customDate ? format(customDate, "MMM d") : "";
 
   return (
-    <Layout showFooter={false}>
+    <Layout>
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -338,11 +338,10 @@ export default function Dashboard() {
             style={{
               gridTemplateColumns: selectedJob ? '30% 45% 25%' : '1fr minmax(280px, 340px)',
               maxWidth: selectedJob ? undefined : 1100,
-              height: 'calc(100vh - 220px)',
             }}
           >
             {/* LEFT — Job List */}
-            <div className="overflow-y-auto pr-2" style={{ maxHeight: 'calc(100vh - 220px)' }}>
+            <div className="pr-2">
               {!selectedJob && (
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -372,8 +371,7 @@ export default function Dashboard() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 24 }}
                   transition={{ duration: 0.25, ease: "easeOut" }}
-                  className="overflow-hidden border border-border/50 rounded-2xl bg-card/80 backdrop-blur-sm shadow-card relative flex flex-col"
-                  style={{ maxHeight: 'calc(100vh - 220px)' }}
+                  className="border border-border/50 rounded-2xl bg-card/80 backdrop-blur-sm shadow-card relative flex flex-col sticky top-[88px] self-start"
                 >
                   <button
                     onClick={() => setSelectedJob(null)}
@@ -388,7 +386,7 @@ export default function Dashboard() {
             )}
 
             {/* RIGHT — Sidebar (always visible) */}
-            <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 220px)' }}>
+            <div className="self-start sticky top-[88px]">
               <RightSidebar onFilterByRole={handleFilterByRole} />
             </div>
           </div>
