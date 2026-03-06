@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
 import { useProfile } from "@/hooks/useProfile";
-import { useIsUSUser } from "@/hooks/useIsUSUser";
 import { Briefcase, Menu, X, LogOut, Shield, User, Crown, ChevronDown, Sparkles, HelpCircle } from "lucide-react";
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -27,7 +26,6 @@ export function Header() {
   const { data: userRole } = useUserRole();
   const { data: allRoles } = useAllUserRoles();
   const { profile } = useProfile();
-  const isUSUser = useIsUSUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const STRIPE_LINK = "https://buy.stripe.com/eVqaEX9treQ0eOL4dX3AY00";
@@ -47,14 +45,12 @@ export function Header() {
   const getNavLinks = () => {
     if (user && isEmployer && !isFounder) return [];
     if (!user) return [];
-    const links = [
+    return [
       { path: "/dashboard", label: "Jobs" },
-      ...(isUSUser ? [{ path: "/visa-jobs", label: "🌐 Visa Jobs" }] : []),
       { path: "/recommendations", label: "Recommendations" },
       { path: "/applied", label: "Applied" },
       { path: "/saved", label: "Saved" },
     ];
-    return links;
   };
 
   const navLinks = getNavLinks();

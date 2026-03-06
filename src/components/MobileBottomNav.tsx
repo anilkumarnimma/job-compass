@@ -1,12 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
-import { Briefcase, Search, Heart, User, Globe } from "lucide-react";
+import { Briefcase, Search, Heart, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
-import { useIsUSUser } from "@/hooks/useIsUSUser";
 
-const allNavItems = [
+const navItems = [
   { path: "/dashboard", icon: Search, label: "Jobs" },
-  { path: "/visa-jobs", icon: Globe, label: "Visa", usOnly: true },
   { path: "/saved", icon: Heart, label: "Saved" },
   { path: "/applied", icon: Briefcase, label: "Applied" },
   { path: "/profile", icon: User, label: "Profile" },
@@ -15,11 +13,8 @@ const allNavItems = [
 export function MobileBottomNav() {
   const location = useLocation();
   const { user } = useAuth();
-  const isUSUser = useIsUSUser();
 
   if (!user) return null;
-
-  const navItems = allNavItems.filter(item => !item.usOnly || isUSUser);
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card/90 backdrop-blur-xl border-t border-border/50 safe-area-bottom">
