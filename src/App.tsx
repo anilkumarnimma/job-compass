@@ -27,6 +27,7 @@ import Help from "./pages/Help";
 import NotFound from "./pages/NotFound";
 import Recommendations from "./pages/Recommendations";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import VisaJobs from "./pages/VisaJobs";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -63,6 +64,11 @@ function AppRoutes() {
         <Route path="/saved" element={
           <ProtectedRoute allowedRoles={["user", "employer", "founder"]}>
             <Saved />
+          </ProtectedRoute>
+        } />
+        <Route path="/visa-jobs" element={
+          <ProtectedRoute allowedRoles={["user", "employer", "founder"]}>
+            <VisaJobs />
           </ProtectedRoute>
         } />
         <Route path="/profile" element={

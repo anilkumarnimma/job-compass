@@ -11,7 +11,9 @@ import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, ArrowRight } from "
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useMemo } from "react";
+import { analyzeVisaSponsorship } from "@/lib/visaSponsorship";
+import { VisaSponsorshipBadge } from "@/components/VisaSponsorshipBadge";
 
 interface JobCardProps {
   job: Job;
@@ -165,6 +167,7 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
 
       {/* Meta Row */}
       <div className="flex flex-wrap items-center gap-2 mb-3 relative z-10">
+        <VisaSponsorshipBadge result={analyzeVisaSponsorship(job)} compact />
         <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${getLocationBadge()}`}>
           <MapPin className="h-3.5 w-3.5" />
           {job.location}
