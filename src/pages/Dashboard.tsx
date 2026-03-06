@@ -30,6 +30,7 @@ import { WelcomeBanner } from "@/components/WelcomeBanner";
 import { VisaFilterPills } from "@/components/VisaFilterPills";
 import { VisaFilter, filterJobsByVisa } from "@/lib/visaSponsorship";
 import { useIsUSUser } from "@/hooks/useIsUSUser";
+import { NotificationOptInDialog } from "@/components/NotificationOptInDialog";
 
 type DateFilter = "all" | "today" | "yesterday" | "custom";
 
