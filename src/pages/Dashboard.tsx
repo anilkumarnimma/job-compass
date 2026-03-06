@@ -287,6 +287,7 @@ export default function Dashboard() {
               </Popover>
             </div>
           </div>
+          <VisaFilterPills value={visaFilter} onChange={setVisaFilter} />
         </div>
 
         {/* Fallback note */}
