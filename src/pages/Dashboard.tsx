@@ -340,6 +340,7 @@ export default function Dashboard() {
                 onPageChange={handlePageChange}
                 onTap={handleJobTap}
                 selectedJobId={selectedJob?.id}
+                matchResults={matchResults}
               />
             </div>
           </div>
@@ -371,6 +372,7 @@ export default function Dashboard() {
                 onPageChange={handlePageChange}
                 onTap={handleJobTap}
                 selectedJobId={selectedJob?.id}
+                matchResults={matchResults}
               />
             </div>
 
