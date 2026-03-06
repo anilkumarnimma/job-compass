@@ -577,6 +577,14 @@ export type Database = {
           yesterday_count: number
         }[]
       }
+      get_top_hiring_roles: {
+        Args: { max_roles?: number }
+        Returns: {
+          job_count: number
+          percentage: number
+          role_name: string
+        }[]
+      }
       has_employer_permission: {
         Args: { permission_name: string }
         Returns: boolean
