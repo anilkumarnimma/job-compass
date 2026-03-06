@@ -61,13 +61,11 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    if (!RESEND_API_KEY) {
+      throw new Error("RESEND_API_KEY is not configured");
     }
 
-    // Use Lovable AI to send a well-formatted email via the AI gateway
-    // We'll construct the email HTML directly and use Supabase's built-in email
     const siteUrl =
       Deno.env.get("SITE_URL") || "https://jobpulse99.lovable.app";
 
@@ -140,34 +138,20 @@ serve(async (req) => {
 </body>
 </html>`;
 
-    // Use the service role client to send email via Supabase Auth admin API
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { auth: { persistSession: false } }
-    );
-
-    // Use Supabase's built-in invite/magic link to send the notification
-    // Instead, we'll use a direct SMTP approach via the Lovable AI gateway
-    // to generate and send the email content
-
-    // Actually, use the Lovable AI gateway email endpoint
-    const emailResponse = await fetch(
-      "https://ai.gateway.lovable.dev/v1/email/send",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          to: user_email,
-          subject: "Your Sociax support ticket has been replied to",
-          html: htmlBody,
-          purpose: "transactional",
-        }),
-      }
-    );
+    // Send email via Resend API
+    const emailResponse = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "Sociax Support <noreply@sociax.tech>",
+        to: [user_email],
+        subject: "Your Sociax support ticket has been replied to",
+        html: htmlBody,
+      }),
+    });
 
     if (!emailResponse.ok) {
       const errText = await emailResponse.text();
