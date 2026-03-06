@@ -111,7 +111,7 @@ export function useRecommendedJobs() {
   const enabled = !profileLoading && (hasResume || hasProfileData || hasIntelligence);
 
   const query = useQuery({
-    queryKey: ["recommended-jobs", profile?.skills, profile?.current_title, profile?.location],
+    queryKey: ["recommended-jobs", profile?.skills, profile?.current_title, profile?.location, profile?.resume_intelligence],
     queryFn: async (): Promise<RecommendedJob[]> => {
       if (!profile) return [];
 
