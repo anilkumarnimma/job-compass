@@ -1,5 +1,6 @@
 import { Job } from "@/types/job";
 import { JobMatchResult } from "@/lib/jobMatcher";
+import { LandingProbabilityResult } from "@/lib/landingProbability";
 import { JobCard } from "@/components/JobCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search } from "lucide-react";
@@ -23,6 +24,7 @@ interface JobListPaginatedProps {
   onTap?: (job: Job) => void;
   selectedJobId?: string | null;
   matchResults?: Map<string, JobMatchResult>;
+  landingResults?: Map<string, LandingProbabilityResult>;
 }
 
 function JobCardSkeleton() {
@@ -65,6 +67,7 @@ export function JobListPaginated({
   onTap,
   selectedJobId,
   matchResults,
+  landingResults,
 }: JobListPaginatedProps) {
   if (isLoading) {
     return (
@@ -124,7 +127,7 @@ export function JobListPaginated({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: Math.min(index, 8) * 0.05, duration: 0.35, ease: "easeOut" }}
         >
-          <JobCard job={job} onTap={onTap} isSelected={selectedJobId === job.id} matchResult={matchResults?.get(job.id)} />
+          <JobCard job={job} onTap={onTap} isSelected={selectedJobId === job.id} matchResult={matchResults?.get(job.id)} landingProbability={landingResults?.get(job.id)} />
         </motion.div>
       ))}
 
