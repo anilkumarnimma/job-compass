@@ -79,6 +79,7 @@ export default function Dashboard() {
   const isMobile = useIsMobile();
   const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply } = useJobContext();
   const { toast } = useToast();
+  const isUSUser = useIsUSUser();
 
   useEffect(() => {
     if (searchParams.get("premium") === "true") {

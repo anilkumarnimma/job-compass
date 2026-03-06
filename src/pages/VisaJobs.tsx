@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { SearchBar } from "@/components/SearchBar";
 import { JobCard } from "@/components/JobCard";
@@ -13,6 +14,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useProfile } from "@/hooks/useProfile";
 import { useJobContext } from "@/context/JobContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsUSUser } from "@/hooks/useIsUSUser";
 import { calculateMatchesForJobs } from "@/lib/jobMatcher";
 import { analyzeVisaSponsorship, filterJobsByVisa, VisaFilter } from "@/lib/visaSponsorship";
 import { Job } from "@/types/job";
@@ -20,6 +22,7 @@ import { X, Globe, Shield } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 
 export default function VisaJobs() {
   const [searchInput, setSearchInput] = useState("");
