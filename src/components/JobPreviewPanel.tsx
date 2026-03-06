@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Job } from "@/types/job";
+import { JobMatchResult } from "@/lib/jobMatcher";
 import { useJobContext } from "@/context/JobContext";
 import { useAuth } from "@/context/AuthContext";
 import { useAtsCheck } from "@/hooks/useAtsCheck";
@@ -7,15 +8,17 @@ import { AtsCheckDialog } from "@/components/AtsCheckDialog";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, BriefcaseBusiness, Target } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 
 interface JobPreviewPanelProps {
   job: Job;
+  matchResult?: JobMatchResult;
 }
 
-export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
+export function JobPreviewPanel({ job, matchResult }: JobPreviewPanelProps) {
   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -73,6 +76,26 @@ export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
               Posted {formatDistanceToNow(job.posted_date, { addSuffix: false })} ago
             </p>
           </div>
+          {/* Match Score */}
+          {matchResult && (
+            <div className="flex flex-col items-end gap-1 shrink-0">
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-sm font-bold tabular-nums ${matchResult.scoreColor}`}>
+                      {matchResult.score}%
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="left" className="text-xs max-w-[220px] whitespace-pre-line">
+                    {matchResult.reason}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border ${matchResult.tierColor}`}>
+                {matchResult.tierLabel}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Action Buttons - sticky with header */}

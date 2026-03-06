@@ -1,7 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Job } from "@/types/job";
+import { JobMatchResult } from "@/lib/jobMatcher";
 import { useJobContext } from "@/context/JobContext";
 import { useAuth } from "@/context/AuthContext";
 import { CompanyLogo } from "@/components/CompanyLogo";
@@ -17,9 +19,10 @@ interface JobCardProps {
   onTap?: (job: Job) => void;
   isSelected?: boolean;
   style?: React.CSSProperties;
+  matchResult?: JobMatchResult;
 }
 
-export function JobCard({ job, onViewDetails, onTap, isSelected, style }: JobCardProps) {
+export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchResult }: JobCardProps) {
   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -129,11 +132,33 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style }: JobCar
                 {formatDistanceToNow(job.posted_date, { addSuffix: true })}
               </p>
             </div>
-            {job.is_reviewing && (
-              <Badge className="shrink-0 px-2.5 py-1 text-[11px] font-medium bg-success-bg text-success-text border-0 rounded-full whitespace-nowrap animate-pulse">
-                ● Reviewing
-              </Badge>
-            )}
+            {/* Match score & tier badges */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {matchResult && (
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold tabular-nums ${matchResult.scoreColor}`}>
+                        {matchResult.score}%
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" className="text-xs max-w-[200px] whitespace-pre-line">
+                      {matchResult.reason}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              {matchResult && matchResult.score >= 40 && (
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border ${matchResult.tierColor}`}>
+                  {matchResult.tierLabel}
+                </span>
+              )}
+              {!matchResult && job.is_reviewing && (
+                <Badge className="shrink-0 px-2.5 py-1 text-[11px] font-medium bg-success-bg text-success-text border-0 rounded-full whitespace-nowrap animate-pulse">
+                  ● Reviewing
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -1,4 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
+import { useProfile } from "@/hooks/useProfile";
+import { calculateMatchesForJobs } from "@/lib/jobMatcher";
 import { Layout } from "@/components/Layout";
 import { SearchBar } from "@/components/SearchBar";
 import { RightSidebar } from "@/components/RightSidebar";
@@ -103,9 +105,14 @@ export default function Dashboard() {
     dateTo: fallbackActive ? null : dateTo,
   });
 
-  
+  const { profile } = useProfile();
 
   const jobs = data?.jobs || [];
+
+  const matchResults = useMemo(
+    () => calculateMatchesForJobs(jobs, profile?.resume_intelligence),
+    [jobs, profile?.resume_intelligence]
+  );
 
   useEffect(() => {
     if (!isLoading && dateFilter !== "all" && !fallbackActive && data && data.totalCount === 0) {
@@ -333,6 +340,7 @@ export default function Dashboard() {
                 onPageChange={handlePageChange}
                 onTap={handleJobTap}
                 selectedJobId={selectedJob?.id}
+                matchResults={matchResults}
               />
             </div>
           </div>
@@ -364,6 +372,7 @@ export default function Dashboard() {
                 onPageChange={handlePageChange}
                 onTap={handleJobTap}
                 selectedJobId={selectedJob?.id}
+                matchResults={matchResults}
               />
             </div>
 
@@ -385,7 +394,7 @@ export default function Dashboard() {
                   >
                     <X className="h-4 w-4" />
                   </button>
-                  <JobPreviewPanel job={selectedJob} />
+                  <JobPreviewPanel job={selectedJob} matchResult={matchResults.get(selectedJob.id)} />
                 </motion.div>
               </AnimatePresence>
             )}
