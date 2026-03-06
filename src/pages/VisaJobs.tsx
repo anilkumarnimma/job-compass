@@ -35,6 +35,16 @@ export default function VisaJobs() {
   const isMobile = useIsMobile();
   const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply } = useJobContext();
   const { profile } = useProfile();
+  const isUSUser = useIsUSUser();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!isUSUser) {
+      toast({ title: "This section is for US-based job seekers only 🇺🇸" });
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isUSUser, navigate, toast]);
 
   const debouncedSearch = useDebounce(searchInput, 300);
 
