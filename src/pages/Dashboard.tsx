@@ -29,6 +29,7 @@ import { JobMatchesPanel } from "@/components/JobMatchesPanel";
 import { WelcomeBanner } from "@/components/WelcomeBanner";
 import { VisaFilterPills } from "@/components/VisaFilterPills";
 import { VisaFilter, filterJobsByVisa } from "@/lib/visaSponsorship";
+import { useIsUSUser } from "@/hooks/useIsUSUser";
 
 type DateFilter = "all" | "today" | "yesterday" | "custom";
 
@@ -78,6 +79,7 @@ export default function Dashboard() {
   const isMobile = useIsMobile();
   const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply } = useJobContext();
   const { toast } = useToast();
+  const isUSUser = useIsUSUser();
 
   useEffect(() => {
     if (searchParams.get("premium") === "true") {
@@ -304,7 +306,7 @@ export default function Dashboard() {
               </Popover>
             </div>
           </div>
-          <VisaFilterPills value={visaFilter} onChange={setVisaFilter} />
+          {isUSUser && <VisaFilterPills value={visaFilter} onChange={setVisaFilter} />}
         </div>
 
         {/* Fallback note */}
