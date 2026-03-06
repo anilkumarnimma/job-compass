@@ -26,7 +26,6 @@ export function Header() {
   const { data: userRole } = useUserRole();
   const { data: allRoles } = useAllUserRoles();
   const { profile } = useProfile();
-  const isUSUser = useIsUSUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const STRIPE_LINK = "https://buy.stripe.com/eVqaEX9treQ0eOL4dX3AY00";
