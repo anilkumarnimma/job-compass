@@ -6,6 +6,7 @@ import { useProfile, ProfileData, WorkExperience, Education } from "@/hooks/useP
 import { useToast } from "@/hooks/use-toast";
 import { useResumeParser, ExtractedResumeData } from "@/hooks/useResumeParser";
 import { useResumeIntelligence } from "@/hooks/useResumeIntelligence";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ProfileAtsPanel } from "@/components/ProfileAtsPanel";
 import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
@@ -24,8 +25,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   User, FileText, Upload, Download, Trash2, Loader2, Bug,
-  Link2, Briefcase, GraduationCap, Sparkles, Plus, Wand2, Award, Pencil, X, Target,
+  Link2, Briefcase, GraduationCap, Sparkles, Plus, Wand2, Award, Pencil, X, Target, Bell, Mail, Shield,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 const WORK_AUTH_OPTIONS = [
   "US Citizen", "Permanent Resident (Green Card)", "H-1B", "OPT / CPT",
