@@ -1,8 +1,7 @@
-import { usePublishedHiringGraphData } from "@/hooks/useHiringGraphData";
-import { TrendingUp, BarChart3, Clock } from "lucide-react";
+import { useTopHiringsAnalysis } from "@/hooks/useTopHiringsAnalysis";
+import { TrendingUp, BarChart3 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMemo, useState, useEffect } from "react";
-import { formatDistanceToNow } from "date-fns";
 import {
   Tooltip,
   TooltipContent,
@@ -23,7 +22,7 @@ interface TopHiringsPanelDisplayProps {
 }
 
 export function TopHiringsPanelDisplay({ onFilterByRole }: TopHiringsPanelDisplayProps) {
-  const { data: entries = [], isLoading } = usePublishedHiringGraphData();
+  const { data: entries = [], isLoading } = useTopHiringsAnalysis();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [isAnimated, setIsAnimated] = useState(false);
 
@@ -44,10 +43,8 @@ export function TopHiringsPanelDisplay({ onFilterByRole }: TopHiringsPanelDispla
     }));
   }, [entries]);
 
-  const lastUpdated = useMemo(() => {
-    if (entries.length === 0) return null;
-    const dates = entries.map(e => new Date(e.published_at));
-    return new Date(Math.max(...dates.map(d => d.getTime())));
+  const totalJobs = useMemo(() => {
+    return entries.reduce((sum, e) => sum + e.job_count, 0);
   }, [entries]);
 
   if (isLoading) {
@@ -95,14 +92,8 @@ export function TopHiringsPanelDisplay({ onFilterByRole }: TopHiringsPanelDispla
           <div className="flex flex-col items-end gap-1 shrink-0">
             <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-green-500/10 border border-green-500/20">
               <TrendingUp className="h-2.5 w-2.5 text-green-600" />
-              <span className="text-[9px] font-semibold text-green-600">+12%</span>
+              <span className="text-[9px] font-semibold text-green-600">Live</span>
             </div>
-            {lastUpdated && (
-              <div className="flex items-center gap-1 text-[9px] text-muted-foreground/70">
-                <Clock className="h-2.5 w-2.5" />
-                <span>{formatDistanceToNow(lastUpdated, { addSuffix: false })} ago</span>
-              </div>
-            )}
           </div>
         </div>
 
@@ -112,7 +103,7 @@ export function TopHiringsPanelDisplay({ onFilterByRole }: TopHiringsPanelDispla
             <div className="h-28 w-28 mx-auto mb-4 rounded-full border-4 border-dashed border-muted-foreground/15 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
               <BarChart3 className="h-12 w-12 text-muted-foreground/25" />
             </div>
-            <p className="text-sm text-muted-foreground font-medium">No hiring data published yet</p>
+            <p className="text-sm text-muted-foreground font-medium">No hiring data available yet</p>
             <p className="text-xs text-muted-foreground/60 mt-1">Check back soon for updates</p>
           </div>
         ) : (
@@ -123,7 +114,7 @@ export function TopHiringsPanelDisplay({ onFilterByRole }: TopHiringsPanelDispla
                 const isHovered = hoveredIndex === index;
 
                 return (
-                  <Tooltip key={entry.id}>
+                  <Tooltip key={entry.role_name}>
                     <TooltipTrigger asChild>
                       <button
                         onClick={() => onFilterByRole?.(entry.role_name)}
@@ -144,11 +135,16 @@ export function TopHiringsPanelDisplay({ onFilterByRole }: TopHiringsPanelDispla
                               </span>
                             )}
                           </span>
-                          <span className={`text-[11px] font-bold ml-2 tabular-nums ${
-                            isTop ? 'text-foreground' : 'text-muted-foreground'
-                          }`}>
-                            {entry.percentage}%
-                          </span>
+                          <div className="flex items-center gap-1.5 ml-2">
+                            <span className="text-[9px] text-muted-foreground/60 tabular-nums">
+                              {entry.job_count} jobs
+                            </span>
+                            <span className={`text-[11px] font-bold tabular-nums ${
+                              isTop ? 'text-foreground' : 'text-muted-foreground'
+                            }`}>
+                              {entry.percentage}%
+                            </span>
+                          </div>
                         </div>
 
                         {/* Bar */}
@@ -179,7 +175,7 @@ export function TopHiringsPanelDisplay({ onFilterByRole }: TopHiringsPanelDispla
             {/* Stats line */}
             <div className="text-center mt-3">
               <p className="text-[9px] text-muted-foreground/70">
-                Total jobs scanned: <span className="font-semibold text-muted-foreground">2,340</span>
+                Based on <span className="font-semibold text-muted-foreground">{totalJobs.toLocaleString()}</span> categorized listings
               </p>
             </div>
           </TooltipProvider>
