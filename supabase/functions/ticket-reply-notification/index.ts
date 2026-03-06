@@ -138,34 +138,20 @@ serve(async (req) => {
 </body>
 </html>`;
 
-    // Use the service role client to send email via Supabase Auth admin API
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { auth: { persistSession: false } }
-    );
-
-    // Use Supabase's built-in invite/magic link to send the notification
-    // Instead, we'll use a direct SMTP approach via the Lovable AI gateway
-    // to generate and send the email content
-
-    // Actually, use the Lovable AI gateway email endpoint
-    const emailResponse = await fetch(
-      "https://ai.gateway.lovable.dev/v1/email/send",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          to: user_email,
-          subject: "Your Sociax support ticket has been replied to",
-          html: htmlBody,
-          purpose: "transactional",
-        }),
-      }
-    );
+    // Send email via Resend API
+    const emailResponse = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "Sociax Support <noreply@sociax.tech>",
+        to: [user_email],
+        subject: "Your Sociax support ticket has been replied to",
+        html: htmlBody,
+      }),
+    });
 
     if (!emailResponse.ok) {
       const errText = await emailResponse.text();
