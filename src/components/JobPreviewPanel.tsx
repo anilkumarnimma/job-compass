@@ -95,7 +95,7 @@ export function JobPreviewPanel({ job, matchResult }: JobPreviewPanelProps) {
                 {matchResult.tierLabel}
               </span>
             </div>
-          )
+          )}
         </div>
 
         {/* Action Buttons - sticky with header */}
