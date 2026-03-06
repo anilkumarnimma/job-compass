@@ -11,9 +11,7 @@ interface VisaFilterPillsProps {
 const filters: { value: VisaFilter; label: string; emoji: string }[] = [
   { value: "all", label: "All Jobs", emoji: "🇺🇸" },
   { value: "sponsors", label: "Sponsorship", emoji: "✅" },
-  { value: "opt_friendly", label: "OPT", emoji: "🎓" },
-  { value: "stem_opt", label: "STEM OPT", emoji: "🔬" },
-  { value: "h1b", label: "H1B", emoji: "🌐" },
+  { value: "opt_friendly", label: "OPT / STEM OPT", emoji: "🎓" },
 ];
 
 const chipVariants = {
