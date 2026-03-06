@@ -103,7 +103,7 @@ export default function Dashboard() {
     dateTo: fallbackActive ? null : dateTo,
   });
 
-  const { isApplied } = useJobContext();
+  
 
   const jobs = data?.jobs || [];
 
