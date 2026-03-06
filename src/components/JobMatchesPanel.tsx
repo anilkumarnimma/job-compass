@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Sparkles, Target, TrendingUp, AlertTriangle, ArrowRight } from "lucide-react";
+import { Sparkles, Target, TrendingUp, AlertTriangle, ArrowRight, Info } from "lucide-react";
 import { useRecommendedJobs, RecommendedJob } from "@/hooks/useRecommendedJobs";
 import { useProfile } from "@/hooks/useProfile";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,29 +14,32 @@ function computeMatchPercent(job: RecommendedJob, maxScore: number): number {
 
 export function JobMatchesPanel() {
   const { data: jobs, isLoading, canRecommend } = useRecommendedJobs();
-  const { isLoading: profileLoading } = useProfile();
+  const { profile, isLoading: profileLoading } = useProfile();
   const navigate = useNavigate();
 
   const maxScore = useMemo(() => {
     if (!jobs?.length) return 1;
-    return jobs[0].matchScore;
+    return Math.max(jobs[0].matchScore, 1);
   }, [jobs]);
 
-  const { strong, good, needsSkills, topMatches } = useMemo(() => {
-    if (!jobs?.length) return { strong: 0, good: 0, needsSkills: 0, topMatches: [] as { title: string; percent: number }[] };
+  const { strong, good, needsSkills, topMatches, allZero } = useMemo(() => {
+    if (!jobs?.length) return { strong: 0, good: 0, needsSkills: 0, topMatches: [] as { title: string; percent: number }[], allZero: true };
 
     let s = 0, g = 0, n = 0;
     const top: { title: string; percent: number }[] = [];
+    const allZero = jobs.every(j => j.matchScore === 0);
 
     for (const job of jobs) {
       const pct = computeMatchPercent(job, maxScore);
-      if (pct >= 80) s++;
-      else if (pct >= 60) g++;
-      else n++;
+      // Lowered thresholds: strong 70%+, good 40-69%, needs skills 20-39%
+      if (pct >= 70) s++;
+      else if (pct >= 40) g++;
+      else if (pct >= 20) n++;
+      // else: below 20% - don't count
       if (top.length < 3) top.push({ title: job.title, percent: pct });
     }
 
-    return { strong: s, good: g, needsSkills: n, topMatches: top };
+    return { strong: s, good: g, needsSkills: n, topMatches: top, allZero };
   }, [jobs, maxScore]);
 
   if (profileLoading || isLoading) {
@@ -77,10 +80,41 @@ export function JobMatchesPanel() {
     );
   }
 
+  // If all jobs scored 0 or no jobs found, show a helpful fallback
+  if (allZero && jobs && jobs.length > 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="rounded-lg border border-border/40 bg-card p-3 shadow-sm max-w-[600px]"
+      >
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-1.5">
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            <h3 className="text-[13px] font-semibold text-foreground">Job matches for you</h3>
+          </div>
+          <button
+            onClick={() => navigate("/recommendations")}
+            className="flex items-center gap-0.5 text-[11px] font-medium text-primary hover:text-primary/80 transition-colors"
+          >
+            View all
+            <ArrowRight className="h-3 w-3" />
+          </button>
+        </div>
+        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <Info className="h-3 w-3 shrink-0" />
+          <span>Showing latest jobs — <button onClick={() => navigate("/profile")} className="text-primary hover:underline">complete your profile</button> for personalized matches</span>
+        </div>
+      </motion.div>
+    );
+  }
+
+  const total = strong + good + needsSkills;
   const stats = [
-    { label: "Strong matches", count: strong, icon: Target, color: "text-emerald-600 dark:text-emerald-400" },
-    { label: "Good matches", count: good, icon: TrendingUp, color: "text-amber-600 dark:text-amber-400" },
-    { label: "Needs skills", count: needsSkills, icon: AlertTriangle, color: "text-muted-foreground" },
+    { label: "strong matches", count: strong, icon: Target, color: "text-emerald-600 dark:text-emerald-400" },
+    { label: "good matches", count: good, icon: TrendingUp, color: "text-amber-600 dark:text-amber-400" },
+    { label: "needs skills", count: needsSkills, icon: AlertTriangle, color: "text-muted-foreground" },
   ];
 
   return (
@@ -110,7 +144,7 @@ export function JobMatchesPanel() {
           <div key={s.label} className="flex items-center gap-1">
             <s.icon className={cn("h-3 w-3", s.color)} />
             <span className={cn("font-semibold", s.color)}>{s.count}</span>
-            <span className="text-muted-foreground">{s.label.toLowerCase()}</span>
+            <span className="text-muted-foreground">{s.label}</span>
           </div>
         ))}
       </div>
