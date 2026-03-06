@@ -330,7 +330,7 @@ export default function Dashboard() {
                 isLoading={isLoading}
                 currentPage={currentPage}
                 totalPages={totalPages}
-                onPageChange={setCurrentPage}
+                onPageChange={handlePageChange}
                 onTap={handleJobTap}
                 selectedJobId={selectedJob?.id}
               />
@@ -361,7 +361,7 @@ export default function Dashboard() {
                 isLoading={isLoading}
                 currentPage={currentPage}
                 totalPages={totalPages}
-                onPageChange={setCurrentPage}
+                onPageChange={handlePageChange}
                 onTap={handleJobTap}
                 selectedJobId={selectedJob?.id}
               />
