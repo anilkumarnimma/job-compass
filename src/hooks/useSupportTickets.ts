@@ -117,14 +117,34 @@ export function useSupportTickets() {
     },
   });
 
-  // Reply to ticket (admin only)
+  // Reply to ticket (admin only) + send email notification
   const replyToTicket = async (ticketId: string, reply: string) => {
+    // Find the ticket to get user details for the email
+    const ticket = tickets?.find((t) => t.id === ticketId);
+
     await updateTicketMutation.mutateAsync({
       id: ticketId,
       admin_reply: reply,
       replied_at: new Date().toISOString(),
       status: "in_progress",
     });
+
+    // Fire-and-forget email notification
+    if (ticket) {
+      supabase.functions
+        .invoke("ticket-reply-notification", {
+          body: {
+            ticket_id: ticketId,
+            reply_text: reply,
+            user_email: ticket.email,
+            user_name: ticket.name,
+            ticket_subject: ticket.subject,
+          },
+        })
+        .then(({ error }) => {
+          if (error) console.error("Email notification failed:", error);
+        });
+    }
   };
 
   // Close ticket (admin only)
