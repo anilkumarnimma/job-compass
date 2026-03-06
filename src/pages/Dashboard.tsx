@@ -394,7 +394,7 @@ export default function Dashboard() {
                   >
                     <X className="h-4 w-4" />
                   </button>
-                  <JobPreviewPanel job={selectedJob} />
+                  <JobPreviewPanel job={selectedJob} matchResult={matchResults.get(selectedJob.id)} />
                 </motion.div>
               </AnimatePresence>
             )}
