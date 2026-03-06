@@ -1,7 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Job } from "@/types/job";
+import { JobMatchResult } from "@/lib/jobMatcher";
 import { useJobContext } from "@/context/JobContext";
 import { useAuth } from "@/context/AuthContext";
 import { CompanyLogo } from "@/components/CompanyLogo";
@@ -17,9 +19,10 @@ interface JobCardProps {
   onTap?: (job: Job) => void;
   isSelected?: boolean;
   style?: React.CSSProperties;
+  matchResult?: JobMatchResult;
 }
 
-export function JobCard({ job, onViewDetails, onTap, isSelected, style }: JobCardProps) {
+export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchResult }: JobCardProps) {
   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
   const navigate = useNavigate();
