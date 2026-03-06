@@ -61,13 +61,11 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    if (!RESEND_API_KEY) {
+      throw new Error("RESEND_API_KEY is not configured");
     }
 
-    // Use Lovable AI to send a well-formatted email via the AI gateway
-    // We'll construct the email HTML directly and use Supabase's built-in email
     const siteUrl =
       Deno.env.get("SITE_URL") || "https://jobpulse99.lovable.app";
 
