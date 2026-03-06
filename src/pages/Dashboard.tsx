@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useProfile } from "@/hooks/useProfile";
 import { calculateMatchesForJobs } from "@/lib/jobMatcher";
+import { calculateLandingProbability } from "@/lib/landingProbability";
+import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
 import { Layout } from "@/components/Layout";
 import { SearchBar } from "@/components/SearchBar";
 import { RightSidebar } from "@/components/RightSidebar";
@@ -24,6 +26,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { JobMatchesPanel } from "@/components/JobMatchesPanel";
+import { WelcomeBanner } from "@/components/WelcomeBanner";
 import { VisaFilterPills } from "@/components/VisaFilterPills";
 import { VisaFilter, filterJobsByVisa } from "@/lib/visaSponsorship";
 
@@ -118,6 +121,17 @@ export default function Dashboard() {
     [jobs, profile?.resume_intelligence]
   );
 
+  const landingResults = useMemo(() => {
+    const intelligence = profile?.resume_intelligence as ResumeIntelligence | null | undefined;
+    if (!intelligence) return new Map();
+    const results = new Map();
+    for (const job of jobs) {
+      const lr = calculateLandingProbability(job, matchResults.get(job.id), intelligence);
+      if (lr) results.set(job.id, lr);
+    }
+    return results;
+  }, [jobs, matchResults, profile?.resume_intelligence]);
+
   useEffect(() => {
     if (!isLoading && dateFilter !== "all" && !fallbackActive && data && data.totalCount === 0) {
       setFallbackActive(true);
@@ -181,6 +195,9 @@ export default function Dashboard() {
         transition={{ duration: 0.4, ease: "easeOut" }}
         className="w-full max-w-[1600px] mx-auto px-4 md:px-6 py-4"
       >
+        {/* Welcome Banner */}
+        <WelcomeBanner jobs={rawJobs} />
+
         {/* Header + Search + Filters (above columns) */}
         <div className="mb-4">
           <div className="flex items-start justify-between mb-4">
@@ -346,6 +363,7 @@ export default function Dashboard() {
                 onTap={handleJobTap}
                 selectedJobId={selectedJob?.id}
                 matchResults={matchResults}
+                landingResults={landingResults}
               />
             </div>
           </div>
@@ -378,6 +396,7 @@ export default function Dashboard() {
                 onTap={handleJobTap}
                 selectedJobId={selectedJob?.id}
                 matchResults={matchResults}
+                landingResults={landingResults}
               />
             </div>
 
@@ -399,7 +418,7 @@ export default function Dashboard() {
                   >
                     <X className="h-4 w-4" />
                   </button>
-                  <JobPreviewPanel job={selectedJob} matchResult={matchResults.get(selectedJob.id)} />
+                  <JobPreviewPanel job={selectedJob} matchResult={matchResults.get(selectedJob.id)} landingProbability={landingResults.get(selectedJob.id)} />
                 </motion.div>
               </AnimatePresence>
             )}

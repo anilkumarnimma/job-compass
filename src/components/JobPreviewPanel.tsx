@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { Job } from "@/types/job";
 import { JobMatchResult } from "@/lib/jobMatcher";
+import { LandingProbabilityResult } from "@/lib/landingProbability";
+import { LandingProbabilityPanel } from "@/components/LandingProbabilityPanel";
+import { SmartResumeTips } from "@/components/SmartResumeTips";
 import { useJobContext } from "@/context/JobContext";
 import { useAuth } from "@/context/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
 import { useAtsCheck } from "@/hooks/useAtsCheck";
 import { AtsCheckDialog } from "@/components/AtsCheckDialog";
 import { CompanyLogo } from "@/components/CompanyLogo";
@@ -14,15 +18,18 @@ import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { analyzeVisaSponsorship } from "@/lib/visaSponsorship";
 import { VisaSponsorshipBadge } from "@/components/VisaSponsorshipBadge";
+import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
 
 interface JobPreviewPanelProps {
   job: Job;
   matchResult?: JobMatchResult;
+  landingProbability?: LandingProbabilityResult | null;
 }
 
-export function JobPreviewPanel({ job, matchResult }: JobPreviewPanelProps) {
+export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPreviewPanelProps) {
   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
+  const { profile } = useProfile();
   const navigate = useNavigate();
   const { runCheck, isChecking, result, clearResult } = useAtsCheck();
   const [showAtsDialog, setShowAtsDialog] = useState(false);
@@ -207,6 +214,14 @@ export function JobPreviewPanel({ job, matchResult }: JobPreviewPanelProps) {
             </div>
           </div>
         )}
+
+        {/* Landing Probability */}
+        {landingProbability && (
+          <LandingProbabilityPanel result={landingProbability} />
+        )}
+
+        {/* Smart Resume Tips */}
+        <SmartResumeTips job={job} intelligence={profile?.resume_intelligence as ResumeIntelligence | null | undefined} />
       </div>
     </div>
   );

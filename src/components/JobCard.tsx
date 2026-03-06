@@ -4,6 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Job } from "@/types/job";
 import { JobMatchResult } from "@/lib/jobMatcher";
+import { LandingProbabilityResult } from "@/lib/landingProbability";
+import { LandingProbabilityBadge } from "@/components/LandingProbabilityBadge";
 import { useJobContext } from "@/context/JobContext";
 import { useAuth } from "@/context/AuthContext";
 import { CompanyLogo } from "@/components/CompanyLogo";
@@ -22,9 +24,10 @@ interface JobCardProps {
   isSelected?: boolean;
   style?: React.CSSProperties;
   matchResult?: JobMatchResult;
+  landingProbability?: LandingProbabilityResult | null;
 }
 
-export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchResult }: JobCardProps) {
+export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchResult, landingProbability }: JobCardProps) {
   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -154,6 +157,9 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border ${matchResult.tierColor}`}>
                   {matchResult.tierLabel}
                 </span>
+              )}
+              {landingProbability && (
+                <LandingProbabilityBadge result={landingProbability} compact />
               )}
               {!matchResult && job.is_reviewing && (
                 <Badge className="shrink-0 px-2.5 py-1 text-[11px] font-medium bg-success-bg text-success-text border-0 rounded-full whitespace-nowrap animate-pulse">
