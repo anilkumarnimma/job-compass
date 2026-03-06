@@ -65,6 +65,7 @@ export default function Profile() {
   const { profile, isLoading, updateProfile, isUpdating, uploadResume, downloadResume, deleteResume, isUploading } = useProfile();
   const { toast } = useToast();
   const { parseResume, isParsing, extractedData, clearExtracted } = useResumeParser();
+  const { analyzeResume, isAnalyzing } = useResumeIntelligence();
 
 
   const { data: effectiveRole, isLoading: roleLoading } = useUserRole();
