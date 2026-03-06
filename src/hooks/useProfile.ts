@@ -36,6 +36,7 @@ export interface ProfileData {
   github_url: string | null;
   portfolio_url: string | null;
   work_authorization: string | null;
+  country: string | null;
   visa_status: string | null;
   experience_years: number | null;
   current_company: string | null;
