@@ -145,7 +145,7 @@ export function analyzeVisaSponsorship(job: Job): VisaSponsorshipResult {
   };
 }
 
-export type VisaFilter = "all" | "sponsors" | "opt_friendly" | "stem_opt" | "h1b";
+export type VisaFilter = "all" | "sponsors" | "opt_friendly";
 
 export function filterJobsByVisa(jobs: Job[], filter: VisaFilter): Job[] {
   if (filter === "all") return jobs;
@@ -158,11 +158,6 @@ export function filterJobsByVisa(jobs: Job[], filter: VisaFilter): Job[] {
       case "opt_friendly":
         return result.status === "opt_friendly" || result.status === "stem_opt" || 
                (result.status === "sponsors" && result.visaTypes.includes("OPT"));
-      case "stem_opt":
-        return result.status === "stem_opt" || 
-               (result.status === "sponsors" && result.visaTypes.includes("STEM OPT"));
-      case "h1b":
-        return result.status === "sponsors";
       default:
         return true;
     }
