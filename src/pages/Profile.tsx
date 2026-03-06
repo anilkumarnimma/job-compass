@@ -10,6 +10,7 @@ import { ProfileAtsPanel } from "@/components/ProfileAtsPanel";
 import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { ProfileWelcomeBanner, SkillsCloudWidget, QuickStatsWidget } from "@/components/ProfileBentoWidgets";
+import { ResumeIntelligenceCard } from "@/components/ResumeIntelligenceCard";
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Header } from "@/components/Header";
@@ -384,6 +385,10 @@ export default function Profile() {
           <ProfileWelcomeBanner />
           <SkillsCloudWidget />
           <QuickStatsWidget />
+          <ResumeIntelligenceCard
+            intelligence={profile?.resume_intelligence ?? null}
+            isAnalyzing={isAnalyzing}
+          />
         </div>
 
         <div className="flex items-center justify-between mb-6">
