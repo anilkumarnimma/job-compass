@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -54,6 +55,7 @@ export interface ProfileData {
   veteran_status: string | null;
   disability_status: string | null;
   military_service: string | null;
+  resume_intelligence: ResumeIntelligence | null;
 }
 
 export function useProfile() {

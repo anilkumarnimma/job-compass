@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.socia-chat]
 verify_jwt = false
+
+[functions.analyze-resume]
+verify_jwt = false

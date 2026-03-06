@@ -5,10 +5,12 @@ import { useAuth } from "@/context/AuthContext";
 import { useProfile, ProfileData, WorkExperience, Education } from "@/hooks/useProfile";
 import { useToast } from "@/hooks/use-toast";
 import { useResumeParser, ExtractedResumeData } from "@/hooks/useResumeParser";
+import { useResumeIntelligence } from "@/hooks/useResumeIntelligence";
 import { ProfileAtsPanel } from "@/components/ProfileAtsPanel";
 import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { ProfileWelcomeBanner, SkillsCloudWidget, QuickStatsWidget } from "@/components/ProfileBentoWidgets";
+import { ResumeIntelligenceCard } from "@/components/ResumeIntelligenceCard";
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Header } from "@/components/Header";
@@ -64,6 +66,7 @@ export default function Profile() {
   const { profile, isLoading, updateProfile, isUpdating, uploadResume, downloadResume, deleteResume, isUploading } = useProfile();
   const { toast } = useToast();
   const { parseResume, isParsing, extractedData, clearExtracted } = useResumeParser();
+  const { analyzeResume, isAnalyzing } = useResumeIntelligence();
 
 
   const { data: effectiveRole, isLoading: roleLoading } = useUserRole();
@@ -213,6 +216,19 @@ export default function Profile() {
     setSavedCerts(certifications);
     setIsEditing(false);
     setIsDirty(false);
+
+    // Trigger resume intelligence analysis in the background
+    const filteredWork = workExperiences.filter((w) => w.title || w.company);
+    const filteredEdu = educations.filter((e) => e.school || e.degree);
+    if (skillsArray.length > 0 || filteredWork.length > 0) {
+      analyzeResume({
+        skills: skillsArray,
+        workExperience: filteredWork,
+        education: filteredEdu,
+        currentTitle: currentWork?.title || formData.current_title || undefined,
+        experienceYears: formData.experience_years ? Number(formData.experience_years) : undefined,
+      });
+    }
   };
 
   // Resume handlers
@@ -369,6 +385,10 @@ export default function Profile() {
           <ProfileWelcomeBanner />
           <SkillsCloudWidget />
           <QuickStatsWidget />
+          <ResumeIntelligenceCard
+            intelligence={profile?.resume_intelligence ?? null}
+            isAnalyzing={isAnalyzing}
+          />
         </div>
 
         <div className="flex items-center justify-between mb-6">

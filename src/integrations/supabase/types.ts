@@ -334,6 +334,7 @@ export type Database = {
           portfolio_url: string | null
           race_ethnicity: string | null
           resume_filename: string | null
+          resume_intelligence: Json | null
           resume_url: string | null
           skills: string[] | null
           state: string | null
@@ -377,6 +378,7 @@ export type Database = {
           portfolio_url?: string | null
           race_ethnicity?: string | null
           resume_filename?: string | null
+          resume_intelligence?: Json | null
           resume_url?: string | null
           skills?: string[] | null
           state?: string | null
@@ -420,6 +422,7 @@ export type Database = {
           portfolio_url?: string | null
           race_ethnicity?: string | null
           resume_filename?: string | null
+          resume_intelligence?: Json | null
           resume_url?: string | null
           skills?: string[] | null
           state?: string | null
