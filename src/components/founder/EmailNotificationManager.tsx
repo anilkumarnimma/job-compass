@@ -19,6 +19,22 @@ export function EmailNotificationManager({ users }: UserEmailPanelProps) {
   const toggleDigest = useToggleUserDigest();
   const sendDigest = useSendDigestNow();
   const [search, setSearch] = useState("");
+  const queryClient = useQueryClient();
+
+  // Realtime: auto-refresh when any user unsubscribes
+  useEffect(() => {
+    const channel = supabase
+      .channel("email-prefs-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "email_notification_preferences" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["all-email-prefs"] });
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
 
   const prefsMap = new Map(prefs.map((p) => [p.user_id, p]));
 
