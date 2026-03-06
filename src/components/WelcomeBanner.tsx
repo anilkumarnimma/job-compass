@@ -50,7 +50,11 @@ export function WelcomeBanner({ jobs }: WelcomeBannerProps) {
 
   const firstName = profile?.first_name || profile?.full_name?.split(" ")[0] || "there";
   const primaryRole = intelligence.primaryRole || "your background";
-  const topSkills = (intelligence.topSkills || []).slice(0, 2).join(" + ");
+  const topSkills = (intelligence.topSkills || [])
+    .map(s => s.replace(/[^\x00-\x7F]+/g, "").trim())
+    .filter(s => s.length > 1)
+    .slice(0, 2)
+    .join(" + ");
 
   return (
     <motion.div
