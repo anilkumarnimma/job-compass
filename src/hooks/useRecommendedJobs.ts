@@ -28,7 +28,7 @@ function parseJob(row: any): Job {
 function extractKeywords(profile: any): string[] {
   const keywords: string[] = [];
 
-  // Skills
+  // Skills from profile
   if (profile.skills?.length) {
     keywords.push(...profile.skills);
   }
@@ -47,8 +47,24 @@ function extractKeywords(profile: any): string[] {
     }
   }
 
+  // Resume intelligence data (covers cases where resume was uploaded but form wasn't saved)
+  const intel = profile.resume_intelligence;
+  if (intel) {
+    if (intel.topSkills?.length) keywords.push(...intel.topSkills);
+    if (intel.secondarySkills?.length) keywords.push(...intel.secondarySkills);
+    if (intel.primaryStack?.length) keywords.push(...intel.primaryStack);
+    if (intel.primaryRole) {
+      keywords.push(...intel.primaryRole.split(/[\s,/]+/).filter((w: string) => w.length > 2));
+    }
+    if (intel.jobTitlesToTarget?.length) {
+      for (const title of intel.jobTitlesToTarget) {
+        keywords.push(...title.split(/[\s,/]+/).filter((w: string) => w.length > 2));
+      }
+    }
+  }
+
   // Deduplicate, lowercase
-  return [...new Set(keywords.map((k: string) => k.toLowerCase()))].slice(0, 15);
+  return [...new Set(keywords.map((k: string) => k.toLowerCase()))].slice(0, 30);
 }
 
 function scoreJob(job: Job, keywords: string[], profileLocation?: string | null): { score: number; matchedSkills: string[] } {
@@ -90,11 +106,12 @@ export function useRecommendedJobs() {
 
   const hasResume = !!profile?.resume_url;
   const hasProfileData = !!(profile?.skills?.length || profile?.current_title || (Array.isArray(profile?.work_experience) && profile.work_experience.length));
+  const hasIntelligence = !!(profile?.resume_intelligence);
 
-  const enabled = !profileLoading && (hasResume || hasProfileData);
+  const enabled = !profileLoading && (hasResume || hasProfileData || hasIntelligence);
 
   const query = useQuery({
-    queryKey: ["recommended-jobs", profile?.skills, profile?.current_title, profile?.location],
+    queryKey: ["recommended-jobs", profile?.skills, profile?.current_title, profile?.location, profile?.resume_intelligence],
     queryFn: async (): Promise<RecommendedJob[]> => {
       if (!profile) return [];
 
@@ -133,6 +150,6 @@ export function useRecommendedJobs() {
     ...query,
     hasResume,
     hasProfileData,
-    canRecommend: hasResume || hasProfileData,
+    canRecommend: hasResume || hasProfileData || hasIntelligence,
   };
 }
