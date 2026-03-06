@@ -150,6 +150,6 @@ export function useRecommendedJobs() {
     ...query,
     hasResume,
     hasProfileData,
-    canRecommend: hasResume || hasProfileData,
+    canRecommend: hasResume || hasProfileData || hasIntelligence,
   };
 }
