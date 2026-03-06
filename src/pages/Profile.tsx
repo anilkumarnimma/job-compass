@@ -6,6 +6,7 @@ import { useProfile, ProfileData, WorkExperience, Education } from "@/hooks/useP
 import { useToast } from "@/hooks/use-toast";
 import { useResumeParser, ExtractedResumeData } from "@/hooks/useResumeParser";
 import { useResumeIntelligence } from "@/hooks/useResumeIntelligence";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ProfileAtsPanel } from "@/components/ProfileAtsPanel";
 import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
@@ -24,8 +25,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   User, FileText, Upload, Download, Trash2, Loader2, Bug,
-  Link2, Briefcase, GraduationCap, Sparkles, Plus, Wand2, Award, Pencil, X, Target,
+  Link2, Briefcase, GraduationCap, Sparkles, Plus, Wand2, Award, Pencil, X, Target, Bell, Mail, Shield,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 const WORK_AUTH_OPTIONS = [
   "US Citizen", "Permanent Resident (Green Card)", "H-1B", "OPT / CPT",
@@ -836,6 +838,9 @@ export default function Profile() {
             </CardContent>
           </Card>
 
+          {/* Email Notification Preferences */}
+          <EmailNotificationPrefsCard userId={user.id} />
+
           {/* Account / Security */}
           <Card className="rounded-3xl">
             <CardHeader>
@@ -939,5 +944,87 @@ export default function Profile() {
       </AlertDialog>
 
     </div>
+  );
+}
+
+function EmailNotificationPrefsCard({ userId }: { userId: string }) {
+  const queryClient = useQueryClient();
+
+  const { data: prefs, isLoading } = useQuery({
+    queryKey: ["my-email-prefs", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("email_notification_preferences")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const updatePref = useMutation({
+    mutationFn: async (updates: Record<string, any>) => {
+      const { error } = await supabase
+        .from("email_notification_preferences")
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq("user_id", userId);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["my-email-prefs", userId] }),
+  });
+
+  const toggle = (key: string, value: boolean) => {
+    const updates: Record<string, any> = { [key]: value };
+    if (key === "daily_digest_enabled") {
+      updates.unsubscribed_at = value ? null : new Date().toISOString();
+    }
+    updatePref.mutate(updates);
+  };
+
+  if (isLoading) return <Card className="rounded-3xl p-6"><Loader2 className="h-5 w-5 animate-spin mx-auto" /></Card>;
+
+  return (
+    <Card className="rounded-3xl">
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Bell className="h-5 w-5 text-muted-foreground" />
+          <CardTitle className="text-lg">Email Notifications</CardTitle>
+        </div>
+        <CardDescription>Manage your daily job digest and notification preferences</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
+          <div className="flex items-center gap-2.5">
+            <Mail className="h-4 w-4 text-primary" />
+            <div>
+              <p className="text-sm font-medium">Daily Job Digest</p>
+              <p className="text-xs text-muted-foreground">Receive new job listings every morning</p>
+            </div>
+          </div>
+          <Switch checked={prefs?.daily_digest_enabled ?? true} onCheckedChange={(v) => toggle("daily_digest_enabled", v)} />
+        </div>
+        <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <div>
+              <p className="text-sm font-medium">Skill-Matched Jobs</p>
+              <p className="text-xs text-muted-foreground">Jobs that match your profile skills</p>
+            </div>
+          </div>
+          <Switch checked={prefs?.matched_jobs_enabled ?? true} onCheckedChange={(v) => toggle("matched_jobs_enabled", v)} />
+        </div>
+        <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
+          <div className="flex items-center gap-2.5">
+            <Shield className="h-4 w-4 text-primary" />
+            <div>
+              <p className="text-sm font-medium">Visa Sponsorship Alerts</p>
+              <p className="text-xs text-muted-foreground">New jobs offering visa sponsorship</p>
+            </div>
+          </div>
+          <Switch checked={prefs?.sponsorship_jobs_enabled ?? true} onCheckedChange={(v) => toggle("sponsorship_jobs_enabled", v)} />
+        </div>
+      </CardContent>
+    </Card>
   );
 }

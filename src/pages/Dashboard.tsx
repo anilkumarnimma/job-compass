@@ -30,6 +30,7 @@ import { WelcomeBanner } from "@/components/WelcomeBanner";
 import { VisaFilterPills } from "@/components/VisaFilterPills";
 import { VisaFilter, filterJobsByVisa } from "@/lib/visaSponsorship";
 import { useIsUSUser } from "@/hooks/useIsUSUser";
+import { NotificationOptInDialog } from "@/components/NotificationOptInDialog";
 
 type DateFilter = "all" | "today" | "yesterday" | "custom";
 
@@ -436,6 +437,7 @@ export default function Dashboard() {
       <MobileJobPreviewSheet job={mobilePreviewJob} open={mobileSheetOpen} onOpenChange={setMobileSheetOpen} />
       <UpgradeDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog} />
       <ApplyConfirmDialog open={showApplyConfirm} onConfirm={confirmApply} onCancel={cancelApply} />
+      <NotificationOptInDialog />
     </Layout>
   );
 }
