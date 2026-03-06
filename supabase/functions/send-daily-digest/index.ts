@@ -107,8 +107,8 @@ Deno.serve(async (req) => {
 <body style="margin:0;padding:0;background:#f8fafc;font-family:Arial,sans-serif;">
 <div style="max-width:600px;margin:0 auto;padding:24px;">
   <div style="background:white;border-radius:12px;padding:32px;border:1px solid #e2e8f0;">
-    <h1 style="margin:0 0 8px;font-size:24px;color:#0f172a;">📋 Your Daily Job Digest</h1>
-    <p style="margin:0 0 24px;color:#64748b;font-size:14px;">Hey ${userName}, here's what's new today on JobPulse!</p>`;
+    <h1 style="margin:0 0 8px;font-size:24px;color:#0f172a;">📋 Sociax Jobs Notify</h1>
+    <p style="margin:0 0 24px;color:#64748b;font-size:14px;">Hey ${userName}, here's your daily job digest from Sociax!</p>`;
 
       // New jobs section
       if (pref.new_jobs_enabled && newJobs.length > 0) {
@@ -160,12 +160,12 @@ Deno.serve(async (req) => {
 
       // Footer with unsubscribe
       emailHtml += `
-    <div style="border-top:1px solid #e2e8f0;padding-top:16px;margin-top:24px;">
-      <a href="${siteUrl}/dashboard" style="display:inline-block;padding:10px 24px;background:#2563eb;color:white;text-decoration:none;border-radius:8px;font-weight:600;font-size:14px;">Browse All Jobs</a>
+     <div style="border-top:1px solid #e2e8f0;padding-top:16px;margin-top:24px;">
+      <a href="${siteUrl}/dashboard" style="display:inline-block;padding:10px 24px;background:#2563eb;color:white;text-decoration:none;border-radius:8px;font-weight:600;font-size:14px;">Browse All Jobs on Sociax</a>
     </div>
   </div>
   <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">
-    You're receiving this because you're subscribed to JobPulse daily digest.<br/>
+    You're receiving this because you're subscribed to Sociax daily job digest.<br/>
     <a href="${unsubscribeUrl}" style="color:#94a3b8;text-decoration:underline;">Unsubscribe</a>
   </p>
 </div>
@@ -181,9 +181,9 @@ Deno.serve(async (req) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: "JobPulse <notifications@jobpulse99.lovable.app>",
+            from: "Sociax Jobs <support@sociax.tech>",
             to: [profile.email],
-            subject: `📋 ${newJobs.length} new jobs today${matchedJobs.length > 0 ? ` · ${matchedJobs.length} match your skills` : ""}`,
+            subject: `📋 Sociax Jobs Notify — ${newJobs.length} new jobs today${matchedJobs.length > 0 ? ` · ${matchedJobs.length} match your skills` : ""}`,
             html: emailHtml,
           }),
         });
