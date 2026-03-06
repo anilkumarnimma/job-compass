@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
 import { useProfile } from "@/hooks/useProfile";
-import { useIsUSUser } from "@/hooks/useIsUSUser";
 import { Briefcase, Menu, X, LogOut, Shield, User, Crown, ChevronDown, Sparkles, HelpCircle } from "lucide-react";
 import { useState } from "react";
 import { motion } from "framer-motion";
