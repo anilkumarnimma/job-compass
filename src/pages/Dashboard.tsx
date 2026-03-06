@@ -105,9 +105,7 @@ export default function Dashboard() {
 
   const { isApplied } = useJobContext();
 
-  const jobs = useMemo(() => {
-    return (data?.jobs || []).filter((job) => !isApplied(job.id));
-  }, [data, isApplied]);
+  const jobs = data?.jobs || [];
 
   useEffect(() => {
     if (!isLoading && dateFilter !== "all" && !fallbackActive && data && data.totalCount === 0) {
