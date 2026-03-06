@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useProfile } from "@/hooks/useProfile";
 import { calculateMatchesForJobs } from "@/lib/jobMatcher";
+import { calculateLandingProbability } from "@/lib/landingProbability";
+import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
 import { Layout } from "@/components/Layout";
 import { SearchBar } from "@/components/SearchBar";
 import { RightSidebar } from "@/components/RightSidebar";
@@ -24,6 +26,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { JobMatchesPanel } from "@/components/JobMatchesPanel";
+import { WelcomeBanner } from "@/components/WelcomeBanner";
 import { VisaFilterPills } from "@/components/VisaFilterPills";
 import { VisaFilter, filterJobsByVisa } from "@/lib/visaSponsorship";
 
@@ -117,6 +120,17 @@ export default function Dashboard() {
     () => calculateMatchesForJobs(jobs, profile?.resume_intelligence),
     [jobs, profile?.resume_intelligence]
   );
+
+  const landingResults = useMemo(() => {
+    const intelligence = profile?.resume_intelligence as ResumeIntelligence | null | undefined;
+    if (!intelligence) return new Map();
+    const results = new Map();
+    for (const job of jobs) {
+      const lr = calculateLandingProbability(job, matchResults.get(job.id), intelligence);
+      if (lr) results.set(job.id, lr);
+    }
+    return results;
+  }, [jobs, matchResults, profile?.resume_intelligence]);
 
   useEffect(() => {
     if (!isLoading && dateFilter !== "all" && !fallbackActive && data && data.totalCount === 0) {
