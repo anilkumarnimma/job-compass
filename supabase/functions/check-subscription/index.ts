@@ -119,8 +119,8 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     logStep("ERROR", { message: err.message });
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 400,
+    return new Response(JSON.stringify({ error: "An unexpected error occurred" }), {
+      status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
