@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Job } from "@/types/job";
+import { JobMatchResult } from "@/lib/jobMatcher";
 import { useJobContext } from "@/context/JobContext";
 import { useAuth } from "@/context/AuthContext";
 import { useAtsCheck } from "@/hooks/useAtsCheck";
@@ -7,15 +8,17 @@ import { AtsCheckDialog } from "@/components/AtsCheckDialog";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, BriefcaseBusiness, Target } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 
 interface JobPreviewPanelProps {
   job: Job;
+  matchResult?: JobMatchResult;
 }
 
-export function JobPreviewPanel({ job }: JobPreviewPanelProps) {
+export function JobPreviewPanel({ job, matchResult }: JobPreviewPanelProps) {
   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
   const navigate = useNavigate();
