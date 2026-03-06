@@ -585,6 +585,7 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_founder: { Args: never; Returns: boolean }
       publish_hiring_graph: { Args: never; Returns: undefined }
+      remove_duplicate_jobs: { Args: never; Returns: Json }
       search_jobs: {
         Args: {
           filter_tab?: string
