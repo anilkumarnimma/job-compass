@@ -134,6 +134,13 @@ export default function FounderEmployers() {
           <MarketAlertManager />
         </div>
 
+        {/* Email Notification Manager - Founder Only */}
+        <div className="mb-8">
+          <EmailNotificationManager
+            users={otherUsers.map((u) => ({ id: u.id, email: u.email, full_name: u.full_name }))}
+          />
+        </div>
+
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
           <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
