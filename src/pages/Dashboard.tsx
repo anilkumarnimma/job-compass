@@ -116,6 +116,11 @@ export default function Dashboard() {
   const totalCount = data?.totalCount ?? 0;
   const totalPages = data?.totalPages ?? 1;
 
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
   const handleJobTap = useCallback((job: Job) => {
     if (isMobile) {
       setMobilePreviewJob(job);
