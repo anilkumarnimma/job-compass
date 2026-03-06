@@ -215,6 +215,19 @@ export default function Profile() {
     setSavedCerts(certifications);
     setIsEditing(false);
     setIsDirty(false);
+
+    // Trigger resume intelligence analysis in the background
+    const filteredWork = workExperiences.filter((w) => w.title || w.company);
+    const filteredEdu = educations.filter((e) => e.school || e.degree);
+    if (skillsArray.length > 0 || filteredWork.length > 0) {
+      analyzeResume({
+        skills: skillsArray,
+        workExperience: filteredWork,
+        education: filteredEdu,
+        currentTitle: currentWork?.title || formData.current_title || undefined,
+        experienceYears: formData.experience_years ? Number(formData.experience_years) : undefined,
+      });
+    }
   };
 
   // Resume handlers
