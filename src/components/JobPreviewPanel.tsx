@@ -31,9 +31,6 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
   const { user } = useAuth();
   const { profile } = useProfile();
   const navigate = useNavigate();
-  const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
-  const { user } = useAuth();
-  const navigate = useNavigate();
   const { runCheck, isChecking, result, clearResult } = useAtsCheck();
   const [showAtsDialog, setShowAtsDialog] = useState(false);
 
