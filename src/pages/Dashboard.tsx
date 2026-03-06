@@ -105,9 +105,14 @@ export default function Dashboard() {
     dateTo: fallbackActive ? null : dateTo,
   });
 
-  
+  const { profile } = useProfile();
 
   const jobs = data?.jobs || [];
+
+  const matchResults = useMemo(
+    () => calculateMatchesForJobs(jobs, profile?.resume_intelligence),
+    [jobs, profile?.resume_intelligence]
+  );
 
   useEffect(() => {
     if (!isLoading && dateFilter !== "all" && !fallbackActive && data && data.totalCount === 0) {
