@@ -106,8 +106,9 @@ export function useRecommendedJobs() {
 
   const hasResume = !!profile?.resume_url;
   const hasProfileData = !!(profile?.skills?.length || profile?.current_title || (Array.isArray(profile?.work_experience) && profile.work_experience.length));
+  const hasIntelligence = !!(profile?.resume_intelligence);
 
-  const enabled = !profileLoading && (hasResume || hasProfileData);
+  const enabled = !profileLoading && (hasResume || hasProfileData || hasIntelligence);
 
   const query = useQuery({
     queryKey: ["recommended-jobs", profile?.skills, profile?.current_title, profile?.location],
