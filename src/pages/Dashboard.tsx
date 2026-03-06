@@ -363,6 +363,7 @@ export default function Dashboard() {
                 onTap={handleJobTap}
                 selectedJobId={selectedJob?.id}
                 matchResults={matchResults}
+                landingResults={landingResults}
               />
             </div>
           </div>
@@ -395,6 +396,7 @@ export default function Dashboard() {
                 onTap={handleJobTap}
                 selectedJobId={selectedJob?.id}
                 matchResults={matchResults}
+                landingResults={landingResults}
               />
             </div>
 
@@ -416,7 +418,7 @@ export default function Dashboard() {
                   >
                     <X className="h-4 w-4" />
                   </button>
-                  <JobPreviewPanel job={selectedJob} matchResult={matchResults.get(selectedJob.id)} />
+                  <JobPreviewPanel job={selectedJob} matchResult={matchResults.get(selectedJob.id)} landingProbability={landingResults.get(selectedJob.id)} />
                 </motion.div>
               </AnimatePresence>
             )}
