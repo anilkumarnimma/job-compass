@@ -411,7 +411,7 @@ export default function Dashboard() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 24 }}
                   transition={{ duration: 0.25, ease: "easeOut" }}
-                  className="border border-border/50 rounded-2xl bg-card/80 backdrop-blur-sm shadow-card relative flex flex-col sticky top-[88px] self-start"
+                  className="border border-border/50 rounded-2xl bg-card/80 backdrop-blur-sm shadow-card relative flex flex-col sticky top-[88px] self-start max-h-[calc(100vh-112px)] overflow-hidden"
                 >
                   <button
                     onClick={() => setSelectedJob(null)}

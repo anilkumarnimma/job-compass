@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Layout } from "@/components/Layout";
 import { JobCard } from "@/components/JobCard";
 import { JobPreviewPanel } from "@/components/JobPreviewPanel";
@@ -12,10 +12,21 @@ import { Job } from "@/types/job";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Upload, FileText } from "lucide-react";
+import { Sparkles, Upload, FileText, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
+
+const PAGE_SIZE = 20;
 
 export default function Recommendations() {
   const { data: jobs, isLoading, canRecommend, hasResume } = useRecommendedJobs();
@@ -26,6 +37,7 @@ export default function Recommendations() {
   const [selectedJob, setSelectedJob] = useState<RecommendedJob | null>(null);
   const [mobilePreviewJob, setMobilePreviewJob] = useState<Job | null>(null);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const handleJobTap = useCallback((job: Job) => {
     const recJob = jobs?.find(j => j.id === job.id) || null;
@@ -37,7 +49,34 @@ export default function Recommendations() {
     }
   }, [isMobile, jobs]);
 
-  const filteredJobs = (jobs || []).filter(j => !isApplied(j.id));
+  const filteredJobs = useMemo(() => (jobs || []).filter(j => !isApplied(j.id)), [jobs, isApplied]);
+
+  const totalPages = Math.ceil(filteredJobs.length / PAGE_SIZE);
+  const paginatedJobs = useMemo(
+    () => filteredJobs.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [filteredJobs, currentPage]
+  );
+
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const getPageNumbers = () => {
+    const pages: (number | "ellipsis")[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push("ellipsis");
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (currentPage < totalPages - 2) pages.push("ellipsis");
+      pages.push(totalPages);
+    }
+    return pages;
+  };
 
   return (
     <Layout>
@@ -60,6 +99,11 @@ export default function Recommendations() {
               </div>
               <p className="text-sm text-muted-foreground">
                 Jobs matched to your resume, skills, and experience.
+                {filteredJobs.length > 0 && (
+                  <span className="ml-1">
+                    <span className="font-medium text-foreground">{filteredJobs.length}</span> recommendation{filteredJobs.length !== 1 ? 's' : ''}
+                  </span>
+                )}
               </p>
             </div>
 
@@ -83,7 +127,6 @@ export default function Recommendations() {
                 ))}
               </div>
             ) : !canRecommend ? (
-              /* Empty state - no resume/profile data */
               <motion.div
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -132,7 +175,7 @@ export default function Recommendations() {
               </motion.div>
             ) : (
               <div className="flex flex-col gap-4">
-                {filteredJobs.map((job, index) => (
+                {paginatedJobs.map((job, index) => (
                   <motion.div
                     key={job.id}
                     initial={{ opacity: 0, y: 12 }}
@@ -140,7 +183,6 @@ export default function Recommendations() {
                     transition={{ delay: Math.min(index, 8) * 0.05, duration: 0.35, ease: "easeOut" }}
                   >
                     <div className="relative">
-                      {/* Recommendation label */}
                       <div className="absolute -top-2 left-4 z-10">
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -164,6 +206,45 @@ export default function Recommendations() {
                     </div>
                   </motion.div>
                 ))}
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="py-4">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious
+                            onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+                            className={currentPage <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          />
+                        </PaginationItem>
+                        {getPageNumbers().map((page, idx) =>
+                          page === "ellipsis" ? (
+                            <PaginationItem key={`ellipsis-${idx}`}>
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          ) : (
+                            <PaginationItem key={page}>
+                              <PaginationLink
+                                isActive={currentPage === page}
+                                onClick={() => handlePageChange(page as number)}
+                                className="cursor-pointer"
+                              >
+                                {page}
+                              </PaginationLink>
+                            </PaginationItem>
+                          )
+                        )}
+                        <PaginationItem>
+                          <PaginationNext
+                            onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+                            className={currentPage >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -181,6 +262,13 @@ export default function Recommendations() {
                     transition={{ duration: 0.2, ease: "easeOut" }}
                     className="w-[580px] shrink-0 sticky top-[88px] self-start border border-border/50 rounded-2xl bg-card/80 backdrop-blur-sm overflow-hidden shadow-card max-h-[calc(100vh-112px)] flex flex-col"
                   >
+                    <button
+                      onClick={() => setSelectedJob(null)}
+                      className="absolute top-3 right-3 z-20 p-1.5 rounded-lg bg-secondary/80 hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors backdrop-blur-sm"
+                      aria-label="Close preview"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
                     <JobPreviewPanel job={selectedJob} />
                   </motion.div>
                 )}
