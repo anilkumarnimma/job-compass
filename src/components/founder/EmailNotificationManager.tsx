@@ -6,6 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Mail, Send, Loader2, Search, BellOff, Bell } from "lucide-react";
 import { useAllEmailPrefs, useToggleUserDigest, useSendDigestNow } from "@/hooks/useEmailNotificationPrefs";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface UserEmailPanelProps {
   users: { id: string; email: string; full_name: string | null }[];
