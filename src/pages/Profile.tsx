@@ -838,6 +838,9 @@ export default function Profile() {
             </CardContent>
           </Card>
 
+          {/* Email Notification Preferences */}
+          <EmailNotificationPrefsCard userId={user.id} />
+
           {/* Account / Security */}
           <Card className="rounded-3xl">
             <CardHeader>
