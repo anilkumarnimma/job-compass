@@ -61,9 +61,7 @@ export function Header() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
-            <div className="h-9 w-9 rounded-xl bg-accent flex items-center justify-center shadow-soft group-hover:shadow-glow transition-shadow duration-300">
-              <Briefcase className="h-4.5 w-4.5 text-accent-foreground" />
-            </div>
+            <img src="/favicon.png" alt="Sociax logo" className="h-9 w-9 rounded-xl shadow-soft group-hover:shadow-glow transition-shadow duration-300" />
             <span className="font-display font-bold text-lg text-foreground tracking-tight">Sociax.tech</span>
           </Link>
 
