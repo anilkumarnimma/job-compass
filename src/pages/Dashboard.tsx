@@ -382,7 +382,7 @@ export default function Dashboard() {
             {/* LEFT — Job List */}
             <div className={cn(
               "pr-2",
-              selectedJob && "max-h-[calc(100vh-112px)] overflow-y-auto overscroll-contain scrollbar-thin"
+              selectedJob && "sticky top-[88px] self-start max-h-[calc(100vh-112px)] overflow-y-auto overscroll-contain scrollbar-thin"
             )}>
               {!selectedJob && (
                 <motion.div
