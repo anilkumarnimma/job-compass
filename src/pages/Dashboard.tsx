@@ -415,16 +415,18 @@ export default function Dashboard() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 24 }}
                   transition={{ duration: 0.25, ease: "easeOut" }}
-                  className="border border-border/50 rounded-2xl bg-card/80 backdrop-blur-sm shadow-card relative flex flex-col sticky top-[88px] self-start max-h-[calc(100vh-112px)] overflow-y-auto overscroll-contain scrollbar-thin"
+                  className="border border-border/50 rounded-2xl bg-card/80 backdrop-blur-sm shadow-card relative flex flex-col sticky top-[88px] self-start max-h-[calc(100vh-112px)] overflow-hidden"
                 >
                   <button
                     onClick={() => setSelectedJob(null)}
-                    className="absolute top-3 right-3 z-20 p-1.5 rounded-lg bg-secondary/80 hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors backdrop-blur-sm"
+                    className="sticky top-0 z-20 p-1.5 rounded-lg bg-secondary/80 hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors backdrop-blur-sm ml-auto mr-3 mt-3 shrink-0"
                     aria-label="Close preview"
                   >
                     <X className="h-4 w-4" />
                   </button>
-                  <JobPreviewPanel job={selectedJob} matchResult={matchResults.get(selectedJob.id)} landingProbability={landingResults.get(selectedJob.id)} />
+                  <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-thin">
+                    <JobPreviewPanel job={selectedJob} matchResult={matchResults.get(selectedJob.id)} landingProbability={landingResults.get(selectedJob.id)} />
+                  </div>
                 </motion.div>
               </AnimatePresence>
             )}

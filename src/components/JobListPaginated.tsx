@@ -132,7 +132,7 @@ export function JobListPaginated({
       ))}
 
       {totalPages > 1 && (
-        <div className="py-4">
+        <div className="py-4 sticky bottom-0 bg-background/95 backdrop-blur-sm z-10">
           <Pagination>
             <PaginationContent>
               <PaginationItem>
