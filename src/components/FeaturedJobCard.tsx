@@ -69,7 +69,7 @@ export function FeaturedJobCard() {
     >
       <div className="flex items-center gap-3 mb-4">
         {job?.company_logo ? (
-          <CompanyLogo name={company} logo={job.company_logo} size="md" />
+          <CompanyLogo companyName={company} logoUrl={job.company_logo} size="md" />
         ) : (
           <div className="h-11 w-11 rounded-xl bg-accent flex items-center justify-center shadow-glow">
             <Briefcase className="h-5 w-5 text-accent-foreground" />
