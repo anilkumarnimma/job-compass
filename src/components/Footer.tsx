@@ -1,4 +1,4 @@
-import { Briefcase } from "lucide-react";
+
 
 export function Footer() {
   return (
