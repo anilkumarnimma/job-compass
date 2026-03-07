@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/Layout";
 import { HeroParticles } from "@/components/HeroParticles";
 import { AnimatedCounter } from "@/components/AnimatedCounter";
+import { FeaturedJobCard } from "@/components/FeaturedJobCard";
 import { FloatingHeroTags } from "@/components/FloatingHeroTags";
 import {
   Briefcase,
@@ -346,37 +347,7 @@ export default function Index() {
             </div>
             <ScrollReveal delay={0.2}>
               <div className="flex-1 w-full max-w-md">
-                <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-premium card-glow tilt-card">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="h-11 w-11 rounded-xl bg-accent flex items-center justify-center shadow-glow">
-                      <Briefcase className="h-5 w-5 text-accent-foreground" />
-                    </div>
-                    <div>
-                      <p className="font-display font-semibold text-foreground">Senior Developer</p>
-                      <p className="text-sm text-muted-foreground">TechCorp Inc.</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 mb-5">
-                    <span className="px-3 py-1 rounded-full bg-success-bg text-success-text text-xs font-medium">
-                      ● Actively Reviewing
-                    </span>
-                    <span className="px-3 py-1 rounded-full bg-secondary text-foreground text-xs font-medium">
-                      Remote
-                    </span>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      className="flex-1 rounded-full bg-accent text-accent-foreground hover:bg-accent/90 group btn-glow"
-                    >
-                      Apply Now
-                      <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-                    </Button>
-                    <Button variant="outline" size="sm" className="rounded-full">
-                      Save
-                    </Button>
-                  </div>
-                </div>
+                <FeaturedJobCard />
               </div>
             </ScrollReveal>
           </div>
