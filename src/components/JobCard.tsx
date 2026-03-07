@@ -92,7 +92,7 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
     >
     <Card
       ref={cardRef}
-      className={`group p-5 border bg-card/80 backdrop-blur-sm rounded-2xl cursor-pointer overflow-hidden relative transition-all duration-300 ${
+      className={`group p-5 border bg-card/80 backdrop-blur-sm rounded-2xl cursor-pointer overflow-visible relative transition-all duration-300 ${
         isSelected 
           ? "border-accent ring-1 ring-accent/30 bg-accent/5 shadow-[0_0_20px_hsl(var(--accent)/0.15)]" 
           : "border-border/40 shadow-card hover:shadow-[0_8px_30px_hsl(var(--glow-accent)/0.1)] hover:border-accent/25"
@@ -103,7 +103,7 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
       style={{ ...style, transition: "transform 0.2s ease, box-shadow 0.3s ease, border-color 0.3s ease" }}
     >
       {/* Shimmer sweep on hover */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none overflow-hidden rounded-2xl">
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none overflow-hidden rounded-2xl z-0">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-accent/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
       </div>
 
@@ -147,7 +147,7 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
                         {matchResult.score}%
                       </span>
                     </TooltipTrigger>
-                    <TooltipContent side="left" className="text-xs max-w-[200px] whitespace-pre-line">
+                    <TooltipContent side="left" className="z-[9999] text-xs max-w-[200px] whitespace-pre-line">
                       {matchResult.reason}
                     </TooltipContent>
                   </Tooltip>
