@@ -24,7 +24,7 @@ export function LandingProbabilityBadge({ result, compact = false }: LandingProb
             {compact ? `${result.probability}%` : `🎯 ${result.probability}% Landing`}
           </span>
         </TooltipTrigger>
-        <TooltipContent side="top" sideOffset={10} className="z-[9999] text-xs max-w-[260px] p-3">
+        <TooltipContent side="bottom" sideOffset={10} className="z-[9999] text-xs max-w-[260px] p-3">
           <p className="font-semibold mb-2">🎯 Landing Probability: {result.probability}%</p>
           <div className="space-y-1">
             {result.breakdown.map((item, i) => (
