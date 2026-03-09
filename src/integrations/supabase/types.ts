@@ -49,6 +49,44 @@ export type Database = {
           },
         ]
       }
+      cover_letters: {
+        Row: {
+          company: string
+          content: string
+          created_at: string
+          id: string
+          job_id: string
+          job_title: string
+          user_id: string
+        }
+        Insert: {
+          company: string
+          content: string
+          created_at?: string
+          id?: string
+          job_id: string
+          job_title: string
+          user_id: string
+        }
+        Update: {
+          company?: string
+          content?: string
+          created_at?: string
+          id?: string
+          job_id?: string
+          job_title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cover_letters_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_notification_preferences: {
         Row: {
           created_at: string
