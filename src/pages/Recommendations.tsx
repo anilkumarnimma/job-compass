@@ -221,6 +221,7 @@ export default function Recommendations() {
                           Cover Letter
                         </Button>
                       </div>
+                    </div>
                   </motion.div>
                 ))}
 
