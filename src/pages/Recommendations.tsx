@@ -206,7 +206,21 @@ export default function Recommendations() {
                         onTap={handleJobTap}
                         isSelected={selectedJob?.id === job.id}
                       />
-                    </div>
+                      <div className="flex justify-end mt-1.5 px-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs text-muted-foreground hover:text-accent h-7 px-2.5 rounded-full"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCoverLetterJob(job);
+                            setCoverLetterOpen(true);
+                          }}
+                        >
+                          <FileText className="h-3.5 w-3.5 mr-1" />
+                          Cover Letter
+                        </Button>
+                      </div>
                   </motion.div>
                 ))}
 
