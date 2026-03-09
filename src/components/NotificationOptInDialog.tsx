@@ -18,18 +18,21 @@ export function NotificationOptInDialog() {
   useEffect(() => {
     if (!user) return;
 
+    const seenKey = `notif_opt_in_seen_${user.id}`;
+
+    // Already seen — never show again
+    if (localStorage.getItem(seenKey)) return;
+
     const checkFirstTime = async () => {
-      const { data } = await supabase
-        .from("email_notification_preferences")
-        .select("id, daily_digest_enabled")
+      // Only show if user has a profile (i.e. profile was created)
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
         .eq("user_id", user.id)
         .maybeSingle();
 
-      // Show popup only if no preferences record exists yet
-      // (the trigger creates one, but there's a race condition on first login)
-      // OR check localStorage flag for "has seen popup"
-      const seenKey = `notif_opt_in_seen_${user.id}`;
-      if (!localStorage.getItem(seenKey)) {
+      // Show only if profile exists AND popup hasn't been seen
+      if (profile) {
         setOpen(true);
       }
     };
