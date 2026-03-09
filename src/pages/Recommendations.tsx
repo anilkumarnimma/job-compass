@@ -5,6 +5,7 @@ import { JobPreviewPanel } from "@/components/JobPreviewPanel";
 import { MobileJobPreviewSheet } from "@/components/MobileJobPreviewSheet";
 import { UpgradeDialog } from "@/components/UpgradeDialog";
 import { ApplyConfirmDialog } from "@/components/ApplyConfirmDialog";
+import { CoverLetterDialog } from "@/components/CoverLetterDialog";
 import { useRecommendedJobs, RecommendedJob } from "@/hooks/useRecommendedJobs";
 import { useJobContext } from "@/context/JobContext";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -38,6 +39,8 @@ export default function Recommendations() {
   const [mobilePreviewJob, setMobilePreviewJob] = useState<Job | null>(null);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [coverLetterJob, setCoverLetterJob] = useState<RecommendedJob | null>(null);
+  const [coverLetterOpen, setCoverLetterOpen] = useState(false);
 
   const handleJobTap = useCallback((job: Job) => {
     const recJob = jobs?.find(j => j.id === job.id) || null;
@@ -203,6 +206,21 @@ export default function Recommendations() {
                         onTap={handleJobTap}
                         isSelected={selectedJob?.id === job.id}
                       />
+                      <div className="flex justify-end mt-1.5 px-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs text-muted-foreground hover:text-accent h-7 px-2.5 rounded-full"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCoverLetterJob(job);
+                            setCoverLetterOpen(true);
+                          }}
+                        >
+                          <FileText className="h-3.5 w-3.5 mr-1" />
+                          Cover Letter
+                        </Button>
+                      </div>
                     </div>
                   </motion.div>
                 ))}
@@ -281,6 +299,11 @@ export default function Recommendations() {
       <MobileJobPreviewSheet job={mobilePreviewJob} open={mobileSheetOpen} onOpenChange={setMobileSheetOpen} />
       <UpgradeDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog} />
       <ApplyConfirmDialog open={showApplyConfirm} onConfirm={confirmApply} onCancel={cancelApply} />
+      <CoverLetterDialog
+        open={coverLetterOpen}
+        onOpenChange={setCoverLetterOpen}
+        job={coverLetterJob}
+      />
     </Layout>
   );
 }

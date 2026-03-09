@@ -1,0 +1,139 @@
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
+
+interface GenerateParams {
+  jobId: string;
+  jobTitle: string;
+  company: string;
+  jobDescription?: string;
+  jobSkills?: string[];
+}
+
+interface CoverLetterResult {
+  content: string;
+  id?: string;
+  remaining: number | null;
+  isPremium: boolean;
+}
+
+export function useCoverLetter() {
+  const [isGenerating, setIsGenerating] = useState(false);
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const { profile } = useProfile();
+
+  const generateCoverLetter = async (params: GenerateParams): Promise<CoverLetterResult | null> => {
+    if (!user) {
+      toast({ title: "Please sign in", variant: "destructive" });
+      return null;
+    }
+
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-cover-letter", {
+        body: params,
+      });
+
+      if (error) throw new Error(error.message);
+      if (data?.error) {
+        if (data.error === "limit_reached") {
+          toast({
+            title: "Cover letter limit reached",
+            description: data.message,
+            variant: "destructive",
+          });
+          return null;
+        }
+        throw new Error(data.error);
+      }
+
+      toast({
+        title: "Cover letter generated ✨",
+        description: `Draft ready for ${params.company}`,
+      });
+
+      return data as CoverLetterResult;
+    } catch (err: any) {
+      toast({
+        title: "Generation failed",
+        description: err.message || "Could not generate cover letter",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const downloadAsTxt = (content: string, jobTitle: string, company: string) => {
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Cover_Letter_${company}_${jobTitle}.txt`.replace(/[^a-zA-Z0-9_.-]/g, "_");
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadAsDoc = (content: string, jobTitle: string, company: string) => {
+    // Create a simple HTML document that Word can open
+    const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Cover Letter</title>
+<style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt;line-height:1.6;max-width:700px;margin:40px auto;color:#222;}h1,h2,h3{color:#111;}p{margin-bottom:12px;}</style>
+</head>
+<body>
+${content.replace(/\n\n/g, "</p><p>").replace(/\n/g, "<br>").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\*(.*?)\*/g, "<em>$1</em>")}
+</body></html>`;
+    const blob = new Blob([html], { type: "application/msword" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Cover_Letter_${company}_${jobTitle}.doc`.replace(/[^a-zA-Z0-9_.-]/g, "_");
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadAsPdf = async (content: string, jobTitle: string, company: string) => {
+    // Use browser print to generate PDF
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      toast({ title: "Please allow popups to download PDF", variant: "destructive" });
+      return;
+    }
+    const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Cover Letter - ${company}</title>
+<style>
+@media print { @page { margin: 1in; } }
+body{font-family:'Georgia',serif;font-size:11pt;line-height:1.7;max-width:650px;margin:0 auto;padding:40px;color:#1a1a1a;}
+p{margin-bottom:14px;}
+strong{font-weight:600;}
+</style>
+</head>
+<body>
+${content.replace(/\n\n/g, "</p><p>").replace(/\n/g, "<br>").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\*(.*?)\*/g, "<em>$1</em>")}
+<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();}}</script>
+</body></html>`;
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
+  return {
+    generateCoverLetter,
+    isGenerating,
+    downloadAsTxt,
+    downloadAsDoc,
+    downloadAsPdf,
+    isPremium: profile?.is_premium === true,
+  };
+}

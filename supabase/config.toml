@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.resume-tips]
 verify_jwt = false
+
+[functions.generate-cover-letter]
+verify_jwt = false
