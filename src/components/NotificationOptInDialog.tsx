@@ -84,7 +84,13 @@ export function NotificationOptInDialog() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(val) => {
+      if (!val && user) {
+        // Mark as seen whenever dialog closes (X, outside click, or save)
+        localStorage.setItem(`notif_opt_in_seen_${user.id}`, "true");
+      }
+      setOpen(val);
+    }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex items-center gap-3 mb-1">
