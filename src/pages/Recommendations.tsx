@@ -210,14 +210,14 @@ export default function Recommendations() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-xs text-muted-foreground hover:text-accent h-7 px-2.5 rounded-full"
+                          className="text-xs text-accent hover:text-accent-foreground hover:bg-accent/20 h-7 px-3 rounded-full animate-[ats-glow_4s_ease-in-out_infinite] relative"
                           onClick={(e) => {
                             e.stopPropagation();
                             setCoverLetterJob(job);
                             setCoverLetterOpen(true);
                           }}
                         >
-                          <FileText className="h-3.5 w-3.5 mr-1" />
+                          <FileText className="h-3.5 w-3.5 mr-1 animate-pulse" />
                           Cover Letter
                         </Button>
                       </div>
