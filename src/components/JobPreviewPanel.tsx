@@ -64,7 +64,7 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0">
       {/* Sticky Header */}
       <div className="p-5 border-b border-border/50 shrink-0 bg-card/90 backdrop-blur-sm sticky top-0 z-10">
         <div className="flex items-start gap-4 mb-3">
