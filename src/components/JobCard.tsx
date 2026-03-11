@@ -51,7 +51,8 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
 
   const handleTitleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    window.open(job.external_apply_link, "_blank");
+    if (!user) { navigate("/auth"); return; }
+    applyToJob(job);
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
