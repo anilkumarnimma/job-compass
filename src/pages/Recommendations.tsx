@@ -287,7 +287,7 @@ export default function Recommendations() {
                     >
                       <X className="h-4 w-4" />
                     </button>
-                    <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-thin">
+                    <div className="flex-1 min-h-0">
                       <JobPreviewPanel job={selectedJob} />
                     </div>
                   </motion.div>
