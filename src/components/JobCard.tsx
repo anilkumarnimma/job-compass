@@ -50,6 +50,7 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
   };
 
   const handleTitleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     if (!user) { navigate("/auth"); return; }
     applyToJob(job);

@@ -54,7 +54,12 @@ export function MobileJobPreviewSheet({ job, open, onOpenChange }: MobileJobPrev
   };
 
   const handleTitleClick = () => {
-    window.open(job.external_apply_link, "_blank");
+    if (!user) {
+      navigate("/auth");
+      onOpenChange(false);
+      return;
+    }
+    applyToJob(job);
   };
 
   return (
