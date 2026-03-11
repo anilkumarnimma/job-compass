@@ -278,7 +278,7 @@ export default function Recommendations() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.2, ease: "easeOut" }}
-                    className="w-[580px] shrink-0 sticky top-[88px] self-start border border-border/50 rounded-2xl bg-card/80 backdrop-blur-sm overflow-hidden shadow-card max-h-[calc(100vh-112px)] flex flex-col min-h-0"
+                    className="w-[580px] shrink-0 sticky top-[88px] self-start border border-border/50 rounded-2xl bg-card/80 backdrop-blur-sm overflow-hidden shadow-card h-[calc(100vh-112px)] flex flex-col min-h-0"
                   >
                     <button
                       onClick={() => setSelectedJob(null)}
