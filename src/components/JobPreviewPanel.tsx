@@ -48,7 +48,8 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
   };
 
   const handleTitleClick = () => {
-    window.open(job.external_apply_link, "_blank");
+    if (!user) { navigate("/auth"); return; }
+    applyToJob(job);
   };
 
   const handleAtsCheck = () => {
