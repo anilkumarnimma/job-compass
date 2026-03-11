@@ -415,7 +415,7 @@ export default function Dashboard() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 24 }}
                   transition={{ duration: 0.25, ease: "easeOut" }}
-                  className="border border-border/50 rounded-2xl bg-card/80 backdrop-blur-sm shadow-card relative flex flex-col sticky top-[88px] self-start max-h-[calc(100vh-112px)] overflow-hidden"
+                  className="border border-border/50 rounded-2xl bg-card/80 backdrop-blur-sm shadow-card relative flex flex-col sticky top-[88px] self-start h-[calc(100vh-112px)] overflow-hidden min-h-0"
                 >
                   <button
                     onClick={() => setSelectedJob(null)}
@@ -424,7 +424,7 @@ export default function Dashboard() {
                   >
                     <X className="h-4 w-4" />
                   </button>
-                  <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-thin">
+                  <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-thin">
                     <JobPreviewPanel job={selectedJob} matchResult={matchResults.get(selectedJob.id)} landingProbability={landingResults.get(selectedJob.id)} />
                   </div>
                 </motion.div>
