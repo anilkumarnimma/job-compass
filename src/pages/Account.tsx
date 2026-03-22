@@ -96,24 +96,26 @@ export default function Account() {
     window.open(link, "_blank");
   };
 
-  const handleManageSubscription = async () => {
-    setPortalLoading(true);
+  const handleCancelSubscription = async () => {
+    setCancelLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("customer-portal");
+      const { data, error } = await supabase.functions.invoke("cancel-subscription");
       if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, "_blank");
-      } else {
-        throw new Error("No portal URL returned");
-      }
+      if (data?.error) throw new Error(data.error);
+      toast({
+        title: "Subscription canceled",
+        description: data?.message || "Your subscription will end at the current billing period.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["user_subscription"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
     } catch (err: any) {
       toast({
-        title: "Unable to open billing portal",
+        title: "Unable to cancel subscription",
         description: err.message || "Please try again later.",
         variant: "destructive",
       });
     } finally {
-      setPortalLoading(false);
+      setCancelLoading(false);
     }
   };
 
