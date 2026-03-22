@@ -36,15 +36,15 @@ interface UseJobSearchPaginatedOptions {
 }
 
 export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo }: UseJobSearchPaginatedOptions) {
-  return useQuery({
+  // Fetch the page of results
+  const jobsQuery = useQuery({
     queryKey: ["jobs", "paginated", searchQuery, page, dateFrom, dateTo],
     queryFn: async () => {
       const trimmed = searchQuery.trim();
 
-      // Use the search_jobs RPC with expanded terms for intelligent matching
       if (trimmed) {
         const expandedTerms = expandSearchTerms(trimmed);
-        const { data, error, count } = await supabase.rpc("search_jobs", {
+        const { data, error } = await supabase.rpc("search_jobs", {
           search_query: trimmed,
           page_size: PAGE_SIZE,
           page_offset: (page - 1) * PAGE_SIZE,
@@ -54,24 +54,22 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo }: U
 
         if (error) throw error;
 
-        const jobs = (data || []).map(parseJob);
+        let jobs = (data || []).map(parseJob);
 
         // Apply date filters client-side (RPC doesn't support date range)
-        const filtered = jobs.filter(j => {
-          if (dateFrom && j.posted_date < new Date(dateFrom)) return false;
-          if (dateTo) {
-            const to = new Date(dateTo);
-            to.setDate(to.getDate() + 1);
-            if (j.posted_date >= to) return false;
-          }
-          return true;
-        });
+        if (dateFrom || dateTo) {
+          jobs = jobs.filter(j => {
+            if (dateFrom && j.posted_date < new Date(dateFrom)) return false;
+            if (dateTo) {
+              const to = new Date(dateTo);
+              to.setDate(to.getDate() + 1);
+              if (j.posted_date >= to) return false;
+            }
+            return true;
+          });
+        }
 
-        return {
-          jobs: filtered,
-          totalCount: filtered.length,
-          totalPages: Math.max(1, Math.ceil(filtered.length / PAGE_SIZE)),
-        };
+        return { jobs };
       }
 
       // No search query — use direct table query
@@ -97,11 +95,50 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo }: U
 
       return {
         jobs: (data || []).map(parseJob),
-        totalCount: count || 0,
-        totalPages: Math.ceil((count || 0) / PAGE_SIZE),
+        directCount: count || 0,
       };
     },
     staleTime: STALE_TIME,
     placeholderData: (prev) => prev,
   });
+
+  // Fetch the total count separately for accurate numbers
+  const countQuery = useQuery({
+    queryKey: ["jobs", "count", searchQuery],
+    queryFn: async () => {
+      const trimmed = searchQuery.trim();
+
+      if (trimmed) {
+        const expandedTerms = expandSearchTerms(trimmed);
+        const { data, error } = await supabase.rpc("count_search_jobs", {
+          search_query: trimmed,
+          expanded_terms: expandedTerms.length > 0 ? expandedTerms : undefined,
+        });
+        if (error) throw error;
+        return Number(data) || 0;
+      }
+
+      // No search — count all published non-archived
+      const { count, error } = await supabase
+        .from("jobs")
+        .select("*", { count: "exact", head: true })
+        .eq("is_published", true)
+        .eq("is_archived", false);
+      if (error) throw error;
+      return count || 0;
+    },
+    staleTime: STALE_TIME,
+  });
+
+  const totalCount = countQuery.data ?? (jobsQuery.data as any)?.directCount ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+  return {
+    data: {
+      jobs: jobsQuery.data?.jobs || [],
+      totalCount,
+      totalPages,
+    },
+    isLoading: jobsQuery.isLoading,
+  };
 }

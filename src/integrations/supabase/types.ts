@@ -642,6 +642,10 @@ export type Database = {
     Functions: {
       archive_old_jobs: { Args: never; Returns: number }
       can_access_job: { Args: { job_id: string }; Returns: boolean }
+      count_search_jobs: {
+        Args: { expanded_terms?: string[]; search_query?: string }
+        Returns: number
+      }
       get_job_counts: {
         Args: { search_query?: string }
         Returns: {
