@@ -64,7 +64,7 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo }: U
         page_size: PAGE_SIZE,
         page_offset: (page - 1) * PAGE_SIZE,
         filter_tab: filterTab !== "all" || !dateFrom ? filterTab : "all",
-        expanded_terms: expandedTerms.length > 0 ? expandedTerms : undefined,
+        expanded_terms: expandedTerms.length > 0 ? expandedTerms : [],
       } as any);
 
       if (error) throw error;
