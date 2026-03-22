@@ -96,8 +96,8 @@ export function JobListPaginated({
         <div className="h-20 w-20 rounded-2xl bg-secondary flex items-center justify-center mx-auto mb-5">
           <Search className="h-8 w-8 text-muted-foreground/50" />
         </div>
-        <h3 className="font-display font-semibold text-foreground text-lg mb-2">No jobs found</h3>
-        <p className="text-muted-foreground text-sm">Try adjusting your search or filters to find what you're looking for.</p>
+        <h3 className="font-display font-semibold text-foreground text-lg mb-2">No jobs available right now</h3>
+        <p className="text-muted-foreground text-sm">Try broadening your search or check back later for new listings.</p>
       </motion.div>
     );
   }
