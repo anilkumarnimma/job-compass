@@ -54,7 +54,8 @@ export default function Account() {
   const { user, isLoading: authLoading } = useAuth();
   const { profile, isLoading: profileLoading } = useProfile();
   const { toast } = useToast();
-  const [portalLoading, setPortalLoading] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: subscription, isLoading: subLoading } = useQuery({
     queryKey: ["user_subscription", user?.id],
