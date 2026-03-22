@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
 import { useProfile } from "@/hooks/useProfile";
-import { Briefcase, Menu, X, LogOut, Shield, User, Crown, ChevronDown, Sparkles, HelpCircle } from "lucide-react";
+import { Briefcase, Menu, X, LogOut, Shield, User, Crown, ChevronDown, Sparkles, HelpCircle, CreditCard } from "lucide-react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
@@ -133,9 +133,13 @@ export function Header() {
                       </div>
                     </div>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate("/profile")} className="rounded-lg">
+                      <DropdownMenuItem onClick={() => navigate("/profile")} className="rounded-lg">
                         <User className="h-4 w-4 mr-2" />
                         My Profile
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate("/account")} className="rounded-lg">
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        Account & Billing
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <div className="px-2 py-1.5 text-xs text-muted-foreground">
@@ -242,12 +246,20 @@ export function Header() {
                 {user ? (
                   <>
                     {(!isEmployer || isFounder) && (
-                      <Link to="/profile" className="w-full" onClick={() => setMobileMenuOpen(false)}>
-                        <Button variant="outline" className="w-full rounded-xl justify-start">
-                          <User className="h-4 w-4 mr-2" />
-                          Profile
-                        </Button>
-                      </Link>
+                      <>
+                        <Link to="/profile" className="w-full" onClick={() => setMobileMenuOpen(false)}>
+                          <Button variant="outline" className="w-full rounded-xl justify-start">
+                            <User className="h-4 w-4 mr-2" />
+                            Profile
+                          </Button>
+                        </Link>
+                        <Link to="/account" className="w-full" onClick={() => setMobileMenuOpen(false)}>
+                          <Button variant="outline" className="w-full rounded-xl justify-start">
+                            <CreditCard className="h-4 w-4 mr-2" />
+                            Account & Billing
+                          </Button>
+                        </Link>
+                      </>
                     )}
                     <div className="px-3 py-2 text-xs text-muted-foreground flex items-center gap-2">
                       <span>Current role:</span>
