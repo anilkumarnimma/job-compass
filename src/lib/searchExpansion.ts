@@ -87,13 +87,15 @@ export function expandSearchTerms(query: string): string[] {
     expanded.delete(word);
   }
 
-  // Filter out terms that are too short or identical to input
+  // Filter out terms that are too short, too generic, or identical to input
+  const genericWords = new Set(["lead", "head", "chief", "staff", "principal", "support", "creative", "systems"]);
   const result = [...expanded].filter(t =>
-    t.length > 1 &&
+    t.length > 2 &&
     t !== normalized &&
-    !words.includes(t)
+    !words.includes(t) &&
+    !genericWords.has(t)
   );
 
-  // Limit to top 20 most relevant terms to avoid query bloat
-  return result.slice(0, 20);
+  // Limit to top 15 most relevant terms to avoid query bloat
+  return result.slice(0, 15);
 }
