@@ -47,7 +47,7 @@ export function useJobSearch({ searchQuery, tab, enabled = true }: UseJobSearchO
         page_size: PAGE_SIZE,
         page_offset: pageParam,
         filter_tab: tab,
-        expanded_terms: expandedTerms.length > 0 ? expandedTerms : undefined,
+        expanded_terms: expandedTerms.length > 0 ? expandedTerms : [],
       } as any);
 
       if (error) throw error;
