@@ -79,24 +79,7 @@ export function expandSearchTerms(query: string): string[] {
       }
     }
 
-    // 3. Dynamic suffix/prefix expansion for common patterns
-    const suffixes = ["er", "or", "ist", "ant", "ent", "ing", "tion", "ment"];
-    const prefixes = ["senior", "junior", "lead", "staff", "principal", "chief", "head"];
-
-    // Generate stem variations
-    for (const suffix of suffixes) {
-      if (word.endsWith(suffix) && word.length > suffix.length + 2) {
-        const stem = word.slice(0, -suffix.length);
-        if (stem.length > 2) expanded.add(stem);
-      }
-    }
-
-    // Add level variations
-    for (const prefix of prefixes) {
-      if (word !== prefix) {
-        expanded.add(`${prefix} ${word}`);
-      }
-    }
+    // 3. Removed prefix/suffix generation — too broad for ILIKE matching
   }
 
   // Remove the original query terms and very short terms
@@ -104,13 +87,15 @@ export function expandSearchTerms(query: string): string[] {
     expanded.delete(word);
   }
 
-  // Filter out terms that are too short or identical to input
+  // Filter out terms that are too short, too generic, or identical to input
+  const genericWords = new Set(["lead", "head", "chief", "staff", "principal", "support", "creative", "systems"]);
   const result = [...expanded].filter(t =>
-    t.length > 1 &&
+    t.length > 2 &&
     t !== normalized &&
-    !words.includes(t)
+    !words.includes(t) &&
+    !genericWords.has(t)
   );
 
-  // Limit to top 20 most relevant terms to avoid query bloat
-  return result.slice(0, 20);
+  // Limit to top 15 most relevant terms to avoid query bloat
+  return result.slice(0, 15);
 }
