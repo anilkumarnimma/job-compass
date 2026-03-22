@@ -673,10 +673,11 @@ export type Database = {
       remove_duplicate_jobs: { Args: never; Returns: Json }
       search_jobs: {
         Args: {
+          expanded_terms?: string[]
           filter_tab?: string
           page_offset?: number
           page_size?: number
-          search_query: string
+          search_query?: string
         }
         Returns: {
           company: string
