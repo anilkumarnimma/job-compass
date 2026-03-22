@@ -67,6 +67,18 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
     });
   };
 
+  const handleInterviewPrep = () => {
+    if (!user) { navigate("/auth"); return; }
+    clearPrep();
+    setShowPrepDialog(true);
+    generatePrep({
+      job_title: job.title,
+      job_description: job.description,
+      job_skills: job.skills,
+      resume_intelligence: profile?.resume_intelligence as ResumeIntelligence | null,
+    });
+  };
+
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* Sticky Header */}
