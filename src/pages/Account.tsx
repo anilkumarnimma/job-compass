@@ -2,18 +2,21 @@ import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
 import {
-  Crown, CreditCard, Receipt, Sparkles, Check, X, Loader2,
-  ArrowRight, Shield, Zap, FileText, BarChart3, Brain, Star,
-  ExternalLink,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Crown, CreditCard, Sparkles, Check, Loader2,
+  Shield, Zap, FileText, BarChart3, Brain, Star, XCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -51,7 +54,8 @@ export default function Account() {
   const { user, isLoading: authLoading } = useAuth();
   const { profile, isLoading: profileLoading } = useProfile();
   const { toast } = useToast();
-  const [portalLoading, setPortalLoading] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: subscription, isLoading: subLoading } = useQuery({
     queryKey: ["user_subscription", user?.id],
@@ -92,24 +96,26 @@ export default function Account() {
     window.open(link, "_blank");
   };
 
-  const handleManageSubscription = async () => {
-    setPortalLoading(true);
+  const handleCancelSubscription = async () => {
+    setCancelLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("customer-portal");
+      const { data, error } = await supabase.functions.invoke("cancel-subscription");
       if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, "_blank");
-      } else {
-        throw new Error("No portal URL returned");
-      }
+      if (data?.error) throw new Error(data.error);
+      toast({
+        title: "Subscription canceled",
+        description: data?.message || "Your subscription will end at the current billing period.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["user_subscription"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
     } catch (err: any) {
       toast({
-        title: "Unable to open billing portal",
+        title: "Unable to cancel subscription",
         description: err.message || "Please try again later.",
         variant: "destructive",
       });
     } finally {
-      setPortalLoading(false);
+      setCancelLoading(false);
     }
   };
 
@@ -268,44 +274,46 @@ export default function Account() {
                   <CardTitle className="text-lg">Manage Subscription</CardTitle>
                 </div>
                 <CardDescription>
-                  Update your payment method, download invoices, or cancel your subscription
+                  Cancel your subscription if you no longer need premium features
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-sm text-muted-foreground">
-                  Use the billing portal to manage all aspects of your subscription, including:
+                  If you cancel, you'll keep access to premium features until the end of your current billing period.
                 </p>
-                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-muted-foreground">
-                  <li className="flex items-center gap-2">
-                    <CreditCard className="h-3.5 w-3.5 text-accent" />
-                    Update payment method
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Receipt className="h-3.5 w-3.5 text-accent" />
-                    View invoices & receipts
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <ArrowRight className="h-3.5 w-3.5 text-accent" />
-                    Change or cancel plan
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Zap className="h-3.5 w-3.5 text-accent" />
-                    Reactivate subscription
-                  </li>
-                </ul>
-                <Button
-                  onClick={handleManageSubscription}
-                  disabled={portalLoading}
-                  variant="outline"
-                  className="rounded-xl mt-2"
-                >
-                  {portalLoading ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                  )}
-                  Open Billing Portal
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      className="rounded-xl mt-2"
+                      disabled={cancelLoading}
+                    >
+                      {cancelLoading ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <XCircle className="h-4 w-4 mr-2" />
+                      )}
+                      Cancel Subscription
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Cancel your subscription?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Your premium features will remain active until the end of your current billing period. After that, you'll be downgraded to the free plan.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleCancelSubscription}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Yes, Cancel
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </CardContent>
             </Card>
           )}
