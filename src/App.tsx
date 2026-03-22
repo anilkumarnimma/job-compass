@@ -28,7 +28,6 @@ import NotFound from "./pages/NotFound";
 import Recommendations from "./pages/Recommendations";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import Unsubscribe from "./pages/Unsubscribe";
-import Account from "./pages/Account";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -97,11 +96,6 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
         
-        <Route path="/account" element={
-          <ProtectedRoute allowedRoles={["user", "employer", "founder"]}>
-            <Account />
-          </ProtectedRoute>
-        } />
         <Route path="/payment-success" element={<PaymentSuccess />} />
         <Route path="/unsubscribe" element={<Unsubscribe />} />
         <Route path="/help" element={<Help />} />

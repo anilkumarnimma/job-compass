@@ -1,7 +1,6 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Job, JobCounts, TabFilter } from "@/types/job";
-import { expandSearchQuery } from "@/lib/searchSynonyms";
 
 const PAGE_SIZE = 25;
 const STALE_TIME = 60 * 1000; // 60 seconds
@@ -36,9 +35,6 @@ interface UseJobSearchOptions {
 }
 
 export function useJobSearch({ searchQuery, tab, enabled = true }: UseJobSearchOptions) {
-  // Expand the query with semantic synonyms
-  const expandedTerms = searchQuery ? expandSearchQuery(searchQuery).slice(1) : [];
-
   return useInfiniteQuery({
     queryKey: ["jobs", "search", searchQuery, tab],
     queryFn: async ({ pageParam = 0 }) => {
@@ -47,8 +43,7 @@ export function useJobSearch({ searchQuery, tab, enabled = true }: UseJobSearchO
         page_size: PAGE_SIZE,
         page_offset: pageParam,
         filter_tab: tab,
-        expanded_terms: expandedTerms.length > 0 ? expandedTerms : [],
-      } as any);
+      });
 
       if (error) throw error;
       return (data || []).map(parseJob);
