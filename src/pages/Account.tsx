@@ -274,44 +274,46 @@ export default function Account() {
                   <CardTitle className="text-lg">Manage Subscription</CardTitle>
                 </div>
                 <CardDescription>
-                  Update your payment method, download invoices, or cancel your subscription
+                  Cancel your subscription if you no longer need premium features
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-sm text-muted-foreground">
-                  Use the billing portal to manage all aspects of your subscription, including:
+                  If you cancel, you'll keep access to premium features until the end of your current billing period.
                 </p>
-                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-muted-foreground">
-                  <li className="flex items-center gap-2">
-                    <CreditCard className="h-3.5 w-3.5 text-accent" />
-                    Update payment method
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Receipt className="h-3.5 w-3.5 text-accent" />
-                    View invoices & receipts
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <ArrowRight className="h-3.5 w-3.5 text-accent" />
-                    Change or cancel plan
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Zap className="h-3.5 w-3.5 text-accent" />
-                    Reactivate subscription
-                  </li>
-                </ul>
-                <Button
-                  onClick={handleManageSubscription}
-                  disabled={portalLoading}
-                  variant="outline"
-                  className="rounded-xl mt-2"
-                >
-                  {portalLoading ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                  )}
-                  Open Billing Portal
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      className="rounded-xl mt-2"
+                      disabled={cancelLoading}
+                    >
+                      {cancelLoading ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <XCircle className="h-4 w-4 mr-2" />
+                      )}
+                      Cancel Subscription
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Cancel your subscription?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Your premium features will remain active until the end of your current billing period. After that, you'll be downgraded to the free plan.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleCancelSubscription}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Yes, Cancel
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </CardContent>
             </Card>
           )}
