@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Job } from "@/types/job";
+import { expandSearchTerms } from "@/lib/searchExpansion";
 
 const PAGE_SIZE = 20;
 const STALE_TIME = 60 * 1000;
@@ -38,7 +39,42 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo }: U
   return useQuery({
     queryKey: ["jobs", "paginated", searchQuery, page, dateFrom, dateTo],
     queryFn: async () => {
-      // Build base query
+      const trimmed = searchQuery.trim();
+
+      // Use the search_jobs RPC with expanded terms for intelligent matching
+      if (trimmed) {
+        const expandedTerms = expandSearchTerms(trimmed);
+        const { data, error, count } = await supabase.rpc("search_jobs", {
+          search_query: trimmed,
+          page_size: PAGE_SIZE,
+          page_offset: (page - 1) * PAGE_SIZE,
+          filter_tab: "all",
+          expanded_terms: expandedTerms.length > 0 ? expandedTerms : undefined,
+        });
+
+        if (error) throw error;
+
+        const jobs = (data || []).map(parseJob);
+
+        // Apply date filters client-side (RPC doesn't support date range)
+        const filtered = jobs.filter(j => {
+          if (dateFrom && j.posted_date < new Date(dateFrom)) return false;
+          if (dateTo) {
+            const to = new Date(dateTo);
+            to.setDate(to.getDate() + 1);
+            if (j.posted_date >= to) return false;
+          }
+          return true;
+        });
+
+        return {
+          jobs: filtered,
+          totalCount: filtered.length,
+          totalPages: Math.max(1, Math.ceil(filtered.length / PAGE_SIZE)),
+        };
+      }
+
+      // No search query — use direct table query
       let query = supabase
         .from("jobs")
         .select("*", { count: "exact" })
@@ -47,22 +83,13 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo }: U
         .order("posted_date", { ascending: false })
         .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
-      // Apply date filters
       if (dateFrom) {
         query = query.gte("posted_date", dateFrom);
       }
       if (dateTo) {
-        // Add a day to include the entire "to" date
         const toDate = new Date(dateTo);
         toDate.setDate(toDate.getDate() + 1);
         query = query.lt("posted_date", toDate.toISOString().split("T")[0]);
-      }
-
-      // Apply text search if present
-      if (searchQuery.trim()) {
-        query = query.or(
-          `title.ilike.%${searchQuery}%,company.ilike.%${searchQuery}%,location.ilike.%${searchQuery}%`
-        );
       }
 
       const { data, error, count } = await query;

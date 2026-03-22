@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Job, JobCounts, TabFilter } from "@/types/job";
+import { expandSearchTerms } from "@/lib/searchExpansion";
 
 const PAGE_SIZE = 25;
 const STALE_TIME = 60 * 1000; // 60 seconds
@@ -38,11 +39,13 @@ export function useJobSearch({ searchQuery, tab, enabled = true }: UseJobSearchO
   return useInfiniteQuery({
     queryKey: ["jobs", "search", searchQuery, tab],
     queryFn: async ({ pageParam = 0 }) => {
+      const expandedTerms = expandSearchTerms(searchQuery);
       const { data, error } = await supabase.rpc("search_jobs", {
         search_query: searchQuery || null,
         page_size: PAGE_SIZE,
         page_offset: pageParam,
         filter_tab: tab,
+        expanded_terms: expandedTerms.length > 0 ? expandedTerms : undefined,
       });
 
       if (error) throw error;
