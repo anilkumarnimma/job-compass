@@ -8,12 +8,14 @@ import { useJobContext } from "@/context/JobContext";
 import { useAuth } from "@/context/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useAtsCheck } from "@/hooks/useAtsCheck";
+import { useInterviewPrep } from "@/hooks/useInterviewPrep";
 import { AtsCheckDialog } from "@/components/AtsCheckDialog";
+import { InterviewPrepDialog } from "@/components/InterviewPrepDialog";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, BriefcaseBusiness, Target } from "lucide-react";
+import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, BriefcaseBusiness, Target, Brain } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { analyzeVisaSponsorship } from "@/lib/visaSponsorship";
@@ -32,7 +34,9 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
   const { profile } = useProfile();
   const navigate = useNavigate();
   const { runCheck, isChecking, result, clearResult } = useAtsCheck();
+  const { prep, isLoading: isPrepLoading, generatePrep, clearPrep } = useInterviewPrep();
   const [showAtsDialog, setShowAtsDialog] = useState(false);
+  const [showPrepDialog, setShowPrepDialog] = useState(false);
 
   const saved = isSaved(job.id);
   const applied = isApplied(job.id);
@@ -60,6 +64,18 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
       job_description: job.description,
       job_title: job.title,
       job_skills: job.skills,
+    });
+  };
+
+  const handleInterviewPrep = () => {
+    if (!user) { navigate("/auth"); return; }
+    clearPrep();
+    setShowPrepDialog(true);
+    generatePrep({
+      job_title: job.title,
+      job_description: job.description,
+      job_skills: job.skills,
+      resume_intelligence: profile?.resume_intelligence as ResumeIntelligence | null,
     });
   };
 
@@ -145,6 +161,15 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
             <Target className="h-4 w-4 mr-1.5 animate-pulse" />ATS Check
           </Button>
 
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleInterviewPrep}
+            className="h-9 px-4 text-sm font-medium rounded-xl active:scale-95 text-accent hover:text-accent-foreground hover:bg-accent/20"
+          >
+            <Brain className="h-4 w-4 mr-1.5" />Prep
+          </Button>
+
           {job.is_reviewing && (
             <Badge className="ml-auto px-2.5 py-1.5 text-xs font-medium bg-success-bg text-success-text border-0 rounded-full">
               Actively Reviewing
@@ -158,6 +183,15 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
         onOpenChange={setShowAtsDialog}
         result={result}
         isChecking={isChecking}
+      />
+
+      <InterviewPrepDialog
+        open={showPrepDialog}
+        onOpenChange={setShowPrepDialog}
+        prep={prep}
+        isLoading={isPrepLoading}
+        jobTitle={job.title}
+        hasResume={!!(profile?.resume_intelligence as ResumeIntelligence | null)?.primaryRole}
       />
 
       {/* Scrollable Content */}
