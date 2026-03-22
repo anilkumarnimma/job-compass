@@ -161,6 +161,15 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
             <Target className="h-4 w-4 mr-1.5 animate-pulse" />ATS Check
           </Button>
 
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleInterviewPrep}
+            className="h-9 px-4 text-sm font-medium rounded-xl active:scale-95 text-accent hover:text-accent-foreground hover:bg-accent/20"
+          >
+            <Brain className="h-4 w-4 mr-1.5" />Prep
+          </Button>
+
           {job.is_reviewing && (
             <Badge className="ml-auto px-2.5 py-1.5 text-xs font-medium bg-success-bg text-success-text border-0 rounded-full">
               Actively Reviewing
@@ -174,6 +183,15 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
         onOpenChange={setShowAtsDialog}
         result={result}
         isChecking={isChecking}
+      />
+
+      <InterviewPrepDialog
+        open={showPrepDialog}
+        onOpenChange={setShowPrepDialog}
+        prep={prep}
+        isLoading={isPrepLoading}
+        jobTitle={job.title}
+        hasResume={!!(profile?.resume_intelligence as ResumeIntelligence | null)?.primaryRole}
       />
 
       {/* Scrollable Content */}
