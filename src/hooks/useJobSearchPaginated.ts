@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Job } from "@/types/job";
+import { expandSearchQuery } from "@/lib/searchSynonyms";
 
 const PAGE_SIZE = 20;
 const STALE_TIME = 60 * 1000;
@@ -35,43 +36,63 @@ interface UseJobSearchPaginatedOptions {
 }
 
 export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo }: UseJobSearchPaginatedOptions) {
+  // Expand the query with semantic synonyms
+  const expandedTerms = searchQuery ? expandSearchQuery(searchQuery).slice(1) : [];
+
   return useQuery({
     queryKey: ["jobs", "paginated", searchQuery, page, dateFrom, dateTo],
     queryFn: async () => {
-      // Build base query
-      let query = supabase
-        .from("jobs")
-        .select("*", { count: "exact" })
-        .eq("is_published", true)
-        .eq("is_archived", false)
-        .order("posted_date", { ascending: false })
-        .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
-
-      // Apply date filters
+      // Determine the tab filter based on date range
+      let filterTab = "all";
       if (dateFrom) {
-        query = query.gte("posted_date", dateFrom);
-      }
-      if (dateTo) {
-        // Add a day to include the entire "to" date
-        const toDate = new Date(dateTo);
-        toDate.setDate(toDate.getDate() + 1);
-        query = query.lt("posted_date", toDate.toISOString().split("T")[0]);
+        const today = new Date();
+        const todayStr = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString().split("T")[0];
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate()).toISOString().split("T")[0];
+
+        if (dateFrom === todayStr && !dateTo) {
+          filterTab = "today";
+        } else if (dateFrom === yesterdayStr && dateTo === todayStr) {
+          filterTab = "yesterday";
+        }
       }
 
-      // Apply text search if present
-      if (searchQuery.trim()) {
-        query = query.or(
-          `title.ilike.%${searchQuery}%,company.ilike.%${searchQuery}%,location.ilike.%${searchQuery}%`
-        );
-      }
+      // Use the search_jobs RPC with expanded terms for semantic matching
+      const { data, error } = await supabase.rpc("search_jobs", {
+        search_query: searchQuery || null,
+        page_size: PAGE_SIZE,
+        page_offset: (page - 1) * PAGE_SIZE,
+        filter_tab: filterTab !== "all" || !dateFrom ? filterTab : "all",
+        expanded_terms: expandedTerms.length > 0 ? expandedTerms : undefined,
+      } as any);
 
-      const { data, error, count } = await query;
       if (error) throw error;
 
+      let jobs = (data || []).map(parseJob);
+
+      // Apply custom date filtering if needed (for custom date ranges not handled by filterTab)
+      if (dateFrom && filterTab === "all") {
+        const fromDate = new Date(dateFrom);
+        jobs = jobs.filter(j => j.posted_date >= fromDate);
+        if (dateTo) {
+          const toDate = new Date(dateTo);
+          toDate.setDate(toDate.getDate() + 1);
+          jobs = jobs.filter(j => j.posted_date < toDate);
+        }
+      }
+
+      // Estimate total count for pagination
+      const rawLength = (data || []).length;
+      let totalCount = jobs.length;
+      if (rawLength >= PAGE_SIZE) {
+        totalCount = page * PAGE_SIZE + PAGE_SIZE;
+      }
+
       return {
-        jobs: (data || []).map(parseJob),
-        totalCount: count || 0,
-        totalPages: Math.ceil((count || 0) / PAGE_SIZE),
+        jobs,
+        totalCount,
+        totalPages: Math.max(1, Math.ceil(totalCount / PAGE_SIZE)),
       };
     },
     staleTime: STALE_TIME,
