@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTailoredResume, TailoredResumeData } from "@/hooks/useTailoredResume";
 import { useProfile } from "@/hooks/useProfile";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
