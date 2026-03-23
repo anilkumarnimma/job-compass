@@ -14,32 +14,40 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
-    const systemPrompt = `You are an expert ATS resume optimizer. Your job is to take a candidate's existing resume content and tailor it for a specific job posting.
+    const systemPrompt = `You are an expert ATS resume optimizer. Tailor a candidate's resume for a specific job posting.
 
-RULES:
-- PRESERVE the original resume structure, section ordering, and formatting style exactly
-- NEVER fabricate experience, projects, companies, degrees, or skills the candidate doesn't have
-- Optimize for ATS keyword matching by naturally incorporating relevant keywords from the job description into existing bullet points
-- Strengthen action verbs and quantify achievements where possible
-- Reorder bullet points within sections to prioritize the most relevant ones for this job
-- If the candidate has a skill mentioned in the job but not prominently featured, elevate it
-- Target 90-95% ATS match score through keyword alignment and relevance optimization
-- Keep the same professional tone as the original resume
+STRICT PRESERVATION RULES — NEVER change:
+- Company names (keep exactly as-is)
+- Job titles / role names (keep exactly as-is)
+- Employment dates / years (keep exactly as-is)
+- Education institutions, degrees, and dates (keep exactly as-is)
+- Project names (keep exactly as-is)
 
-Return a JSON object using the tool provided.`;
+ALLOWED OPTIMIZATIONS — DO aggressively:
+- Add missing relevant keywords from the job description into existing bullet points naturally
+- Strengthen action verbs (e.g. "helped" → "spearheaded", "did" → "engineered")
+- Add new realistic bullet points that align with the candidate's actual skills/experience
+- Quantify achievements where plausible (e.g. "improved performance" → "improved performance by 40%")
+- Reorder bullet points to prioritize the most relevant ones for this job first
+- Add missing skills to the skills section IF the candidate plausibly has them based on their experience
+- Optimize the summary/objective to directly address the job requirements
 
-    const desc = (job_description || "").slice(0, 1500);
+TARGET: 95%+ ATS match score through keyword alignment, not fabrication.
+
+Return JSON using the tool provided. Be concise and fast.`;
+
+    const desc = (job_description || "").slice(0, 1200);
     const skills = (job_skills || []).join(", ");
     const resumeContent = resume_text || (resume_intelligence ? JSON.stringify(resume_intelligence) : "No resume provided");
 
-    const userPrompt = `JOB TITLE: ${job_title}
-JOB DESCRIPTION: ${desc}
-REQUIRED SKILLS: ${skills}
+    const userPrompt = `JOB: ${job_title}
+SKILLS REQUIRED: ${skills}
+DESCRIPTION: ${desc}
 
-CANDIDATE RESUME DATA:
-${typeof resumeContent === 'string' ? resumeContent.slice(0, 3000) : JSON.stringify(resumeContent).slice(0, 3000)}
+RESUME:
+${typeof resumeContent === 'string' ? resumeContent.slice(0, 2500) : JSON.stringify(resumeContent).slice(0, 2500)}
 
-Tailor this resume for the job above. Preserve the original format and structure. Optimize aggressively for ATS but never fabricate experience.`;
+Tailor this resume. Preserve all company names, roles, dates, education exactly. Optimize bullets and keywords aggressively for ATS.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -68,23 +76,23 @@ Tailor this resume for the job above. Preserve the original format and structure
                   },
                   sections: {
                     type: "array",
-                    description: "Resume sections in order, preserving original structure",
+                    description: "Resume sections preserving original structure and identity data exactly",
                     items: {
                       type: "object",
                       properties: {
-                        title: { type: "string", description: "Section heading e.g. Experience, Skills, Education" },
+                        title: { type: "string" },
                         items: {
                           type: "array",
                           items: {
                             type: "object",
                             properties: {
-                              heading: { type: "string", description: "Item heading (job title, degree, etc.)" },
-                              subheading: { type: "string", description: "Company/institution name" },
-                              date: { type: "string", description: "Date range" },
+                              heading: { type: "string", description: "Original job title or degree - DO NOT change" },
+                              subheading: { type: "string", description: "Original company or institution - DO NOT change" },
+                              date: { type: "string", description: "Original date range - DO NOT change" },
                               bullets: {
                                 type: "array",
                                 items: { type: "string" },
-                                description: "Bullet points, optimized for ATS",
+                                description: "Bullet points optimized for ATS with strong verbs and keywords",
                               },
                             },
                             required: ["heading"],
@@ -97,16 +105,16 @@ Tailor this resume for the job above. Preserve the original format and structure
                   skills_section: {
                     type: "array",
                     items: { type: "string" },
-                    description: "Skills list optimized and reordered for this job",
+                    description: "Skills list optimized and expanded for this job",
                   },
                   keywords_added: {
                     type: "array",
                     items: { type: "string" },
-                    description: "Keywords from job description that were naturally incorporated",
+                    description: "Keywords from job description incorporated",
                   },
                   optimization_notes: {
                     type: "string",
-                    description: "Brief note on what was optimized (1-2 sentences)",
+                    description: "Brief optimization note (1 sentence)",
                   },
                 },
                 required: ["summary", "sections", "skills_section", "keywords_added", "optimization_notes"],

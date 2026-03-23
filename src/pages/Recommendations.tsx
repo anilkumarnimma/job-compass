@@ -14,7 +14,9 @@ import { Job } from "@/types/job";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Upload, FileText, X, Target } from "lucide-react";
+import { Sparkles, Upload, FileText, X, Target, Percent } from "lucide-react";
+import { calculateJobMatch } from "@/lib/jobMatcher";
+import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -44,6 +46,11 @@ export default function Recommendations() {
   const [coverLetterOpen, setCoverLetterOpen] = useState(false);
   const [tailoredResumeJob, setTailoredResumeJob] = useState<RecommendedJob | null>(null);
   const [tailoredResumeOpen, setTailoredResumeOpen] = useState(false);
+
+  const intelligence = useMemo(() => {
+    const { profile } = useProfile();
+    return profile?.resume_intelligence as ResumeIntelligence | null | undefined;
+  }, []);
 
   const handleJobTap = useCallback((job: Job) => {
     const recJob = jobs?.find(j => j.id === job.id) || null;
