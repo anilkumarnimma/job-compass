@@ -209,7 +209,7 @@ export default function Recommendations() {
                         onTap={handleJobTap}
                         isSelected={selectedJob?.id === job.id}
                       />
-                      <div className="flex justify-end mt-1.5 px-1">
+                      <div className="flex justify-end mt-1.5 px-1 gap-1.5">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -222,6 +222,19 @@ export default function Recommendations() {
                         >
                           <FileText className="h-3.5 w-3.5 mr-1 animate-pulse" />
                           Cover Letter
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs text-accent hover:text-accent-foreground hover:bg-accent/20 h-7 px-3 rounded-full animate-[ats-glow_4s_ease-in-out_infinite] relative"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTailoredResumeJob(job);
+                            setTailoredResumeOpen(true);
+                          }}
+                        >
+                          <Target className="h-3.5 w-3.5 mr-1 animate-pulse" />
+                          Tailored Resume
                         </Button>
                       </div>
                     </div>
