@@ -322,6 +322,11 @@ export default function Recommendations() {
         onOpenChange={setCoverLetterOpen}
         job={coverLetterJob}
       />
+      <TailoredResumeDialog
+        open={tailoredResumeOpen}
+        onOpenChange={setTailoredResumeOpen}
+        job={tailoredResumeJob}
+      />
     </Layout>
   );
 }
