@@ -14,16 +14,20 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
-    const systemPrompt = `You are an expert ATS resume optimizer. Tailor a candidate's resume for a specific job posting.
+    const systemPrompt = `You are an expert ATS resume optimizer. You tailor a candidate's existing resume for a specific job posting.
 
-STRICT PRESERVATION RULES — NEVER change:
-- Company names (keep exactly as-is)
-- Job titles / role names (keep exactly as-is)
-- Employment dates / years (keep exactly as-is)
-- Education institutions, degrees, and dates (keep exactly as-is)
-- Project names (keep exactly as-is)
+ABSOLUTE MANDATORY RULES — NEVER EVER CHANGE THESE:
+1. Company names — copy them EXACTLY character-for-character from the candidate's resume. Do NOT rename, abbreviate, expand, normalize, or replace any company name. If the resume says "Acme Corp", output "Acme Corp" exactly. If it says "ABC Technologies Pvt Ltd", output "ABC Technologies Pvt Ltd" exactly.
+2. Job titles / role names — keep EXACTLY as written in the resume
+3. Employment dates / years — keep EXACTLY as written in the resume
+4. Education institution names — keep EXACTLY as written in the resume
+5. Education degrees — keep EXACTLY as written in the resume
+6. Education dates / years — keep EXACTLY as written in the resume
+7. Project names — keep EXACTLY as written in the resume
 
-ALLOWED OPTIMIZATIONS — DO aggressively:
+VIOLATION OF THE ABOVE RULES IS STRICTLY FORBIDDEN. These are the candidate's real career facts.
+
+ALLOWED OPTIMIZATIONS — DO these aggressively:
 - Add missing relevant keywords from the job description into existing bullet points naturally
 - Strengthen action verbs (e.g. "helped" → "spearheaded", "did" → "engineered")
 - Add new realistic bullet points that align with the candidate's actual skills/experience
@@ -32,7 +36,9 @@ ALLOWED OPTIMIZATIONS — DO aggressively:
 - Add missing skills to the skills section IF the candidate plausibly has them based on their experience
 - Optimize the summary/objective to directly address the job requirements
 
-TARGET: 95%+ ATS match score through keyword alignment, not fabrication.
+NEVER fabricate fake companies, fake roles, fake projects, or fake dates.
+
+TARGET: 95%+ ATS match score through keyword alignment and bullet optimization, NOT through fabrication.
 
 Return JSON using the tool provided. Be concise and fast.`;
 
@@ -40,14 +46,14 @@ Return JSON using the tool provided. Be concise and fast.`;
     const skills = (job_skills || []).join(", ");
     const resumeContent = resume_text || (resume_intelligence ? JSON.stringify(resume_intelligence) : "No resume provided");
 
-    const userPrompt = `JOB: ${job_title}
-SKILLS REQUIRED: ${skills}
-DESCRIPTION: ${desc}
+    const userPrompt = `TARGET JOB: ${job_title}
+REQUIRED SKILLS: ${skills}
+JOB DESCRIPTION: ${desc}
 
-RESUME:
+CANDIDATE'S CURRENT RESUME (preserve ALL company names, titles, dates, education EXACTLY):
 ${typeof resumeContent === 'string' ? resumeContent.slice(0, 2500) : JSON.stringify(resumeContent).slice(0, 2500)}
 
-Tailor this resume. Preserve all company names, roles, dates, education exactly. Optimize bullets and keywords aggressively for ATS.`;
+IMPORTANT REMINDER: Copy every company name, job title, date, and education detail EXACTLY from the resume above. Do NOT change them. Only optimize bullet points, skills, summary, and keyword alignment.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -56,7 +62,7 @@ Tailor this resume. Preserve all company names, roles, dates, education exactly.
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -76,7 +82,7 @@ Tailor this resume. Preserve all company names, roles, dates, education exactly.
                   },
                   sections: {
                     type: "array",
-                    description: "Resume sections preserving original structure and identity data exactly",
+                    description: "Resume sections. CRITICAL: heading/subheading/date must be copied EXACTLY from the original resume",
                     items: {
                       type: "object",
                       properties: {
@@ -86,9 +92,9 @@ Tailor this resume. Preserve all company names, roles, dates, education exactly.
                           items: {
                             type: "object",
                             properties: {
-                              heading: { type: "string", description: "Original job title or degree - DO NOT change" },
-                              subheading: { type: "string", description: "Original company or institution - DO NOT change" },
-                              date: { type: "string", description: "Original date range - DO NOT change" },
+                              heading: { type: "string", description: "EXACT original job title or degree from resume — DO NOT CHANGE" },
+                              subheading: { type: "string", description: "EXACT original company or institution name from resume — DO NOT CHANGE" },
+                              date: { type: "string", description: "EXACT original date range from resume — DO NOT CHANGE" },
                               bullets: {
                                 type: "array",
                                 items: { type: "string" },
