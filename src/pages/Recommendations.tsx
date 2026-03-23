@@ -6,6 +6,7 @@ import { MobileJobPreviewSheet } from "@/components/MobileJobPreviewSheet";
 import { UpgradeDialog } from "@/components/UpgradeDialog";
 import { ApplyConfirmDialog } from "@/components/ApplyConfirmDialog";
 import { CoverLetterDialog } from "@/components/CoverLetterDialog";
+import { TailoredResumeDialog } from "@/components/TailoredResumeDialog";
 import { useRecommendedJobs, RecommendedJob } from "@/hooks/useRecommendedJobs";
 import { useJobContext } from "@/context/JobContext";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -13,7 +14,7 @@ import { Job } from "@/types/job";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Upload, FileText, X } from "lucide-react";
+import { Sparkles, Upload, FileText, X, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -41,6 +42,8 @@ export default function Recommendations() {
   const [currentPage, setCurrentPage] = useState(1);
   const [coverLetterJob, setCoverLetterJob] = useState<RecommendedJob | null>(null);
   const [coverLetterOpen, setCoverLetterOpen] = useState(false);
+  const [tailoredResumeJob, setTailoredResumeJob] = useState<RecommendedJob | null>(null);
+  const [tailoredResumeOpen, setTailoredResumeOpen] = useState(false);
 
   const handleJobTap = useCallback((job: Job) => {
     const recJob = jobs?.find(j => j.id === job.id) || null;
@@ -206,7 +209,7 @@ export default function Recommendations() {
                         onTap={handleJobTap}
                         isSelected={selectedJob?.id === job.id}
                       />
-                      <div className="flex justify-end mt-1.5 px-1">
+                      <div className="flex justify-end mt-1.5 px-1 gap-1.5">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -219,6 +222,19 @@ export default function Recommendations() {
                         >
                           <FileText className="h-3.5 w-3.5 mr-1 animate-pulse" />
                           Cover Letter
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs text-accent hover:text-accent-foreground hover:bg-accent/20 h-7 px-3 rounded-full animate-[ats-glow_4s_ease-in-out_infinite] relative"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTailoredResumeJob(job);
+                            setTailoredResumeOpen(true);
+                          }}
+                        >
+                          <Target className="h-3.5 w-3.5 mr-1 animate-pulse" />
+                          Tailored Resume
                         </Button>
                       </div>
                     </div>
@@ -305,6 +321,11 @@ export default function Recommendations() {
         open={coverLetterOpen}
         onOpenChange={setCoverLetterOpen}
         job={coverLetterJob}
+      />
+      <TailoredResumeDialog
+        open={tailoredResumeOpen}
+        onOpenChange={setTailoredResumeOpen}
+        job={tailoredResumeJob}
       />
     </Layout>
   );
