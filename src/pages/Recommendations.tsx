@@ -8,6 +8,7 @@ import { ApplyConfirmDialog } from "@/components/ApplyConfirmDialog";
 import { CoverLetterDialog } from "@/components/CoverLetterDialog";
 import { TailoredResumeDialog } from "@/components/TailoredResumeDialog";
 import { useRecommendedJobs, RecommendedJob } from "@/hooks/useRecommendedJobs";
+import { useProfile } from "@/hooks/useProfile";
 import { useJobContext } from "@/context/JobContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Job } from "@/types/job";
@@ -35,6 +36,7 @@ const PAGE_SIZE = 20;
 export default function Recommendations() {
   const { data: jobs, isLoading, canRecommend, hasResume } = useRecommendedJobs();
   const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply, isApplied } = useJobContext();
+  const { profile } = useProfile();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
@@ -47,10 +49,7 @@ export default function Recommendations() {
   const [tailoredResumeJob, setTailoredResumeJob] = useState<RecommendedJob | null>(null);
   const [tailoredResumeOpen, setTailoredResumeOpen] = useState(false);
 
-  const intelligence = useMemo(() => {
-    const { profile } = useProfile();
-    return profile?.resume_intelligence as ResumeIntelligence | null | undefined;
-  }, []);
+  const intelligence = profile?.resume_intelligence as ResumeIntelligence | null | undefined;
 
   const handleJobTap = useCallback((job: Job) => {
     const recJob = jobs?.find(j => j.id === job.id) || null;
