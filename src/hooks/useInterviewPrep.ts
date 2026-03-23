@@ -1,15 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
 
 export interface InterviewPrepData {
-  keySkills: string[];
-  resumeMatch: {
-    strengths: string[];
-    gaps: string[];
-    matchSummary: string;
-  };
   technicalQuestions: {
     question: string;
     suggestedAnswer: string;
@@ -18,20 +12,14 @@ export interface InterviewPrepData {
   behavioralQuestions: {
     question: string;
     suggestedAnswer: string;
-    tip: string;
   }[];
-  tailoredAnswers: {
-    question: string;
-    answer: string;
-  }[];
-  studyTopics: string[];
-  interviewTips: string[];
 }
 
 export function useInterviewPrep() {
   const [prep, setPrep] = useState<InterviewPrepData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const cache = useRef<Map<string, InterviewPrepData>>(new Map());
 
   const generatePrep = useCallback(async (params: {
     job_title: string;
@@ -39,6 +27,15 @@ export function useInterviewPrep() {
     job_skills: string[];
     resume_intelligence?: ResumeIntelligence | null;
   }) => {
+    // Cache key: job title + first 100 chars of desc + resume role
+    const cacheKey = `${params.job_title}|${params.job_description.slice(0, 100)}|${params.resume_intelligence?.primaryRole || "none"}`;
+    
+    const cached = cache.current.get(cacheKey);
+    if (cached) {
+      setPrep(cached);
+      return;
+    }
+
     setIsLoading(true);
     setPrep(null);
 
@@ -49,6 +46,7 @@ export function useInterviewPrep() {
 
       if (error) throw error;
       if (data?.prep) {
+        cache.current.set(cacheKey, data.prep);
         setPrep(data.prep);
       } else if (data?.error) {
         throw new Error(data.error);
