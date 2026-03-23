@@ -195,7 +195,7 @@ export default function Recommendations() {
                     transition={{ delay: Math.min(index, 8) * 0.05, duration: 0.35, ease: "easeOut" }}
                   >
                     <div className="relative">
-                      <div className="absolute -top-2 left-4 z-10">
+                      <div className="absolute -top-2 left-4 z-10 flex items-center gap-1.5">
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Badge className="bg-accent/15 text-accent border-accent/20 text-[10px] px-2 py-0.5 rounded-full font-medium shadow-sm cursor-default">
@@ -209,6 +209,15 @@ export default function Recommendations() {
                               : "Matched based on your profile"}
                           </TooltipContent>
                         </Tooltip>
+                        {(() => {
+                          const match = intelligence ? calculateJobMatch(job, intelligence) : null;
+                          if (!match) return null;
+                          return (
+                            <Badge className={`${match.scoreColor} border-0 text-[10px] px-2 py-0.5 rounded-full font-semibold shadow-sm cursor-default`}>
+                              {match.score}% Match
+                            </Badge>
+                          );
+                        })()}
                       </div>
                       <JobCard
                         job={job}
