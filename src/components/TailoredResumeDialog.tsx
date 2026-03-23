@@ -133,7 +133,7 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[680px] max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[680px] max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/50">
           <div className="flex items-center gap-2">
             <div className="h-9 w-9 rounded-xl bg-accent/10 flex items-center justify-center">
@@ -170,7 +170,7 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
                 exit={{ opacity: 0 }}
                 className="h-full flex flex-col"
               >
-                <ScrollArea className="flex-1 px-6 py-4" style={{ maxHeight: "55vh" }}>
+                <ScrollArea className="flex-1 px-6 py-4" style={{ maxHeight: "calc(90vh - 160px)" }}>
                   <ResumePreview data={result} />
                 </ScrollArea>
 

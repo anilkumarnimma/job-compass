@@ -8,13 +8,16 @@ import { ApplyConfirmDialog } from "@/components/ApplyConfirmDialog";
 import { CoverLetterDialog } from "@/components/CoverLetterDialog";
 import { TailoredResumeDialog } from "@/components/TailoredResumeDialog";
 import { useRecommendedJobs, RecommendedJob } from "@/hooks/useRecommendedJobs";
+import { useProfile } from "@/hooks/useProfile";
 import { useJobContext } from "@/context/JobContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Job } from "@/types/job";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Upload, FileText, X, Target } from "lucide-react";
+import { Sparkles, Upload, FileText, X, Target, Percent } from "lucide-react";
+import { calculateJobMatch } from "@/lib/jobMatcher";
+import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -33,6 +36,7 @@ const PAGE_SIZE = 20;
 export default function Recommendations() {
   const { data: jobs, isLoading, canRecommend, hasResume } = useRecommendedJobs();
   const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply, isApplied } = useJobContext();
+  const { profile } = useProfile();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
@@ -44,6 +48,8 @@ export default function Recommendations() {
   const [coverLetterOpen, setCoverLetterOpen] = useState(false);
   const [tailoredResumeJob, setTailoredResumeJob] = useState<RecommendedJob | null>(null);
   const [tailoredResumeOpen, setTailoredResumeOpen] = useState(false);
+
+  const intelligence = profile?.resume_intelligence as ResumeIntelligence | null | undefined;
 
   const handleJobTap = useCallback((job: Job) => {
     const recJob = jobs?.find(j => j.id === job.id) || null;
@@ -189,7 +195,7 @@ export default function Recommendations() {
                     transition={{ delay: Math.min(index, 8) * 0.05, duration: 0.35, ease: "easeOut" }}
                   >
                     <div className="relative">
-                      <div className="absolute -top-2 left-4 z-10">
+                      <div className="absolute -top-2 left-4 z-10 flex items-center gap-1.5">
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Badge className="bg-accent/15 text-accent border-accent/20 text-[10px] px-2 py-0.5 rounded-full font-medium shadow-sm cursor-default">
@@ -203,6 +209,15 @@ export default function Recommendations() {
                               : "Matched based on your profile"}
                           </TooltipContent>
                         </Tooltip>
+                        {(() => {
+                          const match = intelligence ? calculateJobMatch(job, intelligence) : null;
+                          if (!match) return null;
+                          return (
+                            <Badge className={`${match.scoreColor} border-0 text-[10px] px-2 py-0.5 rounded-full font-semibold shadow-sm cursor-default`}>
+                              {match.score}% Match
+                            </Badge>
+                          );
+                        })()}
                       </div>
                       <JobCard
                         job={job}
