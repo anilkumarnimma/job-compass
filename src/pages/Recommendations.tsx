@@ -15,12 +15,11 @@ import { Job } from "@/types/job";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Upload, FileText, X, Target, Percent } from "lucide-react";
+import { Sparkles, Upload, FileText, X, Target } from "lucide-react";
 import { calculateJobMatch } from "@/lib/jobMatcher";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Pagination,
   PaginationContent,
@@ -195,25 +194,21 @@ export default function Recommendations() {
                     transition={{ delay: Math.min(index, 8) * 0.05, duration: 0.35, ease: "easeOut" }}
                   >
                     <div className="relative">
-                      <div className="absolute -top-2 left-4 z-10 flex items-center gap-1.5">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Badge className="bg-accent/15 text-accent border-accent/20 text-[10px] px-2 py-0.5 rounded-full font-medium shadow-sm cursor-default">
-                              <Sparkles className="h-3 w-3 mr-1" />
-                              Recommended
-                            </Badge>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="text-xs">
-                            {job.matchedSkills.length > 0
-                              ? `Matched skills: ${job.matchedSkills.slice(0, 4).join(", ")}`
-                              : "Matched based on your profile"}
-                          </TooltipContent>
-                        </Tooltip>
+                      <div className="absolute -top-2.5 left-4 z-10 flex items-center gap-1.5">
+                        <Badge className="bg-accent/15 text-accent border-accent/20 text-[10px] px-2 py-0.5 rounded-full font-medium shadow-sm cursor-default">
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          Recommended
+                        </Badge>
                         {(() => {
                           const match = intelligence ? calculateJobMatch(job, intelligence) : null;
-                          if (!match) return null;
+                          if (!match || match.score === 0) return null;
+                          const bgColor = match.score >= 70
+                            ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                            : match.score >= 40
+                            ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                            : "bg-red-500/15 text-red-600 dark:text-red-400";
                           return (
-                            <Badge className={`${match.scoreColor} border-0 text-[10px] px-2 py-0.5 rounded-full font-semibold shadow-sm cursor-default`}>
+                            <Badge className={`${bgColor} border-0 text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm cursor-default`}>
                               {match.score}% Match
                             </Badge>
                           );
