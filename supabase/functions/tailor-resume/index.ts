@@ -10,13 +10,14 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { job_title, job_description, job_skills, resume_intelligence, resume_text } = await req.json();
+    const { job_title, job_description, job_skills, resume_intelligence, resume_text, base_resume } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
     const systemPrompt = `You are an expert ATS resume optimizer. You tailor a candidate's existing resume for a specific job posting.
 
 ABSOLUTE MANDATORY RULES — NEVER EVER CHANGE THESE:
+0. The uploaded/base resume structure is the source of truth. Preserve the same header identity, section order, section titles, core entries, company names, job titles, education entries, and dates exactly.
 1. Company names — copy them EXACTLY character-for-character from the candidate's resume. Do NOT rename, abbreviate, expand, normalize, or replace any company name. If the resume says "Acme Corp", output "Acme Corp" exactly. If it says "ABC Technologies Pvt Ltd", output "ABC Technologies Pvt Ltd" exactly.
 2. Job titles / role names — keep EXACTLY as written in the resume
 3. Employment dates / years — keep EXACTLY as written in the resume
@@ -24,6 +25,8 @@ ABSOLUTE MANDATORY RULES — NEVER EVER CHANGE THESE:
 5. Education degrees — keep EXACTLY as written in the resume
 6. Education dates / years — keep EXACTLY as written in the resume
 7. Project names — keep EXACTLY as written in the resume
+8. Header / top contact details — keep the candidate name and contact details from the base resume exactly as provided
+9. Do NOT remove sections that exist in the base resume. Keep the resume complete from top to bottom.
 
 VIOLATION OF THE ABOVE RULES IS STRICTLY FORBIDDEN. These are the candidate's real career facts.
 
@@ -35,6 +38,7 @@ ALLOWED OPTIMIZATIONS — DO these aggressively:
 - Reorder bullet points to prioritize the most relevant ones for this job first
 - Add missing skills to the skills section IF the candidate plausibly has them based on their experience
 - Optimize the summary/objective to directly address the job requirements
+- Preserve the same overall resume structure and section ordering from the base resume
 
 NEVER fabricate fake companies, fake roles, fake projects, or fake dates.
 
@@ -45,15 +49,19 @@ Return JSON using the tool provided. Be concise and fast.`;
     const desc = (job_description || "").slice(0, 1200);
     const skills = (job_skills || []).join(", ");
     const resumeContent = resume_text || (resume_intelligence ? JSON.stringify(resume_intelligence) : "No resume provided");
+    const baseResume = base_resume ? JSON.stringify(base_resume).slice(0, 5000) : "No structured base resume provided";
 
     const userPrompt = `TARGET JOB: ${job_title}
 REQUIRED SKILLS: ${skills}
 JOB DESCRIPTION: ${desc}
 
+BASE RESUME STRUCTURE TO PRESERVE EXACTLY:
+${baseResume}
+
 CANDIDATE'S CURRENT RESUME (preserve ALL company names, titles, dates, education EXACTLY):
 ${typeof resumeContent === 'string' ? resumeContent.slice(0, 2500) : JSON.stringify(resumeContent).slice(0, 2500)}
 
-IMPORTANT REMINDER: Copy every company name, job title, date, and education detail EXACTLY from the resume above. Do NOT change them. Only optimize bullet points, skills, summary, and keyword alignment.`;
+IMPORTANT REMINDER: Copy every company name, job title, date, education detail, header detail, and section order EXACTLY from the base resume above. Do NOT change them. Only optimize bullet points, skills, summary, and keyword alignment.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -76,13 +84,26 @@ IMPORTANT REMINDER: Copy every company name, job title, date, and education deta
               parameters: {
                 type: "object",
                 properties: {
+                  header: {
+                    type: "object",
+                    description: "Resume header copied from the base resume exactly",
+                    properties: {
+                      full_name: { type: "string" },
+                      headline: { type: "string" },
+                      contact_details: {
+                        type: "array",
+                        items: { type: "string" },
+                      },
+                    },
+                    required: ["full_name", "contact_details"],
+                  },
                   summary: {
                     type: "string",
                     description: "Professional summary tailored to this specific job (2-3 sentences)",
                   },
                   sections: {
                     type: "array",
-                    description: "Resume sections. CRITICAL: heading/subheading/date must be copied EXACTLY from the original resume",
+                    description: "Resume sections in the SAME order and with the SAME titles as the base resume. CRITICAL: heading/subheading/date must be copied EXACTLY from the original resume",
                     items: {
                       type: "object",
                       properties: {
@@ -123,7 +144,7 @@ IMPORTANT REMINDER: Copy every company name, job title, date, and education deta
                     description: "Brief optimization note (1 sentence)",
                   },
                 },
-                required: ["summary", "sections", "skills_section", "keywords_added", "optimization_notes"],
+                required: ["header", "summary", "sections", "skills_section", "keywords_added", "optimization_notes"],
               },
             },
           },

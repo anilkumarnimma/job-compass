@@ -87,7 +87,14 @@ function buildBaseResume(profile: ProfileData | null | undefined, intelligence: 
     summary: undefined,
     sections,
     skills_section: profile?.skills || [],
-    source_signature: [profile?.resume_filename, profile?.updated_at].filter(Boolean).join("::") || profile?.email || "resume",
+    source_signature:
+      [
+        profile?.resume_filename,
+        profile?.contact_email || profile?.email,
+        JSON.stringify(profile?.work_experience || []),
+        JSON.stringify(profile?.education || []),
+        JSON.stringify(profile?.skills || []),
+      ].join("::") || profile?.email || "resume",
   };
 }
 
