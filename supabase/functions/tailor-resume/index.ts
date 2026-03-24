@@ -40,11 +40,21 @@ ALLOWED OPTIMIZATIONS — DO these aggressively:
 - Optimize the summary/objective to directly address the job requirements
 - Preserve the same overall resume structure and section ordering from the base resume
 
+BULLET POINT DEPTH REQUIREMENT (CRITICAL):
+- Every experience/work role MUST have exactly 6-7 bullet points. No fewer than 6.
+- Each bullet must start with a strong action verb: Designed, Developed, Built, Optimized, Led, Implemented, Architected, Engineered, Spearheaded, Orchestrated, Streamlined, etc.
+- Each bullet must be technically detailed, mentioning specific technologies, tools, frameworks, or methodologies relevant to the target job.
+- Each bullet must demonstrate impact, scale, or measurable contribution (e.g., percentages, team sizes, user counts, performance gains).
+- Expand existing short bullets into richer, more detailed statements.
+- Add realistic new bullets that align with the candidate's role, tools, and industry — but do NOT fabricate fake projects or companies.
+- Avoid generic filler bullets like "Participated in team meetings" or "Assisted with various tasks".
+- Prioritize bullets that align with the target job description's requirements and keywords.
+
 NEVER fabricate fake companies, fake roles, fake projects, or fake dates.
 
 TARGET: 95%+ ATS match score through keyword alignment and bullet optimization, NOT through fabrication.
 
-Return JSON using the tool provided. Be concise and fast.`;
+Return JSON using the tool provided.`;
 
     const desc = (job_description || "").slice(0, 1200);
     const skills = (job_skills || []).join(", ");
