@@ -37,8 +37,22 @@ ALLOWED OPTIMIZATIONS — DO these aggressively:
 - Quantify achievements where plausible (e.g. "improved performance" → "improved performance by 40%")
 - Reorder bullet points to prioritize the most relevant ones for this job first
 - Add missing skills to the skills section IF the candidate plausibly has them based on their experience
-- Optimize the summary/objective to directly address the job requirements
 - Preserve the same overall resume structure and section ordering from the base resume
+
+PROFESSIONAL SUMMARY REQUIREMENT (CRITICAL):
+- The summary field MUST be a strong, detailed professional summary of exactly 5-6 sentences (NOT a one-liner).
+- It must read as a single cohesive paragraph placed at the top of the resume.
+- Content requirements for the summary:
+  1. Open with a compelling statement about the candidate's total years of experience, core domain, and professional identity (e.g., "Results-driven Senior Software Engineer with 8+ years of experience...").
+  2. Highlight the candidate's strongest technical skills and technologies that align with the target job description.
+  3. Mention specific domains, industries, or problem areas the candidate has worked in.
+  4. Include measurable impact or scale where realistic (e.g., "architecting systems serving 10M+ users").
+  5. Reference leadership, collaboration, or cross-functional abilities if supported by the resume.
+  6. Close with a forward-looking statement tying the candidate's strengths to the target role's requirements.
+- Use ATS-optimized keywords from the job description naturally throughout the summary.
+- Tone must be professional, confident, and impactful — as if the candidate is targeting top-tier companies.
+- Do NOT use generic filler phrases like "team player" or "hard worker" without specific context.
+- The summary must truthfully reflect the candidate's actual experience from the resume — do NOT fabricate claims.
 
 BULLET POINT DEPTH REQUIREMENT (CRITICAL):
 - Every experience/work role MUST have exactly 6-7 bullet points. No fewer than 6.
@@ -109,7 +123,7 @@ IMPORTANT REMINDER: Copy every company name, job title, date, education detail, 
                   },
                   summary: {
                     type: "string",
-                    description: "Professional summary tailored to this specific job (2-3 sentences)",
+                    description: "A strong, detailed 5-6 sentence professional summary paragraph tailored to this specific job. Must highlight years of experience, key technical skills aligned with the job, domains worked in, measurable impact, and a forward-looking statement. Use ATS keywords naturally. No generic filler.",
                   },
                   sections: {
                     type: "array",
