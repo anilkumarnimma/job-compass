@@ -3,6 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 
+export interface TailoredResumeHeader {
+  full_name: string;
+  headline?: string;
+  contact_details: string[];
+}
+
 export interface TailoredResumeSection {
   title: string;
   items: {
@@ -14,6 +20,7 @@ export interface TailoredResumeSection {
 }
 
 export interface TailoredResumeData {
+  header: TailoredResumeHeader;
   summary: string;
   sections: TailoredResumeSection[];
   skills_section: string[];
@@ -26,6 +33,85 @@ interface GenerateParams {
   job_description: string;
   job_skills: string[];
   resume_intelligence: any;
+  base_resume: {
+    header: TailoredResumeHeader;
+    summary?: string;
+    sections: TailoredResumeSection[];
+    skills_section: string[];
+    source_signature?: string;
+  };
+  resume_file_base64?: string;
+  resume_filename?: string;
+  resume_mime_type?: string;
+  resume_version?: string;
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function renderResumeHtml(data: TailoredResumeData, documentTitle: string) {
+  const headerLines = data.header.contact_details
+    .filter(Boolean)
+    .map((line) => `<span>${escapeHtml(line)}</span>`)
+    .join('<span style="margin:0 8px;color:#94a3b8">•</span>');
+
+  const sectionsHtml = data.sections
+    .map((section) => {
+      const itemsHtml = section.items
+        .map((item) => {
+          const header = `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:2px;">
+            <div style="min-width:0;flex:1;">
+              <div style="font-weight:700;color:#0f172a;">${escapeHtml(item.heading)}</div>
+              ${item.subheading ? `<div style="color:#475569;">${escapeHtml(item.subheading)}</div>` : ""}
+            </div>
+            ${item.date ? `<div style="color:#64748b;font-size:10pt;white-space:nowrap;">${escapeHtml(item.date)}</div>` : ""}
+          </div>`;
+          const bullets = (item.bullets || [])
+            .map((bullet) => `<li style="margin-bottom:4px;">${escapeHtml(bullet)}</li>`)
+            .join("");
+
+          return `${header}${bullets ? `<ul style="margin:6px 0 12px 18px;padding:0;">${bullets}</ul>` : ""}`;
+        })
+        .join("");
+
+      return `<section style="margin-top:18px;">
+        <h2 style="font-size:11pt;text-transform:uppercase;letter-spacing:0.12em;border-bottom:1px solid #cbd5e1;padding-bottom:4px;margin:0 0 10px;color:#0f172a;">${escapeHtml(section.title)}</h2>
+        ${itemsHtml}
+      </section>`;
+    })
+    .join("");
+
+  const skillsHtml = data.skills_section.length
+    ? `<section style="margin-top:18px;">
+        <h2 style="font-size:11pt;text-transform:uppercase;letter-spacing:0.12em;border-bottom:1px solid #cbd5e1;padding-bottom:4px;margin:0 0 10px;color:#0f172a;">Skills</h2>
+        <p style="margin:0;color:#1e293b;">${data.skills_section.map(escapeHtml).join(" • ")}</p>
+      </section>`
+    : "";
+
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHtml(documentTitle)}</title>
+  <style>
+    @media print { @page { margin: 0.6in 0.7in; } }
+    body { font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 10.5pt; line-height: 1.45; color: #0f172a; max-width: 800px; margin: 0 auto; padding: 30px; }
+    * { box-sizing: border-box; }
+    ul { list-style-type: disc; }
+  </style>
+  </head><body>
+    <header style="text-align:center;margin-bottom:18px;">
+      <h1 style="margin:0;font-size:22pt;letter-spacing:0.02em;color:#020617;">${escapeHtml(data.header.full_name || documentTitle)}</h1>
+      ${data.header.headline ? `<p style="margin:6px 0 0;font-size:11pt;font-weight:600;color:#334155;">${escapeHtml(data.header.headline)}</p>` : ""}
+      ${headerLines ? `<p style="margin:8px 0 0;font-size:10pt;color:#475569;">${headerLines}</p>` : ""}
+    </header>
+    ${data.summary ? `<section><p style="margin:0 0 8px;color:#334155;">${escapeHtml(data.summary)}</p></section>` : ""}
+    ${skillsHtml}
+    ${sectionsHtml}
+    <script>window.onload=function(){window.print();window.onafterprint=function(){window.close();}}</script>
+  </body></html>`;
 }
 
 export function useTailoredResume() {
@@ -38,7 +124,12 @@ export function useTailoredResume() {
   const generate = useCallback(async (params: GenerateParams) => {
     if (!user) return;
 
-    const cacheKey = `${params.job_title}::${(params.job_skills || []).slice(0, 3).join(",")}::${params.resume_intelligence?.primaryRole || "none"}`;
+    const cacheKey = [
+      user.id,
+      params.job_title,
+      (params.job_skills || []).join(","),
+      params.resume_version || params.base_resume.source_signature || "resume",
+    ].join("::");
 
     const cached = cache.current.get(cacheKey);
     if (cached) {
@@ -76,48 +167,13 @@ export function useTailoredResume() {
   const downloadAsPdf = useCallback((data: TailoredResumeData, jobTitle: string, company: string) => {
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
-
-    const sectionsHtml = data.sections.map(s => {
-      const itemsHtml = s.items.map(item => {
-        const header = `<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px;">
-          <div><strong>${item.heading}</strong>${item.subheading ? ` — <span style="color:#555">${item.subheading}</span>` : ""}</div>
-          ${item.date ? `<span style="color:#777;font-size:10pt;white-space:nowrap">${item.date}</span>` : ""}
-        </div>`;
-        const bullets = (item.bullets || []).map(b => `<li style="margin-bottom:3px">${b}</li>`).join("");
-        return `${header}${bullets ? `<ul style="margin:4px 0 10px 18px;padding:0">${bullets}</ul>` : ""}`;
-      }).join("");
-      return `<h2 style="font-size:12pt;text-transform:uppercase;letter-spacing:1px;border-bottom:1.5px solid #333;padding-bottom:3px;margin:16px 0 8px;color:#222">${s.title}</h2>${itemsHtml}`;
-    }).join("");
-
-    const skillsHtml = data.skills_section.length > 0
-      ? `<h2 style="font-size:12pt;text-transform:uppercase;letter-spacing:1px;border-bottom:1.5px solid #333;padding-bottom:3px;margin:16px 0 8px;color:#222">Skills</h2><p style="margin:0">${data.skills_section.join(" • ")}</p>`
-      : "";
-
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Resume - ${company}</title>
-<style>@media print{@page{margin:0.7in 0.8in;}}body{font-family:Calibri,'Segoe UI',Arial,sans-serif;font-size:10.5pt;line-height:1.45;color:#1a1a1a;max-width:700px;margin:0 auto;padding:30px;}h2{font-family:Calibri,Arial,sans-serif;}ul{list-style-type:disc;}</style>
-</head><body>
-<p style="font-size:10pt;color:#555;margin-bottom:14px">${data.summary}</p>
-${sectionsHtml}
-${skillsHtml}
-<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();}}</script>
-</body></html>`;
+    const html = renderResumeHtml(data, `Resume - ${company} - ${jobTitle}`);
     printWindow.document.write(html);
     printWindow.document.close();
   }, []);
 
   const downloadAsDoc = useCallback((data: TailoredResumeData, jobTitle: string, company: string) => {
-    const sectionsHtml = data.sections.map(s => {
-      const itemsHtml = s.items.map(item => {
-        const bullets = (item.bullets || []).map(b => `<li>${b}</li>`).join("");
-        return `<p><strong>${item.heading}</strong>${item.subheading ? ` — ${item.subheading}` : ""}${item.date ? ` | ${item.date}` : ""}</p>${bullets ? `<ul>${bullets}</ul>` : ""}`;
-      }).join("");
-      return `<h2>${s.title}</h2>${itemsHtml}`;
-    }).join("");
-
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt;line-height:1.5;color:#222;}h2{font-size:12pt;border-bottom:1px solid #999;}</style></head><body>
-<p><em>${data.summary}</em></p>${sectionsHtml}
-<h2>Skills</h2><p>${data.skills_section.join(" • ")}</p>
-</body></html>`;
+    const html = renderResumeHtml(data, `Resume - ${company} - ${jobTitle}`);
 
     const blob = new Blob([html], { type: "application/msword" });
     const url = URL.createObjectURL(blob);
