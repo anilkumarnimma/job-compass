@@ -15,7 +15,12 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const authHeader = req.headers.get("Authorization") ?? "";
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Get user profile for context
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -26,7 +31,13 @@ serve(async (req) => {
 
     const {
       data: { user },
+      error: authError,
     } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Build user context from profile
     let profileContext = "";
