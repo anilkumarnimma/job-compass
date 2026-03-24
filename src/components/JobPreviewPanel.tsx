@@ -52,8 +52,7 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
   };
 
   const handleTitleClick = () => {
-    if (!user) { navigate("/auth"); return; }
-    applyToJob(job);
+    // Title click should not trigger external apply; it's a no-op in the preview panel
   };
 
   const handleAtsCheck = () => {

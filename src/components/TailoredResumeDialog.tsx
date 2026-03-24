@@ -239,7 +239,7 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
           </div>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 flex flex-col">
           <AnimatePresence mode="wait">
             {isGenerating || !result ? (
               <motion.div
@@ -259,9 +259,10 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="flex h-full min-h-0 flex-col"
+                className="flex flex-col min-h-0"
+                style={{ height: "100%" }}
               >
-                <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
+                <div className="overflow-y-auto px-6 py-4" style={{ maxHeight: "calc(90vh - 180px)" }}>
                   <ResumePreview data={result} />
                 </div>
 
