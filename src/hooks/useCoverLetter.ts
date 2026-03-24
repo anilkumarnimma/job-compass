@@ -80,8 +80,17 @@ export function useCoverLetter() {
     URL.revokeObjectURL(url);
   };
 
+  const escapeHtml = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+  const formatContent = (raw: string) =>
+    escapeHtml(raw)
+      .replace(/\n\n/g, "</p><p>")
+      .replace(/\n/g, "<br>")
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\*(.*?)\*/g, "<em>$1</em>");
+
   const downloadAsDoc = (content: string, jobTitle: string, company: string) => {
-    // Create a simple HTML document that Word can open
     const html = `
 <!DOCTYPE html>
 <html>
@@ -89,7 +98,7 @@ export function useCoverLetter() {
 <style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt;line-height:1.6;max-width:700px;margin:40px auto;color:#222;}h1,h2,h3{color:#111;}p{margin-bottom:12px;}</style>
 </head>
 <body>
-${content.replace(/\n\n/g, "</p><p>").replace(/\n/g, "<br>").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\*(.*?)\*/g, "<em>$1</em>")}
+${formatContent(content)}
 </body></html>`;
     const blob = new Blob([html], { type: "application/msword" });
     const url = URL.createObjectURL(blob);
@@ -109,10 +118,11 @@ ${content.replace(/\n\n/g, "</p><p>").replace(/\n/g, "<br>").replace(/\*\*(.*?)\
       toast({ title: "Please allow popups to download PDF", variant: "destructive" });
       return;
     }
+    const safeCompany = escapeHtml(company);
     const html = `
 <!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><title>Cover Letter - ${company}</title>
+<head><meta charset="utf-8"><title>Cover Letter - ${safeCompany}</title>
 <style>
 @media print { @page { margin: 1in; } }
 body{font-family:'Georgia',serif;font-size:11pt;line-height:1.7;max-width:650px;margin:0 auto;padding:40px;color:#1a1a1a;}
@@ -121,7 +131,7 @@ strong{font-weight:600;}
 </style>
 </head>
 <body>
-${content.replace(/\n\n/g, "</p><p>").replace(/\n/g, "<br>").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\*(.*?)\*/g, "<em>$1</em>")}
+${formatContent(content)}
 <script>window.onload=function(){window.print();window.onafterprint=function(){window.close();}}</script>
 </body></html>`;
     printWindow.document.write(html);
