@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTailoredResume, TailoredResumeData } from "@/hooks/useTailoredResume";
-import { useProfile } from "@/hooks/useProfile";
+import { useProfile, ProfileData } from "@/hooks/useProfile";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
 import { Download, Loader2, Sparkles, FileDown, FileType, Target } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -31,11 +31,115 @@ interface TailoredResumeDialogProps {
   } | null;
 }
 
+function compact(values: Array<string | null | undefined>) {
+  return values.map((value) => value?.trim()).filter(Boolean) as string[];
+}
+
+function buildBaseResume(profile: ProfileData | null | undefined, intelligence: ResumeIntelligence | null) {
+  const fullName = profile?.full_name?.trim()
+    || compact([profile?.first_name, profile?.last_name]).join(" ")
+    || profile?.contact_email
+    || profile?.email
+    || "Your Resume";
+
+  const contactDetails = compact([
+    profile?.contact_email || profile?.email,
+    profile?.phone,
+    profile?.location || compact([profile?.city, profile?.state, profile?.zip]).join(", "),
+    profile?.linkedin_url,
+    profile?.github_url,
+    profile?.portfolio_url,
+  ]);
+
+  const experienceItems = (profile?.work_experience || []).map((item) => ({
+    heading: item.title,
+    subheading: item.company,
+    date: compact([item.start_date, item.end_date || (item.is_current ? "Present" : "")]).join(" - "),
+    bullets: [],
+  }));
+
+  const educationItems = (profile?.education || []).map((item) => ({
+    heading: item.degree || item.school,
+    subheading: item.school,
+    date: item.graduation_year || undefined,
+    bullets: item.major ? [`Field of Study: ${item.major}`] : [],
+  }));
+
+  const certificationItems = (profile?.certifications || []).map((item) => ({
+    heading: item.name,
+    subheading: item.issuer || undefined,
+    date: compact([item.date_obtained, item.expiration_date ? `Expires ${item.expiration_date}` : ""]).join(" • ") || undefined,
+    bullets: [],
+  }));
+
+  const sections = [
+    experienceItems.length ? { title: "Experience", items: experienceItems } : null,
+    educationItems.length ? { title: "Education", items: educationItems } : null,
+    certificationItems.length ? { title: "Certifications", items: certificationItems } : null,
+  ].filter(Boolean);
+
+  return {
+    header: {
+      full_name: fullName,
+      headline: compact([profile?.current_title, profile?.current_company]).join(" • ") || intelligence?.primaryRole,
+      contact_details: contactDetails,
+    },
+    summary: undefined,
+    sections,
+    skills_section: profile?.skills || [],
+    source_signature:
+      [
+        profile?.resume_filename,
+        profile?.contact_email || profile?.email,
+        JSON.stringify(profile?.work_experience || []),
+        JSON.stringify(profile?.education || []),
+        JSON.stringify(profile?.skills || []),
+      ].join("::") || profile?.email || "resume",
+  };
+}
+
 function ResumePreview({ data }: { data: TailoredResumeData }) {
   return (
     <div className="space-y-5">
+      <div className="text-center space-y-2 pb-4 border-b border-border/60">
+        <div>
+          <h2 className="text-2xl font-display font-semibold tracking-tight text-foreground break-words">
+            {data.header.full_name}
+          </h2>
+          {data.header.headline && (
+            <p className="text-sm font-medium text-muted-foreground mt-1">{data.header.headline}</p>
+          )}
+        </div>
+        {data.header.contact_details.length > 0 && (
+          <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+            {data.header.contact_details.map((detail, index) => (
+              <span key={`${detail}-${index}`} className="inline-flex items-center gap-2">
+                {index > 0 && <span className="text-border">•</span>}
+                <span className="break-all">{detail}</span>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Summary */}
-      <p className="text-sm text-muted-foreground italic leading-relaxed">{data.summary}</p>
+      {data.summary && <p className="text-sm text-muted-foreground italic leading-relaxed">{data.summary}</p>}
+
+      {/* Skills */}
+      {data.skills_section.length > 0 && (
+        <div>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-foreground border-b border-border pb-1 mb-3">
+            Skills
+          </h3>
+          <div className="flex flex-wrap gap-1.5">
+            {data.skills_section.map((skill, i) => (
+              <Badge key={i} variant="secondary" className="text-xs font-normal px-2.5 py-1 rounded-full bg-chip-bg text-foreground border-0">
+                {skill}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Sections */}
       {data.sections.map((section, si) => (
@@ -70,22 +174,6 @@ function ResumePreview({ data }: { data: TailoredResumeData }) {
         </div>
       ))}
 
-      {/* Skills */}
-      {data.skills_section.length > 0 && (
-        <div>
-          <h3 className="text-xs font-bold uppercase tracking-wider text-foreground border-b border-border pb-1 mb-3">
-            Skills
-          </h3>
-          <div className="flex flex-wrap gap-1.5">
-            {data.skills_section.map((skill, i) => (
-              <Badge key={i} variant="secondary" className="text-xs font-normal px-2.5 py-1 rounded-full bg-chip-bg text-foreground border-0">
-                {skill}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Keywords added */}
       {data.keywords_added.length > 0 && (
         <div className="pt-3 border-t border-border/50">
@@ -110,18 +198,22 @@ function ResumePreview({ data }: { data: TailoredResumeData }) {
 export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResumeDialogProps) {
   const { generate, isGenerating, result, clearResult, downloadAsPdf, downloadAsDoc } = useTailoredResume();
   const { profile } = useProfile();
+  const intelligence = profile?.resume_intelligence as ResumeIntelligence | null;
+
+  const baseResume = useMemo(() => buildBaseResume(profile, intelligence), [profile, intelligence]);
 
   useEffect(() => {
     if (open && job && !result && !isGenerating) {
-      const intelligence = profile?.resume_intelligence as ResumeIntelligence | null;
       generate({
         job_title: job.title,
         job_description: job.description || "",
         job_skills: job.skills || [],
         resume_intelligence: intelligence,
+        base_resume: baseResume,
+        resume_version: baseResume.source_signature,
       });
     }
-  }, [open, job?.id]);
+  }, [open, job?.id, result, isGenerating, generate, intelligence, baseResume]);
 
   const handleClose = () => {
     onOpenChange(false);
@@ -147,7 +239,7 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
           </div>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="flex-1 min-h-0">
           <AnimatePresence mode="wait">
             {isGenerating || !result ? (
               <motion.div
@@ -167,9 +259,9 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="flex flex-col"
+                className="flex h-full min-h-0 flex-col"
               >
-                <div className="overflow-y-auto px-6 py-4" style={{ maxHeight: "calc(90vh - 200px)" }}>
+                <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
                   <ResumePreview data={result} />
                 </div>
 
@@ -179,12 +271,13 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
                     size="sm"
                     onClick={() => {
                       clearResult();
-                      const intelligence = profile?.resume_intelligence as ResumeIntelligence | null;
                       generate({
                         job_title: job.title,
                         job_description: job.description || "",
                         job_skills: job.skills || [],
                         resume_intelligence: intelligence,
+                          base_resume: baseResume,
+                          resume_version: baseResume.source_signature,
                       });
                     }}
                     className="text-xs text-muted-foreground"
