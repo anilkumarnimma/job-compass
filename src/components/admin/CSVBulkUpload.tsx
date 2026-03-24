@@ -14,8 +14,8 @@ interface CSVJob {
   company: string;
   location: string;
   description: string;
-  skills: string;
   external_apply_link: string;
+  skills?: string;
   employment_type?: string;
   experience_years?: string;
   salary_range?: string;
@@ -35,7 +35,7 @@ interface UploadSummary {
   oldDuplicatesRemoved: number;
 }
 
-const REQUIRED_FIELDS = ["title", "company", "location", "description", "skills", "external_apply_link"];
+const REQUIRED_FIELDS = ["title", "company", "location", "description", "external_apply_link"];
 
 function sanitizeCSVValue(value: string): string {
   const trimmed = value.trim();
