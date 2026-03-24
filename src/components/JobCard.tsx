@@ -53,7 +53,7 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
     e.preventDefault();
     e.stopPropagation();
     if (!user) { navigate("/auth"); return; }
-    applyToJob(job);
+    if (onTap) onTap(job);
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
