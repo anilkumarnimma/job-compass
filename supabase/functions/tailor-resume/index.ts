@@ -123,7 +123,7 @@ IMPORTANT REMINDER: Copy every company name, job title, date, education detail, 
                   },
                   summary: {
                     type: "string",
-                    description: "Professional summary tailored to this specific job (2-3 sentences)",
+                    description: "A strong, detailed 5-6 sentence professional summary paragraph tailored to this specific job. Must highlight years of experience, key technical skills aligned with the job, domains worked in, measurable impact, and a forward-looking statement. Use ATS keywords naturally. No generic filler.",
                   },
                   sections: {
                     type: "array",
