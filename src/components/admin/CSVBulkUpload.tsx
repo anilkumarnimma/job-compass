@@ -14,8 +14,8 @@ interface CSVJob {
   company: string;
   location: string;
   description: string;
-  skills: string;
   external_apply_link: string;
+  skills?: string;
   employment_type?: string;
   experience_years?: string;
   salary_range?: string;
