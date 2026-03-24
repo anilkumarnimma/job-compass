@@ -12,6 +12,47 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Auth guard: only allow service-role or founder callers
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    // Verify the caller is authenticated and is a founder/admin
+    const { createClient: createAuthClient } = await import("https://esm.sh/@supabase/supabase-js@2.94.1");
+    const authSupabase = createAuthClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: authError } = await authSupabase.auth.getUser();
+    
+    // Allow service-role calls (from pg_cron) — token won't resolve to a user
+    // For user calls, require founder/admin role
+    if (user) {
+      const { data: roleData } = await authSupabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .in("role", ["admin", "founder"]);
+      
+      if (!roleData || roleData.length === 0) {
+        return new Response(JSON.stringify({ error: "Unauthorized: admin or founder role required" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } else if (authError) {
+      // If it's not a valid service-role key either, reject
+      const token = authHeader.replace("Bearer ", "");
+      if (token !== serviceRoleKey) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
