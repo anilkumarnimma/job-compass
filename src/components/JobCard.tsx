@@ -9,13 +9,19 @@ import { LandingProbabilityBadge } from "@/components/LandingProbabilityBadge";
 import { useJobContext } from "@/context/JobContext";
 import { useAuth } from "@/context/AuthContext";
 import { CompanyLogo } from "@/components/CompanyLogo";
-import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, ArrowRight } from "lucide-react";
+import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, ArrowRight, Target, FileText } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useRef, useCallback, useMemo } from "react";
+import { useRef, useCallback, useState } from "react";
 import { analyzeVisaSponsorship } from "@/lib/visaSponsorship";
 import { VisaSponsorshipBadge } from "@/components/VisaSponsorshipBadge";
+import { useAtsCheck } from "@/hooks/useAtsCheck";
+import { AtsCheckDialog } from "@/components/AtsCheckDialog";
+import { CoverLetterDialog } from "@/components/CoverLetterDialog";
+import { TailoredResumeDialog } from "@/components/TailoredResumeDialog";
+import { useProfile } from "@/hooks/useProfile";
+import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
 
 interface JobCardProps {
   job: Job;
@@ -30,11 +36,45 @@ interface JobCardProps {
 export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchResult, landingProbability }: JobCardProps) {
   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
+  const { profile } = useProfile();
   const navigate = useNavigate();
   const cardRef = useRef<HTMLDivElement>(null);
 
   const saved = isSaved(job.id);
   const applied = isApplied(job.id);
+
+  // ATS Check state
+  const { runCheck, isChecking, result: atsResult, clearResult: clearAts } = useAtsCheck();
+  const [showAtsDialog, setShowAtsDialog] = useState(false);
+
+  // Cover Letter state
+  const [coverLetterOpen, setCoverLetterOpen] = useState(false);
+
+  // Tailored Resume state
+  const [tailoredResumeOpen, setTailoredResumeOpen] = useState(false);
+
+  const handleAtsClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) { navigate("/auth"); return; }
+    runCheck({
+      job_description: job.description,
+      job_title: job.title,
+      job_skills: job.skills,
+    });
+    setShowAtsDialog(true);
+  };
+
+  const handleCoverLetterClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) { navigate("/auth"); return; }
+    setCoverLetterOpen(true);
+  };
+
+  const handleTailoredResumeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) { navigate("/auth"); return; }
+    setTailoredResumeOpen(true);
+  };
 
   const handleSaveClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -214,6 +254,37 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
         </div>
       )}
 
+      {/* AI Actions Row */}
+      <div className="flex flex-wrap items-center gap-1.5 mb-2 relative z-10">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs text-accent hover:text-accent-foreground hover:bg-accent/20 h-7 px-3 rounded-full animate-[ats-glow_4s_ease-in-out_infinite] relative"
+          onClick={handleAtsClick}
+        >
+          <Target className="h-3.5 w-3.5 mr-1" />
+          ATS Check
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs text-accent hover:text-accent-foreground hover:bg-accent/20 h-7 px-3 rounded-full animate-[ats-glow_4s_ease-in-out_infinite] relative"
+          onClick={handleCoverLetterClick}
+        >
+          <FileText className="h-3.5 w-3.5 mr-1" />
+          Cover Letter
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs text-accent hover:text-accent-foreground hover:bg-accent/20 h-7 px-3 rounded-full animate-[ats-glow_4s_ease-in-out_infinite] relative"
+          onClick={handleTailoredResumeClick}
+        >
+          <Target className="h-3.5 w-3.5 mr-1" />
+          Tailored Resume
+        </Button>
+      </div>
+
       {/* Actions */}
       <div className="flex items-center justify-between gap-3 pt-3 border-t border-border/30 relative z-10">
         <Button
@@ -246,6 +317,24 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
         </Button>
       </div>
     </Card>
+
+    {/* Dialogs */}
+    <AtsCheckDialog
+      open={showAtsDialog}
+      onOpenChange={(open) => { setShowAtsDialog(open); if (!open) clearAts(); }}
+      result={atsResult}
+      isChecking={isChecking}
+    />
+    <CoverLetterDialog
+      open={coverLetterOpen}
+      onOpenChange={setCoverLetterOpen}
+      job={job}
+    />
+    <TailoredResumeDialog
+      open={tailoredResumeOpen}
+      onOpenChange={setTailoredResumeOpen}
+      job={job}
+    />
     </motion.div>
   );
 }
