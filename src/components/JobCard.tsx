@@ -254,6 +254,37 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
         </div>
       )}
 
+      {/* AI Actions Row */}
+      <div className="flex flex-wrap items-center gap-1.5 mb-2 relative z-10">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs text-accent hover:text-accent-foreground hover:bg-accent/20 h-7 px-3 rounded-full animate-[ats-glow_4s_ease-in-out_infinite] relative"
+          onClick={handleAtsClick}
+        >
+          <Target className="h-3.5 w-3.5 mr-1" />
+          ATS Check
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs text-accent hover:text-accent-foreground hover:bg-accent/20 h-7 px-3 rounded-full animate-[ats-glow_4s_ease-in-out_infinite] relative"
+          onClick={handleCoverLetterClick}
+        >
+          <FileText className="h-3.5 w-3.5 mr-1" />
+          Cover Letter
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs text-accent hover:text-accent-foreground hover:bg-accent/20 h-7 px-3 rounded-full animate-[ats-glow_4s_ease-in-out_infinite] relative"
+          onClick={handleTailoredResumeClick}
+        >
+          <Target className="h-3.5 w-3.5 mr-1" />
+          Tailored Resume
+        </Button>
+      </div>
+
       {/* Actions */}
       <div className="flex items-center justify-between gap-3 pt-3 border-t border-border/30 relative z-10">
         <Button
@@ -286,6 +317,24 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
         </Button>
       </div>
     </Card>
+
+    {/* Dialogs */}
+    <AtsCheckDialog
+      open={showAtsDialog}
+      onOpenChange={(open) => { setShowAtsDialog(open); if (!open) clearAts(); }}
+      result={atsResult}
+      isChecking={isChecking}
+    />
+    <CoverLetterDialog
+      open={coverLetterOpen}
+      onOpenChange={setCoverLetterOpen}
+      job={job}
+    />
+    <TailoredResumeDialog
+      open={tailoredResumeOpen}
+      onOpenChange={setTailoredResumeOpen}
+      job={job}
+    />
     </motion.div>
   );
 }
