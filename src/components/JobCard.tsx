@@ -56,10 +56,11 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
   const handleAtsClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) { navigate("/auth"); return; }
-    const intelligence = profile?.resume_intelligence as ResumeIntelligence | null | undefined;
-    if (intelligence) {
-      runCheck(job.description, intelligence);
-    }
+    runCheck({
+      job_description: job.description,
+      job_title: job.title,
+      job_skills: job.skills,
+    });
     setShowAtsDialog(true);
   };
 
