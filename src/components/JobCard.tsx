@@ -80,6 +80,12 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
     setTailoredResumeOpen(true);
   };
 
+  const handleAutoApplyClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) { navigate("/auth"); return; }
+    triggerAutoApply(job);
+  };
+
   const handleSaveClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) { navigate("/auth"); return; }
@@ -291,17 +297,37 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
 
       {/* Actions */}
       <div className="flex items-center justify-between gap-3 pt-3 border-t border-border/30 relative z-10">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleSaveClick}
-          className={`h-9 px-3 text-sm font-normal gap-1.5 rounded-full transition-all duration-200 active:scale-95 ${
-            saved ? "text-accent" : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          {saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
-          {saved ? "Saved" : "Save"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSaveClick}
+            className={`h-9 px-3 text-sm font-normal gap-1.5 rounded-full transition-all duration-200 active:scale-95 ${
+              saved ? "text-accent" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
+            {saved ? "Saved" : "Save"}
+          </Button>
+          <Button
+            size="sm"
+            onClick={handleAutoApplyClick}
+            disabled={applied || isAutoApplying}
+            className="h-9 px-4 text-sm font-medium rounded-full gap-1.5 bg-gradient-to-r from-accent to-accent/80 text-accent-foreground hover:opacity-90 shadow-sm transition-all duration-200 active:scale-95 disabled:opacity-50"
+          >
+            {isAutoApplying ? (
+              <span className="flex items-center gap-1.5">
+                <span className="h-3.5 w-3.5 border-2 border-accent-foreground/30 border-t-accent-foreground rounded-full animate-spin" />
+                Preparing…
+              </span>
+            ) : (
+              <>
+                <Zap className="h-3.5 w-3.5" />
+                Auto Apply
+              </>
+            )}
+          </Button>
+        </div>
         <Button
           size="sm"
           onClick={handleApplyClick}
