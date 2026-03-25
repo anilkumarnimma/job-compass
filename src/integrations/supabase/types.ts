@@ -49,6 +49,45 @@ export type Database = {
           },
         ]
       }
+      auto_apply_queue: {
+        Row: {
+          consumed_at: string | null
+          cover_letter: string | null
+          created_at: string
+          external_url: string
+          id: string
+          job_id: string
+          profile_data: Json | null
+          status: string
+          tailored_resume: Json | null
+          user_id: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          cover_letter?: string | null
+          created_at?: string
+          external_url: string
+          id?: string
+          job_id: string
+          profile_data?: Json | null
+          status?: string
+          tailored_resume?: Json | null
+          user_id: string
+        }
+        Update: {
+          consumed_at?: string | null
+          cover_letter?: string | null
+          created_at?: string
+          external_url?: string
+          id?: string
+          job_id?: string
+          profile_data?: Json | null
+          status?: string
+          tailored_resume?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       cover_letters: {
         Row: {
           company: string
