@@ -9,13 +9,19 @@ import { LandingProbabilityBadge } from "@/components/LandingProbabilityBadge";
 import { useJobContext } from "@/context/JobContext";
 import { useAuth } from "@/context/AuthContext";
 import { CompanyLogo } from "@/components/CompanyLogo";
-import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, ArrowRight } from "lucide-react";
+import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, ArrowRight, Target, FileText } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useRef, useCallback, useMemo } from "react";
+import { useRef, useCallback, useState } from "react";
 import { analyzeVisaSponsorship } from "@/lib/visaSponsorship";
 import { VisaSponsorshipBadge } from "@/components/VisaSponsorshipBadge";
+import { useAtsCheck } from "@/hooks/useAtsCheck";
+import { AtsCheckDialog } from "@/components/AtsCheckDialog";
+import { CoverLetterDialog } from "@/components/CoverLetterDialog";
+import { TailoredResumeDialog } from "@/components/TailoredResumeDialog";
+import { useProfile } from "@/hooks/useProfile";
+import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
 
 interface JobCardProps {
   job: Job;
