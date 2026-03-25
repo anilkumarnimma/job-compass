@@ -36,11 +36,44 @@ interface JobCardProps {
 export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchResult, landingProbability }: JobCardProps) {
   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
+  const { profile } = useProfile();
   const navigate = useNavigate();
   const cardRef = useRef<HTMLDivElement>(null);
 
   const saved = isSaved(job.id);
   const applied = isApplied(job.id);
+
+  // ATS Check state
+  const { runCheck, isChecking, result: atsResult, clearResult: clearAts } = useAtsCheck();
+  const [showAtsDialog, setShowAtsDialog] = useState(false);
+
+  // Cover Letter state
+  const [coverLetterOpen, setCoverLetterOpen] = useState(false);
+
+  // Tailored Resume state
+  const [tailoredResumeOpen, setTailoredResumeOpen] = useState(false);
+
+  const handleAtsClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) { navigate("/auth"); return; }
+    const intelligence = profile?.resume_intelligence as ResumeIntelligence | null | undefined;
+    if (intelligence) {
+      runCheck(job.description, intelligence);
+    }
+    setShowAtsDialog(true);
+  };
+
+  const handleCoverLetterClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) { navigate("/auth"); return; }
+    setCoverLetterOpen(true);
+  };
+
+  const handleTailoredResumeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) { navigate("/auth"); return; }
+    setTailoredResumeOpen(true);
+  };
 
   const handleSaveClick = (e: React.MouseEvent) => {
     e.stopPropagation();
