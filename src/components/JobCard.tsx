@@ -9,7 +9,7 @@ import { LandingProbabilityBadge } from "@/components/LandingProbabilityBadge";
 import { useJobContext } from "@/context/JobContext";
 import { useAuth } from "@/context/AuthContext";
 import { CompanyLogo } from "@/components/CompanyLogo";
-import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, ArrowRight, Target, FileText } from "lucide-react";
+import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, ArrowRight, Target, FileText, Zap } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -22,6 +22,7 @@ import { CoverLetterDialog } from "@/components/CoverLetterDialog";
 import { TailoredResumeDialog } from "@/components/TailoredResumeDialog";
 import { useProfile } from "@/hooks/useProfile";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
+import { useAutoApply } from "@/hooks/useAutoApply";
 
 interface JobCardProps {
   job: Job;
@@ -52,6 +53,9 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
 
   // Tailored Resume state
   const [tailoredResumeOpen, setTailoredResumeOpen] = useState(false);
+
+  // Auto Apply
+  const { triggerAutoApply, isProcessing: isAutoApplying } = useAutoApply();
 
   const handleAtsClick = (e: React.MouseEvent) => {
     e.stopPropagation();
