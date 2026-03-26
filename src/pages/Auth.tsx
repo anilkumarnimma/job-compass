@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { CountrySelectDialog } from "@/components/CountrySelectDialog";
 import { countries } from "@/data/countries";
-import { Mail, Lock, Loader2, Eye, EyeOff, Search, Check, ChevronDown, Briefcase } from "lucide-react";
+import { Mail, Lock, Loader2, Eye, EyeOff, Search, Check, ChevronDown, Briefcase, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Auth() {
@@ -40,6 +40,12 @@ export default function Auth() {
   // Country prompt for Google OAuth users
   const [showCountryPrompt, setShowCountryPrompt] = useState(false);
   const [savingCountry, setSavingCountry] = useState(false);
+
+  // Email verification state
+  const [showVerificationBanner, setShowVerificationBanner] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const [resending, setResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const filteredCountries = useMemo(
     () => countries.filter((c) => c.toLowerCase().includes(countrySearch.toLowerCase())),
@@ -130,6 +136,32 @@ export default function Auth() {
     }
   };
 
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
+
+  const handleResendVerification = async () => {
+    if (!verificationEmail || resending || resendCooldown > 0) return;
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({ type: "signup", email: verificationEmail });
+      if (error) {
+        console.error("[AUTH] Resend failed:", error);
+        toast.error("Could not resend. Please wait a moment and try again.");
+      } else {
+        toast.success("Verification email re-sent! Check your inbox and spam/junk folder.");
+        setResendCooldown(60);
+      }
+    } catch (err) {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setResending(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -141,19 +173,29 @@ export default function Auth() {
           setIsLoading(false);
           return;
         }
+        console.log("[AUTH] Attempting signup for:", email);
         const { error } = await signUp(email, password, country);
         if (error) {
+          console.error("[AUTH] Signup error:", error.message);
           toast.error(error.message);
         } else {
-          toast.success("Account created! Check your email to verify.");
+          console.log("[AUTH] Signup succeeded, verification email triggered for:", email);
+          setVerificationEmail(email);
+          setShowVerificationBanner(true);
+          setResendCooldown(60);
           setMode("login");
         }
       } else {
+        console.log("[AUTH] Attempting login for:", email);
         const { error } = await signIn(email, password);
         if (error) {
           if (error.message === "Email not confirmed") {
+            console.warn("[AUTH] Email not confirmed for:", email);
             // Resend confirmation email automatically
             await supabase.auth.resend({ type: "signup", email });
+            setVerificationEmail(email);
+            setShowVerificationBanner(true);
+            setResendCooldown(60);
             toast.error("Please confirm your email. We've just re-sent you a confirmation link.");
           } else {
             toast.error(error.message);
@@ -185,6 +227,37 @@ export default function Auth() {
               Apply anywhere. Track everything. Get hired faster.
             </h1>
           </div>
+
+          {/* Email verification banner */}
+          {showVerificationBanner && (
+            <div className="w-full bg-accent/10 border border-accent/30 rounded-xl px-4 py-3 mb-3">
+              <div className="flex items-start gap-2">
+                <Mail className="h-4 w-4 text-accent mt-0.5 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">
+                    Please confirm your email
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    We've sent a verification link to <span className="font-medium text-foreground">{verificationEmail}</span>. 
+                    If you don't see it, check your spam/junk folder.
+                  </p>
+                  <button
+                    type="button"
+                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:text-accent/80 transition-colors disabled:opacity-50"
+                    onClick={handleResendVerification}
+                    disabled={resending || resendCooldown > 0}
+                  >
+                    <RefreshCw className={`h-3 w-3 ${resending ? "animate-spin" : ""}`} />
+                    {resending
+                      ? "Sending…"
+                      : resendCooldown > 0
+                      ? `Resend in ${resendCooldown}s`
+                      : "Resend verification email"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Card */}
           <div className="w-full bg-card border border-border/60 rounded-2xl px-5 py-5 shadow-soft">
