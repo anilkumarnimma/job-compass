@@ -136,6 +136,32 @@ export default function Auth() {
     }
   };
 
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
+
+  const handleResendVerification = async () => {
+    if (!verificationEmail || resending || resendCooldown > 0) return;
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({ type: "signup", email: verificationEmail });
+      if (error) {
+        console.error("[AUTH] Resend failed:", error);
+        toast.error("Could not resend. Please wait a moment and try again.");
+      } else {
+        toast.success("Verification email re-sent! Check your inbox and spam/junk folder.");
+        setResendCooldown(60);
+      }
+    } catch (err) {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setResending(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -147,19 +173,29 @@ export default function Auth() {
           setIsLoading(false);
           return;
         }
+        console.log("[AUTH] Attempting signup for:", email);
         const { error } = await signUp(email, password, country);
         if (error) {
+          console.error("[AUTH] Signup error:", error.message);
           toast.error(error.message);
         } else {
-          toast.success("Account created! Check your email to verify.");
+          console.log("[AUTH] Signup succeeded, verification email triggered for:", email);
+          setVerificationEmail(email);
+          setShowVerificationBanner(true);
+          setResendCooldown(60);
           setMode("login");
         }
       } else {
+        console.log("[AUTH] Attempting login for:", email);
         const { error } = await signIn(email, password);
         if (error) {
           if (error.message === "Email not confirmed") {
+            console.warn("[AUTH] Email not confirmed for:", email);
             // Resend confirmation email automatically
             await supabase.auth.resend({ type: "signup", email });
+            setVerificationEmail(email);
+            setShowVerificationBanner(true);
+            setResendCooldown(60);
             toast.error("Please confirm your email. We've just re-sent you a confirmation link.");
           } else {
             toast.error(error.message);
