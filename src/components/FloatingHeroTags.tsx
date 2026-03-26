@@ -1,6 +1,7 @@
 import { useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/context/AuthContext";
 
 const tags = [
   "React Developer", "UI/UX Designer", "Product Manager", "Data Analyst",
@@ -25,6 +26,7 @@ function lerp(a: number, b: number, t: number) {
 export function FloatingHeroTags() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const containerRef = useRef<HTMLDivElement>(null);
   const tagRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const mouseRef = useRef({ x: -9999, y: -9999 });
@@ -32,8 +34,13 @@ export function FloatingHeroTags() {
   const rafRef = useRef<number>(0);
 
   const handleClick = useCallback((tag: string) => {
-    navigate(`/dashboard?search=${encodeURIComponent(tag)}`);
-  }, [navigate]);
+    if (user) {
+      navigate(`/dashboard?search=${encodeURIComponent(tag)}`);
+    } else {
+      sessionStorage.setItem("pending_search", tag);
+      navigate("/auth");
+    }
+  }, [navigate, user]);
 
   // Direct DOM rAF loop with lerp — no React state, no re-renders
   useEffect(() => {
