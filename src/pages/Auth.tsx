@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { CountrySelectDialog } from "@/components/CountrySelectDialog";
 import { countries } from "@/data/countries";
-import { Mail, Lock, Loader2, Eye, EyeOff, Search, Check, ChevronDown, Briefcase } from "lucide-react";
+import { Mail, Lock, Loader2, Eye, EyeOff, Search, Check, ChevronDown, Briefcase, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Auth() {
