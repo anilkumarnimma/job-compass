@@ -15,7 +15,7 @@ import { Job } from "@/types/job";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Upload, FileText, X, Target } from "lucide-react";
+import { Sparkles, Upload, FileText, X } from "lucide-react";
 import { calculateJobMatch } from "@/lib/jobMatcher";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
 import { useNavigate } from "react-router-dom";
