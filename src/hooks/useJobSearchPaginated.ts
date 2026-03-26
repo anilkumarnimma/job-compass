@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Job } from "@/types/job";
 import { expandSearchTerms } from "@/lib/searchExpansion";
+import { enrichJobList } from "@/lib/jobEnrichment";
 
 const PAGE_SIZE = 20;
 const STALE_TIME = 60 * 1000;
@@ -69,7 +70,7 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo }: U
           });
         }
 
-        return { jobs };
+        return { jobs: enrichJobList(jobs) };
       }
 
       // No search query — use direct table query
@@ -94,7 +95,7 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo }: U
       if (error) throw error;
 
       return {
-        jobs: (data || []).map(parseJob),
+        jobs: enrichJobList((data || []).map(parseJob)),
         directCount: count || 0,
       };
     },

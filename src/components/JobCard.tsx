@@ -237,7 +237,7 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
       {/* Skills - max 5 visible + N more */}
       {job.skills.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-4 relative z-10">
-          {job.skills.slice(0, 5).map((skill) => (
+          {job.skills.slice(0, 7).map((skill) => (
             <Badge
               key={skill}
               variant="outline"
@@ -246,9 +246,9 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
               {skill}
             </Badge>
           ))}
-          {job.skills.length > 5 && (
+          {job.skills.length > 7 && (
             <Badge variant="outline" className="text-xs font-normal px-2.5 py-1 rounded-full text-muted-foreground">
-              +{job.skills.length - 5} more
+              +{job.skills.length - 7} more
             </Badge>
           )}
         </div>
