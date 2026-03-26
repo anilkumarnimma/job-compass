@@ -218,6 +218,7 @@ export default function Recommendations() {
                         job={job}
                         onTap={handleJobTap}
                         isSelected={selectedJob?.id === job.id}
+                        context="recommendations"
                       />
                     </div>
                   </motion.div>
