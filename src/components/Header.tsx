@@ -60,7 +60,16 @@ export function Header() {
       <div className="max-w-[1400px] mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2.5 shrink-0 group">
+          <Link
+            to={user ? "/dashboard" : "/"}
+            onClick={() => {
+              if (user && location.pathname === "/dashboard") {
+                // Clear search params to reset dashboard to default state
+                navigate("/dashboard", { replace: true });
+              }
+            }}
+            className="flex items-center gap-2.5 shrink-0 group"
+          >
             <img src="/favicon.png" alt="Sociax logo" className="h-9 w-9 rounded-xl shadow-soft group-hover:shadow-glow transition-shadow duration-300" />
             <span className="font-display font-bold text-lg text-foreground tracking-tight">Sociax.tech</span>
           </Link>
