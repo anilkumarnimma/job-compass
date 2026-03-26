@@ -228,6 +228,37 @@ export default function Auth() {
             </h1>
           </div>
 
+          {/* Email verification banner */}
+          {showVerificationBanner && (
+            <div className="w-full bg-accent/10 border border-accent/30 rounded-xl px-4 py-3 mb-3">
+              <div className="flex items-start gap-2">
+                <Mail className="h-4 w-4 text-accent mt-0.5 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">
+                    Please confirm your email
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    We've sent a verification link to <span className="font-medium text-foreground">{verificationEmail}</span>. 
+                    If you don't see it, check your spam/junk folder.
+                  </p>
+                  <button
+                    type="button"
+                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:text-accent/80 transition-colors disabled:opacity-50"
+                    onClick={handleResendVerification}
+                    disabled={resending || resendCooldown > 0}
+                  >
+                    <RefreshCw className={`h-3 w-3 ${resending ? "animate-spin" : ""}`} />
+                    {resending
+                      ? "Sending…"
+                      : resendCooldown > 0
+                      ? `Resend in ${resendCooldown}s`
+                      : "Resend verification email"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Card */}
           <div className="w-full bg-card border border-border/60 rounded-2xl px-5 py-5 shadow-soft">
             {/* Google Button */}
