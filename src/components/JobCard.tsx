@@ -31,9 +31,11 @@ interface JobCardProps {
   style?: React.CSSProperties;
   matchResult?: JobMatchResult;
   landingProbability?: LandingProbabilityResult | null;
+  /** Controls blinking: 'dashboard' = no blink, 'recommendations' = cover letter + tailored resume blink */
+  context?: 'dashboard' | 'recommendations';
 }
 
-export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchResult, landingProbability }: JobCardProps) {
+export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchResult, landingProbability, context = 'dashboard' }: JobCardProps) {
   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
   const { profile } = useProfile();
@@ -268,7 +270,7 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
         <Button
           variant="outline"
           size="sm"
-          className="text-xs font-medium h-7 px-3 rounded-full border-accent/30 bg-accent/5 text-accent hover:bg-accent/15 hover:border-accent/50 hover:shadow-[0_0_8px_hsl(var(--accent)/0.15)] transition-all duration-300"
+          className={`text-xs font-medium h-7 px-3 rounded-full border-accent/30 bg-accent/5 text-accent hover:bg-accent/15 hover:border-accent/50 hover:shadow-[0_0_8px_hsl(var(--accent)/0.15)] transition-all duration-300${context === 'recommendations' ? ' animate-[ats-glow_8s_ease-in-out_infinite]' : ''}`}
           onClick={handleCoverLetterClick}
         >
           <FileText className="h-3.5 w-3.5 mr-1" />
@@ -277,7 +279,7 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
         <Button
           variant="outline"
           size="sm"
-          className="text-xs font-medium h-7 px-3 rounded-full border-accent/30 bg-accent/5 text-accent hover:bg-accent/15 hover:border-accent/50 hover:shadow-[0_0_8px_hsl(var(--accent)/0.15)] transition-all duration-300"
+          className={`text-xs font-medium h-7 px-3 rounded-full border-accent/30 bg-accent/5 text-accent hover:bg-accent/15 hover:border-accent/50 hover:shadow-[0_0_8px_hsl(var(--accent)/0.15)] transition-all duration-300${context === 'recommendations' ? ' animate-[ats-glow_8s_ease-in-out_infinite]' : ''}`}
           onClick={handleTailoredResumeClick}
         >
           <Target className="h-3.5 w-3.5 mr-1" />
