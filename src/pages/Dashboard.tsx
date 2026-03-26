@@ -182,7 +182,14 @@ export default function Dashboard() {
     if (value !== "custom") setCustomDate(undefined);
     setDateFilter(value);
     setAllTimeDropdownOpen(false);
-  }, []);
+    if (value === "all") {
+      setSearchInput("");
+      setRoleFilter(null);
+      setCompanyFilter(null);
+      searchParams.delete("search");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleCustomDateSelect = useCallback((date: Date | undefined) => {
     if (date) {
