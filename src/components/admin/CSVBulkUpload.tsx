@@ -96,6 +96,24 @@ const COMMON_SKILLS: Record<string, string> = {
 
 const SKILL_PATTERNS = Object.keys(COMMON_SKILLS).sort((a, b) => b.length - a.length);
 
+function extractSalaryFromDescription(description: string): string | null {
+  if (!description) return null;
+  // Match patterns like $120,000 - $140,000, $60/hr, $45 to $55 per hour, $90k-$110k
+  const patterns = [
+    /\$[\d,]+(?:\.\d+)?[kK]?\s*[-–to]+\s*\$[\d,]+(?:\.\d+)?[kK]?\s*(?:per\s+(?:year|annum|hour|hr)|\/(?:yr|hr|hour|year)|annually|hourly)?/gi,
+    /\$[\d,]+(?:\.\d+)?[kK]?\s*(?:per\s+(?:year|annum|hour|hr)|\/(?:yr|hr|hour|year)|annually|hourly)/gi,
+    /(?:salary|pay|compensation|base|annual|hourly)\s*(?:range|rate)?[\s:]*\$[\d,]+(?:\.\d+)?[kK]?\s*[-–to]*\s*\$?[\d,]*(?:\.\d+)?[kK]?/gi,
+    /\$[\d,]+(?:\.\d+)?[kK]?\s*[-–]\s*\$[\d,]+(?:\.\d+)?[kK]?/gi,
+  ];
+  for (const pattern of patterns) {
+    const match = description.match(pattern);
+    if (match) {
+      return match[0].trim().replace(/\s+/g, ' ');
+    }
+  }
+  return null;
+}
+
 function extractSkillsFromDescription(description: string): string[] {
   if (!description) return [];
   const text = description.toLowerCase();
@@ -304,7 +322,7 @@ export function CSVBulkUpload({ onComplete }: CSVBulkUploadProps) {
           external_apply_link: job.external_apply_link,
           employment_type: job.employment_type || "Full Time",
           experience_years: job.experience_years || null,
-          salary_range: job.salary_range || null,
+          salary_range: job.salary_range || extractSalaryFromDescription(job.description) || null,
           company_logo: job.company_logo || null,
           posted_date: job.posted_date || new Date().toISOString(),
           is_published: true,

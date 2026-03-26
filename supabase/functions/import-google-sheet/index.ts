@@ -92,6 +92,23 @@ const COMMON_SKILLS: Record<string, string> = {
 
 const SKILL_PATTERNS = Object.keys(COMMON_SKILLS).sort((a, b) => b.length - a.length);
 
+function extractSalaryFromDescription(description: string): string | null {
+  if (!description) return null;
+  const patterns = [
+    /\$[\d,]+(?:\.\d+)?[kK]?\s*[-–to]+\s*\$[\d,]+(?:\.\d+)?[kK]?\s*(?:per\s+(?:year|annum|hour|hr)|\/(?:yr|hr|hour|year)|annually|hourly)?/gi,
+    /\$[\d,]+(?:\.\d+)?[kK]?\s*(?:per\s+(?:year|annum|hour|hr)|\/(?:yr|hr|hour|year)|annually|hourly)/gi,
+    /(?:salary|pay|compensation|base|annual|hourly)\s*(?:range|rate)?[\s:]*\$[\d,]+(?:\.\d+)?[kK]?\s*[-–to]*\s*\$?[\d,]*(?:\.\d+)?[kK]?/gi,
+    /\$[\d,]+(?:\.\d+)?[kK]?\s*[-–]\s*\$[\d,]+(?:\.\d+)?[kK]?/gi,
+  ];
+  for (const pattern of patterns) {
+    const match = description.match(pattern);
+    if (match) {
+      return match[0].trim().replace(/\s+/g, ' ');
+    }
+  }
+  return null;
+}
+
 function extractSkillsFromDescription(description: string): string[] {
   if (!description) return [];
   const text = description.toLowerCase();
@@ -441,7 +458,7 @@ Deno.serve(async (req) => {
             posted_date: postedDate.toISOString(),
             employment_type: employmentType,
             experience_years: row.experience_years?.trim() || null,
-            salary_range: row.salary?.trim() || null,
+            salary_range: row.salary?.trim() || extractSalaryFromDescription(description) || null,
             skills: (() => {
               const csvSkills = parseSkills(row.skills);
               const extracted = extractSkillsFromDescription(description);
