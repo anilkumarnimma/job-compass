@@ -37,6 +37,80 @@ interface UploadSummary {
 
 const REQUIRED_FIELDS = ["title", "company", "location", "description", "external_apply_link"];
 
+const DICE_PATTERNS = [
+  'dice.com',
+  'www.dice.com',
+  'employer.dice.com',
+];
+
+function isDiceLink(url: string): boolean {
+  try {
+    const hostname = new URL(url).hostname.toLowerCase();
+    return DICE_PATTERNS.some(p => hostname === p || hostname.endsWith('.' + p));
+  } catch {
+    return url.toLowerCase().includes('dice.com');
+  }
+}
+
+const COMMON_SKILLS: Record<string, string> = {
+  'js': 'JavaScript', 'javascript': 'JavaScript', 'typescript': 'TypeScript', 'ts': 'TypeScript',
+  'react': 'React', 'reactjs': 'React', 'react.js': 'React', 'react js': 'React',
+  'angular': 'Angular', 'angularjs': 'Angular', 'vue': 'Vue.js', 'vuejs': 'Vue.js',
+  'node': 'Node.js', 'nodejs': 'Node.js', 'node.js': 'Node.js',
+  'python': 'Python', 'java': 'Java', 'c#': 'C#', 'csharp': 'C#', 'c++': 'C++', 'cpp': 'C++',
+  'go': 'Go', 'golang': 'Go', 'rust': 'Rust', 'ruby': 'Ruby', 'php': 'PHP', 'swift': 'Swift',
+  'kotlin': 'Kotlin', 'scala': 'Scala', 'r': 'R', 'perl': 'Perl',
+  'html': 'HTML', 'html5': 'HTML', 'css': 'CSS', 'css3': 'CSS', 'sass': 'Sass', 'scss': 'Sass',
+  'sql': 'SQL', 'mysql': 'MySQL', 'postgresql': 'PostgreSQL', 'postgres': 'PostgreSQL',
+  'mongodb': 'MongoDB', 'mongo': 'MongoDB', 'redis': 'Redis', 'elasticsearch': 'Elasticsearch',
+  'dynamodb': 'DynamoDB', 'cassandra': 'Cassandra', 'oracle': 'Oracle',
+  'aws': 'AWS', 'azure': 'Azure', 'gcp': 'GCP', 'google cloud': 'GCP',
+  'docker': 'Docker', 'kubernetes': 'Kubernetes', 'k8s': 'Kubernetes',
+  'terraform': 'Terraform', 'ansible': 'Ansible', 'jenkins': 'Jenkins',
+  'git': 'Git', 'github': 'GitHub', 'gitlab': 'GitLab', 'ci/cd': 'CI/CD', 'cicd': 'CI/CD',
+  'rest': 'REST APIs', 'restful': 'REST APIs', 'graphql': 'GraphQL', 'grpc': 'gRPC',
+  'kafka': 'Kafka', 'rabbitmq': 'RabbitMQ',
+  'linux': 'Linux', 'unix': 'Unix', 'bash': 'Bash',
+  'agile': 'Agile', 'scrum': 'Scrum', 'jira': 'Jira',
+  'figma': 'Figma', 'sketch': 'Sketch',
+  'machine learning': 'Machine Learning', 'ml': 'Machine Learning',
+  'deep learning': 'Deep Learning', 'nlp': 'NLP', 'ai': 'AI',
+  'tensorflow': 'TensorFlow', 'pytorch': 'PyTorch', 'pandas': 'Pandas', 'numpy': 'NumPy',
+  'spark': 'Apache Spark', 'hadoop': 'Hadoop',
+  'tableau': 'Tableau', 'power bi': 'Power BI', 'powerbi': 'Power BI',
+  'salesforce': 'Salesforce', 'sap': 'SAP',
+  'next.js': 'Next.js', 'nextjs': 'Next.js', 'nuxt': 'Nuxt.js',
+  'express': 'Express.js', 'expressjs': 'Express.js', 'fastapi': 'FastAPI',
+  'django': 'Django', 'flask': 'Flask', 'spring': 'Spring', 'spring boot': 'Spring Boot',
+  '.net': '.NET', 'dotnet': '.NET', 'asp.net': 'ASP.NET',
+  'redux': 'Redux', 'mobx': 'MobX', 'tailwind': 'Tailwind CSS', 'tailwindcss': 'Tailwind CSS',
+  'bootstrap': 'Bootstrap', 'material ui': 'Material UI', 'mui': 'Material UI',
+  'webpack': 'Webpack', 'vite': 'Vite',
+  'jest': 'Jest', 'cypress': 'Cypress', 'selenium': 'Selenium', 'playwright': 'Playwright',
+  'firebase': 'Firebase', 'supabase': 'Supabase', 'heroku': 'Heroku', 'vercel': 'Vercel',
+  'snowflake': 'Snowflake', 'databricks': 'Databricks', 'airflow': 'Airflow',
+  'microservices': 'Microservices', 'serverless': 'Serverless',
+  'oauth': 'OAuth', 'jwt': 'JWT', 'sso': 'SSO',
+  'excel': 'Excel', 'powerpoint': 'PowerPoint',
+};
+
+const SKILL_PATTERNS = Object.keys(COMMON_SKILLS).sort((a, b) => b.length - a.length);
+
+function extractSkillsFromDescription(description: string): string[] {
+  if (!description) return [];
+  const text = description.toLowerCase();
+  const foundSkills = new Set<string>();
+
+  for (const pattern of SKILL_PATTERNS) {
+    const regex = new RegExp(`(?:^|[\\s,;/|()•\\-])${pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:$|[\\s,;/|()•\\-])`, 'i');
+    if (regex.test(text)) {
+      foundSkills.add(COMMON_SKILLS[pattern]);
+    }
+  }
+
+  return Array.from(foundSkills).slice(0, 15);
+}
+
 function sanitizeCSVValue(value: string): string {
   const trimmed = value.trim();
   if (/^[=+\-@\t\r]/.test(trimmed)) {
@@ -116,6 +190,11 @@ function parseCSV(text: string): ParseResult {
 
     if (!row.external_apply_link.startsWith("https://")) {
       errors.push({ row: i + 1, message: "external_apply_link must start with https://" });
+      continue;
+    }
+
+    if (isDiceLink(row.external_apply_link)) {
+      errors.push({ row: i + 1, message: "Dice links are not allowed" });
       continue;
     }
 
@@ -208,7 +287,20 @@ export function CSVBulkUpload({ onComplete }: CSVBulkUploadProps) {
           company: job.company,
           location: job.location,
           description: job.description,
-          skills: job.skills.split(",").map((s) => s.trim()).filter(Boolean),
+          skills: (() => {
+            const csvSkills = job.skills ? job.skills.split(",").map((s) => s.trim()).filter(Boolean) : [];
+            const extractedSkills = extractSkillsFromDescription(job.description);
+            const merged = new Set<string>();
+            // Normalize CSV skills
+            for (const s of csvSkills) {
+              const norm = COMMON_SKILLS[s.toLowerCase()] || s;
+              merged.add(norm);
+            }
+            for (const s of extractedSkills) {
+              merged.add(s);
+            }
+            return Array.from(merged).slice(0, 20);
+          })(),
           external_apply_link: job.external_apply_link,
           employment_type: job.employment_type || "Full Time",
           experience_years: job.experience_years || null,
