@@ -270,7 +270,7 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
         <Button
           variant="outline"
           size="sm"
-          className={`text-xs font-medium h-7 px-3 rounded-full border-accent/30 bg-accent/5 text-accent hover:bg-accent/15 hover:border-accent/50 hover:shadow-[0_0_8px_hsl(var(--accent)/0.15)] transition-all duration-300${context === 'recommendations' ? ' animate-[ats-glow_8s_ease-in-out_infinite]' : ''}`}
+          className={`text-xs font-medium h-7 px-3 rounded-full border-accent/30 bg-accent/5 text-accent hover:bg-accent/15 hover:border-accent/50 hover:shadow-[0_0_8px_hsl(var(--accent)/0.15)] transition-all duration-300${context === 'recommendations' ? ' animate-[ats-glow_4s_ease-in-out_infinite]' : ''}`}
           onClick={handleCoverLetterClick}
         >
           <FileText className="h-3.5 w-3.5 mr-1" />
@@ -279,7 +279,7 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
         <Button
           variant="outline"
           size="sm"
-          className={`text-xs font-medium h-7 px-3 rounded-full border-accent/30 bg-accent/5 text-accent hover:bg-accent/15 hover:border-accent/50 hover:shadow-[0_0_8px_hsl(var(--accent)/0.15)] transition-all duration-300${context === 'recommendations' ? ' animate-[ats-glow_8s_ease-in-out_infinite]' : ''}`}
+          className={`text-xs font-medium h-7 px-3 rounded-full border-accent/30 bg-accent/5 text-accent hover:bg-accent/15 hover:border-accent/50 hover:shadow-[0_0_8px_hsl(var(--accent)/0.15)] transition-all duration-300${context === 'recommendations' ? ' animate-[ats-glow_4s_ease-in-out_infinite]' : ''}`}
           onClick={handleTailoredResumeClick}
         >
           <Target className="h-3.5 w-3.5 mr-1" />

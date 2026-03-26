@@ -155,7 +155,7 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
             variant="ghost"
             size="sm"
             onClick={handleAtsCheck}
-            className="h-9 px-4 text-sm font-medium rounded-xl active:scale-95 border border-accent/30 bg-accent/5 text-accent hover:bg-accent/15 hover:border-accent/50 animate-[ats-glow_8s_ease-in-out_infinite] transition-all duration-300"
+            className="h-9 px-4 text-sm font-medium rounded-xl active:scale-95 border border-accent/30 bg-accent/5 text-accent hover:bg-accent/15 hover:border-accent/50 animate-[ats-glow_4s_ease-in-out_infinite] transition-all duration-300"
           >
             <Target className="h-4 w-4 mr-1.5" />ATS Check
           </Button>
