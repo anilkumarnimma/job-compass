@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Job, Application, SavedJob } from "@/types/job";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
+import { enrichJobList } from "@/lib/jobEnrichment";
 
 // Helper to parse job from DB
 function parseJob(row: any): Job {
@@ -38,7 +39,7 @@ export function useJobs() {
         .order("posted_date", { ascending: false });
 
       if (error) throw error;
-      return (data || []).map(parseJob);
+      return enrichJobList((data || []).map(parseJob));
     },
   });
 }
