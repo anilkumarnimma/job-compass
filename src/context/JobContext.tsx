@@ -20,6 +20,9 @@ interface JobContextType {
   showUpgradeDialog: boolean;
   setShowUpgradeDialog: (open: boolean) => void;
   showApplyConfirm: boolean;
+  showProfileGate: boolean;
+  setShowProfileGate: (open: boolean) => void;
+  profileGateMissingFields: string[];
 }
 
 const JobContext = createContext<JobContextType | undefined>(undefined);
