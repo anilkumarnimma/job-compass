@@ -1,6 +1,7 @@
 import { createContext, useContext, ReactNode, useMemo, useState, useCallback } from "react";
 import { useApplications, useSavedJobs, useJobActions, useTotalApplicationCount } from "@/hooks/useJobStore";
 import { useProfile } from "@/hooks/useProfile";
+import { useProfileComplete } from "@/hooks/useProfileComplete";
 import { Application, SavedJob, Job } from "@/types/job";
 import { emitWidgetEvent } from "@/hooks/useWidgetTracker";
 
@@ -19,6 +20,9 @@ interface JobContextType {
   showUpgradeDialog: boolean;
   setShowUpgradeDialog: (open: boolean) => void;
   showApplyConfirm: boolean;
+  showProfileGate: boolean;
+  setShowProfileGate: (open: boolean) => void;
+  profileGateMissingFields: string[];
 }
 
 const JobContext = createContext<JobContextType | undefined>(undefined);
@@ -29,8 +33,10 @@ export function JobProvider({ children }: { children: ReactNode }) {
   const { data: totalAppCount = 0 } = useTotalApplicationCount();
   const { applyToJob: rawApply, saveJob: rawSave, unsaveJob, removeAppliedJob } = useJobActions();
   const { profile } = useProfile();
+  const { isComplete: profileComplete, missingFields: profileGateMissingFields } = useProfileComplete();
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [showApplyConfirm, setShowApplyConfirm] = useState(false);
+  const [showProfileGate, setShowProfileGate] = useState(false);
   const [pendingJob, setPendingJob] = useState<Job | null>(null);
 
   const appliedJobIds = useMemo(() => new Set(applications.map((a) => a.job_id)), [applications]);
@@ -43,18 +49,21 @@ export function JobProvider({ children }: { children: ReactNode }) {
   // Step 1: Open external link + show confirmation dialog
   const applyToJob = useCallback(
     (job: any) => {
+      // Check profile completeness first
+      if (!profileComplete) {
+        setShowProfileGate(true);
+        return;
+      }
       const isPremium = profile?.is_premium === true;
       if (!isPremium && totalAppCount >= 1) {
         setShowUpgradeDialog(true);
         return;
       }
-      // Open external link immediately
       window.open(job.external_apply_link, "_blank");
-      // Store pending job and show confirmation
       setPendingJob(job);
       setShowApplyConfirm(true);
     },
-    [profile?.is_premium, totalAppCount],
+    [profile?.is_premium, totalAppCount, profileComplete],
   );
 
   // Step 2a: User confirms they applied
@@ -88,6 +97,9 @@ export function JobProvider({ children }: { children: ReactNode }) {
     showUpgradeDialog,
     setShowUpgradeDialog,
     showApplyConfirm,
+    showProfileGate,
+    setShowProfileGate,
+    profileGateMissingFields,
   };
 
   return <JobContext.Provider value={value}>{children}</JobContext.Provider>;

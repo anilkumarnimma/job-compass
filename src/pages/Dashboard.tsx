@@ -11,6 +11,7 @@ import { JobPreviewPanel } from "@/components/JobPreviewPanel";
 import { JobListPaginated } from "@/components/JobListPaginated";
 import { UpgradeDialog } from "@/components/UpgradeDialog";
 import { ApplyConfirmDialog } from "@/components/ApplyConfirmDialog";
+import { ProfileGateDialog } from "@/components/ProfileGateDialog";
 import { useJobSearchPaginated } from "@/hooks/useJobSearchPaginated";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useJobContext } from "@/context/JobContext";
@@ -78,7 +79,7 @@ export default function Dashboard() {
   const [visaFilter, setVisaFilter] = useState<VisaFilter>("all");
 
   const isMobile = useIsMobile();
-  const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply } = useJobContext();
+  const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply, showProfileGate, setShowProfileGate, profileGateMissingFields } = useJobContext();
   const { toast } = useToast();
   const isUSUser = useIsUSUser();
 
@@ -473,6 +474,7 @@ export default function Dashboard() {
       <MobileJobPreviewSheet job={mobilePreviewJob} open={mobileSheetOpen} onOpenChange={setMobileSheetOpen} />
       <UpgradeDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog} />
       <ApplyConfirmDialog open={showApplyConfirm} onConfirm={confirmApply} onCancel={cancelApply} />
+      <ProfileGateDialog open={showProfileGate} onOpenChange={setShowProfileGate} missingFields={profileGateMissingFields} />
       <NotificationOptInDialog />
     </Layout>
   );
