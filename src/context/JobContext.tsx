@@ -49,18 +49,21 @@ export function JobProvider({ children }: { children: ReactNode }) {
   // Step 1: Open external link + show confirmation dialog
   const applyToJob = useCallback(
     (job: any) => {
+      // Check profile completeness first
+      if (!profileComplete) {
+        setShowProfileGate(true);
+        return;
+      }
       const isPremium = profile?.is_premium === true;
       if (!isPremium && totalAppCount >= 1) {
         setShowUpgradeDialog(true);
         return;
       }
-      // Open external link immediately
       window.open(job.external_apply_link, "_blank");
-      // Store pending job and show confirmation
       setPendingJob(job);
       setShowApplyConfirm(true);
     },
-    [profile?.is_premium, totalAppCount],
+    [profile?.is_premium, totalAppCount, profileComplete],
   );
 
   // Step 2a: User confirms they applied
