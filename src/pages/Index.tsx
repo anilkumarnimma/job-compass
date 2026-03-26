@@ -1,5 +1,7 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useSearchSuggestions } from "@/hooks/useSearchSuggestions";
+import { SearchSuggestions } from "@/components/SearchSuggestions";
 import { Layout } from "@/components/Layout";
 import { HeroParticles } from "@/components/HeroParticles";
 import { AnimatedCounter } from "@/components/AnimatedCounter";
@@ -19,7 +21,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { motion, useInView } from "framer-motion";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 
 const features = [
   {
