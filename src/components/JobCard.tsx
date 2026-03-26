@@ -257,27 +257,27 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
       {/* AI Actions Row */}
       <div className="flex flex-wrap items-center gap-1.5 mb-2 relative z-10">
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="text-xs text-accent hover:text-accent-foreground hover:bg-accent/20 h-7 px-3 rounded-full animate-[ats-glow_8s_ease-in-out_infinite] relative"
+          className="text-xs font-medium h-7 px-3 rounded-full border-accent/30 bg-accent/5 text-accent hover:bg-accent/15 hover:border-accent/50 hover:shadow-[0_0_8px_hsl(var(--accent)/0.15)] transition-all duration-300"
           onClick={handleAtsClick}
         >
           <Target className="h-3.5 w-3.5 mr-1" />
           ATS Check
         </Button>
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="text-xs text-accent hover:text-accent-foreground hover:bg-accent/20 h-7 px-3 rounded-full animate-[ats-glow_8s_ease-in-out_infinite] relative"
+          className="text-xs font-medium h-7 px-3 rounded-full border-accent/30 bg-accent/5 text-accent hover:bg-accent/15 hover:border-accent/50 hover:shadow-[0_0_8px_hsl(var(--accent)/0.15)] transition-all duration-300"
           onClick={handleCoverLetterClick}
         >
           <FileText className="h-3.5 w-3.5 mr-1" />
           Cover Letter
         </Button>
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="text-xs text-accent hover:text-accent-foreground hover:bg-accent/20 h-7 px-3 rounded-full animate-[ats-glow_8s_ease-in-out_infinite] relative"
+          className="text-xs font-medium h-7 px-3 rounded-full border-accent/30 bg-accent/5 text-accent hover:bg-accent/15 hover:border-accent/50 hover:shadow-[0_0_8px_hsl(var(--accent)/0.15)] transition-all duration-300"
           onClick={handleTailoredResumeClick}
         >
           <Target className="h-3.5 w-3.5 mr-1" />
