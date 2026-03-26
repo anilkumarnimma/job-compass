@@ -19,6 +19,9 @@ export function useAutoApply() {
 
     setIsProcessing(true);
 
+    // Open blank tab synchronously to avoid popup blocker
+    const newTab = window.open("about:blank", "_blank");
+
     try {
       // Step 1: Generate tailored resume
       const tailorResp = await supabase.functions.invoke("tailor-resume", {
@@ -87,8 +90,12 @@ export function useAutoApply() {
 
       if (error) throw error;
 
-      // Step 5: Open external page — extension will auto-detect and fill
-      window.open(job.external_apply_link, "_blank");
+      // Step 5: Redirect the already-opened tab to the external apply page
+      if (newTab && !newTab.closed) {
+        newTab.location.href = job.external_apply_link;
+      } else {
+        window.open(job.external_apply_link, "_blank");
+      }
 
       toast({
         title: "Auto Apply triggered ✨",
@@ -96,6 +103,10 @@ export function useAutoApply() {
       });
     } catch (err: any) {
       console.error("Auto apply error:", err);
+      // Close the blank tab on failure
+      if (newTab && !newTab.closed) {
+        newTab.close();
+      }
       toast({
         title: "Auto Apply failed",
         description: err.message || "Could not prepare application data",
