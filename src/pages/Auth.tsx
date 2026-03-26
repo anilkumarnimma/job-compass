@@ -41,6 +41,12 @@ export default function Auth() {
   const [showCountryPrompt, setShowCountryPrompt] = useState(false);
   const [savingCountry, setSavingCountry] = useState(false);
 
+  // Email verification state
+  const [showVerificationBanner, setShowVerificationBanner] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const [resending, setResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
   const filteredCountries = useMemo(
     () => countries.filter((c) => c.toLowerCase().includes(countrySearch.toLowerCase())),
     [countrySearch]
