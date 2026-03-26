@@ -151,7 +151,13 @@ export default function Auth() {
       } else {
         const { error } = await signIn(email, password);
         if (error) {
-          toast.error(error.message);
+          if (error.message === "Email not confirmed") {
+            // Resend confirmation email automatically
+            await supabase.auth.resend({ type: "signup", email });
+            toast.error("Please confirm your email. We've just re-sent you a confirmation link.");
+          } else {
+            toast.error(error.message);
+          }
         }
       }
     } finally {
