@@ -100,6 +100,20 @@ export default function Dashboard() {
     }
   }, []);
 
+  // Reset all filters when URL search params are cleared (e.g. logo click)
+  useEffect(() => {
+    const urlSearch = searchParams.get("search") || "";
+    if (!urlSearch && searchInput) {
+      setSearchInput("");
+      setRoleFilter(null);
+      setCompanyFilter(null);
+      setDateFilter("all");
+      setCustomDate(undefined);
+      setFallbackActive(false);
+      setCurrentPage(1);
+    }
+  }, [searchParams]);
+
   const debouncedSearch = useDebounce(searchInput, 300);
 
   const combinedSearchQuery = useMemo(() => {
