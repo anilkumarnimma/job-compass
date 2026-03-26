@@ -33,8 +33,10 @@ export function JobProvider({ children }: { children: ReactNode }) {
   const { data: totalAppCount = 0 } = useTotalApplicationCount();
   const { applyToJob: rawApply, saveJob: rawSave, unsaveJob, removeAppliedJob } = useJobActions();
   const { profile } = useProfile();
+  const { isComplete: profileComplete, missingFields: profileGateMissingFields } = useProfileComplete();
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [showApplyConfirm, setShowApplyConfirm] = useState(false);
+  const [showProfileGate, setShowProfileGate] = useState(false);
   const [pendingJob, setPendingJob] = useState<Job | null>(null);
 
   const appliedJobIds = useMemo(() => new Set(applications.map((a) => a.job_id)), [applications]);
