@@ -34,7 +34,7 @@ const PAGE_SIZE = 20;
 
 export default function Recommendations() {
   const { data: jobs, isLoading, canRecommend, hasResume } = useRecommendedJobs();
-  const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply, isApplied } = useJobContext();
+  const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply, isApplied, showProfileGate, setShowProfileGate, profileGateMissingFields } = useJobContext();
   const { profile } = useProfile();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
@@ -300,6 +300,7 @@ export default function Recommendations() {
       <MobileJobPreviewSheet job={mobilePreviewJob} open={mobileSheetOpen} onOpenChange={setMobileSheetOpen} />
       <UpgradeDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog} />
       <ApplyConfirmDialog open={showApplyConfirm} onConfirm={confirmApply} onCancel={cancelApply} />
+      <ProfileGateDialog open={showProfileGate} onOpenChange={setShowProfileGate} missingFields={profileGateMissingFields} />
       <CoverLetterDialog
         open={coverLetterOpen}
         onOpenChange={setCoverLetterOpen}

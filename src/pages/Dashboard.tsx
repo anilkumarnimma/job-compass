@@ -78,7 +78,7 @@ export default function Dashboard() {
   const [visaFilter, setVisaFilter] = useState<VisaFilter>("all");
 
   const isMobile = useIsMobile();
-  const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply } = useJobContext();
+  const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply, showProfileGate, setShowProfileGate, profileGateMissingFields } = useJobContext();
   const { toast } = useToast();
   const isUSUser = useIsUSUser();
 
@@ -473,6 +473,7 @@ export default function Dashboard() {
       <MobileJobPreviewSheet job={mobilePreviewJob} open={mobileSheetOpen} onOpenChange={setMobileSheetOpen} />
       <UpgradeDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog} />
       <ApplyConfirmDialog open={showApplyConfirm} onConfirm={confirmApply} onCancel={cancelApply} />
+      <ProfileGateDialog open={showProfileGate} onOpenChange={setShowProfileGate} missingFields={profileGateMissingFields} />
       <NotificationOptInDialog />
     </Layout>
   );
