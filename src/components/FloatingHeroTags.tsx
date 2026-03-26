@@ -137,7 +137,7 @@ export function FloatingHeroTags() {
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 z-[1] pointer-events-none"
+      className="absolute inset-0 z-[11] pointer-events-none"
       aria-hidden="true"
     >
       {tags.map((tag, i) => {
