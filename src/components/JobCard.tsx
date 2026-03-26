@@ -171,10 +171,6 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
               </h3>
               <p className="text-muted-foreground text-sm mt-0.5">
                 {job.company}
-                <span className="mx-1.5 text-border">·</span>
-                <span className="text-muted-foreground">
-                  {job.salary_range || "Salary not disclosed"}
-                </span>
               </p>
               <p className="text-muted-foreground text-xs flex items-center gap-1 mt-0.5">
                 <Clock className="h-3 w-3" />
