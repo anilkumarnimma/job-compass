@@ -43,10 +43,10 @@ export default function Recommendations() {
   const [mobilePreviewJob, setMobilePreviewJob] = useState<Job | null>(null);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [coverLetterJob, setCoverLetterJob] = useState<RecommendedJob | null>(null);
   const [coverLetterOpen, setCoverLetterOpen] = useState(false);
-  const [tailoredResumeJob, setTailoredResumeJob] = useState<RecommendedJob | null>(null);
+  const [coverLetterJob, setCoverLetterJob] = useState<RecommendedJob | null>(null);
   const [tailoredResumeOpen, setTailoredResumeOpen] = useState(false);
+  const [tailoredResumeJob, setTailoredResumeJob] = useState<RecommendedJob | null>(null);
 
   const intelligence = profile?.resume_intelligence as ResumeIntelligence | null | undefined;
 
