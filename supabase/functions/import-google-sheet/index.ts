@@ -39,6 +39,73 @@ function parseSkills(value: string | undefined): string[] {
   return value.split(',').map(s => s.trim()).filter(Boolean);
 }
 
+const DICE_PATTERNS = ['dice.com', 'www.dice.com', 'employer.dice.com'];
+
+function isDiceLink(url: string): boolean {
+  try {
+    const hostname = new URL(url).hostname.toLowerCase();
+    return DICE_PATTERNS.some(p => hostname === p || hostname.endsWith('.' + p));
+  } catch {
+    return url.toLowerCase().includes('dice.com');
+  }
+}
+
+const COMMON_SKILLS: Record<string, string> = {
+  'js': 'JavaScript', 'javascript': 'JavaScript', 'typescript': 'TypeScript', 'ts': 'TypeScript',
+  'react': 'React', 'reactjs': 'React', 'react.js': 'React',
+  'angular': 'Angular', 'vue': 'Vue.js', 'vuejs': 'Vue.js',
+  'node': 'Node.js', 'nodejs': 'Node.js', 'node.js': 'Node.js',
+  'python': 'Python', 'java': 'Java', 'c#': 'C#', 'c++': 'C++',
+  'go': 'Go', 'golang': 'Go', 'rust': 'Rust', 'ruby': 'Ruby', 'php': 'PHP', 'swift': 'Swift',
+  'kotlin': 'Kotlin', 'scala': 'Scala',
+  'html': 'HTML', 'css': 'CSS', 'sass': 'Sass', 'scss': 'Sass',
+  'sql': 'SQL', 'mysql': 'MySQL', 'postgresql': 'PostgreSQL', 'postgres': 'PostgreSQL',
+  'mongodb': 'MongoDB', 'redis': 'Redis', 'elasticsearch': 'Elasticsearch',
+  'dynamodb': 'DynamoDB', 'oracle': 'Oracle',
+  'aws': 'AWS', 'azure': 'Azure', 'gcp': 'GCP', 'google cloud': 'GCP',
+  'docker': 'Docker', 'kubernetes': 'Kubernetes', 'k8s': 'Kubernetes',
+  'terraform': 'Terraform', 'ansible': 'Ansible', 'jenkins': 'Jenkins',
+  'git': 'Git', 'ci/cd': 'CI/CD',
+  'rest': 'REST APIs', 'graphql': 'GraphQL', 'grpc': 'gRPC',
+  'kafka': 'Kafka', 'rabbitmq': 'RabbitMQ',
+  'linux': 'Linux', 'bash': 'Bash',
+  'agile': 'Agile', 'scrum': 'Scrum', 'jira': 'Jira', 'figma': 'Figma',
+  'machine learning': 'Machine Learning', 'ml': 'Machine Learning',
+  'deep learning': 'Deep Learning', 'nlp': 'NLP', 'ai': 'AI',
+  'tensorflow': 'TensorFlow', 'pytorch': 'PyTorch', 'pandas': 'Pandas',
+  'spark': 'Apache Spark', 'hadoop': 'Hadoop',
+  'tableau': 'Tableau', 'power bi': 'Power BI',
+  'salesforce': 'Salesforce', 'sap': 'SAP',
+  'next.js': 'Next.js', 'nextjs': 'Next.js',
+  'express': 'Express.js', 'fastapi': 'FastAPI',
+  'django': 'Django', 'flask': 'Flask', 'spring': 'Spring', 'spring boot': 'Spring Boot',
+  '.net': '.NET', 'asp.net': 'ASP.NET',
+  'redux': 'Redux', 'tailwind': 'Tailwind CSS',
+  'bootstrap': 'Bootstrap', 'material ui': 'Material UI',
+  'webpack': 'Webpack', 'vite': 'Vite',
+  'jest': 'Jest', 'cypress': 'Cypress', 'selenium': 'Selenium',
+  'firebase': 'Firebase', 'supabase': 'Supabase',
+  'snowflake': 'Snowflake', 'databricks': 'Databricks', 'airflow': 'Airflow',
+  'microservices': 'Microservices', 'serverless': 'Serverless',
+  'oauth': 'OAuth', 'jwt': 'JWT', 'sso': 'SSO',
+};
+
+const SKILL_PATTERNS = Object.keys(COMMON_SKILLS).sort((a, b) => b.length - a.length);
+
+function extractSkillsFromDescription(description: string): string[] {
+  if (!description) return [];
+  const text = description.toLowerCase();
+  const foundSkills = new Set<string>();
+  for (const pattern of SKILL_PATTERNS) {
+    const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(?:^|[\\s,;/|()•\\-])${escaped}(?:$|[\\s,;/|()•\\-])`, 'i');
+    if (regex.test(text)) {
+      foundSkills.add(COMMON_SKILLS[pattern]);
+    }
+  }
+  return Array.from(foundSkills).slice(0, 15);
+}
+
 function isValidUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
@@ -322,6 +389,10 @@ Deno.serve(async (req) => {
             result.errors.push({ row: rowNum, message: 'Missing apply_link' });
             continue;
           }
+          if (isDiceLink(row.apply_link)) {
+            result.errors.push({ row: rowNum, message: 'Dice links are not allowed' });
+            continue;
+          }
           if (!isValidUrl(row.apply_link)) {
             result.errors.push({ row: rowNum, message: 'Invalid apply_link URL' });
             continue;
@@ -371,7 +442,18 @@ Deno.serve(async (req) => {
             employment_type: employmentType,
             experience_years: row.experience_years?.trim() || null,
             salary_range: row.salary?.trim() || null,
-            skills: parseSkills(row.skills),
+            skills: (() => {
+              const csvSkills = parseSkills(row.skills);
+              const extracted = extractSkillsFromDescription(description);
+              const merged = new Set<string>();
+              for (const s of csvSkills) {
+                merged.add(COMMON_SKILLS[s.toLowerCase()] || s);
+              }
+              for (const s of extracted) {
+                merged.add(s);
+              }
+              return Array.from(merged).slice(0, 20);
+            })(),
             is_reviewing: parseBoolean(row.actively_reviewing),
             company_logo: row.company_logo_url?.trim() || null,
             is_published: row.is_published !== undefined ? parseBoolean(row.is_published) : true,
