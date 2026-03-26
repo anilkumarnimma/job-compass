@@ -237,7 +237,7 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
       {/* Skills - max 5 visible + N more */}
       {job.skills.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-4 relative z-10">
-          {job.skills.slice(0, 5).map((skill) => (
+          {job.skills.slice(0, 7).map((skill) => (
             <Badge
               key={skill}
               variant="outline"
@@ -246,9 +246,9 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
               {skill}
             </Badge>
           ))}
-          {job.skills.length > 5 && (
+          {job.skills.length > 7 && (
             <Badge variant="outline" className="text-xs font-normal px-2.5 py-1 rounded-full text-muted-foreground">
-              +{job.skills.length - 5} more
+              +{job.skills.length - 7} more
             </Badge>
           )}
         </div>
@@ -257,27 +257,27 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
       {/* AI Actions Row */}
       <div className="flex flex-wrap items-center gap-1.5 mb-2 relative z-10">
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="text-xs text-accent hover:text-accent-foreground hover:bg-accent/20 h-7 px-3 rounded-full animate-[ats-glow_8s_ease-in-out_infinite] relative"
+          className="text-xs font-medium h-7 px-3 rounded-full border-accent/30 bg-accent/5 text-accent hover:bg-accent/15 hover:border-accent/50 hover:shadow-[0_0_8px_hsl(var(--accent)/0.15)] transition-all duration-300"
           onClick={handleAtsClick}
         >
           <Target className="h-3.5 w-3.5 mr-1" />
           ATS Check
         </Button>
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="text-xs text-accent hover:text-accent-foreground hover:bg-accent/20 h-7 px-3 rounded-full animate-[ats-glow_8s_ease-in-out_infinite] relative"
+          className="text-xs font-medium h-7 px-3 rounded-full border-accent/30 bg-accent/5 text-accent hover:bg-accent/15 hover:border-accent/50 hover:shadow-[0_0_8px_hsl(var(--accent)/0.15)] transition-all duration-300"
           onClick={handleCoverLetterClick}
         >
           <FileText className="h-3.5 w-3.5 mr-1" />
           Cover Letter
         </Button>
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="text-xs text-accent hover:text-accent-foreground hover:bg-accent/20 h-7 px-3 rounded-full animate-[ats-glow_8s_ease-in-out_infinite] relative"
+          className="text-xs font-medium h-7 px-3 rounded-full border-accent/30 bg-accent/5 text-accent hover:bg-accent/15 hover:border-accent/50 hover:shadow-[0_0_8px_hsl(var(--accent)/0.15)] transition-all duration-300"
           onClick={handleTailoredResumeClick}
         >
           <Target className="h-3.5 w-3.5 mr-1" />

@@ -166,16 +166,7 @@
   }
 }
 
-@keyframes ats-glow {
-  0%, 100% {
-    box-shadow: 0 0 3px hsl(var(--accent) / 0.1), 0 0 8px hsl(var(--accent) / 0.05);
-    background: hsl(var(--accent) / 0.04);
-  }
-  50% {
-    box-shadow: 0 0 5px hsl(var(--accent) / 0.2), 0 0 12px hsl(var(--accent) / 0.1);
-    background: hsl(var(--accent) / 0.08);
-  }
-}
+/* AI action pill buttons - premium gradient style */
 
 @layer utilities {
   .text-balance {
