@@ -120,6 +120,22 @@ function ScrollReveal({ children, delay = 0 }: { children: React.ReactNode; dela
 }
 
 export default function Index() {
+  const navigate = useNavigate();
+  const [heroSearch, setHeroSearch] = useState("");
+  const [heroFocused, setHeroFocused] = useState(false);
+  const [highlightedIdx, setHighlightedIdx] = useState(-1);
+  const { suggestions } = useSearchSuggestions(heroSearch, heroFocused);
+  const showSuggestions = heroFocused && heroSearch.trim().length >= 2 && suggestions.length > 0;
+
+  const handleHeroSearch = useCallback((query?: string) => {
+    const q = query || heroSearch.trim();
+    if (q) {
+      navigate(`/dashboard?search=${encodeURIComponent(q)}`);
+    } else {
+      navigate("/dashboard");
+    }
+  }, [heroSearch, navigate]);
+
   return (
     <Layout showFooter={true}>
       {/* Hero Section */}
