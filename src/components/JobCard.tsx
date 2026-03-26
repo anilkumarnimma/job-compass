@@ -259,7 +259,7 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
         <Button
           variant="ghost"
           size="sm"
-          className="text-xs text-accent hover:text-accent-foreground hover:bg-accent/20 h-7 px-3 rounded-full animate-[ats-glow_4s_ease-in-out_infinite] relative"
+          className="text-xs text-accent hover:text-accent-foreground hover:bg-accent/20 h-7 px-3 rounded-full animate-[ats-glow_8s_ease-in-out_infinite] relative"
           onClick={handleAtsClick}
         >
           <Target className="h-3.5 w-3.5 mr-1" />
@@ -268,7 +268,7 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
         <Button
           variant="ghost"
           size="sm"
-          className="text-xs text-accent hover:text-accent-foreground hover:bg-accent/20 h-7 px-3 rounded-full animate-[ats-glow_4s_ease-in-out_infinite] relative"
+          className="text-xs text-accent hover:text-accent-foreground hover:bg-accent/20 h-7 px-3 rounded-full animate-[ats-glow_8s_ease-in-out_infinite] relative"
           onClick={handleCoverLetterClick}
         >
           <FileText className="h-3.5 w-3.5 mr-1" />
@@ -277,7 +277,7 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
         <Button
           variant="ghost"
           size="sm"
-          className="text-xs text-accent hover:text-accent-foreground hover:bg-accent/20 h-7 px-3 rounded-full animate-[ats-glow_4s_ease-in-out_infinite] relative"
+          className="text-xs text-accent hover:text-accent-foreground hover:bg-accent/20 h-7 px-3 rounded-full animate-[ats-glow_8s_ease-in-out_infinite] relative"
           onClick={handleTailoredResumeClick}
         >
           <Target className="h-3.5 w-3.5 mr-1" />
