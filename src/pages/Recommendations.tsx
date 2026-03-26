@@ -5,6 +5,7 @@ import { JobPreviewPanel } from "@/components/JobPreviewPanel";
 import { MobileJobPreviewSheet } from "@/components/MobileJobPreviewSheet";
 import { UpgradeDialog } from "@/components/UpgradeDialog";
 import { ApplyConfirmDialog } from "@/components/ApplyConfirmDialog";
+import { ProfileGateDialog } from "@/components/ProfileGateDialog";
 import { CoverLetterDialog } from "@/components/CoverLetterDialog";
 import { TailoredResumeDialog } from "@/components/TailoredResumeDialog";
 import { useRecommendedJobs, RecommendedJob } from "@/hooks/useRecommendedJobs";

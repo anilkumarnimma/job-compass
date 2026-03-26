@@ -11,6 +11,7 @@ import { JobPreviewPanel } from "@/components/JobPreviewPanel";
 import { JobListPaginated } from "@/components/JobListPaginated";
 import { UpgradeDialog } from "@/components/UpgradeDialog";
 import { ApplyConfirmDialog } from "@/components/ApplyConfirmDialog";
+import { ProfileGateDialog } from "@/components/ProfileGateDialog";
 import { useJobSearchPaginated } from "@/hooks/useJobSearchPaginated";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useJobContext } from "@/context/JobContext";
