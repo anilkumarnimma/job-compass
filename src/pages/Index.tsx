@@ -5,6 +5,7 @@ import { SearchSuggestions } from "@/components/SearchSuggestions";
 import { Layout } from "@/components/Layout";
 import { HeroParticles } from "@/components/HeroParticles";
 import { AnimatedCounter } from "@/components/AnimatedCounter";
+import { useLandingStats } from "@/hooks/useLandingStats";
 import { FeaturedJobCard } from "@/components/FeaturedJobCard";
 import { FloatingHeroTags } from "@/components/FloatingHeroTags";
 import {
