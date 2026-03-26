@@ -126,6 +126,7 @@ export default function Index() {
   const [heroFocused, setHeroFocused] = useState(false);
   const [highlightedIdx, setHighlightedIdx] = useState(-1);
   const { suggestions } = useSearchSuggestions(heroSearch, heroFocused);
+  const { data: landingStats } = useLandingStats();
   const showSuggestions = heroFocused && heroSearch.trim().length >= 2 && suggestions.length > 0;
 
   const handleHeroSearch = useCallback((query?: string) => {
