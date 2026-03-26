@@ -90,6 +90,16 @@ export default function Dashboard() {
     }
   }, [searchParams, setSearchParams, toast]);
 
+  // Handle pending search from landing page tag click
+  useEffect(() => {
+    const pendingSearch = sessionStorage.getItem("pending_search");
+    if (pendingSearch) {
+      sessionStorage.removeItem("pending_search");
+      setSearchInput(pendingSearch);
+      setSearchParams({ search: pendingSearch }, { replace: true });
+    }
+  }, []);
+
   const debouncedSearch = useDebounce(searchInput, 300);
 
   const combinedSearchQuery = useMemo(() => {
