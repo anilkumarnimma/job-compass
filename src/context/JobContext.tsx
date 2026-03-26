@@ -97,6 +97,9 @@ export function JobProvider({ children }: { children: ReactNode }) {
     showUpgradeDialog,
     setShowUpgradeDialog,
     showApplyConfirm,
+    showProfileGate,
+    setShowProfileGate,
+    profileGateMissingFields,
   };
 
   return <JobContext.Provider value={value}>{children}</JobContext.Provider>;
