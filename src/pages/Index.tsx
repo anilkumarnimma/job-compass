@@ -1,5 +1,7 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useSearchSuggestions } from "@/hooks/useSearchSuggestions";
+import { SearchSuggestions } from "@/components/SearchSuggestions";
 import { Layout } from "@/components/Layout";
 import { HeroParticles } from "@/components/HeroParticles";
 import { AnimatedCounter } from "@/components/AnimatedCounter";
@@ -19,7 +21,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { motion, useInView } from "framer-motion";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 
 const features = [
   {
@@ -118,6 +120,22 @@ function ScrollReveal({ children, delay = 0 }: { children: React.ReactNode; dela
 }
 
 export default function Index() {
+  const navigate = useNavigate();
+  const [heroSearch, setHeroSearch] = useState("");
+  const [heroFocused, setHeroFocused] = useState(false);
+  const [highlightedIdx, setHighlightedIdx] = useState(-1);
+  const { suggestions } = useSearchSuggestions(heroSearch, heroFocused);
+  const showSuggestions = heroFocused && heroSearch.trim().length >= 2 && suggestions.length > 0;
+
+  const handleHeroSearch = useCallback((query?: string) => {
+    const q = query || heroSearch.trim();
+    if (q) {
+      navigate(`/dashboard?search=${encodeURIComponent(q)}`);
+    } else {
+      navigate("/dashboard");
+    }
+  }, [heroSearch, navigate]);
+
   return (
     <Layout showFooter={true}>
       {/* Hero Section */}
@@ -172,25 +190,57 @@ export default function Index() {
               transition={{ duration: 0.6, delay: 0.35 }}
               className="max-w-xl mx-auto mb-8"
             >
-              <Link to="/dashboard" className="block">
-                <div className="relative group" data-interactive>
-                  <div className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-accent/40 via-accent/20 to-purple-500/30 opacity-0 group-hover:opacity-100 blur transition-opacity duration-500" />
-                  <div className="relative flex items-center h-14 bg-card/80 backdrop-blur-md border border-border/60 rounded-full px-5 shadow-elevated group-hover:border-accent/40 transition-all duration-300">
-                    <Search className="h-5 w-5 text-muted-foreground mr-3 shrink-0" />
-                    <span className="text-muted-foreground/60 text-base truncate">
+              <div className="relative group" data-interactive>
+                <div className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-accent/40 via-accent/20 to-purple-500/30 opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 blur transition-opacity duration-500" />
+                <div className="relative flex items-center h-14 bg-card/80 backdrop-blur-md border border-border/60 rounded-full px-5 shadow-elevated group-hover:border-accent/40 group-focus-within:border-accent/40 transition-all duration-300">
+                  <Search className="h-5 w-5 text-muted-foreground mr-3 shrink-0" />
+                  <input
+                    type="text"
+                    value={heroSearch}
+                    onChange={(e) => {
+                      setHeroSearch(e.target.value);
+                      setHighlightedIdx(-1);
+                    }}
+                    onFocus={() => setHeroFocused(true)}
+                    onBlur={() => setTimeout(() => setHeroFocused(false), 150)}
+                    onKeyDown={(e) => {
+                      if (showSuggestions) {
+                        if (e.key === "ArrowDown") { e.preventDefault(); setHighlightedIdx(prev => Math.min(prev + 1, suggestions.length - 1)); return; }
+                        if (e.key === "ArrowUp") { e.preventDefault(); setHighlightedIdx(prev => Math.max(prev - 1, -1)); return; }
+                        if (e.key === "Enter" && highlightedIdx >= 0) { e.preventDefault(); handleHeroSearch(suggestions[highlightedIdx].suggestion); return; }
+                        if (e.key === "Escape") { setHeroFocused(false); return; }
+                      }
+                      if (e.key === "Enter") handleHeroSearch();
+                    }}
+                    placeholder=""
+                    className="flex-1 bg-transparent border-none outline-none text-base text-foreground placeholder:text-transparent"
+                    autoComplete="off"
+                  />
+                  {!heroSearch && (
+                    <span className="absolute left-14 text-muted-foreground/60 text-base pointer-events-none truncate">
                       Search for{" "}
                       <span className="text-accent font-medium">
                         <AnimatedPlaceholder />
                       </span>
                     </span>
-                    <div className="ml-auto shrink-0">
-                      <span className="bg-accent text-accent-foreground px-4 py-2 rounded-full text-sm font-medium shadow-glow group-hover:shadow-[0_0_20px_hsl(var(--accent)/0.4)] transition-shadow">
-                        Search
-                      </span>
-                    </div>
+                  )}
+                  <div className="ml-auto shrink-0">
+                    <button
+                      onClick={() => handleHeroSearch()}
+                      className="bg-accent text-accent-foreground px-4 py-2 rounded-full text-sm font-medium shadow-glow hover:shadow-[0_0_20px_hsl(var(--accent)/0.4)] transition-shadow"
+                    >
+                      Search
+                    </button>
                   </div>
                 </div>
-              </Link>
+                <SearchSuggestions
+                  suggestions={suggestions}
+                  isOpen={showSuggestions}
+                  onSelect={(s) => handleHeroSearch(s)}
+                  highlightedIndex={highlightedIdx}
+                  query={heroSearch}
+                />
+              </div>
             </motion.div>
 
             <motion.div

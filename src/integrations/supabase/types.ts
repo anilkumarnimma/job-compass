@@ -743,6 +743,13 @@ export type Database = {
           updated_at: string
         }[]
       }
+      suggest_job_titles: {
+        Args: { max_results?: number; query_text: string }
+        Returns: {
+          match_count: number
+          suggestion: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
