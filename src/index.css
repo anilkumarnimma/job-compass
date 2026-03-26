@@ -168,12 +168,12 @@
 
 @keyframes ats-glow {
   0%, 100% {
-    box-shadow: 0 0 4px hsl(var(--accent) / 0.2), 0 0 10px hsl(var(--accent) / 0.1);
-    background: hsl(var(--accent) / 0.06);
+    box-shadow: 0 0 3px hsl(var(--accent) / 0.1), 0 0 8px hsl(var(--accent) / 0.05);
+    background: hsl(var(--accent) / 0.04);
   }
   50% {
-    box-shadow: 0 0 6px hsl(var(--accent) / 0.35), 0 0 16px hsl(var(--accent) / 0.18);
-    background: hsl(var(--accent) / 0.12);
+    box-shadow: 0 0 5px hsl(var(--accent) / 0.2), 0 0 12px hsl(var(--accent) / 0.1);
+    background: hsl(var(--accent) / 0.08);
   }
 }
 

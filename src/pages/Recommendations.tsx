@@ -15,7 +15,7 @@ import { Job } from "@/types/job";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Upload, FileText, X, Target } from "lucide-react";
+import { Sparkles, Upload, FileText, X } from "lucide-react";
 import { calculateJobMatch } from "@/lib/jobMatcher";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
 import { useNavigate } from "react-router-dom";
@@ -43,10 +43,10 @@ export default function Recommendations() {
   const [mobilePreviewJob, setMobilePreviewJob] = useState<Job | null>(null);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [coverLetterJob, setCoverLetterJob] = useState<RecommendedJob | null>(null);
   const [coverLetterOpen, setCoverLetterOpen] = useState(false);
-  const [tailoredResumeJob, setTailoredResumeJob] = useState<RecommendedJob | null>(null);
+  const [coverLetterJob, setCoverLetterJob] = useState<RecommendedJob | null>(null);
   const [tailoredResumeOpen, setTailoredResumeOpen] = useState(false);
+  const [tailoredResumeJob, setTailoredResumeJob] = useState<RecommendedJob | null>(null);
 
   const intelligence = profile?.resume_intelligence as ResumeIntelligence | null | undefined;
 
@@ -219,34 +219,6 @@ export default function Recommendations() {
                         onTap={handleJobTap}
                         isSelected={selectedJob?.id === job.id}
                       />
-                      <div className="flex justify-end mt-1.5 px-1 gap-1.5">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs text-accent hover:text-accent-foreground hover:bg-accent/20 h-7 px-3 rounded-full animate-[ats-glow_4s_ease-in-out_infinite] relative"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setCoverLetterJob(job);
-                            setCoverLetterOpen(true);
-                          }}
-                        >
-                          <FileText className="h-3.5 w-3.5 mr-1 animate-pulse" />
-                          Cover Letter
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs text-accent hover:text-accent-foreground hover:bg-accent/20 h-7 px-3 rounded-full animate-[ats-glow_4s_ease-in-out_infinite] relative"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setTailoredResumeJob(job);
-                            setTailoredResumeOpen(true);
-                          }}
-                        >
-                          <Target className="h-3.5 w-3.5 mr-1 animate-pulse" />
-                          Tailored Resume
-                        </Button>
-                      </div>
                     </div>
                   </motion.div>
                 ))}
