@@ -510,18 +510,11 @@ Deno.serve(async (req) => {
             employment_type: employmentType,
             experience_years: row.experience_years?.trim() || null,
             salary_range: row.salary?.trim() || extractSalaryFromDescription(description) || null,
-            skills: (() => {
-              const csvSkills = parseSkills(row.skills);
-              const extracted = extractSkillsFromDescription(description);
-              const merged = new Set<string>();
-              for (const s of csvSkills) {
-                merged.add(COMMON_SKILLS[s.toLowerCase()] || s);
-              }
-              for (const s of extracted) {
-                merged.add(s);
-              }
-              return Array.from(merged).slice(0, 20);
-            })(),
+            skills: enrichSkillsWithFallback(
+              row.title.trim(),
+              description,
+              parseSkills(row.skills)
+            ),
             is_reviewing: parseBoolean(row.actively_reviewing),
             company_logo: row.company_logo_url?.trim() || null,
             is_published: row.is_published !== undefined ? parseBoolean(row.is_published) : true,
