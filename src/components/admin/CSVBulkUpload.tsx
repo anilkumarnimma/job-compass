@@ -94,11 +94,40 @@ const COMMON_SKILLS: Record<string, string> = {
   'excel': 'Excel', 'powerpoint': 'PowerPoint',
 };
 
+const TITLE_SKILL_MAP: Record<string, string[]> = {
+  'software engineer': ['JavaScript', 'Python', 'SQL', 'Git', 'REST APIs', 'Agile', 'Docker', 'AWS'],
+  'frontend': ['JavaScript', 'React', 'CSS', 'HTML', 'TypeScript', 'Git', 'REST APIs', 'Figma'],
+  'backend': ['Python', 'Node.js', 'SQL', 'REST APIs', 'Docker', 'AWS', 'Git', 'PostgreSQL'],
+  'full stack': ['JavaScript', 'React', 'Node.js', 'SQL', 'Git', 'REST APIs', 'Docker', 'TypeScript'],
+  'data engineer': ['Python', 'SQL', 'Apache Spark', 'AWS', 'ETL', 'Airflow', 'Docker', 'PostgreSQL'],
+  'data scientist': ['Python', 'Machine Learning', 'SQL', 'Pandas', 'TensorFlow', 'NumPy', 'Deep Learning', 'R'],
+  'data analyst': ['SQL', 'Python', 'Excel', 'Tableau', 'Power BI', 'Pandas', 'Analytical Skills', 'Communication'],
+  'devops': ['Docker', 'Kubernetes', 'AWS', 'CI/CD', 'Terraform', 'Linux', 'Git', 'Jenkins'],
+  'cloud engineer': ['AWS', 'Azure', 'GCP', 'Docker', 'Kubernetes', 'Terraform', 'Linux', 'CI/CD'],
+  'machine learning': ['Python', 'TensorFlow', 'PyTorch', 'Machine Learning', 'Deep Learning', 'SQL', 'NumPy', 'Pandas'],
+  'ai engineer': ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'PyTorch', 'NLP', 'Docker', 'SQL'],
+  'mobile developer': ['React', 'JavaScript', 'TypeScript', 'Swift', 'Kotlin', 'Git', 'REST APIs', 'Firebase'],
+  'qa engineer': ['Selenium', 'Jest', 'Cypress', 'SQL', 'Git', 'Agile', 'REST APIs', 'JavaScript'],
+  'product manager': ['Agile', 'Scrum', 'Jira', 'Analytical Skills', 'Communication', 'Leadership', 'SQL', 'Product Management'],
+  'project manager': ['Agile', 'Scrum', 'Jira', 'Project Management', 'Communication', 'Leadership', 'Excel', 'Analytical Skills'],
+  'security engineer': ['Linux', 'AWS', 'Python', 'Docker', 'CI/CD', 'Git', 'Bash', 'Kubernetes'],
+  'ui/ux designer': ['Figma', 'Sketch', 'CSS', 'HTML', 'JavaScript', 'Communication', 'Analytical Skills', 'Bootstrap'],
+  'business analyst': ['SQL', 'Excel', 'Tableau', 'Power BI', 'Analytical Skills', 'Communication', 'Jira', 'Agile'],
+};
+
+function getTitleFallbackSkills(title: string): string[] {
+  const t = title.toLowerCase();
+  for (const [key, skills] of Object.entries(TITLE_SKILL_MAP)) {
+    if (t.includes(key)) return skills;
+  }
+  return [];
+}
+
 const SKILL_PATTERNS = Object.keys(COMMON_SKILLS).sort((a, b) => b.length - a.length);
+const MIN_SKILLS = 8;
 
 function extractSalaryFromDescription(description: string): string | null {
   if (!description) return null;
-  // Match patterns like $120,000 - $140,000, $60/hr, $45 to $55 per hour, $90k-$110k
   const patterns = [
     /\$[\d,]+(?:\.\d+)?[kK]?\s*[-–to]+\s*\$[\d,]+(?:\.\d+)?[kK]?\s*(?:per\s+(?:year|annum|hour|hr)|\/(?:yr|hr|hour|year)|annually|hourly)?/gi,
     /\$[\d,]+(?:\.\d+)?[kK]?\s*(?:per\s+(?:year|annum|hour|hr)|\/(?:yr|hr|hour|year)|annually|hourly)/gi,
@@ -126,7 +155,30 @@ function extractSkillsFromDescription(description: string): string[] {
     }
   }
 
-  return Array.from(foundSkills).slice(0, 15);
+  return Array.from(foundSkills).slice(0, 20);
+}
+
+function enrichSkillsWithFallback(title: string, description: string, csvSkills: string[]): string[] {
+  const merged = new Set<string>();
+  // Normalize CSV skills
+  for (const s of csvSkills) {
+    const norm = COMMON_SKILLS[s.toLowerCase()] || s;
+    merged.add(norm);
+  }
+  // Extract from description
+  for (const s of extractSkillsFromDescription(description)) {
+    merged.add(s);
+  }
+  // Title-based fallback if still under minimum
+  if (merged.size < MIN_SKILLS) {
+    for (const s of getTitleFallbackSkills(title)) {
+      if (!new Set([...merged].map(x => x.toLowerCase())).has(s.toLowerCase())) {
+        merged.add(s);
+      }
+      if (merged.size >= MIN_SKILLS) break;
+    }
+  }
+  return Array.from(merged).slice(0, 20);
 }
 
 function sanitizeCSVValue(value: string): string {
@@ -305,20 +357,11 @@ export function CSVBulkUpload({ onComplete }: CSVBulkUploadProps) {
           company: job.company,
           location: job.location,
           description: job.description,
-          skills: (() => {
-            const csvSkills = job.skills ? job.skills.split(",").map((s) => s.trim()).filter(Boolean) : [];
-            const extractedSkills = extractSkillsFromDescription(job.description);
-            const merged = new Set<string>();
-            // Normalize CSV skills
-            for (const s of csvSkills) {
-              const norm = COMMON_SKILLS[s.toLowerCase()] || s;
-              merged.add(norm);
-            }
-            for (const s of extractedSkills) {
-              merged.add(s);
-            }
-            return Array.from(merged).slice(0, 20);
-          })(),
+          skills: enrichSkillsWithFallback(
+            job.title,
+            job.description,
+            job.skills ? job.skills.split(",").map((s) => s.trim()).filter(Boolean) : []
+          ),
           external_apply_link: job.external_apply_link,
           employment_type: job.employment_type || "Full Time",
           experience_years: job.experience_years || null,

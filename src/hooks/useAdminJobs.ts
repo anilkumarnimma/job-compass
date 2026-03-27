@@ -1,7 +1,8 @@
- import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
- import { supabase } from "@/integrations/supabase/client";
- import { Job } from "@/types/job";
- import { toast } from "sonner";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Job } from "@/types/job";
+import { toast } from "sonner";
+import { enrichJobSkills } from "@/lib/jobEnrichment";
  
 interface JobFormData {
   title: string;
@@ -62,13 +63,22 @@ function parseJob(row: any): Job {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { error } = await supabase.from("jobs").insert({
-        title: data.title,
-        company: data.company,
-        company_logo: data.company_logo || null,
-        location: data.location,
-        description: data.description,
-        skills: data.skills,
+       const enrichedSkills = enrichJobSkills({
+         ...data,
+         id: '', posted_date: new Date(), created_at: new Date(), updated_at: new Date(),
+         is_published: data.is_published, is_reviewing: data.is_reviewing,
+         salary_range: data.salary_range || null, experience_years: data.experience_years || null,
+         company_logo: data.company_logo || null, employment_type: (data.employment_type || 'Full Time') as any,
+         external_apply_link: data.external_apply_link,
+       } as Job);
+
+       const { error } = await supabase.from("jobs").insert({
+         title: data.title,
+         company: data.company,
+         company_logo: data.company_logo || null,
+         location: data.location,
+         description: data.description,
+         skills: enrichedSkills,
         external_apply_link: data.external_apply_link,
         is_published: data.is_published,
         is_reviewing: data.is_reviewing,
