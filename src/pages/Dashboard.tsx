@@ -32,6 +32,7 @@ import { VisaFilterPills } from "@/components/VisaFilterPills";
 import { VisaFilter, filterJobsByVisa } from "@/lib/visaSponsorship";
 import { useIsUSUser } from "@/hooks/useIsUSUser";
 import { NotificationOptInDialog } from "@/components/NotificationOptInDialog";
+import { consumeDashboardResetToken, DASHBOARD_RESET_EVENT } from "@/lib/dashboardReset";
 
 type DateFilter = "all" | "today" | "yesterday" | "custom";
 
@@ -83,6 +84,23 @@ export default function Dashboard() {
   const { toast } = useToast();
   const isUSUser = useIsUSUser();
 
+  const performDashboardReset = useCallback(() => {
+    sessionStorage.removeItem("pending_search");
+    setSearchInput("");
+    setCurrentPage(1);
+    setDateFilter("all");
+    setMobilePreviewJob(null);
+    setMobileSheetOpen(false);
+    setSelectedJob(null);
+    setRoleFilter(null);
+    setCompanyFilter(null);
+    setAllTimeDropdownOpen(false);
+    setCustomDate(undefined);
+    setFallbackActive(false);
+    setVisaFilter("all");
+    setSearchParams({}, { replace: true });
+  }, [setSearchParams]);
+
   useEffect(() => {
     if (searchParams.get("premium") === "true") {
       toast({ title: "🎉 Premium unlocked!", description: "You can now apply to unlimited jobs." });
@@ -101,11 +119,27 @@ export default function Dashboard() {
     }
   }, []);
 
+  useEffect(() => {
+    const handleDashboardReset = () => performDashboardReset();
+
+    window.addEventListener(DASHBOARD_RESET_EVENT, handleDashboardReset);
+
+    if (consumeDashboardResetToken()) {
+      performDashboardReset();
+    }
+
+    return () => {
+      window.removeEventListener(DASHBOARD_RESET_EVENT, handleDashboardReset);
+    };
+  }, [performDashboardReset]);
+
   // Reset all filters when URL search params are cleared (e.g. logo click)
   useEffect(() => {
     const urlSearch = searchParams.get("search") || "";
-    if (!urlSearch && searchInput) {
-      setSearchInput("");
+    if (urlSearch !== searchInput) {
+      setSearchInput(urlSearch);
+    }
+    if (!urlSearch) {
       setRoleFilter(null);
       setCompanyFilter(null);
       setDateFilter("all");
@@ -113,7 +147,7 @@ export default function Dashboard() {
       setFallbackActive(false);
       setCurrentPage(1);
     }
-  }, [searchParams]);
+  }, [searchParams, searchInput]);
 
   const debouncedSearch = useDebounce(searchInput, 300);
 
@@ -198,13 +232,9 @@ export default function Dashboard() {
     setDateFilter(value);
     setAllTimeDropdownOpen(false);
     if (value === "all") {
-      setSearchInput("");
-      setRoleFilter(null);
-      setCompanyFilter(null);
-      searchParams.delete("search");
-      setSearchParams(searchParams, { replace: true });
+      performDashboardReset();
     }
-  }, [searchParams, setSearchParams]);
+  }, [performDashboardReset]);
 
   const handleCustomDateSelect = useCallback((date: Date | undefined) => {
     if (date) {

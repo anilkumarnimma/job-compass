@@ -11,6 +11,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { FloatingHelpButton } from "@/components/FloatingHelpButton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { triggerDashboardReset } from "@/lib/dashboardReset";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,6 +38,15 @@ export function Header() {
   const isFounder = role === "founder";
   const isEmployer = role === "employer";
 
+  const handleBrandClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!user) return;
+
+    event.preventDefault();
+    triggerDashboardReset();
+    navigate("/dashboard", { replace: location.pathname === "/dashboard" });
+    setMobileMenuOpen(false);
+  };
+
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
@@ -62,12 +72,7 @@ export function Header() {
           {/* Logo */}
           <Link
             to={user ? "/dashboard" : "/"}
-            onClick={() => {
-              if (user && location.pathname === "/dashboard") {
-                // Clear search params to reset dashboard to default state
-                navigate("/dashboard", { replace: true });
-              }
-            }}
+            onClick={handleBrandClick}
             className="flex items-center gap-2.5 shrink-0 group"
           >
             <img src="/favicon.png" alt="Sociax logo" className="h-9 w-9 rounded-xl shadow-soft group-hover:shadow-glow transition-shadow duration-300" />
