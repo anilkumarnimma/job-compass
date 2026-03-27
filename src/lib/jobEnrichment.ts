@@ -97,6 +97,26 @@ export function extractSalary(job: Job): string | null {
   return null;
 }
 
+/** Get source priority score (lower = better) */
+function getSourcePriority(link: string): number {
+  const l = (link || '').toLowerCase();
+  if (l.includes('greenhouse.io') || l.includes('greenhouse.com')) return 0;
+  if (l.includes('lever.co')) return 1;
+  if (l.includes('workday') || l.includes('icims') || l.includes('taleo') || l.includes('smartrecruiters') || l.includes('jobvite')) return 2;
+  if (l.includes('dice.com') || l.includes('lensa.com') || l.includes('lensa.')) return 9;
+  return 3;
+}
+
+/** Sort jobs by source quality */
+function sortBySourceQuality(jobs: Job[]): Job[] {
+  return [...jobs].sort((a, b) => {
+    const pa = getSourcePriority(a.external_apply_link);
+    const pb = getSourcePriority(b.external_apply_link);
+    if (pa !== pb) return pa - pb;
+    return (b.posted_date?.getTime() || 0) - (a.posted_date?.getTime() || 0);
+  });
+}
+
 /** Spread similar jobs so near-duplicates don't appear back-to-back */
 export function spreadSimilarJobs(jobs: Job[]): Job[] {
   if (jobs.length <= 2) return jobs;
