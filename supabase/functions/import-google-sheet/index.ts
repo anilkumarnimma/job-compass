@@ -90,7 +90,37 @@ const COMMON_SKILLS: Record<string, string> = {
   'oauth': 'OAuth', 'jwt': 'JWT', 'sso': 'SSO',
 };
 
+const TITLE_SKILL_MAP: Record<string, string[]> = {
+  'software engineer': ['JavaScript', 'Python', 'SQL', 'Git', 'REST APIs', 'Agile', 'Docker', 'AWS'],
+  'frontend': ['JavaScript', 'React', 'CSS', 'HTML', 'TypeScript', 'Git', 'REST APIs', 'Figma'],
+  'backend': ['Python', 'Node.js', 'SQL', 'REST APIs', 'Docker', 'AWS', 'Git', 'PostgreSQL'],
+  'full stack': ['JavaScript', 'React', 'Node.js', 'SQL', 'Git', 'REST APIs', 'Docker', 'TypeScript'],
+  'data engineer': ['Python', 'SQL', 'Apache Spark', 'AWS', 'ETL', 'Airflow', 'Docker', 'PostgreSQL'],
+  'data scientist': ['Python', 'Machine Learning', 'SQL', 'Pandas', 'TensorFlow', 'NumPy', 'Deep Learning', 'R'],
+  'data analyst': ['SQL', 'Python', 'Excel', 'Tableau', 'Power BI', 'Pandas', 'Analytical Skills', 'Communication'],
+  'devops': ['Docker', 'Kubernetes', 'AWS', 'CI/CD', 'Terraform', 'Linux', 'Git', 'Jenkins'],
+  'cloud engineer': ['AWS', 'Azure', 'GCP', 'Docker', 'Kubernetes', 'Terraform', 'Linux', 'CI/CD'],
+  'machine learning': ['Python', 'TensorFlow', 'PyTorch', 'Machine Learning', 'Deep Learning', 'SQL', 'NumPy', 'Pandas'],
+  'ai engineer': ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'PyTorch', 'NLP', 'Docker', 'SQL'],
+  'mobile developer': ['React', 'JavaScript', 'TypeScript', 'Swift', 'Kotlin', 'Git', 'REST APIs', 'Firebase'],
+  'qa engineer': ['Selenium', 'Jest', 'Cypress', 'SQL', 'Git', 'Agile', 'REST APIs', 'JavaScript'],
+  'product manager': ['Agile', 'Scrum', 'Jira', 'Analytical Skills', 'Communication', 'Leadership', 'SQL', 'Product Management'],
+  'project manager': ['Agile', 'Scrum', 'Jira', 'Project Management', 'Communication', 'Leadership', 'Excel', 'Analytical Skills'],
+  'security engineer': ['Linux', 'AWS', 'Python', 'Docker', 'CI/CD', 'Git', 'Bash', 'Kubernetes'],
+  'ui/ux designer': ['Figma', 'Sketch', 'CSS', 'HTML', 'JavaScript', 'Communication', 'Analytical Skills', 'Bootstrap'],
+  'business analyst': ['SQL', 'Excel', 'Tableau', 'Power BI', 'Analytical Skills', 'Communication', 'Jira', 'Agile'],
+};
+
+function getTitleFallbackSkills(title: string): string[] {
+  const t = title.toLowerCase();
+  for (const [key, skills] of Object.entries(TITLE_SKILL_MAP)) {
+    if (t.includes(key)) return skills;
+  }
+  return [];
+}
+
 const SKILL_PATTERNS = Object.keys(COMMON_SKILLS).sort((a, b) => b.length - a.length);
+const MIN_SKILLS = 8;
 
 function extractSalaryFromDescription(description: string): string | null {
   if (!description) return null;
@@ -120,7 +150,28 @@ function extractSkillsFromDescription(description: string): string[] {
       foundSkills.add(COMMON_SKILLS[pattern]);
     }
   }
-  return Array.from(foundSkills).slice(0, 15);
+  return Array.from(foundSkills).slice(0, 20);
+}
+
+function enrichSkillsWithFallback(title: string, description: string, csvSkills: string[]): string[] {
+  const merged = new Set<string>();
+  for (const s of csvSkills) {
+    merged.add(COMMON_SKILLS[s.toLowerCase()] || s);
+  }
+  for (const s of extractSkillsFromDescription(description)) {
+    merged.add(s);
+  }
+  if (merged.size < MIN_SKILLS) {
+    const lowerSet = new Set([...merged].map(x => x.toLowerCase()));
+    for (const s of getTitleFallbackSkills(title)) {
+      if (!lowerSet.has(s.toLowerCase())) {
+        merged.add(s);
+        lowerSet.add(s.toLowerCase());
+      }
+      if (merged.size >= MIN_SKILLS) break;
+    }
+  }
+  return Array.from(merged).slice(0, 20);
 }
 
 function isValidUrl(url: string): boolean {
