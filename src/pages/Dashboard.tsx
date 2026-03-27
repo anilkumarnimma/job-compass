@@ -136,10 +136,8 @@ export default function Dashboard() {
   // Reset all filters when URL search params are cleared (e.g. logo click)
   useEffect(() => {
     const urlSearch = searchParams.get("search") || "";
-    if (urlSearch !== searchInput) {
-      setSearchInput(urlSearch);
-    }
     if (!urlSearch) {
+      setSearchInput("");
       setRoleFilter(null);
       setCompanyFilter(null);
       setDateFilter("all");
@@ -147,7 +145,7 @@ export default function Dashboard() {
       setFallbackActive(false);
       setCurrentPage(1);
     }
-  }, [searchParams, searchInput]);
+  }, [searchParams]);
 
   const debouncedSearch = useDebounce(searchInput, 300);
 
