@@ -49,6 +49,38 @@ const COMMON_SKILLS: Record<string, string> = {
   'problem solving': 'Problem Solving', 'analytical': 'Analytical Skills',
 };
 
+// Title-based fallback skills when description is weak
+const TITLE_SKILL_MAP: Record<string, string[]> = {
+  'software engineer': ['JavaScript', 'Python', 'SQL', 'Git', 'REST APIs', 'Agile', 'Docker', 'AWS'],
+  'frontend': ['JavaScript', 'React', 'CSS', 'HTML', 'TypeScript', 'Git', 'REST APIs', 'Figma'],
+  'backend': ['Python', 'Node.js', 'SQL', 'REST APIs', 'Docker', 'AWS', 'Git', 'PostgreSQL'],
+  'full stack': ['JavaScript', 'React', 'Node.js', 'SQL', 'Git', 'REST APIs', 'Docker', 'TypeScript'],
+  'data engineer': ['Python', 'SQL', 'Apache Spark', 'AWS', 'ETL', 'Airflow', 'Docker', 'PostgreSQL'],
+  'data scientist': ['Python', 'Machine Learning', 'SQL', 'Pandas', 'TensorFlow', 'NumPy', 'Deep Learning', 'R'],
+  'data analyst': ['SQL', 'Python', 'Excel', 'Tableau', 'Power BI', 'Pandas', 'Analytical Skills', 'Communication'],
+  'devops': ['Docker', 'Kubernetes', 'AWS', 'CI/CD', 'Terraform', 'Linux', 'Git', 'Jenkins'],
+  'cloud engineer': ['AWS', 'Azure', 'GCP', 'Docker', 'Kubernetes', 'Terraform', 'Linux', 'CI/CD'],
+  'machine learning': ['Python', 'TensorFlow', 'PyTorch', 'Machine Learning', 'Deep Learning', 'SQL', 'NumPy', 'Pandas'],
+  'ai engineer': ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'PyTorch', 'NLP', 'Docker', 'SQL'],
+  'mobile developer': ['React', 'JavaScript', 'TypeScript', 'Swift', 'Kotlin', 'Git', 'REST APIs', 'Firebase'],
+  'qa engineer': ['Selenium', 'Jest', 'Cypress', 'SQL', 'Git', 'Agile', 'REST APIs', 'JavaScript'],
+  'product manager': ['Agile', 'Scrum', 'Jira', 'Analytical Skills', 'Communication', 'Leadership', 'SQL', 'Product Management'],
+  'project manager': ['Agile', 'Scrum', 'Jira', 'Project Management', 'Communication', 'Leadership', 'Excel', 'Analytical Skills'],
+  'security engineer': ['Linux', 'AWS', 'Python', 'Docker', 'CI/CD', 'Git', 'Bash', 'Kubernetes'],
+  'ui/ux designer': ['Figma', 'Sketch', 'CSS', 'HTML', 'JavaScript', 'Communication', 'Analytical Skills', 'Bootstrap'],
+  'business analyst': ['SQL', 'Excel', 'Tableau', 'Power BI', 'Analytical Skills', 'Communication', 'Jira', 'Agile'],
+  'solutions architect': ['AWS', 'Azure', 'Docker', 'Kubernetes', 'Microservices', 'REST APIs', 'SQL', 'Terraform'],
+  'scrum master': ['Agile', 'Scrum', 'Jira', 'Communication', 'Leadership', 'Project Management', 'Analytical Skills', 'Confluence'],
+};
+
+function getTitleFallbackSkills(title: string): string[] {
+  const t = title.toLowerCase();
+  for (const [key, skills] of Object.entries(TITLE_SKILL_MAP)) {
+    if (t.includes(key)) return skills;
+  }
+  return [];
+}
+
 const SKILL_PATTERNS = Object.keys(COMMON_SKILLS).sort((a, b) => b.length - a.length);
 
 function extractSkillsFromDescription(description: string): string[] {
@@ -64,19 +96,34 @@ function extractSkillsFromDescription(description: string): string[] {
   return Array.from(foundSkills);
 }
 
-/** Enrich job skills to at least 6-7 by extracting from description */
+const MIN_SKILLS = 8;
+
+/** Enrich job skills to at least 8 by extracting from description + title fallback */
 export function enrichJobSkills(job: Job): string[] {
-  if (job.skills.length >= 6) return job.skills;
   const existing = new Set(job.skills.map(s => s.toLowerCase()));
-  const extracted = extractSkillsFromDescription(job.description);
   const merged = [...job.skills];
+
+  // Step 1: extract from description
+  const extracted = extractSkillsFromDescription(job.description);
   for (const skill of extracted) {
     if (!existing.has(skill.toLowerCase())) {
       merged.push(skill);
       existing.add(skill.toLowerCase());
     }
-    if (merged.length >= 7) break;
   }
+
+  // Step 2: title-based fallback if still under minimum
+  if (merged.length < MIN_SKILLS) {
+    const fallback = getTitleFallbackSkills(job.title);
+    for (const skill of fallback) {
+      if (!existing.has(skill.toLowerCase())) {
+        merged.push(skill);
+        existing.add(skill.toLowerCase());
+      }
+      if (merged.length >= MIN_SKILLS) break;
+    }
+  }
+
   return merged;
 }
 
