@@ -357,20 +357,11 @@ export function CSVBulkUpload({ onComplete }: CSVBulkUploadProps) {
           company: job.company,
           location: job.location,
           description: job.description,
-          skills: (() => {
-            const csvSkills = job.skills ? job.skills.split(",").map((s) => s.trim()).filter(Boolean) : [];
-            const extractedSkills = extractSkillsFromDescription(job.description);
-            const merged = new Set<string>();
-            // Normalize CSV skills
-            for (const s of csvSkills) {
-              const norm = COMMON_SKILLS[s.toLowerCase()] || s;
-              merged.add(norm);
-            }
-            for (const s of extractedSkills) {
-              merged.add(s);
-            }
-            return Array.from(merged).slice(0, 20);
-          })(),
+          skills: enrichSkillsWithFallback(
+            job.title,
+            job.description,
+            job.skills ? job.skills.split(",").map((s) => s.trim()).filter(Boolean) : []
+          ),
           external_apply_link: job.external_apply_link,
           employment_type: job.employment_type || "Full Time",
           experience_years: job.experience_years || null,
