@@ -161,12 +161,13 @@ export function spreadSimilarJobs(jobs: Job[]): Job[] {
   return result;
 }
 
-/** Enrich a list of jobs: skills, salary, and ordering */
+/** Enrich a list of jobs: skills, salary, source ranking, and ordering */
 export function enrichJobList(jobs: Job[]): Job[] {
   const enriched = jobs.map(job => ({
     ...job,
     skills: enrichJobSkills(job),
     salary_range: extractSalary(job),
   }));
-  return spreadSimilarJobs(enriched);
+  const sorted = sortBySourceQuality(enriched);
+  return spreadSimilarJobs(sorted);
 }
