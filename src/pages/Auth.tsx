@@ -118,7 +118,7 @@ export default function Auth() {
     setIsLoading(true);
     try {
       const { error } = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: "https://sociax.tech/~oauth/callback",
+        redirect_uri: window.location.origin,
       });
       if (error) {
         toast.error("Google sign-in failed. Please try again.");
