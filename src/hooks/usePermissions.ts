@@ -112,28 +112,28 @@ export function useUserRole() {
         .select("role")
         .eq("user_id", user.id);
 
-      console.log("[useUserRole] Fetched roles for", user.email, ":", roles, error);
+      // Roles fetched for debugging if needed
 
       if (!roles || roles.length === 0) {
-        console.log("[useUserRole] No roles found, defaulting to 'user'");
+        return "user";
         return "user";
       }
 
       // Priority: founder > employer > user
       const roleSet = new Set(roles.map(r => r.role));
       if (roleSet.has("founder")) {
-        console.log("[useUserRole] Found founder role, returning 'founder'");
+        return "founder";
         return "founder";
       }
       if (roleSet.has("employer")) {
-        console.log("[useUserRole] Found employer role, returning 'employer'");
+        return "employer";
         return "employer";
       }
-      console.log("[useUserRole] Defaulting to 'user'");
+      return "user";
       return "user";
     },
     enabled: !!user,
-    staleTime: 0, // Always refetch to ensure fresh data
+    staleTime: 1000 * 60 * 2, // Cache for 2 minutes to avoid excessive refetching
     refetchOnMount: true,
   });
 }
