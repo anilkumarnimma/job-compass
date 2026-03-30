@@ -133,7 +133,7 @@ export function useUserRole() {
       return "user";
     },
     enabled: !!user,
-    staleTime: 0, // Always refetch to ensure fresh data
+    staleTime: 1000 * 60 * 2, // Cache for 2 minutes to avoid excessive refetching
     refetchOnMount: true,
   });
 }

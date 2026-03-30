@@ -19,7 +19,7 @@ export function HeroParticles() {
     window.addEventListener("resize", resize);
 
     const particles: { x: number; y: number; vx: number; vy: number; r: number; o: number }[] = [];
-    const count = 60;
+    const count = 35;
     const cw = canvas.offsetWidth;
     const ch = canvas.offsetHeight;
 

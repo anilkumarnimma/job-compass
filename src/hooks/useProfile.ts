@@ -80,7 +80,7 @@ export function useProfile() {
       return data as unknown as ProfileData;
     },
     enabled: !!user,
-    staleTime: 0,
+    staleTime: 1000 * 60 * 2, // Cache for 2 minutes
     refetchOnWindowFocus: true,
   });
 
