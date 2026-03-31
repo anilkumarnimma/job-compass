@@ -21,6 +21,7 @@ import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import AdminImport from "./pages/AdminImport";
 import FounderEmployers from "./pages/FounderEmployers";
+import ErrorLogs from "./pages/ErrorLogs";
 import EmployerDashboard from "./pages/EmployerDashboard";
 import Profile from "./pages/Profile";
 import Help from "./pages/Help";
@@ -93,6 +94,11 @@ function AppRoutes() {
         <Route path="/founder/employers" element={
           <ProtectedRoute allowedRoles={["founder"]}>
             <FounderEmployers />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/error-logs" element={
+          <ProtectedRoute allowedRoles={["founder"]}>
+            <ErrorLogs />
           </ProtectedRoute>
         } />
         

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Shield, Crown, Plus, FileSpreadsheet, Users } from "lucide-react";
+import { Shield, Crown, Plus, FileSpreadsheet, Users, Bug } from "lucide-react";
 
 interface AdminHeaderProps {
   isFounder: boolean;
@@ -44,12 +44,20 @@ export function AdminHeader({
       {!showForm && !showBulkUpload && (
         <div className="flex gap-2">
           {isFounder && (
-            <Link to="/founder/employers">
-              <Button variant="outline">
-                <Users className="h-4 w-4" />
-                Manage Employers
-              </Button>
-            </Link>
+            <>
+              <Link to="/admin/error-logs">
+                <Button variant="outline">
+                  <Bug className="h-4 w-4" />
+                  Error Logs
+                </Button>
+              </Link>
+              <Link to="/founder/employers">
+                <Button variant="outline">
+                  <Users className="h-4 w-4" />
+                  Manage Employers
+                </Button>
+              </Link>
+            </>
           )}
           {(isFounder || canImportGoogleSheet) && (
             <Link to="/admin/import">
