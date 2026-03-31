@@ -184,16 +184,23 @@ export default function Auth() {
         console.log("[AUTH] Attempting login for:", email);
         const { error } = await signIn(email, password);
         if (error) {
-          if (error.message === "Email not confirmed") {
+          const msg = error.message?.toLowerCase() || "";
+          if (msg.includes("email not confirmed")) {
             console.warn("[AUTH] Email not confirmed for:", email);
-            // Resend confirmation email automatically
             await supabase.auth.resend({ type: "signup", email });
             setVerificationEmail(email);
             setShowVerificationBanner(true);
             setResendCooldown(60);
             toast.error("Please confirm your email. We've just re-sent you a confirmation link.");
+          } else if (msg.includes("invalid login credentials") || msg.includes("invalid") || msg.includes("credentials")) {
+            toast.error("Incorrect email or password. Please try again.");
+          } else if (msg.includes("rate") || msg.includes("too many")) {
+            toast.error("Too many attempts. Please wait a moment and try again.");
+          } else if (msg.includes("network") || msg.includes("fetch")) {
+            toast.error("Connection issue. Please check your internet and try again.");
           } else {
-            toast.error(error.message);
+            toast.error("Something went wrong. Please try again.");
+            console.error("[AUTH] Login error:", error.message);
           }
         }
       }
