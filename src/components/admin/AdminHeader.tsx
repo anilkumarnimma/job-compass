@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Shield, Crown, Plus, FileSpreadsheet, Users } from "lucide-react";
+import { Shield, Crown, Plus, FileSpreadsheet, Users, Bug } from "lucide-react";
 
 interface AdminHeaderProps {
   isFounder: boolean;
