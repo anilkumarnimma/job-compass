@@ -105,103 +105,111 @@ ${typeof resumeContent === 'string' ? resumeContent.slice(0, 2500) : JSON.string
 
 IMPORTANT REMINDER: Copy every company name, job title, date, education detail, header detail, and section order EXACTLY from the base resume above. Do NOT change them. Only optimize bullet points, skills, summary, and keyword alignment.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "return_tailored_resume",
-              description: "Return the tailored resume content",
-              parameters: {
-                type: "object",
-                properties: {
-                  header: {
+    const models = ["google/gemini-2.5-flash", "google/gemini-3-flash-preview"];
+    const maxRetries = 2;
+    let response: Response | null = null;
+    let lastError = "";
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      const model = attempt === 0 ? models[0] : models[1];
+      try {
+        response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userPrompt },
+            ],
+            tools: [
+              {
+                type: "function",
+                function: {
+                  name: "return_tailored_resume",
+                  description: "Return the tailored resume content",
+                  parameters: {
                     type: "object",
-                    description: "Resume header copied from the base resume exactly",
                     properties: {
-                      full_name: { type: "string" },
-                      headline: { type: "string" },
-                      contact_details: {
-                        type: "array",
-                        items: { type: "string" },
+                      header: {
+                        type: "object",
+                        description: "Resume header copied from the base resume exactly",
+                        properties: {
+                          full_name: { type: "string" },
+                          headline: { type: "string" },
+                          contact_details: { type: "array", items: { type: "string" } },
+                        },
+                        required: ["full_name", "contact_details"],
                       },
-                    },
-                    required: ["full_name", "contact_details"],
-                  },
-                  summary: {
-                    type: "string",
-                    description: "A strong, detailed 5-6 sentence professional summary paragraph tailored to this specific job. Must highlight years of experience, key technical skills aligned with the job, domains worked in, measurable impact, and a forward-looking statement. Use ATS keywords naturally. No generic filler.",
-                  },
-                  sections: {
-                    type: "array",
-                    description: "Resume sections in the SAME order and with the SAME titles as the base resume. CRITICAL: heading/subheading/date must be copied EXACTLY from the original resume",
-                    items: {
-                      type: "object",
-                      properties: {
-                        title: { type: "string" },
+                      summary: { type: "string", description: "5-6 sentence professional summary paragraph tailored to this job." },
+                      sections: {
+                        type: "array",
+                        description: "Resume sections preserving original order, titles, headings, dates exactly",
                         items: {
-                          type: "array",
-                          items: {
-                            type: "object",
-                            properties: {
-                              heading: { type: "string", description: "EXACT original job title or degree from resume — DO NOT CHANGE" },
-                              subheading: { type: "string", description: "EXACT original company or institution name from resume — DO NOT CHANGE" },
-                              date: { type: "string", description: "EXACT original date range from resume — DO NOT CHANGE" },
-                              bullets: {
-                                type: "array",
-                                items: { type: "string" },
-                                description: "Bullet points optimized for ATS with strong verbs and keywords",
+                          type: "object",
+                          properties: {
+                            title: { type: "string" },
+                            items: {
+                              type: "array",
+                              items: {
+                                type: "object",
+                                properties: {
+                                  heading: { type: "string" },
+                                  subheading: { type: "string" },
+                                  date: { type: "string" },
+                                  bullets: { type: "array", items: { type: "string" } },
+                                },
+                                required: ["heading"],
                               },
                             },
-                            required: ["heading"],
                           },
+                          required: ["title", "items"],
                         },
                       },
-                      required: ["title", "items"],
+                      skills_section: { type: "array", items: { type: "string" } },
+                      keywords_added: { type: "array", items: { type: "string" } },
+                      optimization_notes: { type: "string" },
                     },
-                  },
-                  skills_section: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: "Skills list optimized and expanded for this job",
-                  },
-                  keywords_added: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: "Keywords from job description incorporated",
-                  },
-                  optimization_notes: {
-                    type: "string",
-                    description: "Brief optimization note (1 sentence)",
+                    required: ["header", "summary", "sections", "skills_section", "keywords_added", "optimization_notes"],
                   },
                 },
-                required: ["header", "summary", "sections", "skills_section", "keywords_added", "optimization_notes"],
               },
-            },
-          },
-        ],
-        tool_choice: { type: "function", function: { name: "return_tailored_resume" } },
-      }),
-    });
+            ],
+            tool_choice: { type: "function", function: { name: "return_tailored_resume" } },
+          }),
+        });
 
-    if (!response.ok) {
-      const status = response.status;
-      if (status === 429) return new Response(JSON.stringify({ error: "Rate limited, please try again shortly." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (status === 402) return new Response(JSON.stringify({ error: "Credits exhausted. Please add funds." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      const t = await response.text();
-      console.error("AI gateway error:", status, t);
-      throw new Error("AI gateway error");
+        if (response.status === 429) {
+          return new Response(JSON.stringify({ error: "Rate limited, please try again shortly." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        if (response.status === 402) {
+          return new Response(JSON.stringify({ error: "Credits exhausted. Please add funds." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        if (response.ok) break;
+
+        lastError = await response.text();
+        console.error(`AI attempt ${attempt + 1} failed (model: ${model}, status: ${response.status}):`, lastError);
+        response = null;
+
+        // Wait before retry
+        if (attempt < maxRetries) await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
+      } catch (fetchErr) {
+        console.error(`AI fetch attempt ${attempt + 1} error:`, fetchErr);
+        lastError = fetchErr instanceof Error ? fetchErr.message : "Network error";
+        response = null;
+        if (attempt < maxRetries) await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
+      }
+    }
+
+    if (!response || !response.ok) {
+      console.error("All AI attempts failed. Last error:", lastError);
+      return new Response(JSON.stringify({ error: "AI service is temporarily unavailable. Please try again in a moment." }), {
+        status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const result = await response.json();
