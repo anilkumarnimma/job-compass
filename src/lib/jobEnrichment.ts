@@ -230,6 +230,6 @@ export function enrichJobList(jobs: Job[]): Job[] {
     skills: enrichJobSkills(job),
     salary_range: extractSalary(job),
   }));
-  const sorted = sortBySourceQuality(enriched);
+  const sorted = sortByFreshnessThenSource(enriched);
   return spreadSimilarJobs(sorted);
 }
