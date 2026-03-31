@@ -45,12 +45,12 @@ export function AdminHeader({
         <div className="flex gap-2">
           {isFounder && (
             <>
-              <Link to="/admin/error-logs">
+              <a href="/admin/error-logs" target="_blank" rel="noopener noreferrer">
                 <Button variant="outline">
                   <Bug className="h-4 w-4" />
                   Error Logs
                 </Button>
-              </Link>
+              </a>
               <Link to="/founder/employers">
                 <Button variant="outline">
                   <Users className="h-4 w-4" />
