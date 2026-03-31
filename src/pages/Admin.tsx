@@ -7,6 +7,7 @@ import { useAdminJobs, useUpdateJob, useDeleteJob, useDuplicateJob } from "@/hoo
 import { JobForm } from "@/components/admin/JobForm";
 import { CSVBulkUpload } from "@/components/admin/CSVBulkUpload";
 import { SupportTicketsPanel } from "@/components/admin/SupportTicketsPanel";
+import { ErrorLogsPanel } from "@/components/admin/ErrorLogsPanel";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { AdminJobsList } from "@/components/admin/AdminJobsList";
 import { Job } from "@/types/job";
