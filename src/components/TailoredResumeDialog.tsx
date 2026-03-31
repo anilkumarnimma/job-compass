@@ -51,21 +51,24 @@ function buildBaseResume(profile: ProfileData | null | undefined, intelligence: 
     profile?.portfolio_url,
   ]);
 
-  const experienceItems = (profile?.work_experience || []).map((item) => ({
+  const rawExp = profile?.work_experience;
+  const experienceItems = (Array.isArray(rawExp) ? rawExp : []).map((item: any) => ({
     heading: item.title,
     subheading: item.company,
     date: compact([item.start_date, item.end_date || (item.is_current ? "Present" : "")]).join(" - "),
     bullets: [],
   }));
 
-  const educationItems = (profile?.education || []).map((item) => ({
+  const rawEdu = profile?.education;
+  const educationItems = (Array.isArray(rawEdu) ? rawEdu : []).map((item: any) => ({
     heading: item.degree || item.school,
     subheading: item.school,
     date: item.graduation_year || undefined,
     bullets: item.major ? [`Field of Study: ${item.major}`] : [],
   }));
 
-  const certificationItems = (profile?.certifications || []).map((item) => ({
+  const rawCert = profile?.certifications;
+  const certificationItems = (Array.isArray(rawCert) ? rawCert : []).map((item: any) => ({
     heading: item.name,
     subheading: item.issuer || undefined,
     date: compact([item.date_obtained, item.expiration_date ? `Expires ${item.expiration_date}` : ""]).join(" • ") || undefined,
