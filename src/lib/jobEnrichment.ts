@@ -154,9 +154,24 @@ function getSourcePriority(link: string): number {
   return 3;
 }
 
-/** Sort jobs by source quality */
-function sortBySourceQuality(jobs: Job[]): Job[] {
+/** Get freshness tier (lower = fresher) */
+function getFreshnessTier(date: Date): number {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today.getTime() - 86400000);
+  const weekAgo = new Date(today.getTime() - 7 * 86400000);
+  if (date >= today) return 0;
+  if (date >= yesterday) return 1;
+  if (date >= weekAgo) return 2;
+  return 3;
+}
+
+/** Sort jobs by freshness first, then source quality */
+function sortByFreshnessThenSource(jobs: Job[]): Job[] {
   return [...jobs].sort((a, b) => {
+    const fa = getFreshnessTier(a.posted_date);
+    const fb = getFreshnessTier(b.posted_date);
+    if (fa !== fb) return fa - fb;
     const pa = getSourcePriority(a.external_apply_link);
     const pb = getSourcePriority(b.external_apply_link);
     if (pa !== pb) return pa - pb;
@@ -215,6 +230,6 @@ export function enrichJobList(jobs: Job[]): Job[] {
     skills: enrichJobSkills(job),
     salary_range: extractSalary(job),
   }));
-  const sorted = sortBySourceQuality(enriched);
+  const sorted = sortByFreshnessThenSource(enriched);
   return spreadSimilarJobs(sorted);
 }
