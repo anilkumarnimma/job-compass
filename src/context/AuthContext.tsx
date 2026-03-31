@@ -6,12 +6,14 @@ const checkSubscriptionStatus = async () => {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.access_token) {
-      console.warn("[AUTH] Skipping subscription check - no active session");
-      return;
+      return; // silently skip - no session yet
     }
-    await supabase.functions.invoke("check-subscription");
-  } catch (err) {
-    console.error("[AUTH] Subscription check failed:", err);
+    const { error } = await supabase.functions.invoke("check-subscription");
+    if (error) {
+      console.warn("[AUTH] Subscription check returned error, ignoring");
+    }
+  } catch {
+    // Silently ignore - non-critical background check
   }
 };
 
