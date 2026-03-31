@@ -96,6 +96,11 @@ function AppRoutes() {
             <FounderEmployers />
           </ProtectedRoute>
         } />
+        <Route path="/admin/error-logs" element={
+          <ProtectedRoute allowedRoles={["founder"]}>
+            <ErrorLogs />
+          </ProtectedRoute>
+        } />
         
         <Route path="/payment-success" element={<PaymentSuccess />} />
         <Route path="/unsubscribe" element={<Unsubscribe />} />
