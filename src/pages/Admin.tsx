@@ -159,6 +159,13 @@ export default function Admin() {
           </div>
         )}
 
+        {/* Error Logs Section - Founder only */}
+        {isFounder && (
+          <div className="mt-8">
+            <ErrorLogsPanel />
+          </div>
+        )}
+
         {/* Delete Confirmation */}
         <AlertDialog open={!!deletingJobId} onOpenChange={() => setDeletingJobId(null)}>
           <AlertDialogContent>
