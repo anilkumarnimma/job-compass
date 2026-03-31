@@ -21,6 +21,7 @@ import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import AdminImport from "./pages/AdminImport";
 import FounderEmployers from "./pages/FounderEmployers";
+import ErrorLogs from "./pages/ErrorLogs";
 import EmployerDashboard from "./pages/EmployerDashboard";
 import Profile from "./pages/Profile";
 import Help from "./pages/Help";
