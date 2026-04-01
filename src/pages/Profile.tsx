@@ -95,6 +95,40 @@ export default function Profile() {
   const [isDownloadingResume, setIsDownloadingResume] = useState(false);
   const [showAutofillPrompt, setShowAutofillPrompt] = useState(false);
   const [pendingExtracted, setPendingExtracted] = useState<ExtractedResumeData | null>(null);
+
+  // Extension password state
+  const [extPassword, setExtPassword] = useState("");
+  const [extConfirmPassword, setExtConfirmPassword] = useState("");
+  const [extPasswordSaving, setExtPasswordSaving] = useState(false);
+  const [extPasswordSet, setExtPasswordSet] = useState(false);
+  const [showExtPassword, setShowExtPassword] = useState(false);
+
+  const isGoogleOnlyUser = user?.app_metadata?.provider === "google" || 
+    (user?.app_metadata?.providers?.includes("google") && !user?.app_metadata?.providers?.includes("email"));
+
+  const handleSetExtensionPassword = async () => {
+    if (extPassword.length < 6) {
+      toast({ title: "Password too short", description: "Password must be at least 6 characters.", variant: "destructive" });
+      return;
+    }
+    if (extPassword !== extConfirmPassword) {
+      toast({ title: "Passwords don't match", description: "Please make sure both passwords match.", variant: "destructive" });
+      return;
+    }
+    setExtPasswordSaving(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: extPassword });
+      if (error) throw error;
+      setExtPasswordSet(true);
+      setExtPassword("");
+      setExtConfirmPassword("");
+      toast({ title: "Password set!", description: "You can now sign into the Sociax extension with your email and this password." });
+    } catch (err: any) {
+      toast({ title: "Failed to set password", description: err.message, variant: "destructive" });
+    } finally {
+      setExtPasswordSaving(false);
+    }
+  };
   
 
   // Saved state for cancel/revert
