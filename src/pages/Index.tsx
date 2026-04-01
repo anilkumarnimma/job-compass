@@ -282,9 +282,9 @@ export default function Index() {
         >
           <div className="flex items-center justify-center gap-8 md:gap-12 text-sm">
             {[
-              { value: landingStats?.jobCount ?? 1000, label: "Jobs", suffix: "+" },
-              { value: landingStats?.companyCount ?? 100, label: "Companies", suffix: "+" },
-              { value: 12000, label: "Users", suffix: "+" },
+              { value: landingStats?.jobCount ?? 0, label: "Jobs", suffix: "+" },
+              { value: landingStats?.companyCount ?? 0, label: "Companies", suffix: "+" },
+              { value: landingStats?.userCount ?? 0, label: "Users", suffix: "+" },
             ].map((stat, i) => (
               <div key={stat.label} className="flex items-center gap-2">
                 <span className="font-display font-bold text-lg md:text-xl text-foreground">
