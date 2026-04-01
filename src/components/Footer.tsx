@@ -1,4 +1,4 @@
-
+import { Link } from "react-router-dom";
 
 export function Footer() {
   return (
@@ -9,9 +9,14 @@ export function Footer() {
             <img src="/favicon.png" alt="Sociax logo" className="h-8 w-8 rounded-xl" />
             <span className="font-display font-semibold text-sm text-foreground">Sociax.tech</span>
           </div>
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Sociax.tech. All rights reserved.
-          </p>
+          <div className="flex items-center gap-4">
+            <Link to="/privacy-policy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Privacy Policy
+            </Link>
+            <p className="text-sm text-muted-foreground">
+              © {new Date().getFullYear()} Sociax.tech. All rights reserved.
+            </p>
+          </div>
         </div>
       </div>
     </footer>
