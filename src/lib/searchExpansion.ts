@@ -1,49 +1,43 @@
 /**
- * Dynamic role-family expansion for intelligent job search.
- * Generates related terms for ANY keyword without relying on hardcoded mappings.
+ * Conservative search expansion — only direct synonyms / alternate spellings.
+ * Keeps results tightly relevant to the user's actual query.
  */
 
-// Core role families — used as seed knowledge, NOT as exhaustive lists.
-// The expansion logic works for ANY keyword, even ones not listed here.
-const ROLE_FAMILIES: Record<string, string[]> = {
-  developer: ["engineer", "programmer", "coder", "full stack", "frontend", "backend", "mobile", "web", "software", "application"],
-  engineer: ["developer", "architect", "sre", "devops", "platform", "infrastructure", "systems", "reliability", "cloud"],
-  analyst: ["analytics", "business analyst", "data analyst", "reporting", "intelligence", "insights", "research", "quantitative"],
-  designer: ["ux", "ui", "product designer", "visual", "graphic", "interaction", "experience", "creative"],
-  manager: ["lead", "director", "head", "coordinator", "supervisor", "vp", "chief", "principal"],
-  architect: ["engineer", "solutions", "enterprise", "technical", "systems", "cloud", "infrastructure"],
-  consultant: ["advisor", "specialist", "strategist", "practitioner"],
-  tester: ["qa", "quality", "sdet", "test engineer", "automation", "quality assurance"],
-  admin: ["administrator", "operations", "coordinator", "support", "helpdesk"],
-  scientist: ["researcher", "machine learning", "ai", "deep learning", "nlp", "data science"],
-  marketing: ["growth", "seo", "content", "brand", "digital marketing", "communications", "social media"],
-  sales: ["account", "business development", "revenue", "partnerships", "customer success"],
-  security: ["cybersecurity", "infosec", "penetration", "compliance", "risk", "soc"],
-  devops: ["sre", "platform", "infrastructure", "ci/cd", "cloud", "kubernetes", "docker", "reliability"],
-  data: ["database", "etl", "pipeline", "warehouse", "bi", "analytics", "big data", "spark"],
-  product: ["product manager", "product owner", "program manager", "scrum master", "agile"],
-  support: ["customer success", "helpdesk", "service desk", "technical support", "customer service"],
-  writer: ["content", "copywriter", "technical writer", "editor", "documentation"],
-  recruiter: ["talent", "sourcing", "hr", "people", "hiring"],
-  finance: ["accounting", "financial", "controller", "treasury", "audit", "tax", "bookkeeper"],
-};
-
-// Bidirectional keyword associations for dynamic expansion
-const KEYWORD_ASSOCIATIONS: Record<string, string[]> = {
-  frontend: ["react", "angular", "vue", "javascript", "typescript", "css", "html", "ui"],
-  backend: ["api", "server", "node", "python", "java", "golang", "microservices", "rest"],
-  fullstack: ["full stack", "full-stack", "frontend", "backend", "web"],
-  mobile: ["ios", "android", "react native", "flutter", "swift", "kotlin"],
-  cloud: ["aws", "azure", "gcp", "devops", "infrastructure", "terraform"],
-  ml: ["machine learning", "ai", "artificial intelligence", "deep learning", "nlp", "computer vision"],
-  python: ["django", "flask", "data", "machine learning", "backend"],
-  java: ["spring", "backend", "enterprise", "microservices"],
-  react: ["frontend", "javascript", "typescript", "next.js", "redux"],
+// Each entry maps a keyword to its CLOSE synonyms only.
+// These are terms that mean essentially the same role — not loosely related roles.
+const SYNONYM_MAP: Record<string, string[]> = {
+  developer: ["engineer", "programmer"],
+  engineer: ["developer"],
+  programmer: ["developer", "engineer"],
+  analyst: ["analytics"],
+  analytics: ["analyst"],
+  designer: ["design"],
+  design: ["designer"],
+  tester: ["qa", "quality assurance"],
+  qa: ["tester", "quality assurance", "sdet"],
+  sdet: ["qa", "tester"],
+  devops: ["sre", "site reliability"],
+  sre: ["devops", "site reliability"],
+  frontend: ["front end", "front-end"],
+  backend: ["back end", "back-end"],
+  fullstack: ["full stack", "full-stack"],
+  "full stack": ["fullstack", "full-stack"],
+  mobile: ["ios", "android"],
+  ml: ["machine learning"],
+  "machine learning": ["ml"],
+  ai: ["artificial intelligence"],
+  "artificial intelligence": ["ai"],
+  ui: ["ux", "ui/ux"],
+  ux: ["ui", "ui/ux"],
+  "ui/ux": ["ui", "ux"],
+  dba: ["database administrator"],
+  "database administrator": ["dba"],
+  pm: ["product manager", "project manager"],
 };
 
 /**
- * Dynamically expands a search query into related terms.
- * Works for ANY keyword — not limited to predefined lists.
+ * Returns a small set of close synonyms for the search query.
+ * Intentionally conservative to avoid polluting results.
  */
 export function expandSearchTerms(query: string): string[] {
   if (!query || !query.trim()) return [];
@@ -52,50 +46,24 @@ export function expandSearchTerms(query: string): string[] {
   const words = normalized.split(/[\s,/\-_]+/).filter(w => w.length > 1);
   const expanded = new Set<string>();
 
-  for (const word of words) {
-    // 1. Check role families (both as key and in values)
-    for (const [family, related] of Object.entries(ROLE_FAMILIES)) {
-      const familyMatch = word === family || family.includes(word) || word.includes(family);
-      const valueMatch = related.some(r => r.includes(word) || word.includes(r));
-
-      if (familyMatch) {
-        related.forEach(r => expanded.add(r));
-        expanded.add(family);
-      }
-      if (valueMatch) {
-        expanded.add(family);
-        related.forEach(r => expanded.add(r));
-      }
-    }
-
-    // 2. Check keyword associations
-    for (const [key, related] of Object.entries(KEYWORD_ASSOCIATIONS)) {
-      if (word === key || key.includes(word) || word.includes(key)) {
-        related.forEach(r => expanded.add(r));
-      }
-      if (related.some(r => r.includes(word) || word.includes(r))) {
-        expanded.add(key);
-        related.forEach(r => expanded.add(r));
-      }
-    }
-
-    // 3. Removed prefix/suffix generation — too broad for ILIKE matching
+  // Check full query as a phrase first
+  if (SYNONYM_MAP[normalized]) {
+    SYNONYM_MAP[normalized].forEach(s => expanded.add(s));
   }
 
-  // Remove the original query terms and very short terms
+  // Check individual words — only exact key matches
+  for (const word of words) {
+    if (SYNONYM_MAP[word]) {
+      SYNONYM_MAP[word].forEach(s => expanded.add(s));
+    }
+  }
+
+  // Remove any terms that are already in the original query
   for (const word of words) {
     expanded.delete(word);
   }
+  expanded.delete(normalized);
 
-  // Filter out terms that are too short, too generic, or identical to input
-  const genericWords = new Set(["lead", "head", "chief", "staff", "principal", "support", "creative", "systems"]);
-  const result = [...expanded].filter(t =>
-    t.length > 2 &&
-    t !== normalized &&
-    !words.includes(t) &&
-    !genericWords.has(t)
-  );
-
-  // Limit to top 15 most relevant terms to avoid query bloat
-  return result.slice(0, 15);
+  // Filter short/identical terms
+  return [...expanded].filter(t => t.length > 1).slice(0, 5);
 }
