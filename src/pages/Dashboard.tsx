@@ -147,7 +147,7 @@ export default function Dashboard() {
     }
   }, [searchParams]);
 
-  const debouncedSearch = useDebounce(searchInput, 300);
+  const debouncedSearch = useDebounce(searchInput, 150);
 
   const combinedSearchQuery = useMemo(() => {
     const parts: string[] = [];

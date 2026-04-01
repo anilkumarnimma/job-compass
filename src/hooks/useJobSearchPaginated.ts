@@ -5,7 +5,7 @@ import { expandSearchTerms } from "@/lib/searchExpansion";
 import { enrichJobList } from "@/lib/jobEnrichment";
 
 const PAGE_SIZE = 20;
-const STALE_TIME = 60 * 1000;
+const STALE_TIME = 2 * 60 * 1000; // 2 minutes
 
 function parseJob(row: any): Job {
   return {
@@ -73,12 +73,15 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo }: U
         return { jobs: enrichJobList(jobs) };
       }
 
-      // No search query — use direct table query
+      // No search query — use direct table query with 15-day cutoff
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 15);
       let query = supabase
         .from("jobs")
         .select("*", { count: "exact" })
         .eq("is_published", true)
         .eq("is_archived", false)
+        .gte("posted_date", cutoff.toISOString())
         .order("posted_date", { ascending: false })
         .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
@@ -119,12 +122,15 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo }: U
         return Number(data) || 0;
       }
 
-      // No search — count all published non-archived
+      // No search — count all published non-archived within 15 days
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 15);
       const { count, error } = await supabase
         .from("jobs")
         .select("*", { count: "exact", head: true })
         .eq("is_published", true)
-        .eq("is_archived", false);
+        .eq("is_archived", false)
+        .gte("posted_date", cutoff.toISOString());
       if (error) throw error;
       return count || 0;
     },
