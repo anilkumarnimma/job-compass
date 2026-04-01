@@ -19,6 +19,7 @@ export function useSearchSuggestions(query: string, enabled = true) {
 
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
+      // Abort previous in-flight request
       setIsLoading(true);
       try {
         const { data, error } = await supabase.rpc("suggest_job_titles", {

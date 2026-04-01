@@ -122,12 +122,15 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo }: U
         return Number(data) || 0;
       }
 
-      // No search — count all published non-archived
+      // No search — count all published non-archived within 15 days
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 15);
       const { count, error } = await supabase
         .from("jobs")
         .select("*", { count: "exact", head: true })
         .eq("is_published", true)
-        .eq("is_archived", false);
+        .eq("is_archived", false)
+        .gte("posted_date", cutoff.toISOString());
       if (error) throw error;
       return count || 0;
     },
