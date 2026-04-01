@@ -29,6 +29,7 @@ import NotFound from "./pages/NotFound";
 import Recommendations from "./pages/Recommendations";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import Unsubscribe from "./pages/Unsubscribe";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -104,6 +105,7 @@ function AppRoutes() {
         
         <Route path="/payment-success" element={<PaymentSuccess />} />
         <Route path="/unsubscribe" element={<Unsubscribe />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/help" element={<Help />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
