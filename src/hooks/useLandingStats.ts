@@ -11,17 +11,23 @@ export function useLandingStats() {
   return useQuery({
     queryKey: ["landing-stats"],
     queryFn: async (): Promise<LandingStats> => {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 15);
+      const cutoffISO = cutoff.toISOString();
+
       const [jobRes, companyRes, userRes] = await Promise.all([
         supabase
           .from("jobs")
           .select("*", { count: "exact", head: true })
           .eq("is_published", true)
-          .eq("is_archived", false),
+          .eq("is_archived", false)
+          .gte("posted_date", cutoffISO),
         supabase
           .from("jobs")
           .select("company")
           .eq("is_published", true)
-          .eq("is_archived", false),
+          .eq("is_archived", false)
+          .gte("posted_date", cutoffISO),
         supabase
           .from("profiles")
           .select("*", { count: "exact", head: true }),

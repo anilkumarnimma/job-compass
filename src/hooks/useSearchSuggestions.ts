@@ -34,7 +34,7 @@ export function useSearchSuggestions(query: string, enabled = true) {
       } finally {
         setIsLoading(false);
       }
-    }, 200);
+    }, 120);
 
     return () => clearTimeout(debounceRef.current);
   }, [query, enabled]);
