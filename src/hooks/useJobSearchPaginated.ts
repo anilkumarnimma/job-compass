@@ -5,7 +5,7 @@ import { expandSearchTerms } from "@/lib/searchExpansion";
 import { enrichJobList } from "@/lib/jobEnrichment";
 
 const PAGE_SIZE = 20;
-const STALE_TIME = 60 * 1000;
+const STALE_TIME = 2 * 60 * 1000; // 2 minutes
 
 function parseJob(row: any): Job {
   return {
