@@ -25,7 +25,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   User, FileText, Upload, Download, Trash2, Loader2, Bug,
-  Link2, Briefcase, GraduationCap, Sparkles, Plus, Wand2, Award, Pencil, X, Target, Bell, Mail, Shield, KeyRound,
+  Link2, Briefcase, GraduationCap, Sparkles, Plus, Wand2, Award, Pencil, X, Target, Bell, Mail, Shield, KeyRound, Eye, EyeOff, Check,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
