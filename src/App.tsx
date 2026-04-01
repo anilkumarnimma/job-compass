@@ -29,6 +29,7 @@ import NotFound from "./pages/NotFound";
 import Recommendations from "./pages/Recommendations";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import Unsubscribe from "./pages/Unsubscribe";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 const queryClient = new QueryClient({
   defaultOptions: {
