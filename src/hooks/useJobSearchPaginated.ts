@@ -73,12 +73,15 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo }: U
         return { jobs: enrichJobList(jobs) };
       }
 
-      // No search query — use direct table query
+      // No search query — use direct table query with 15-day cutoff
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 15);
       let query = supabase
         .from("jobs")
         .select("*", { count: "exact" })
         .eq("is_published", true)
         .eq("is_archived", false)
+        .gte("posted_date", cutoff.toISOString())
         .order("posted_date", { ascending: false })
         .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
