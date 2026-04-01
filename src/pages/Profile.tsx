@@ -903,6 +903,59 @@ export default function Profile() {
             </div>
           )}
 
+          {/* Extension Password for Google users */}
+          {isGoogleOnlyUser && (
+            <Card className="rounded-3xl border-primary/20">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <KeyRound className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-lg">Extension Sign-In Password</CardTitle>
+                </div>
+                <CardDescription>
+                  You signed in with Google. Set a password here so you can sign into the Sociax browser extension using your email and password.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {extPasswordSet ? (
+                  <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                    <Check className="h-4 w-4" />
+                    Password set successfully! You can now sign into the extension.
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <Label>New Password</Label>
+                      <div className="relative">
+                        <Input
+                          type={showExtPassword ? "text" : "password"}
+                          value={extPassword}
+                          onChange={(e) => setExtPassword(e.target.value)}
+                          placeholder="Min 6 characters"
+                          className="pr-10"
+                        />
+                        <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" onClick={() => setShowExtPassword(!showExtPassword)}>
+                          {showExtPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Confirm Password</Label>
+                      <Input
+                        type="password"
+                        value={extConfirmPassword}
+                        onChange={(e) => setExtConfirmPassword(e.target.value)}
+                        placeholder="Re-enter password"
+                      />
+                    </div>
+                    <Button onClick={handleSetExtensionPassword} disabled={extPasswordSaving || !extPassword} className="rounded-full">
+                      {extPasswordSaving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : "Set Password"}
+                    </Button>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Debug Role Section */}
           <Card className="border-dashed border-accent/50 bg-accent/5 rounded-3xl">
             <CardHeader>
