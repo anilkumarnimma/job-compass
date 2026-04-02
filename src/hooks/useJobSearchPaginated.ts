@@ -3,13 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Job } from "@/types/job";
 import { expandSearchTerms } from "@/lib/searchExpansion";
 import { enrichJobList } from "@/lib/jobEnrichment";
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 
 import { VisaFilter, filterJobsByVisa } from "@/lib/visaSponsorship";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const PAGE_SIZE = 20;
 const VISA_BATCH_SIZE = 200;
-const STALE_TIME = 2 * 60 * 1000; // 2 minutes
+const STALE_TIME = 5 * 60 * 1000; // 5 minutes
 
 function parseJob(row: any): Job {
   return {
@@ -58,13 +59,19 @@ async function fetchJobsPage(
     const fetchSize = isVisaFiltered ? VISA_BATCH_SIZE : PAGE_SIZE;
     const fetchOffset = isVisaFiltered ? 0 : (page - 1) * PAGE_SIZE;
 
-    const { data, error } = await supabase.rpc("search_jobs", {
+    let rpcQuery = supabase.rpc("search_jobs", {
       search_query: trimmed,
       page_size: fetchSize,
       page_offset: fetchOffset,
       filter_tab: "all",
       expanded_terms: expandedTerms.length > 0 ? expandedTerms : undefined,
     });
+
+    if (signal) {
+      rpcQuery = rpcQuery.abortSignal(signal);
+    }
+
+    const { data, error } = await rpcQuery;
 
     if (error) throw error;
     allJobs = (data || []).map(parseJob);
@@ -104,6 +111,10 @@ async function fetchJobsPage(
       query = query.lt("posted_date", toDate.toISOString().split("T")[0]);
     }
 
+    if (signal) {
+      query = query.abortSignal(signal);
+    }
+
     const { data, error } = await query;
     if (error) throw error;
     allJobs = (data || []).map(parseJob);
@@ -127,6 +138,7 @@ async function fetchJobsPage(
 export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, visaFilter = "all" }: UseJobSearchPaginatedOptions) {
   const queryClient = useQueryClient();
   const isVisaFiltered = visaFilter !== "all";
+  const debouncedCountSearch = useDebounce(searchQuery, 450);
 
   // Cancel stale in-flight queries when search changes
   useEffect(() => {
@@ -155,27 +167,39 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
   }, [queryClient, searchQuery, page, dateFrom, dateTo, visaFilter, isVisaFiltered, jobsQuery.data]);
 
   const countQuery = useQuery({
-    queryKey: ["jobs", "count", searchQuery],
-    queryFn: async () => {
-      const trimmed = searchQuery.trim();
+    queryKey: ["jobs", "count", debouncedCountSearch],
+    queryFn: async ({ signal }) => {
+      const trimmed = debouncedCountSearch.trim();
       if (trimmed) {
         const expandedTerms = expandSearchTerms(trimmed);
-        const { data, error } = await supabase.rpc("count_search_jobs", {
+        let rpcQuery = supabase.rpc("count_search_jobs", {
           search_query: trimmed,
           expanded_terms: expandedTerms.length > 0 ? expandedTerms : undefined,
         });
+
+        if (signal) {
+          rpcQuery = rpcQuery.abortSignal(signal);
+        }
+
+        const { data, error } = await rpcQuery;
         if (error) throw error;
         return Number(data) || 0;
       }
 
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - 15);
-      const { count, error } = await supabase
+      let baseCountQuery = supabase
         .from("jobs")
         .select("*", { count: "exact", head: true })
         .eq("is_published", true)
         .eq("is_archived", false)
         .gte("posted_date", cutoff.toISOString());
+
+      if (signal) {
+        baseCountQuery = baseCountQuery.abortSignal(signal);
+      }
+
+      const { count, error } = await baseCountQuery;
       if (error) throw error;
       return count || 0;
     },
@@ -196,5 +220,6 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
       totalPages,
     },
     isLoading: jobsQuery.isLoading,
+    isFetching: jobsQuery.isFetching,
   };
 }

@@ -19,29 +19,49 @@ export const SearchBar = memo(function SearchBar({ value, onChange, placeholder 
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const { suggestions } = useSearchSuggestions(localValue, isFocused);
   const inputRef = useRef<HTMLInputElement>(null);
+  const emitTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Sync external value changes (e.g. reset, suggestion select from outside)
   useEffect(() => {
     setLocalValue(value);
   }, [value]);
 
+  useEffect(() => {
+    if (localValue === value) return;
+
+    clearTimeout(emitTimeoutRef.current);
+    emitTimeoutRef.current = setTimeout(() => {
+      onChange(localValue);
+    }, 200);
+
+    return () => {
+      clearTimeout(emitTimeoutRef.current);
+    };
+  }, [localValue, value, onChange]);
+
+  const flushChange = useCallback((nextValue: string) => {
+    clearTimeout(emitTimeoutRef.current);
+    if (nextValue !== value) {
+      onChange(nextValue);
+    }
+  }, [onChange, value]);
+
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
-    setLocalValue(v);       // instant local update
-    onChange(v);             // propagate to parent (debounced upstream)
+    setLocalValue(v);
     setHighlightedIndex(-1);
-  }, [onChange]);
+  }, []);
 
   const showSuggestions = isFocused && localValue.trim().length >= 2 && suggestions.length > 0;
 
   const handleSelect = useCallback((suggestion: string) => {
     setLocalValue(suggestion);
-    onChange(suggestion);
+    flushChange(suggestion);
     setIsFocused(false);
     setHighlightedIndex(-1);
     onSuggestionSelect?.(suggestion);
     onSearch?.();
-  }, [onChange, onSuggestionSelect, onSearch]);
+  }, [flushChange, onSuggestionSelect, onSearch]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (showSuggestions) {
@@ -62,13 +82,16 @@ export const SearchBar = memo(function SearchBar({ value, onChange, placeholder 
       }
       if (e.key === "Escape") {
         setIsFocused(false);
+        inputRef.current?.blur();
         return;
       }
     }
     if (e.key === "Enter") {
+      e.preventDefault();
+      flushChange(localValue);
       onSearch?.();
     }
-  }, [showSuggestions, suggestions, highlightedIndex, handleSelect, onSearch]);
+  }, [showSuggestions, suggestions, highlightedIndex, handleSelect, flushChange, localValue, onSearch]);
 
   return (
     <div className="relative group">
