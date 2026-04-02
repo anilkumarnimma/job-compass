@@ -47,6 +47,7 @@ async function fetchJobsPage(
   dateFrom: string | null | undefined,
   dateTo: string | null | undefined,
   visaFilter: VisaFilter,
+  signal?: AbortSignal,
 ) {
   const trimmed = searchQuery.trim();
   const isVisaFiltered = visaFilter !== "all";
