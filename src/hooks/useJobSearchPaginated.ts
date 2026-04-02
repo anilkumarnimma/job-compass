@@ -4,7 +4,10 @@ import { Job } from "@/types/job";
 import { expandSearchTerms } from "@/lib/searchExpansion";
 import { enrichJobList } from "@/lib/jobEnrichment";
 
+import { VisaFilter, filterJobsByVisa } from "@/lib/visaSponsorship";
+
 const PAGE_SIZE = 20;
+const VISA_BATCH_SIZE = 200; // Fetch more when visa filtering to ensure enough results
 const STALE_TIME = 2 * 60 * 1000; // 2 minutes
 
 function parseJob(row: any): Job {
