@@ -12,13 +12,25 @@ import { CompanyLogo } from "@/components/CompanyLogo";
 import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, ArrowRight, Target, FileText } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { memo, useCallback, useState, useMemo } from "react";
+import { memo, useCallback, useState, useMemo, lazy, Suspense } from "react";
 import { analyzeVisaSponsorship } from "@/lib/visaSponsorship";
 import { VisaSponsorshipBadge } from "@/components/VisaSponsorshipBadge";
 import { useAtsCheck } from "@/hooks/useAtsCheck";
-import { AtsCheckDialog } from "@/components/AtsCheckDialog";
-import { CoverLetterDialog } from "@/components/CoverLetterDialog";
-import { TailoredResumeDialog } from "@/components/TailoredResumeDialog";
+
+const AtsCheckDialog = lazy(async () => {
+  const module = await import("@/components/AtsCheckDialog");
+  return { default: module.AtsCheckDialog };
+});
+
+const CoverLetterDialog = lazy(async () => {
+  const module = await import("@/components/CoverLetterDialog");
+  return { default: module.CoverLetterDialog };
+});
+
+const TailoredResumeDialog = lazy(async () => {
+  const module = await import("@/components/TailoredResumeDialog");
+  return { default: module.TailoredResumeDialog };
+});
 
 interface JobCardProps {
   job: Job;
@@ -286,22 +298,34 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
     </Card>
 
     {/* Dialogs */}
-    <AtsCheckDialog
-      open={showAtsDialog}
-      onOpenChange={(open) => { setShowAtsDialog(open); if (!open) clearAts(); }}
-      result={atsResult}
-      isChecking={isChecking}
-    />
-    <CoverLetterDialog
-      open={coverLetterOpen}
-      onOpenChange={setCoverLetterOpen}
-      job={job}
-    />
-    <TailoredResumeDialog
-      open={tailoredResumeOpen}
-      onOpenChange={setTailoredResumeOpen}
-      job={job}
-    />
+    {showAtsDialog && (
+      <Suspense fallback={null}>
+        <AtsCheckDialog
+          open={showAtsDialog}
+          onOpenChange={(open) => { setShowAtsDialog(open); if (!open) clearAts(); }}
+          result={atsResult}
+          isChecking={isChecking}
+        />
+      </Suspense>
+    )}
+    {coverLetterOpen && (
+      <Suspense fallback={null}>
+        <CoverLetterDialog
+          open={coverLetterOpen}
+          onOpenChange={setCoverLetterOpen}
+          job={job}
+        />
+      </Suspense>
+    )}
+    {tailoredResumeOpen && (
+      <Suspense fallback={null}>
+        <TailoredResumeDialog
+          open={tailoredResumeOpen}
+          onOpenChange={setTailoredResumeOpen}
+          job={job}
+        />
+      </Suspense>
+    )}
     </>
   );
 });

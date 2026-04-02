@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useTransition } from "react";
 import { useProfile } from "@/hooks/useProfile";
 import { calculateMatchesForJobs } from "@/lib/jobMatcher";
 import { calculateLandingProbability } from "@/lib/landingProbability";
@@ -13,7 +13,6 @@ import { UpgradeDialog } from "@/components/UpgradeDialog";
 import { ApplyConfirmDialog } from "@/components/ApplyConfirmDialog";
 import { ProfileGateDialog } from "@/components/ProfileGateDialog";
 import { useJobSearchPaginated } from "@/hooks/useJobSearchPaginated";
-import { useDebounce } from "@/hooks/useDebounce";
 import { useJobContext } from "@/context/JobContext";
 import { Job } from "@/types/job";
 import { X, ChevronDown } from "lucide-react";
@@ -79,6 +78,7 @@ export default function Dashboard() {
   const [customDate, setCustomDate] = useState<Date | undefined>(undefined);
   const [fallbackActive, setFallbackActive] = useState(false);
   const [visaFilter, setVisaFilter] = useState<VisaFilter>("all");
+  const [isSearchPending, startSearchTransition] = useTransition();
 
   const isMobile = useIsMobile();
   const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply, showProfileGate, setShowProfileGate, profileGateMissingFields } = useJobContext();
@@ -148,30 +148,26 @@ export default function Dashboard() {
     }
   }, [searchParams]);
 
-  const [instantSearch, setInstantSearch] = useState("");
-  const debouncedSearch = useDebounce(searchInput, 200);
-  const activeSearch = instantSearch || debouncedSearch;
+  const handleSearchChange = useCallback((value: string) => {
+    startSearchTransition(() => {
+      setSearchInput((prev) => (prev === value ? prev : value));
+    });
+  }, []);
 
-  // Clear instant override when debounce catches up
-  useEffect(() => {
-    if (instantSearch && debouncedSearch === searchInput) {
-      setInstantSearch("");
-    }
-  }, [debouncedSearch, searchInput, instantSearch]);
+  const handleSearchCommit = useCallback(() => {
+    setCurrentPage(1);
+    setFallbackActive(false);
+  }, []);
 
   const combinedSearchQuery = useMemo(() => {
     const parts: string[] = [];
-    const search = activeSearch.trim();
+    const search = searchInput.trim();
     // Skip very short partial queries to avoid broad/slow DB searches
     if (search.length >= 2) parts.push(search);
     if (roleFilter) parts.push(roleFilter);
     if (companyFilter) parts.push(companyFilter);
     return parts.join(" ");
-  }, [activeSearch, roleFilter, companyFilter]);
-
-  const handleInstantSearch = useCallback(() => {
-    setInstantSearch(searchInput);
-  }, [searchInput]);
+  }, [searchInput, roleFilter, companyFilter]);
 
   const { dateFrom, dateTo } = getDateRange(dateFilter, customDate);
 
@@ -180,7 +176,7 @@ export default function Dashboard() {
     setFallbackActive(false);
   }, [combinedSearchQuery, dateFilter, customDate, visaFilter]);
 
-  const { data, isLoading } = useJobSearchPaginated({
+  const { data, isLoading, isFetching } = useJobSearchPaginated({
     searchQuery: combinedSearchQuery,
     page: currentPage,
     dateFrom: fallbackActive ? null : dateFrom,
@@ -290,8 +286,8 @@ export default function Dashboard() {
             <div className="flex-1">
               <SearchBar
                 value={searchInput}
-                onChange={setSearchInput}
-                onSearch={handleInstantSearch}
+                onChange={handleSearchChange}
+                onSearch={handleSearchCommit}
                 placeholder="Search jobs by title, company, skills…"
               />
             </div>
@@ -379,6 +375,9 @@ export default function Dashboard() {
               </Popover>
             </div>
           </div>
+          {!isLoading && (isSearchPending || isFetching) && (
+            <p className="mb-4 text-xs text-muted-foreground">Updating results…</p>
+          )}
           {isUSUser && <VisaFilterPills value={visaFilter} onChange={setVisaFilter} />}
         </div>
 

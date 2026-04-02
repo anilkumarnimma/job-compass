@@ -14,7 +14,9 @@ export function useSearchSuggestions(query: string, enabled = true) {
 
   useEffect(() => {
     if (!enabled || query.trim().length < 2) {
+      abortRef.current?.abort();
       setSuggestions([]);
+      setIsLoading(false);
       return;
     }
 
@@ -26,10 +28,12 @@ export function useSearchSuggestions(query: string, enabled = true) {
 
       setIsLoading(true);
       try {
-        const { data, error } = await supabase.rpc("suggest_job_titles", {
+        const request = supabase.rpc("suggest_job_titles", {
           query_text: query.trim(),
           max_results: 6,
-        });
+        }).abortSignal(controller.signal);
+
+        const { data, error } = await request;
         if (controller.signal.aborted) return;
         if (!error && data) {
           setSuggestions(data as Suggestion[]);
@@ -39,7 +43,7 @@ export function useSearchSuggestions(query: string, enabled = true) {
       } finally {
         if (!controller.signal.aborted) setIsLoading(false);
       }
-    }, 300);
+    }, 180);
 
     return () => {
       clearTimeout(debounceRef.current);

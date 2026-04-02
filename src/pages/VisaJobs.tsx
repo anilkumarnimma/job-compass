@@ -11,7 +11,6 @@ import { ProfileGateDialog } from "@/components/ProfileGateDialog";
 import { VisaFilterPills } from "@/components/VisaFilterPills";
 import { VisaSponsorshipBadge } from "@/components/VisaSponsorshipBadge";
 import { useJobSearchPaginated } from "@/hooks/useJobSearchPaginated";
-import { useDebounce } from "@/hooks/useDebounce";
 import { useProfile } from "@/hooks/useProfile";
 import { useJobContext } from "@/context/JobContext";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -47,11 +46,18 @@ export default function VisaJobs() {
     }
   }, [isUSUser, navigate, toast]);
 
-  const debouncedSearch = useDebounce(searchInput, 300);
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchInput(value);
+    setCurrentPage(1);
+  }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [visaFilter]);
 
   // Fetch a larger set to filter client-side for visa
   const { data, isLoading } = useJobSearchPaginated({
-    searchQuery: debouncedSearch,
+    searchQuery: searchInput,
     page: currentPage,
   });
 
@@ -104,7 +110,7 @@ export default function VisaJobs() {
           <div className="flex flex-col gap-3 mb-4">
             <SearchBar
               value={searchInput}
-              onChange={setSearchInput}
+              onChange={handleSearchChange}
               placeholder="Search visa-friendly jobs…"
             />
             <VisaFilterPills value={visaFilter} onChange={setVisaFilter} />
