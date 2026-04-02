@@ -29,7 +29,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { JobMatchesPanel } from "@/components/JobMatchesPanel";
 import { WelcomeBanner } from "@/components/WelcomeBanner";
 import { VisaFilterPills } from "@/components/VisaFilterPills";
-import { VisaFilter, filterJobsByVisa } from "@/lib/visaSponsorship";
+import { VisaFilter } from "@/lib/visaSponsorship";
 import { useIsUSUser } from "@/hooks/useIsUSUser";
 import { NotificationOptInDialog } from "@/components/NotificationOptInDialog";
 import { consumeDashboardResetToken, DASHBOARD_RESET_EVENT } from "@/lib/dashboardReset";
@@ -162,19 +162,19 @@ export default function Dashboard() {
   useEffect(() => {
     setCurrentPage(1);
     setFallbackActive(false);
-  }, [combinedSearchQuery, dateFilter, customDate]);
+  }, [combinedSearchQuery, dateFilter, customDate, visaFilter]);
 
   const { data, isLoading } = useJobSearchPaginated({
     searchQuery: combinedSearchQuery,
     page: currentPage,
     dateFrom: fallbackActive ? null : dateFrom,
     dateTo: fallbackActive ? null : dateTo,
+    visaFilter,
   });
 
   const { profile } = useProfile();
 
-  const rawJobs = data?.jobs || [];
-  const jobs = useMemo(() => filterJobsByVisa(rawJobs, visaFilter), [rawJobs, visaFilter]);
+  const jobs = data?.jobs || [];
 
   const matchResults = useMemo(
     () => calculateMatchesForJobs(jobs, profile?.resume_intelligence),

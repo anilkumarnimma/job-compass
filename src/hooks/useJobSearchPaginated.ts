@@ -4,7 +4,10 @@ import { Job } from "@/types/job";
 import { expandSearchTerms } from "@/lib/searchExpansion";
 import { enrichJobList } from "@/lib/jobEnrichment";
 
+import { VisaFilter, filterJobsByVisa } from "@/lib/visaSponsorship";
+
 const PAGE_SIZE = 20;
+const VISA_BATCH_SIZE = 200; // Fetch more when visa filtering to ensure enough results
 const STALE_TIME = 2 * 60 * 1000; // 2 minutes
 
 function parseJob(row: any): Job {
@@ -34,32 +37,41 @@ interface UseJobSearchPaginatedOptions {
   page: number;
   dateFrom?: string | null;
   dateTo?: string | null;
+  visaFilter?: VisaFilter;
 }
 
-export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo }: UseJobSearchPaginatedOptions) {
+export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, visaFilter = "all" }: UseJobSearchPaginatedOptions) {
+  const isVisaFiltered = visaFilter !== "all";
+  const effectivePageSize = isVisaFiltered ? VISA_BATCH_SIZE : PAGE_SIZE;
+
   // Fetch the page of results
   const jobsQuery = useQuery({
-    queryKey: ["jobs", "paginated", searchQuery, page, dateFrom, dateTo],
+    queryKey: ["jobs", "paginated", searchQuery, page, dateFrom, dateTo, visaFilter],
     queryFn: async () => {
       const trimmed = searchQuery.trim();
+      let allJobs: Job[] = [];
 
       if (trimmed) {
         const expandedTerms = expandSearchTerms(trimmed);
+        // When visa filtering, fetch a large batch from offset 0 to filter client-side
+        const fetchSize = isVisaFiltered ? VISA_BATCH_SIZE : PAGE_SIZE;
+        const fetchOffset = isVisaFiltered ? 0 : (page - 1) * PAGE_SIZE;
+
         const { data, error } = await supabase.rpc("search_jobs", {
           search_query: trimmed,
-          page_size: PAGE_SIZE,
-          page_offset: (page - 1) * PAGE_SIZE,
+          page_size: fetchSize,
+          page_offset: fetchOffset,
           filter_tab: "all",
           expanded_terms: expandedTerms.length > 0 ? expandedTerms : undefined,
         });
 
         if (error) throw error;
 
-        let jobs = (data || []).map(parseJob);
+        allJobs = (data || []).map(parseJob);
 
-        // Apply date filters client-side (RPC doesn't support date range)
+        // Apply date filters client-side
         if (dateFrom || dateTo) {
-          jobs = jobs.filter(j => {
+          allJobs = allJobs.filter(j => {
             if (dateFrom && j.posted_date < new Date(dateFrom)) return false;
             if (dateTo) {
               const to = new Date(dateTo);
@@ -69,38 +81,57 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo }: U
             return true;
           });
         }
+      } else {
+        // No search query — use direct table query with 15-day cutoff
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - 15);
 
-        return { jobs: enrichJobList(jobs) };
+        const fetchSize = isVisaFiltered ? VISA_BATCH_SIZE : PAGE_SIZE;
+        const rangeStart = isVisaFiltered ? 0 : (page - 1) * PAGE_SIZE;
+        const rangeEnd = rangeStart + fetchSize - 1;
+
+        let query = supabase
+          .from("jobs")
+          .select("*", { count: "exact" })
+          .eq("is_published", true)
+          .eq("is_archived", false)
+          .gte("posted_date", cutoff.toISOString())
+          .order("posted_date", { ascending: false })
+          .range(rangeStart, rangeEnd);
+
+        if (dateFrom) {
+          query = query.gte("posted_date", dateFrom);
+        }
+        if (dateTo) {
+          const toDate = new Date(dateTo);
+          toDate.setDate(toDate.getDate() + 1);
+          query = query.lt("posted_date", toDate.toISOString().split("T")[0]);
+        }
+
+        const { data, error, count } = await query;
+        if (error) throw error;
+
+        allJobs = (data || []).map(parseJob);
       }
 
-      // No search query — use direct table query with 15-day cutoff
-      const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - 15);
-      let query = supabase
-        .from("jobs")
-        .select("*", { count: "exact" })
-        .eq("is_published", true)
-        .eq("is_archived", false)
-        .gte("posted_date", cutoff.toISOString())
-        .order("posted_date", { ascending: false })
-        .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
-
-      if (dateFrom) {
-        query = query.gte("posted_date", dateFrom);
-      }
-      if (dateTo) {
-        const toDate = new Date(dateTo);
-        toDate.setDate(toDate.getDate() + 1);
-        query = query.lt("posted_date", toDate.toISOString().split("T")[0]);
+      // Apply visa filter client-side
+      let filteredJobs = enrichJobList(allJobs);
+      if (isVisaFiltered) {
+        filteredJobs = filterJobsByVisa(filteredJobs, visaFilter);
       }
 
-      const { data, error, count } = await query;
-      if (error) throw error;
+      // If visa filtered, do client-side pagination
+      if (isVisaFiltered) {
+        const totalFiltered = filteredJobs.length;
+        const startIdx = (page - 1) * PAGE_SIZE;
+        const pageJobs = filteredJobs.slice(startIdx, startIdx + PAGE_SIZE);
+        return {
+          jobs: pageJobs,
+          visaFilteredCount: totalFiltered,
+        };
+      }
 
-      return {
-        jobs: enrichJobList((data || []).map(parseJob)),
-        directCount: count || 0,
-      };
+      return { jobs: filteredJobs };
     },
     staleTime: STALE_TIME,
     placeholderData: (prev) => prev,
@@ -135,9 +166,14 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo }: U
       return count || 0;
     },
     staleTime: STALE_TIME,
+    enabled: !isVisaFiltered, // Skip separate count when visa filtering (we get it from filtered results)
   });
 
-  const totalCount = countQuery.data ?? (jobsQuery.data as any)?.directCount ?? 0;
+  // When visa filtered, use the filtered count; otherwise use the separate count query
+  const visaFilteredCount = (jobsQuery.data as any)?.visaFilteredCount;
+  const totalCount = isVisaFiltered
+    ? (visaFilteredCount ?? 0)
+    : (countQuery.data ?? 0);
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   return {
