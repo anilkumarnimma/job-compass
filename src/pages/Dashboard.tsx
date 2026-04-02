@@ -493,7 +493,7 @@ export default function Dashboard() {
             </div>
           </div>
         )}
-      </motion.div>
+        </div>
 
       <MobileJobPreviewSheet job={mobilePreviewJob} open={mobileSheetOpen} onOpenChange={setMobileSheetOpen} />
       <UpgradeDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog} />
