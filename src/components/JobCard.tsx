@@ -39,6 +39,7 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
 
   const saved = isSaved(job.id);
   const applied = isApplied(job.id);
+  const visaResult = useMemo(() => analyzeVisaSponsorship(job), [job]);
 
   // ATS Check state
   const { runCheck, isChecking, result: atsResult, clearResult: clearAts } = useAtsCheck();
