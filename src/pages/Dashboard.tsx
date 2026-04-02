@@ -162,7 +162,7 @@ export default function Dashboard() {
   useEffect(() => {
     setCurrentPage(1);
     setFallbackActive(false);
-  }, [combinedSearchQuery, dateFilter, customDate]);
+  }, [combinedSearchQuery, dateFilter, customDate, visaFilter]);
 
   const { data, isLoading } = useJobSearchPaginated({
     searchQuery: combinedSearchQuery,
