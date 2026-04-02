@@ -25,7 +25,7 @@ export function ExtensionPasswordPrompt() {
   const hasEmail = mainProvider === "email" || (providers?.includes("email") ?? false);
   const isGoogleOnly = hasGoogle && !hasEmail;
 
-  const wasDismissed = localStorage.getItem(DISMISS_KEY) === user?.id;
+  const wasDismissed = !!user && localStorage.getItem(DISMISS_KEY) === user.id;
   const isOpen = !!user && isGoogleOnly && !wasDismissed && !done;
 
   const handleDismiss = () => {
