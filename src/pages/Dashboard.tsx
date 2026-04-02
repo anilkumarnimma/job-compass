@@ -149,7 +149,7 @@ export default function Dashboard() {
   }, [searchParams]);
 
   const [instantSearch, setInstantSearch] = useState("");
-  const debouncedSearch = useDebounce(searchInput, 200);
+  const debouncedSearch = useDebounce(searchInput, 400);
   const activeSearch = instantSearch || debouncedSearch;
 
   // Clear instant override when debounce catches up
@@ -161,7 +161,9 @@ export default function Dashboard() {
 
   const combinedSearchQuery = useMemo(() => {
     const parts: string[] = [];
-    if (activeSearch.trim()) parts.push(activeSearch);
+    const search = activeSearch.trim();
+    // Skip very short partial queries to avoid broad/slow DB searches
+    if (search.length >= 2) parts.push(search);
     if (roleFilter) parts.push(roleFilter);
     if (companyFilter) parts.push(companyFilter);
     return parts.join(" ");
