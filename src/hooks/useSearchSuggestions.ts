@@ -20,7 +20,6 @@ export function useSearchSuggestions(query: string, enabled = true) {
 
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
-      // Cancel previous in-flight request
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
@@ -40,7 +39,7 @@ export function useSearchSuggestions(query: string, enabled = true) {
       } finally {
         if (!controller.signal.aborted) setIsLoading(false);
       }
-    }, 200);
+    }, 300);
 
     return () => {
       clearTimeout(debounceRef.current);
