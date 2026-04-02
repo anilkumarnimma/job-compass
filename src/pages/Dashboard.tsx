@@ -289,6 +289,7 @@ export default function Dashboard() {
               <SearchBar
                 value={searchInput}
                 onChange={setSearchInput}
+                onSearch={handleInstantSearch}
                 placeholder="Search jobs by title, company, skills…"
               />
             </div>
