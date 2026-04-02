@@ -32,6 +32,7 @@ import { VisaFilterPills } from "@/components/VisaFilterPills";
 import { VisaFilter } from "@/lib/visaSponsorship";
 import { useIsUSUser } from "@/hooks/useIsUSUser";
 import { NotificationOptInDialog } from "@/components/NotificationOptInDialog";
+import { ExtensionPasswordPrompt } from "@/components/ExtensionPasswordPrompt";
 import { consumeDashboardResetToken, DASHBOARD_RESET_EVENT } from "@/lib/dashboardReset";
 
 type DateFilter = "all" | "today" | "yesterday" | "custom";
@@ -504,6 +505,7 @@ export default function Dashboard() {
       <ApplyConfirmDialog open={showApplyConfirm} onConfirm={confirmApply} onCancel={cancelApply} />
       <ProfileGateDialog open={showProfileGate} onOpenChange={setShowProfileGate} missingFields={profileGateMissingFields} />
       <NotificationOptInDialog />
+      <ExtensionPasswordPrompt />
     </Layout>
   );
 }
