@@ -148,7 +148,16 @@ export default function Dashboard() {
     }
   }, [searchParams]);
 
-  const debouncedSearch = useDebounce(searchInput, 300);
+  const [instantSearch, setInstantSearch] = useState("");
+  const debouncedSearch = useDebounce(searchInput, 200);
+  const activeSearch = instantSearch || debouncedSearch;
+
+  // Clear instant override when debounce catches up
+  useEffect(() => {
+    if (instantSearch && debouncedSearch === searchInput) {
+      setInstantSearch("");
+    }
+  }, [debouncedSearch, searchInput, instantSearch]);
 
   const combinedSearchQuery = useMemo(() => {
     const parts: string[] = [];
