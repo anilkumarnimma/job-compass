@@ -14,6 +14,7 @@ export function IntroSplash({ children }: IntroSplashProps) {
 
   useEffect(() => {
     if (!showSplash) return;
+    // Faster splash — 1.8s total instead of 2.6s
     const timer = setTimeout(() => {
       setShowSplash(false);
       sessionStorage.setItem("sociax_intro_seen", "1");
