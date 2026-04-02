@@ -253,12 +253,7 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="w-full max-w-[1600px] mx-auto px-4 md:px-6 py-4"
-      >
+        <div className="w-full max-w-[1600px] mx-auto px-4 md:px-6 py-4">
         {/* Welcome Banner */}
         <WelcomeBanner />
 
@@ -498,7 +493,7 @@ export default function Dashboard() {
             </div>
           </div>
         )}
-      </motion.div>
+        </div>
 
       <MobileJobPreviewSheet job={mobilePreviewJob} open={mobileSheetOpen} onOpenChange={setMobileSheetOpen} />
       <UpgradeDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog} />

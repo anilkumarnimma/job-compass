@@ -12,7 +12,7 @@ import { CompanyLogo } from "@/components/CompanyLogo";
 import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, ArrowRight, Target, FileText } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback, useState, useMemo } from "react";
 import { analyzeVisaSponsorship } from "@/lib/visaSponsorship";
 import { VisaSponsorshipBadge } from "@/components/VisaSponsorshipBadge";
 import { useAtsCheck } from "@/hooks/useAtsCheck";
@@ -39,6 +39,7 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
 
   const saved = isSaved(job.id);
   const applied = isApplied(job.id);
+  const visaResult = useMemo(() => analyzeVisaSponsorship(job), [job]);
 
   // ATS Check state
   const { runCheck, isChecking, result: atsResult, clearResult: clearAts } = useAtsCheck();
@@ -181,7 +182,7 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
 
       {/* Meta Row */}
       <div className="flex flex-wrap items-center gap-2 mb-3 relative z-10">
-        <VisaSponsorshipBadge result={analyzeVisaSponsorship(job)} compact />
+        <VisaSponsorshipBadge result={visaResult} compact />
         <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${getLocationBadge()}`}>
           <MapPin className="h-3.5 w-3.5" />
           {job.location}

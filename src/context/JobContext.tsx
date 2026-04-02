@@ -40,16 +40,13 @@ export function JobProvider({ children }: { children: ReactNode }) {
   const [pendingJob, setPendingJob] = useState<Job | null>(null);
 
   const appliedJobIds = useMemo(() => new Set(applications.map((a) => a.job_id)), [applications]);
-
   const savedJobIds = useMemo(() => new Set(savedJobs.map((s) => s.job_id)), [savedJobs]);
 
-  const isApplied = (jobId: string) => appliedJobIds.has(jobId);
-  const isSaved = (jobId: string) => savedJobIds.has(jobId);
+  const isApplied = useCallback((jobId: string) => appliedJobIds.has(jobId), [appliedJobIds]);
+  const isSaved = useCallback((jobId: string) => savedJobIds.has(jobId), [savedJobIds]);
 
-  // Step 1: Open external link + show confirmation dialog
   const applyToJob = useCallback(
     (job: any) => {
-      // Check profile completeness first
       if (!profileComplete) {
         setShowProfileGate(true);
         return;
@@ -66,7 +63,6 @@ export function JobProvider({ children }: { children: ReactNode }) {
     [profile?.is_premium, totalAppCount, profileComplete],
   );
 
-  // Step 2a: User confirms they applied
   const confirmApply = useCallback(() => {
     if (pendingJob) {
       rawApply(pendingJob);
@@ -76,20 +72,21 @@ export function JobProvider({ children }: { children: ReactNode }) {
     setShowApplyConfirm(false);
   }, [pendingJob, rawApply]);
 
-  // Step 2b: User didn't apply yet
   const cancelApply = useCallback(() => {
     setPendingJob(null);
     setShowApplyConfirm(false);
   }, []);
 
-  const value = {
+  const saveJob = useCallback((job: any) => { rawSave(job); emitWidgetEvent("save"); }, [rawSave]);
+
+  const value = useMemo(() => ({
     applications,
     savedJobs,
     isLoading: appsLoading || savedLoading,
     applyToJob,
     confirmApply,
     cancelApply,
-    saveJob: (job: any) => { rawSave(job); emitWidgetEvent("save"); },
+    saveJob,
     unsaveJob,
     removeAppliedJob,
     isApplied,
@@ -100,7 +97,12 @@ export function JobProvider({ children }: { children: ReactNode }) {
     showProfileGate,
     setShowProfileGate,
     profileGateMissingFields,
-  };
+  }), [
+    applications, savedJobs, appsLoading, savedLoading,
+    applyToJob, confirmApply, cancelApply, saveJob, unsaveJob, removeAppliedJob,
+    isApplied, isSaved,
+    showUpgradeDialog, showApplyConfirm, showProfileGate, profileGateMissingFields,
+  ]);
 
   return <JobContext.Provider value={value}>{children}</JobContext.Provider>;
 }
