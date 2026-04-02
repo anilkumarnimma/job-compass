@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect, memo } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useSearchSuggestions } from "@/hooks/useSearchSuggestions";
@@ -12,15 +12,30 @@ interface SearchBarProps {
   onSuggestionSelect?: (suggestion: string) => void;
 }
 
-export function SearchBar({ value, onChange, placeholder = "Search jobs by title, company, skills…", onSearch, onSuggestionSelect }: SearchBarProps) {
+export const SearchBar = memo(function SearchBar({ value, onChange, placeholder = "Search jobs by title, company, skills…", onSearch, onSuggestionSelect }: SearchBarProps) {
+  // Local state for instant keystrokes — decoupled from parent re-renders
+  const [localValue, setLocalValue] = useState(value);
   const [isFocused, setIsFocused] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const { suggestions } = useSearchSuggestions(value, isFocused);
+  const { suggestions } = useSearchSuggestions(localValue, isFocused);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const showSuggestions = isFocused && value.trim().length >= 2 && suggestions.length > 0;
+  // Sync external value changes (e.g. reset, suggestion select from outside)
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    setLocalValue(v);       // instant local update
+    onChange(v);             // propagate to parent (debounced upstream)
+    setHighlightedIndex(-1);
+  }, [onChange]);
+
+  const showSuggestions = isFocused && localValue.trim().length >= 2 && suggestions.length > 0;
 
   const handleSelect = useCallback((suggestion: string) => {
+    setLocalValue(suggestion);
     onChange(suggestion);
     setIsFocused(false);
     setHighlightedIndex(-1);
@@ -28,7 +43,7 @@ export function SearchBar({ value, onChange, placeholder = "Search jobs by title
     onSearch?.();
   }, [onChange, onSuggestionSelect, onSearch]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (showSuggestions) {
       if (e.key === "ArrowDown") {
         e.preventDefault();
@@ -53,7 +68,7 @@ export function SearchBar({ value, onChange, placeholder = "Search jobs by title
     if (e.key === "Enter") {
       onSearch?.();
     }
-  };
+  }, [showSuggestions, suggestions, highlightedIndex, handleSelect, onSearch]);
 
   return (
     <div className="relative group">
@@ -62,11 +77,8 @@ export function SearchBar({ value, onChange, placeholder = "Search jobs by title
         ref={inputRef}
         type="text"
         placeholder={placeholder}
-        value={value}
-        onChange={(e) => {
-          onChange(e.target.value);
-          setHighlightedIndex(-1);
-        }}
+        value={localValue}
+        onChange={handleChange}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setTimeout(() => setIsFocused(false), 150)}
         onKeyDown={handleKeyDown}
@@ -78,8 +90,8 @@ export function SearchBar({ value, onChange, placeholder = "Search jobs by title
         isOpen={showSuggestions}
         onSelect={handleSelect}
         highlightedIndex={highlightedIndex}
-        query={value}
+        query={localValue}
       />
     </div>
   );
-}
+});
