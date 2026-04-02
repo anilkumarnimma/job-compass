@@ -130,7 +130,7 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
 
   const jobsQuery = useQuery({
     queryKey: ["jobs", "paginated", searchQuery, page, dateFrom, dateTo, visaFilter],
-    queryFn: () => fetchJobsPage(searchQuery, page, dateFrom, dateTo, visaFilter),
+    queryFn: ({ signal }) => fetchJobsPage(searchQuery, page, dateFrom, dateTo, visaFilter, signal),
     staleTime: STALE_TIME,
     placeholderData: (prev) => prev,
   });
