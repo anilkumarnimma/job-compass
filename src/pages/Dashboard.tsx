@@ -505,6 +505,7 @@ export default function Dashboard() {
       <ApplyConfirmDialog open={showApplyConfirm} onConfirm={confirmApply} onCancel={cancelApply} />
       <ProfileGateDialog open={showProfileGate} onOpenChange={setShowProfileGate} missingFields={profileGateMissingFields} />
       <NotificationOptInDialog />
+      <ExtensionPasswordPrompt />
     </Layout>
   );
 }
