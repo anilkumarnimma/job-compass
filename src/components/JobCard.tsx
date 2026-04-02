@@ -12,16 +12,13 @@ import { CompanyLogo } from "@/components/CompanyLogo";
 import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, ArrowRight, Target, FileText } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { useRef, useCallback, useState } from "react";
+import { memo, useCallback, useState } from "react";
 import { analyzeVisaSponsorship } from "@/lib/visaSponsorship";
 import { VisaSponsorshipBadge } from "@/components/VisaSponsorshipBadge";
 import { useAtsCheck } from "@/hooks/useAtsCheck";
 import { AtsCheckDialog } from "@/components/AtsCheckDialog";
 import { CoverLetterDialog } from "@/components/CoverLetterDialog";
 import { TailoredResumeDialog } from "@/components/TailoredResumeDialog";
-import { useProfile } from "@/hooks/useProfile";
-import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
 
 interface JobCardProps {
   job: Job;
@@ -35,12 +32,10 @@ interface JobCardProps {
   context?: 'dashboard' | 'recommendations';
 }
 
-export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchResult, landingProbability, context = 'dashboard' }: JobCardProps) {
+export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSelected, style, matchResult, landingProbability, context = 'dashboard' }: JobCardProps) {
   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
-  const { profile } = useProfile();
   const navigate = useNavigate();
-  const cardRef = useRef<HTMLDivElement>(null);
 
   const saved = isSaved(job.id);
   const applied = isApplied(job.id);
@@ -98,27 +93,13 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
     if (onTap) onTap(job);
   };
 
-  const handleCardClick = (e: React.MouseEvent) => {
+  const handleCardClick = useCallback((e: React.MouseEvent) => {
     if (onTap) {
       const target = e.target as HTMLElement;
       if (target.closest('button') || target.closest('a')) return;
       onTap(job);
     }
-  };
-
-  // Subtle 3D tilt
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    cardRef.current.style.transform = `perspective(800px) rotateY(${x * 3}deg) rotateX(${-y * 3}deg) translateY(-2px)`;
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    if (!cardRef.current) return;
-    cardRef.current.style.transform = "perspective(800px) rotateY(0deg) rotateX(0deg) translateY(0px)";
-  }, []);
+  }, [onTap, job]);
 
   const getLocationBadge = () => {
     const loc = job.location.toLowerCase();
@@ -128,29 +109,16 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileTap={{ scale: 0.99 }}
-      transition={{ type: "spring", stiffness: 350, damping: 25 }}
-    >
+    <>
     <Card
-      ref={cardRef}
-      className={`group p-5 border bg-card/80 backdrop-blur-sm rounded-2xl cursor-pointer overflow-visible relative transition-all duration-300 ${
+      className={`group p-5 border bg-card/80 backdrop-blur-sm rounded-2xl cursor-pointer overflow-visible relative transition-all duration-200 hover:-translate-y-0.5 ${
         isSelected 
           ? "border-accent ring-1 ring-accent/30 bg-accent/5 shadow-[0_0_20px_hsl(var(--accent)/0.15)]" 
           : "border-border/40 shadow-card hover:shadow-[0_8px_30px_hsl(var(--glow-accent)/0.1)] hover:border-accent/25"
       }`}
       onClick={handleCardClick}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{ ...style, transition: "transform 0.2s ease, box-shadow 0.3s ease, border-color 0.3s ease" }}
+      style={style}
     >
-      {/* Shimmer sweep on hover */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none overflow-hidden rounded-2xl z-0">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-accent/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
-      </div>
-
       {/* Header Row */}
       <div className="flex items-start gap-3.5 mb-3 relative z-10">
         <CompanyLogo
@@ -333,6 +301,6 @@ export function JobCard({ job, onViewDetails, onTap, isSelected, style, matchRes
       onOpenChange={setTailoredResumeOpen}
       job={job}
     />
-    </motion.div>
+    </>
   );
-}
+});
