@@ -1,13 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Job } from "@/types/job";
 import { expandSearchTerms } from "@/lib/searchExpansion";
 import { enrichJobList } from "@/lib/jobEnrichment";
+import { useEffect, useCallback } from "react";
 
 import { VisaFilter, filterJobsByVisa } from "@/lib/visaSponsorship";
 
 const PAGE_SIZE = 20;
-const VISA_BATCH_SIZE = 200; // Fetch more when visa filtering to ensure enough results
+const VISA_BATCH_SIZE = 200;
 const STALE_TIME = 2 * 60 * 1000; // 2 minutes
 
 function parseJob(row: any): Job {
@@ -40,109 +41,115 @@ interface UseJobSearchPaginatedOptions {
   visaFilter?: VisaFilter;
 }
 
-export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, visaFilter = "all" }: UseJobSearchPaginatedOptions) {
+async function fetchJobsPage(
+  searchQuery: string,
+  page: number,
+  dateFrom: string | null | undefined,
+  dateTo: string | null | undefined,
+  visaFilter: VisaFilter,
+) {
+  const trimmed = searchQuery.trim();
   const isVisaFiltered = visaFilter !== "all";
-  const effectivePageSize = isVisaFiltered ? VISA_BATCH_SIZE : PAGE_SIZE;
+  let allJobs: Job[] = [];
 
-  // Fetch the page of results
+  if (trimmed) {
+    const expandedTerms = expandSearchTerms(trimmed);
+    const fetchSize = isVisaFiltered ? VISA_BATCH_SIZE : PAGE_SIZE;
+    const fetchOffset = isVisaFiltered ? 0 : (page - 1) * PAGE_SIZE;
+
+    const { data, error } = await supabase.rpc("search_jobs", {
+      search_query: trimmed,
+      page_size: fetchSize,
+      page_offset: fetchOffset,
+      filter_tab: "all",
+      expanded_terms: expandedTerms.length > 0 ? expandedTerms : undefined,
+    });
+
+    if (error) throw error;
+    allJobs = (data || []).map(parseJob);
+
+    if (dateFrom || dateTo) {
+      allJobs = allJobs.filter(j => {
+        if (dateFrom && j.posted_date < new Date(dateFrom)) return false;
+        if (dateTo) {
+          const to = new Date(dateTo);
+          to.setDate(to.getDate() + 1);
+          if (j.posted_date >= to) return false;
+        }
+        return true;
+      });
+    }
+  } else {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 15);
+
+    const fetchSize = isVisaFiltered ? VISA_BATCH_SIZE : PAGE_SIZE;
+    const rangeStart = isVisaFiltered ? 0 : (page - 1) * PAGE_SIZE;
+    const rangeEnd = rangeStart + fetchSize - 1;
+
+    let query = supabase
+      .from("jobs")
+      .select("*", { count: "exact" })
+      .eq("is_published", true)
+      .eq("is_archived", false)
+      .gte("posted_date", cutoff.toISOString())
+      .order("posted_date", { ascending: false })
+      .range(rangeStart, rangeEnd);
+
+    if (dateFrom) query = query.gte("posted_date", dateFrom);
+    if (dateTo) {
+      const toDate = new Date(dateTo);
+      toDate.setDate(toDate.getDate() + 1);
+      query = query.lt("posted_date", toDate.toISOString().split("T")[0]);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    allJobs = (data || []).map(parseJob);
+  }
+
+  let filteredJobs = enrichJobList(allJobs);
+  if (isVisaFiltered) {
+    filteredJobs = filterJobsByVisa(filteredJobs, visaFilter);
+  }
+
+  if (isVisaFiltered) {
+    const totalFiltered = filteredJobs.length;
+    const startIdx = (page - 1) * PAGE_SIZE;
+    const pageJobs = filteredJobs.slice(startIdx, startIdx + PAGE_SIZE);
+    return { jobs: pageJobs, visaFilteredCount: totalFiltered };
+  }
+
+  return { jobs: filteredJobs };
+}
+
+export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, visaFilter = "all" }: UseJobSearchPaginatedOptions) {
+  const queryClient = useQueryClient();
+  const isVisaFiltered = visaFilter !== "all";
+
   const jobsQuery = useQuery({
     queryKey: ["jobs", "paginated", searchQuery, page, dateFrom, dateTo, visaFilter],
-    queryFn: async () => {
-      const trimmed = searchQuery.trim();
-      let allJobs: Job[] = [];
-
-      if (trimmed) {
-        const expandedTerms = expandSearchTerms(trimmed);
-        // When visa filtering, fetch a large batch from offset 0 to filter client-side
-        const fetchSize = isVisaFiltered ? VISA_BATCH_SIZE : PAGE_SIZE;
-        const fetchOffset = isVisaFiltered ? 0 : (page - 1) * PAGE_SIZE;
-
-        const { data, error } = await supabase.rpc("search_jobs", {
-          search_query: trimmed,
-          page_size: fetchSize,
-          page_offset: fetchOffset,
-          filter_tab: "all",
-          expanded_terms: expandedTerms.length > 0 ? expandedTerms : undefined,
-        });
-
-        if (error) throw error;
-
-        allJobs = (data || []).map(parseJob);
-
-        // Apply date filters client-side
-        if (dateFrom || dateTo) {
-          allJobs = allJobs.filter(j => {
-            if (dateFrom && j.posted_date < new Date(dateFrom)) return false;
-            if (dateTo) {
-              const to = new Date(dateTo);
-              to.setDate(to.getDate() + 1);
-              if (j.posted_date >= to) return false;
-            }
-            return true;
-          });
-        }
-      } else {
-        // No search query — use direct table query with 15-day cutoff
-        const cutoff = new Date();
-        cutoff.setDate(cutoff.getDate() - 15);
-
-        const fetchSize = isVisaFiltered ? VISA_BATCH_SIZE : PAGE_SIZE;
-        const rangeStart = isVisaFiltered ? 0 : (page - 1) * PAGE_SIZE;
-        const rangeEnd = rangeStart + fetchSize - 1;
-
-        let query = supabase
-          .from("jobs")
-          .select("*", { count: "exact" })
-          .eq("is_published", true)
-          .eq("is_archived", false)
-          .gte("posted_date", cutoff.toISOString())
-          .order("posted_date", { ascending: false })
-          .range(rangeStart, rangeEnd);
-
-        if (dateFrom) {
-          query = query.gte("posted_date", dateFrom);
-        }
-        if (dateTo) {
-          const toDate = new Date(dateTo);
-          toDate.setDate(toDate.getDate() + 1);
-          query = query.lt("posted_date", toDate.toISOString().split("T")[0]);
-        }
-
-        const { data, error, count } = await query;
-        if (error) throw error;
-
-        allJobs = (data || []).map(parseJob);
-      }
-
-      // Apply visa filter client-side
-      let filteredJobs = enrichJobList(allJobs);
-      if (isVisaFiltered) {
-        filteredJobs = filterJobsByVisa(filteredJobs, visaFilter);
-      }
-
-      // If visa filtered, do client-side pagination
-      if (isVisaFiltered) {
-        const totalFiltered = filteredJobs.length;
-        const startIdx = (page - 1) * PAGE_SIZE;
-        const pageJobs = filteredJobs.slice(startIdx, startIdx + PAGE_SIZE);
-        return {
-          jobs: pageJobs,
-          visaFilteredCount: totalFiltered,
-        };
-      }
-
-      return { jobs: filteredJobs };
-    },
+    queryFn: () => fetchJobsPage(searchQuery, page, dateFrom, dateTo, visaFilter),
     staleTime: STALE_TIME,
     placeholderData: (prev) => prev,
   });
 
-  // Fetch the total count separately for accurate numbers
+  // Prefetch next page in background for instant navigation
+  useEffect(() => {
+    if (!isVisaFiltered && jobsQuery.data && jobsQuery.data.jobs.length === PAGE_SIZE) {
+      const nextPage = page + 1;
+      queryClient.prefetchQuery({
+        queryKey: ["jobs", "paginated", searchQuery, nextPage, dateFrom, dateTo, visaFilter],
+        queryFn: () => fetchJobsPage(searchQuery, nextPage, dateFrom, dateTo, visaFilter),
+        staleTime: STALE_TIME,
+      });
+    }
+  }, [queryClient, searchQuery, page, dateFrom, dateTo, visaFilter, isVisaFiltered, jobsQuery.data]);
+
   const countQuery = useQuery({
     queryKey: ["jobs", "count", searchQuery],
     queryFn: async () => {
       const trimmed = searchQuery.trim();
-
       if (trimmed) {
         const expandedTerms = expandSearchTerms(trimmed);
         const { data, error } = await supabase.rpc("count_search_jobs", {
@@ -153,7 +160,6 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
         return Number(data) || 0;
       }
 
-      // No search — count all published non-archived within 15 days
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - 15);
       const { count, error } = await supabase
@@ -166,10 +172,9 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
       return count || 0;
     },
     staleTime: STALE_TIME,
-    enabled: !isVisaFiltered, // Skip separate count when visa filtering (we get it from filtered results)
+    enabled: !isVisaFiltered,
   });
 
-  // When visa filtered, use the filtered count; otherwise use the separate count query
   const visaFilteredCount = (jobsQuery.data as any)?.visaFilteredCount;
   const totalCount = isVisaFiltered
     ? (visaFilteredCount ?? 0)
