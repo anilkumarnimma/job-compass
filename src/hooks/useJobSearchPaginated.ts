@@ -47,6 +47,7 @@ async function fetchJobsPage(
   dateFrom: string | null | undefined,
   dateTo: string | null | undefined,
   visaFilter: VisaFilter,
+  signal?: AbortSignal,
 ) {
   const trimmed = searchQuery.trim();
   const isVisaFiltered = visaFilter !== "all";
@@ -127,9 +128,16 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
   const queryClient = useQueryClient();
   const isVisaFiltered = visaFilter !== "all";
 
+  // Cancel stale in-flight queries when search changes
+  useEffect(() => {
+    return () => {
+      queryClient.cancelQueries({ queryKey: ["jobs", "paginated"] });
+    };
+  }, [searchQuery, queryClient]);
+
   const jobsQuery = useQuery({
     queryKey: ["jobs", "paginated", searchQuery, page, dateFrom, dateTo, visaFilter],
-    queryFn: () => fetchJobsPage(searchQuery, page, dateFrom, dateTo, visaFilter),
+    queryFn: ({ signal }) => fetchJobsPage(searchQuery, page, dateFrom, dateTo, visaFilter, signal),
     staleTime: STALE_TIME,
     placeholderData: (prev) => prev,
   });

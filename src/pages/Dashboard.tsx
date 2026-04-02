@@ -149,7 +149,7 @@ export default function Dashboard() {
   }, [searchParams]);
 
   const [instantSearch, setInstantSearch] = useState("");
-  const debouncedSearch = useDebounce(searchInput, 400);
+  const debouncedSearch = useDebounce(searchInput, 500);
   const activeSearch = instantSearch || debouncedSearch;
 
   // Clear instant override when debounce catches up
