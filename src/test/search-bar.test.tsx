@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SearchBar } from "@/components/SearchBar";
 
@@ -23,11 +23,14 @@ describe("SearchBar", () => {
     const onChange = vi.fn();
     const onSearch = vi.fn();
 
-    render(<SearchBar value="" onChange={onChange} onSearch={onSearch} />);
+    const { getByPlaceholderText } = render(<SearchBar value="" onChange={onChange} onSearch={onSearch} />);
 
-    const input = screen.getByPlaceholderText("Search jobs by title, company, skills…") as HTMLInputElement;
+    const input = getByPlaceholderText("Search jobs by title, company, skills…") as HTMLInputElement;
 
-    fireEvent.change(input, { target: { value: "data analyst" } });
+    act(() => {
+      input.value = "data analyst";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
 
     expect(input.value).toBe("data analyst");
     expect(onChange).not.toHaveBeenCalled();
@@ -44,8 +47,11 @@ describe("SearchBar", () => {
 
     expect(onChange).toHaveBeenCalledWith("data analyst");
 
-    fireEvent.change(input, { target: { value: "data engineer" } });
-    fireEvent.keyDown(input, { key: "Enter" });
+    act(() => {
+      input.value = "data engineer";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    });
 
     expect(onChange).toHaveBeenLastCalledWith("data engineer");
     expect(onSearch).toHaveBeenCalledTimes(1);
