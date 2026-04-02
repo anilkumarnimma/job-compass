@@ -181,7 +181,7 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
 
       {/* Meta Row */}
       <div className="flex flex-wrap items-center gap-2 mb-3 relative z-10">
-        <VisaSponsorshipBadge result={useMemo(() => analyzeVisaSponsorship(job), [job])} compact />
+        <VisaSponsorshipBadge result={analyzeVisaSponsorship(job)} compact />
         <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${getLocationBadge()}`}>
           <MapPin className="h-3.5 w-3.5" />
           {job.location}
