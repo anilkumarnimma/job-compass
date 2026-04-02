@@ -18,10 +18,14 @@ export function ExtensionPasswordPrompt() {
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
 
-  const isGoogleOnly = user?.app_metadata?.provider === "google" ||
-    (user?.app_metadata?.providers?.includes("google") && !user?.app_metadata?.providers?.includes("email"));
+  // Detect Google-only users: check multiple metadata fields
+  const providers = user?.app_metadata?.providers as string[] | undefined;
+  const mainProvider = user?.app_metadata?.provider as string | undefined;
+  const hasGoogle = mainProvider === "google" || (providers?.includes("google") ?? false);
+  const hasEmail = mainProvider === "email" || (providers?.includes("email") ?? false);
+  const isGoogleOnly = hasGoogle && !hasEmail;
 
-  const wasDismissed = localStorage.getItem(DISMISS_KEY) === user?.id;
+  const wasDismissed = !!user && localStorage.getItem(DISMISS_KEY) === user.id;
   const isOpen = !!user && isGoogleOnly && !wasDismissed && !done;
 
   const handleDismiss = () => {
