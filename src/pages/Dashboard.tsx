@@ -169,12 +169,12 @@ export default function Dashboard() {
     page: currentPage,
     dateFrom: fallbackActive ? null : dateFrom,
     dateTo: fallbackActive ? null : dateTo,
+    visaFilter,
   });
 
   const { profile } = useProfile();
 
-  const rawJobs = data?.jobs || [];
-  const jobs = useMemo(() => filterJobsByVisa(rawJobs, visaFilter), [rawJobs, visaFilter]);
+  const jobs = data?.jobs || [];
 
   const matchResults = useMemo(
     () => calculateMatchesForJobs(jobs, profile?.resume_intelligence),
