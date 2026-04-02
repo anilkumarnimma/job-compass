@@ -75,8 +75,8 @@ export function IntroSplash({ children }: IntroSplashProps) {
         initial={showSplash ? { opacity: 0 } : { opacity: 1 }}
         animate={{ opacity: 1 }}
         transition={{
-          delay: showSplash ? 2.6 : 0,
-          duration: 0.5,
+          delay: showSplash ? 1.8 : 0,
+          duration: 0.3,
           ease: [0.22, 1, 0.36, 1],
         }}
       >
