@@ -161,11 +161,15 @@ export default function Dashboard() {
 
   const combinedSearchQuery = useMemo(() => {
     const parts: string[] = [];
-    if (debouncedSearch.trim()) parts.push(debouncedSearch);
+    if (activeSearch.trim()) parts.push(activeSearch);
     if (roleFilter) parts.push(roleFilter);
     if (companyFilter) parts.push(companyFilter);
     return parts.join(" ");
-  }, [debouncedSearch, roleFilter, companyFilter]);
+  }, [activeSearch, roleFilter, companyFilter]);
+
+  const handleInstantSearch = useCallback(() => {
+    setInstantSearch(searchInput);
+  }, [searchInput]);
 
   const { dateFrom, dateTo } = getDateRange(dateFilter, customDate);
 
