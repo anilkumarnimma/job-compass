@@ -18,7 +18,7 @@ export function IntroSplash({ children }: IntroSplashProps) {
     const timer = setTimeout(() => {
       setShowSplash(false);
       sessionStorage.setItem("sociax_intro_seen", "1");
-    }, 2600);
+    }, 1800);
     return () => clearTimeout(timer);
   }, [showSplash]);
 
