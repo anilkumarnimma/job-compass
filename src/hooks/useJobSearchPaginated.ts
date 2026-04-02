@@ -37,6 +37,7 @@ interface UseJobSearchPaginatedOptions {
   page: number;
   dateFrom?: string | null;
   dateTo?: string | null;
+  visaFilter?: VisaFilter;
 }
 
 export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo }: UseJobSearchPaginatedOptions) {
