@@ -27,6 +27,7 @@ const Admin = lazy(() => import("./pages/Admin"));
 const AdminImport = lazy(() => import("./pages/AdminImport"));
 const FounderEmployers = lazy(() => import("./pages/FounderEmployers"));
 const ErrorLogs = lazy(() => import("./pages/ErrorLogs"));
+const AdminPayments = lazy(() => import("./pages/AdminPayments"));
 const EmployerDashboard = lazy(() => import("./pages/EmployerDashboard"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Help = lazy(() => import("./pages/Help"));
