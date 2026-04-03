@@ -33,7 +33,6 @@ import { useIsUSUser } from "@/hooks/useIsUSUser";
 import { NotificationOptInDialog } from "@/components/NotificationOptInDialog";
 import { ExtensionPasswordPrompt } from "@/components/ExtensionPasswordPrompt";
 import { consumeDashboardResetToken, DASHBOARD_RESET_EVENT } from "@/lib/dashboardReset";
-import { useFirstLoginEmails } from "@/hooks/useFirstLoginEmails";
 
 type DateFilter = "all" | "today" | "yesterday" | "custom";
 
@@ -85,9 +84,6 @@ export default function Dashboard() {
   const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply, showProfileGate, setShowProfileGate, profileGateMissingFields } = useJobContext();
   const { toast } = useToast();
   const isUSUser = useIsUSUser();
-
-  // Trigger resume-based emails on first login
-  useFirstLoginEmails();
 
   const performDashboardReset = useCallback(() => {
     sessionStorage.removeItem("pending_search");
