@@ -47,7 +47,7 @@ export default function Recommendations() {
   const [tailoredResumeOpen, setTailoredResumeOpen] = useState(false);
   const [tailoredResumeJob, setTailoredResumeJob] = useState<RecommendedJob | null>(null);
 
-  const intelligence = profile?.resume_intelligence as ResumeIntelligence | null | undefined;
+  const intelligence = profile?.resume_intelligence as any;
 
   const handleJobTap = useCallback((job: Job) => {
     const recJob = jobs?.find(j => j.id === job.id) || null;
