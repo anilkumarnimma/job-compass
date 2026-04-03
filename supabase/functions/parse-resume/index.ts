@@ -50,8 +50,6 @@ serve(async (req) => {
     let contentPayload: any[];
     
     if (isDocx) {
-      // DOCX/DOC: extract text from the ZIP (DOCX is a ZIP of XML files)
-      // We'll decode base64, unzip, and extract text from word/document.xml
       const binaryStr = atob(file_base64);
       const bytes = new Uint8Array(binaryStr.length);
       for (let i = 0; i < binaryStr.length; i++) {
@@ -60,89 +58,104 @@ serve(async (req) => {
       
       let extractedText = "";
       try {
-        // Use DecompressionStream to handle ZIP
-        // DOCX is a ZIP - find word/document.xml using simple ZIP parsing
         const zip = bytes;
-        const textDecoder = new TextDecoder();
+        const td = new TextDecoder();
         
-        // Simple ZIP parser to find word/document.xml
-        let offset = 0;
-        const files: { name: string; data: Uint8Array; compressed: boolean }[] = [];
-        
-        while (offset < zip.length - 4) {
-          const sig = zip[offset] | (zip[offset+1] << 8) | (zip[offset+2] << 16) | (zip[offset+3] << 24);
-          if (sig !== 0x04034b50) break; // Not a local file header
-          
-          const compressionMethod = zip[offset + 8] | (zip[offset + 9] << 8);
-          const compressedSize = zip[offset + 18] | (zip[offset + 19] << 8) | (zip[offset + 20] << 16) | (zip[offset + 21] << 24);
-          const uncompressedSize = zip[offset + 22] | (zip[offset + 23] << 8) | (zip[offset + 24] << 16) | (zip[offset + 25] << 24);
-          const nameLen = zip[offset + 26] | (zip[offset + 27] << 8);
-          const extraLen = zip[offset + 28] | (zip[offset + 29] << 8);
-          const name = textDecoder.decode(zip.slice(offset + 30, offset + 30 + nameLen));
-          const dataStart = offset + 30 + nameLen + extraLen;
-          const dataBytes = zip.slice(dataStart, dataStart + compressedSize);
-          
-          if (name === "word/document.xml" || name === "word/header1.xml" || name === "word/header2.xml") {
-            if (compressionMethod === 8) {
-              // Deflate compressed
-              try {
-                const ds = new DecompressionStream("raw");
-                const writer = ds.writable.getWriter();
-                writer.write(dataBytes);
-                writer.close();
-                const reader = ds.readable.getReader();
-                const chunks: Uint8Array[] = [];
-                while (true) {
-                  const { done, value } = await reader.read();
-                  if (done) break;
-                  chunks.push(value);
-                }
-                const totalLen = chunks.reduce((a, c) => a + c.length, 0);
-                const result = new Uint8Array(totalLen);
-                let pos = 0;
-                for (const chunk of chunks) {
-                  result.set(chunk, pos);
-                  pos += chunk.length;
-                }
-                files.push({ name, data: result, compressed: true });
-              } catch {
-                files.push({ name, data: dataBytes, compressed: false });
-              }
-            } else {
-              files.push({ name, data: dataBytes, compressed: false });
-            }
+        // Find End of Central Directory record (search backwards)
+        let eocdOffset = -1;
+        for (let i = zip.length - 22; i >= 0; i--) {
+          if (zip[i] === 0x50 && zip[i+1] === 0x4b && zip[i+2] === 0x05 && zip[i+3] === 0x06) {
+            eocdOffset = i;
+            break;
           }
-          
-          offset = dataStart + compressedSize;
         }
         
-        // Extract text from XML by stripping tags and getting <w:t> content
-        for (const f of files) {
-          const xml = textDecoder.decode(f.data);
-          // Extract text between <w:t> and </w:t> tags, preserving paragraph breaks
+        if (eocdOffset === -1) throw new Error("Not a valid ZIP file");
+        
+        const cdOffset = zip[eocdOffset + 16] | (zip[eocdOffset + 17] << 8) | (zip[eocdOffset + 18] << 16) | (zip[eocdOffset + 19] << 24);
+        const cdEntries = zip[eocdOffset + 10] | (zip[eocdOffset + 11] << 8);
+        
+        // Parse central directory to get accurate file info
+        const targetFiles = ["word/document.xml"];
+        const fileEntries: { name: string; offset: number; compSize: number; uncompSize: number; method: number }[] = [];
+        let pos = cdOffset;
+        
+        for (let i = 0; i < cdEntries && pos < zip.length - 46; i++) {
+          const sig = zip[pos] | (zip[pos+1] << 8) | (zip[pos+2] << 16) | (zip[pos+3] << 24);
+          if (sig !== 0x02014b50) break;
+          
+          const method = zip[pos + 10] | (zip[pos + 11] << 8);
+          const compSize = zip[pos + 20] | (zip[pos + 21] << 8) | (zip[pos + 22] << 16) | (zip[pos + 23] << 24);
+          const uncompSize = zip[pos + 24] | (zip[pos + 25] << 8) | (zip[pos + 26] << 16) | (zip[pos + 27] << 24);
+          const nameLen = zip[pos + 28] | (zip[pos + 29] << 8);
+          const extraLen = zip[pos + 30] | (zip[pos + 31] << 8);
+          const commentLen = zip[pos + 32] | (zip[pos + 33] << 8);
+          const localHeaderOffset = zip[pos + 42] | (zip[pos + 43] << 8) | (zip[pos + 44] << 16) | (zip[pos + 45] << 24);
+          const name = td.decode(zip.slice(pos + 46, pos + 46 + nameLen));
+          
+          if (targetFiles.includes(name)) {
+            fileEntries.push({ name, offset: localHeaderOffset, compSize, uncompSize, method });
+          }
+          
+          pos += 46 + nameLen + extraLen + commentLen;
+        }
+        
+        for (const entry of fileEntries) {
+          // Read local file header to get actual data offset
+          const lhNameLen = zip[entry.offset + 26] | (zip[entry.offset + 27] << 8);
+          const lhExtraLen = zip[entry.offset + 28] | (zip[entry.offset + 29] << 8);
+          const dataStart = entry.offset + 30 + lhNameLen + lhExtraLen;
+          const rawData = zip.slice(dataStart, dataStart + entry.compSize);
+          
+          let xmlBytes: Uint8Array;
+          if (entry.method === 8) {
+            const ds = new DecompressionStream("raw");
+            const writer = ds.writable.getWriter();
+            writer.write(rawData);
+            writer.close();
+            const reader = ds.readable.getReader();
+            const chunks: Uint8Array[] = [];
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              chunks.push(value);
+            }
+            const total = chunks.reduce((a, c) => a + c.length, 0);
+            xmlBytes = new Uint8Array(total);
+            let p = 0;
+            for (const c of chunks) { xmlBytes.set(c, p); p += c.length; }
+          } else {
+            xmlBytes = rawData;
+          }
+          
+          const xml = td.decode(xmlBytes);
           const paragraphs = xml.split(/<\/w:p>/);
           for (const para of paragraphs) {
             const texts: string[] = [];
             const regex = /<w:t[^>]*>([^<]*)<\/w:t>/g;
-            let match;
-            while ((match = regex.exec(para)) !== null) {
-              texts.push(match[1]);
-            }
-            if (texts.length > 0) {
-              extractedText += texts.join("") + "\n";
-            }
+            let m;
+            while ((m = regex.exec(para)) !== null) texts.push(m[1]);
+            if (texts.length > 0) extractedText += texts.join("") + "\n";
           }
         }
+        
+        console.log(`DOCX extraction: found ${fileEntries.length} target files, extracted ${extractedText.length} chars`);
       } catch (e) {
         console.error("DOCX extraction error:", e);
-        // Fallback: strip all XML-like tags from raw text
-        const textDecoder = new TextDecoder("utf-8", { fatal: false });
-        const rawText = textDecoder.decode(bytes);
-        extractedText = rawText.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+        // Fallback: try to find readable text in binary
+        const td2 = new TextDecoder("utf-8", { fatal: false });
+        const raw = td2.decode(bytes);
+        // Try extracting w:t tags from raw (uncompressed) data
+        const regex2 = /<w:t[^>]*>([^<]+)<\/w:t>/g;
+        let m2;
+        while ((m2 = regex2.exec(raw)) !== null) extractedText += m2[1] + " ";
+        if (!extractedText.trim()) {
+          extractedText = raw.replace(/<[^>]+>/g, " ").replace(/[^\x20-\x7E\n]/g, "").replace(/\s+/g, " ").trim();
+        }
       }
       
       if (!extractedText.trim()) {
-        return new Response(JSON.stringify({ error: "Could not extract text from the document. Please try uploading a PDF version." }), {
+        return new Response(JSON.stringify({ error: "Could not extract text from this document. Please try uploading a PDF version instead." }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
