@@ -62,8 +62,9 @@ export function useResumeIntelligence() {
 
       const intelligence = data.intelligence as ResumeIntelligence;
 
-      // Invalidate profile cache so UI picks up new intelligence
+      // Invalidate profile + recommendations so UI picks up new intelligence immediately
       queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["recommended-jobs"] });
 
       toast({
         title: "Resume analyzed ✨",
