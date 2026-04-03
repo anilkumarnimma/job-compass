@@ -289,11 +289,11 @@ function parseCSV(text: string): ParseResult {
     return { valid: [], errors: [{ row: 0, message: "CSV must have a header row and at least one data row" }] };
   }
 
-  const header = lines[0].split(",").map((h) => h.trim().toLowerCase().replace(/['"]/g, ""));
+  const rawHeaders = lines[0].split(",").map((h) => h.trim());
+  const { mapped: header, unmapped: missingFields } = mapHeaders(rawHeaders);
   
-  const missingFields = REQUIRED_FIELDS.filter((f) => !header.includes(f));
   if (missingFields.length > 0) {
-    return { valid: [], errors: [{ row: 0, message: `Missing required columns: ${missingFields.join(", ")}` }] };
+    return { valid: [], errors: [{ row: 0, message: `Missing required columns: ${missingFields.join(", ")}. Your headers: ${rawHeaders.join(", ")}` }] };
   }
 
   const valid: CSVJob[] = [];
