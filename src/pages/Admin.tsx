@@ -153,6 +153,13 @@ export default function Admin() {
           duplicateIsPending={duplicateJob.isPending}
         />
 
+        {/* Deleted Jobs Trash - Founder only */}
+        {isFounder && (
+          <div className="mt-8">
+            <DeletedJobsPanel />
+          </div>
+        )}
+
         {/* Support Tickets Section - Founder only */}
         {isFounder && (
           <div className="mt-8">
