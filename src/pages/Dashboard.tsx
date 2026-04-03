@@ -432,6 +432,7 @@ export default function Dashboard() {
           <div className="flex flex-col">
             <JobMatchesPanel />
             <TopMatchesSection onJobTap={handleJobTap} />
+            <div className="mt-4">
               <JobListPaginated
                 jobs={jobs}
                 isLoading={isLoading}
