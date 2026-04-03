@@ -35,6 +35,7 @@ import { useIsUSUser } from "@/hooks/useIsUSUser";
 import { NotificationOptInDialog } from "@/components/NotificationOptInDialog";
 import { ExtensionPasswordPrompt } from "@/components/ExtensionPasswordPrompt";
 import { consumeDashboardResetToken, DASHBOARD_RESET_EVENT } from "@/lib/dashboardReset";
+import { useResumeEmail } from "@/hooks/useResumeEmail";
 
 type DateFilter = "all" | "today" | "yesterday" | "custom";
 
