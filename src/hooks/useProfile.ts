@@ -115,11 +115,17 @@ export function useProfile() {
     if (!user) throw new Error("Not authenticated");
     const silent = options?.silent ?? false;
     
-    const allowedTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
-    if (!allowedTypes.includes(file.type)) {
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+    const allowedExtensions = [".pdf", ".doc", ".docx"];
+    const ext = file.name.toLowerCase().slice(file.name.lastIndexOf("."));
+    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(ext)) {
       toast({
         title: "Invalid file type",
-        description: "Please upload a PDF or DOCX file.",
+        description: "Please upload a PDF, DOC, or DOCX file.",
         variant: "destructive",
       });
       return;

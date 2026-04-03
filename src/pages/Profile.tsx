@@ -509,7 +509,7 @@ export default function Profile() {
             <CardContent>
               {isLoading ? <Skeleton className="h-24 w-full" /> : (
                 <div className="space-y-4">
-                  <input type="file" ref={fileInputRef} accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleFileUpload} className="hidden" />
+                  <input type="file" ref={fileInputRef} accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleFileUpload} className="hidden" />
 
                   {profile?.resume_filename ? (
                     <>
@@ -542,7 +542,7 @@ export default function Profile() {
                       {isUploading || isParsing ? (
                         <><Loader2 className="h-10 w-10 text-muted-foreground animate-spin mb-3" /><p className="text-muted-foreground">{isParsing ? "Parsing..." : "Uploading..."}</p></>
                       ) : (
-                        <><Upload className="h-10 w-10 text-muted-foreground mb-3" /><p className="font-medium text-foreground">Click to upload resume</p><p className="text-sm text-muted-foreground mt-1">PDF or DOCX — will auto-fill your profile</p></>
+                        <><Upload className="h-10 w-10 text-muted-foreground mb-3" /><p className="font-medium text-foreground">Click to upload resume</p><p className="text-sm text-muted-foreground mt-1">PDF, DOC, or DOCX — will auto-fill your profile</p></>
                       )}
                     </div>
                   )}
