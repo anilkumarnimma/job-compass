@@ -251,10 +251,7 @@ serve(async (req) => {
           },
           {
             role: "user",
-            content: [
-              { type: "text", text: `Parse this resume and extract all available profile fields. Only include fields you can clearly find in the document. The filename is: ${filename}` },
-              { type: "image_url", image_url: { url: dataUri } },
-            ],
+            content: contentPayload,
           },
         ],
         tools: [extractionTool],
