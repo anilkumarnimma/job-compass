@@ -37,6 +37,78 @@ interface UploadSummary {
 
 const REQUIRED_FIELDS = ["title", "company", "location", "description", "external_apply_link"];
 
+// Smart header mapping: maps common CSV column name variations to our internal field names
+const HEADER_ALIASES: Record<string, string> = {
+  // title
+  'title': 'title', 'job title': 'title', 'jobtitle': 'title', 'role': 'title',
+  'position': 'title', 'job name': 'title', 'jobname': 'title', 'role title': 'title',
+  'position title': 'title', 'job role': 'title', 'designation': 'title',
+  // company
+  'company': 'company', 'company name': 'company', 'companyname': 'company',
+  'employer': 'company', 'employer name': 'company', 'organization': 'company', 'org': 'company',
+  'firm': 'company', 'hiring company': 'company',
+  // location
+  'location': 'location', 'job location': 'location', 'joblocation': 'location',
+  'city': 'location', 'work location': 'location', 'office location': 'location',
+  'place': 'location', 'region': 'location',
+  // description
+  'description': 'description', 'job description': 'description', 'jobdescription': 'description',
+  'full job description': 'description', 'full description': 'description', 'desc': 'description',
+  'details': 'description', 'job details': 'description', 'summary': 'description',
+  'job summary': 'description', 'about the role': 'description',
+  // external_apply_link
+  'external_apply_link': 'external_apply_link', 'externalapplylink': 'external_apply_link',
+  'external apply link': 'external_apply_link', 'apply link': 'external_apply_link',
+  'applylink': 'external_apply_link', 'apply url': 'external_apply_link',
+  'applyurl': 'external_apply_link', 'application url': 'external_apply_link',
+  'applicationurl': 'external_apply_link', 'application link': 'external_apply_link',
+  'url': 'external_apply_link', 'link': 'external_apply_link', 'job url': 'external_apply_link',
+  'joburl': 'external_apply_link', 'job link': 'external_apply_link', 'joblink': 'external_apply_link',
+  'apply': 'external_apply_link', 'direct company apply url': 'external_apply_link',
+  'company url': 'external_apply_link', 'posting url': 'external_apply_link',
+  // skills (optional)
+  'skills': 'skills', 'required skills': 'skills', 'tech stack': 'skills',
+  'techstack': 'skills', 'technologies': 'skills', 'tools': 'skills',
+  'key skills': 'skills', 'technical skills': 'skills', 'qualifications': 'skills',
+  // employment_type (optional)
+  'employment_type': 'employment_type', 'employmenttype': 'employment_type',
+  'employment type': 'employment_type', 'job type': 'employment_type',
+  'jobtype': 'employment_type', 'type': 'employment_type', 'work type': 'employment_type',
+  // experience_years (optional)
+  'experience_years': 'experience_years', 'experienceyears': 'experience_years',
+  'experience years': 'experience_years', 'experience': 'experience_years',
+  'years of experience': 'experience_years', 'yoe': 'experience_years',
+  // salary_range (optional)
+  'salary_range': 'salary_range', 'salaryrange': 'salary_range',
+  'salary range': 'salary_range', 'salary': 'salary_range', 'pay': 'salary_range',
+  'compensation': 'salary_range', 'pay range': 'salary_range',
+  // company_logo (optional)
+  'company_logo': 'company_logo', 'companylogo': 'company_logo',
+  'company logo': 'company_logo', 'logo': 'company_logo', 'logo url': 'company_logo',
+  // posted_date (optional)
+  'posted_date': 'posted_date', 'posteddate': 'posted_date',
+  'posted date': 'posted_date', 'date posted': 'posted_date', 'date': 'posted_date',
+  'publish date': 'posted_date', 'post date': 'posted_date',
+};
+
+function normalizeHeader(raw: string): string {
+  return raw
+    .toLowerCase()
+    .replace(/['"]/g, '')
+    .replace(/[_\-\.]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function mapHeaders(rawHeaders: string[]): { mapped: string[]; unmapped: string[] } {
+  const mapped = rawHeaders.map((h) => {
+    const norm = normalizeHeader(h);
+    return HEADER_ALIASES[norm] || norm;
+  });
+  const unmapped = REQUIRED_FIELDS.filter((f) => !mapped.includes(f));
+  return { mapped, unmapped };
+}
+
 const DICE_PATTERNS = [
   'dice.com',
   'www.dice.com',
@@ -217,11 +289,11 @@ function parseCSV(text: string): ParseResult {
     return { valid: [], errors: [{ row: 0, message: "CSV must have a header row and at least one data row" }] };
   }
 
-  const header = lines[0].split(",").map((h) => h.trim().toLowerCase().replace(/['"]/g, ""));
+  const rawHeaders = lines[0].split(",").map((h) => h.trim());
+  const { mapped: header, unmapped: missingFields } = mapHeaders(rawHeaders);
   
-  const missingFields = REQUIRED_FIELDS.filter((f) => !header.includes(f));
   if (missingFields.length > 0) {
-    return { valid: [], errors: [{ row: 0, message: `Missing required columns: ${missingFields.join(", ")}` }] };
+    return { valid: [], errors: [{ row: 0, message: `Missing required columns: ${missingFields.join(", ")}. Your headers: ${rawHeaders.join(", ")}` }] };
   }
 
   const valid: CSVJob[] = [];
