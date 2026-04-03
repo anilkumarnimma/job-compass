@@ -17,8 +17,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Upload, FileText, X } from "lucide-react";
-import { calculateJobMatch } from "@/lib/jobMatcher";
-import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -49,7 +47,7 @@ export default function Recommendations() {
   const [tailoredResumeOpen, setTailoredResumeOpen] = useState(false);
   const [tailoredResumeJob, setTailoredResumeJob] = useState<RecommendedJob | null>(null);
 
-  const intelligence = profile?.resume_intelligence as ResumeIntelligence | null | undefined;
+  const intelligence = profile?.resume_intelligence as any;
 
   const handleJobTap = useCallback((job: Job) => {
     const recJob = jobs?.find(j => j.id === job.id) || null;
@@ -61,7 +59,12 @@ export default function Recommendations() {
     }
   }, [isMobile, jobs]);
 
-  const filteredJobs = useMemo(() => (jobs || []).filter(j => !isApplied(j.id)), [jobs, isApplied]);
+  // Jobs are already sorted by match score from the hook; just filter applied ones
+  const filteredJobs = useMemo(() => {
+    const filtered = (jobs || []).filter(j => !isApplied(j.id));
+    // Already sorted by matchScore desc from hook, no need to re-sort
+    return filtered;
+  }, [jobs, isApplied]);
 
   const totalPages = Math.ceil(filteredJobs.length / PAGE_SIZE);
   const paginatedJobs = useMemo(
@@ -196,24 +199,23 @@ export default function Recommendations() {
                   >
                     <div className="relative">
                       <div className="absolute -top-2.5 left-4 z-10 flex items-center gap-1.5">
-                        <Badge className="bg-accent/15 text-accent border-accent/20 text-[10px] px-2 py-0.5 rounded-full font-medium shadow-sm cursor-default">
-                          <Sparkles className="h-3 w-3 mr-1" />
-                          Recommended
-                        </Badge>
-                        {(() => {
-                          const match = intelligence ? calculateJobMatch(job, intelligence) : null;
-                          if (!match || match.score === 0) return null;
-                          const bgColor = match.score >= 70
-                            ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                            : match.score >= 40
-                            ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
-                            : "bg-red-500/15 text-red-600 dark:text-red-400";
-                          return (
-                            <Badge className={`${bgColor} border-0 text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm cursor-default`}>
-                              {match.score}% Match
-                            </Badge>
-                          );
-                        })()}
+                        {job.matchResult && job.matchResult.score >= 70 && (
+                          <Badge className="bg-accent/15 text-accent border-accent/20 text-[10px] px-2 py-0.5 rounded-full font-medium shadow-sm cursor-default">
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            Best Match
+                          </Badge>
+                        )}
+                        {job.matchScore > 0 && (
+                          <Badge className={`${
+                            job.matchScore >= 70
+                              ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                              : job.matchScore >= 50
+                              ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                              : "bg-muted text-muted-foreground"
+                          } border-0 text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm cursor-default`}>
+                            {job.matchScore}% Match
+                          </Badge>
+                        )}
                       </div>
                       <JobCard
                         job={job}
