@@ -45,6 +45,10 @@ export function useResumeIntelligence() {
 
   const analyzeResume = async (params: AnalyzeParams): Promise<ResumeIntelligence | null> => {
     setIsAnalyzing(true);
+
+    // Immediately clear stale recommendation cache before analysis starts
+    queryClient.removeQueries({ queryKey: ["recommended-jobs"] });
+
     try {
       const { data, error } = await supabase.functions.invoke("analyze-resume", {
         body: {
@@ -62,9 +66,8 @@ export function useResumeIntelligence() {
 
       const intelligence = data.intelligence as ResumeIntelligence;
 
-      // Invalidate all dependent queries so UI refreshes everywhere
-      queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      // Force-refetch all dependent data so UI reflects new intelligence everywhere
+      await queryClient.invalidateQueries({ queryKey: ["profile"] });
       queryClient.invalidateQueries({ queryKey: ["recommended-jobs"] });
       queryClient.invalidateQueries({ queryKey: ["job-matches"] });
       queryClient.invalidateQueries({ queryKey: ["job-search"] });
