@@ -28,12 +28,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { JobMatchesPanel } from "@/components/JobMatchesPanel";
 
 import { WelcomeBanner } from "@/components/WelcomeBanner";
+import { ResumeUploadBanner } from "@/components/ResumeUploadBanner";
 import { VisaFilterPills } from "@/components/VisaFilterPills";
 import { VisaFilter } from "@/lib/visaSponsorship";
 import { useIsUSUser } from "@/hooks/useIsUSUser";
 import { NotificationOptInDialog } from "@/components/NotificationOptInDialog";
 import { ExtensionPasswordPrompt } from "@/components/ExtensionPasswordPrompt";
 import { consumeDashboardResetToken, DASHBOARD_RESET_EVENT } from "@/lib/dashboardReset";
+import { useResumeEmail } from "@/hooks/useResumeEmail";
 
 type DateFilter = "all" | "today" | "yesterday" | "custom";
 
@@ -85,7 +87,9 @@ export default function Dashboard() {
   const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply, showProfileGate, setShowProfileGate, profileGateMissingFields } = useJobContext();
   const { toast } = useToast();
   const isUSUser = useIsUSUser();
-
+  
+  // Send one-time welcome/recommendation email on first visit
+  useResumeEmail();
   const performDashboardReset = useCallback(() => {
     sessionStorage.removeItem("pending_search");
     setSearchInput("");
@@ -271,6 +275,8 @@ export default function Dashboard() {
         <div className="w-full max-w-[1600px] mx-auto px-4 md:px-6 py-4">
         {/* Welcome Banner */}
         <WelcomeBanner />
+        {/* Resume Upload CTA (only shown if no resume) */}
+        <ResumeUploadBanner />
 
         {/* Header + Search + Filters (above columns) */}
         <div className="mb-4">

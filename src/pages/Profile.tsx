@@ -451,6 +451,20 @@ export default function Profile() {
         education: filteredEdu,
         currentTitle: currentWork?.title || newFormData.current_title || undefined,
         experienceYears: newFormData.experience_years ? Number(newFormData.experience_years) : undefined,
+      }).then(() => {
+        // After analysis completes, send recommendation email for new resume
+        // Clear the old "remind" key so the "rec" email fires
+        if (user) {
+          localStorage.removeItem(`sociax_resume_email_sent_${user.id}_remind`);
+          localStorage.removeItem(`sociax_resume_email_sent_${user.id}_rec`);
+        }
+        supabase.auth.getSession().then(({ data: session }) => {
+          if (session?.session?.access_token) {
+            supabase.functions.invoke("send-resume-email", {
+              headers: { Authorization: `Bearer ${session.session.access_token}` },
+            }).catch(() => {});
+          }
+        });
       });
     }
   };
