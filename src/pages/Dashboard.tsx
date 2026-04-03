@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useTransition } from "react";
+import { useState, useMemo, useCallback, useEffect, useTransition, useDeferredValue } from "react";
 import { useProfile } from "@/hooks/useProfile";
 import { calculateMatchesForJobs } from "@/lib/jobMatcher";
 import { calculateLandingProbability } from "@/lib/landingProbability";
@@ -188,21 +188,24 @@ export default function Dashboard() {
 
   const jobs = data?.jobs || [];
 
+  // Defer heavy calculations so they don't block typing
+  const deferredJobs = useDeferredValue(jobs);
+
   const matchResults = useMemo(
-    () => calculateMatchesForJobs(jobs, profile?.resume_intelligence),
-    [jobs, profile?.resume_intelligence]
+    () => calculateMatchesForJobs(deferredJobs, profile?.resume_intelligence),
+    [deferredJobs, profile?.resume_intelligence]
   );
 
   const landingResults = useMemo(() => {
     const intelligence = profile?.resume_intelligence as ResumeIntelligence | null | undefined;
     if (!intelligence) return new Map();
     const results = new Map();
-    for (const job of jobs) {
+    for (const job of deferredJobs) {
       const lr = calculateLandingProbability(job, matchResults.get(job.id), intelligence);
       if (lr) results.set(job.id, lr);
     }
     return results;
-  }, [jobs, matchResults, profile?.resume_intelligence]);
+  }, [deferredJobs, matchResults, profile?.resume_intelligence]);
 
   useEffect(() => {
     if (!isLoading && dateFilter !== "all" && !fallbackActive && data && data.totalCount === 0) {
