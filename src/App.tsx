@@ -111,6 +111,11 @@ function AppRoutes() {
           <LazyPage><ErrorLogs /></LazyPage>
         </ProtectedRoute>
       } />
+      <Route path="/admin/payments" element={
+        <ProtectedRoute allowedRoles={["founder"]}>
+          <LazyPage><AdminPayments /></LazyPage>
+        </ProtectedRoute>
+      } />
       
       <Route path="/payment-success" element={<LazyPage><PaymentSuccess /></LazyPage>} />
       <Route path="/unsubscribe" element={<LazyPage><Unsubscribe /></LazyPage>} />
