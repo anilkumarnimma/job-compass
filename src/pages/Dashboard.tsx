@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useTransition, useDeferredValue } from "react";
 import { useProfile } from "@/hooks/useProfile";
+import { useAuth } from "@/context/AuthContext";
 import { calculateMatchesForJobs } from "@/lib/jobMatcher";
 import { calculateLandingProbability } from "@/lib/landingProbability";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
@@ -115,6 +116,7 @@ export default function Dashboard() {
     }
   }, [searchParams, setSearchParams, toast]);
 
+
   // Handle pending search from landing page tag click
   useEffect(() => {
     const pendingSearch = sessionStorage.getItem("pending_search");
@@ -190,6 +192,34 @@ export default function Dashboard() {
   });
 
   const { profile } = useProfile();
+  const { user } = useAuth();
+
+  // Show subtle toast for auto-premium (first 100) users — once per session
+  useEffect(() => {
+    if (
+      profile?.is_premium === true &&
+      user?.id &&
+      !sessionStorage.getItem("priority_premium_shown")
+    ) {
+      const checkAutoPremium = async () => {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { data } = await supabase
+          .from("user_subscriptions")
+          .select("is_subscribed")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        
+        if (!data?.is_subscribed) {
+          toast({
+            title: "🌟 You just unlocked Premium as a priority user",
+            description: "Enjoy unlimited applications and all premium features.",
+          });
+        }
+        sessionStorage.setItem("priority_premium_shown", "true");
+      };
+      checkAutoPremium();
+    }
+  }, [profile?.is_premium, user?.id, toast]);
 
   const jobs = data?.jobs || [];
 

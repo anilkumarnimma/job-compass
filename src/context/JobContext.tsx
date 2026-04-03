@@ -52,7 +52,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
         return;
       }
       const isPremium = profile?.is_premium === true;
-      if (!isPremium && totalAppCount >= 1) {
+      if (!isPremium && totalAppCount >= 9) {
         setShowUpgradeDialog(true);
         return;
       }
