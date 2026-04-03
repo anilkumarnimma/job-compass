@@ -132,6 +132,71 @@ export function useDeleteJob() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      // Soft delete: set deleted_at timestamp instead of removing
+      const { error } = await supabase
+        .from("jobs")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["deleted-jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      toast.success("Job moved to trash (can be restored)");
+    },
+    onError: (error) => {
+      toast.error("Failed to delete job: " + error.message);
+    },
+  });
+}
+
+export function useDeletedJobs() {
+  return useQuery({
+    queryKey: ["deleted-jobs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("jobs")
+        .select("*")
+        .not("deleted_at", "is", null)
+        .order("deleted_at", { ascending: false });
+
+      if (error) throw error;
+      return (data || []).map(parseJob);
+    },
+  });
+}
+
+export function useRestoreJob() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("jobs")
+        .update({ deleted_at: null })
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["deleted-jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      toast.success("Job restored successfully!");
+    },
+    onError: (error) => {
+      toast.error("Failed to restore job: " + error.message);
+    },
+  });
+}
+
+export function usePermanentDeleteJob() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
       const { error } = await supabase
         .from("jobs")
         .delete()
@@ -140,12 +205,11 @@ export function useDeleteJob() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-jobs"] });
-      queryClient.invalidateQueries({ queryKey: ["jobs"] });
-      toast.success("Job deleted successfully!");
+      queryClient.invalidateQueries({ queryKey: ["deleted-jobs"] });
+      toast.success("Job permanently deleted");
     },
     onError: (error) => {
-      toast.error("Failed to delete job: " + error.message);
+      toast.error("Failed to permanently delete job: " + error.message);
     },
   });
 }
