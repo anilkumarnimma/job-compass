@@ -205,7 +205,7 @@ function isRoleRelevant(jobTitle: string, userRole: string, targetTitles: string
 }
 
 // Minimum match score to include in recommendations
-const MIN_MATCH_SCORE = 35;
+const MIN_MATCH_SCORE = 40;
 
 export interface RecommendedJob extends Job {
   matchScore: number;
