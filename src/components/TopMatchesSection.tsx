@@ -93,7 +93,7 @@ export function TopMatchesSection({ onJobTap }: TopMatchesSectionProps) {
             className="shrink-0 w-52 text-left p-3 rounded-xl border border-border/40 bg-card hover:border-accent/30 hover:shadow-sm transition-all group"
           >
             <div className="flex items-start gap-2.5 mb-2">
-              <CompanyLogo company={job.company} logoUrl={job.company_logo} size="sm" />
+              <CompanyLogo companyName={job.company} logoUrl={job.company_logo} size="sm" />
               <div className="min-w-0 flex-1">
                 <p className="text-[13px] font-medium text-foreground truncate group-hover:text-accent transition-colors">
                   {job.title}
