@@ -87,7 +87,9 @@ export default function Dashboard() {
   const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply, showProfileGate, setShowProfileGate, profileGateMissingFields } = useJobContext();
   const { toast } = useToast();
   const isUSUser = useIsUSUser();
-
+  
+  // Send one-time welcome/recommendation email on first visit
+  useResumeEmail();
   const performDashboardReset = useCallback(() => {
     sessionStorage.removeItem("pending_search");
     setSearchInput("");
