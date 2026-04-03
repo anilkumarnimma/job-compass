@@ -267,16 +267,18 @@ export default function Profile() {
     }
   };
 
-  // Resume handlers
+  // Resume handlers - automatic parse + autofill + analyze on upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // Reset the input so the same file can be re-selected
     e.target.value = "";
     try {
       await uploadResume(file);
-      // After successful upload, ask if user wants to autofill
-      setShowAutofillPrompt(true);
+      // Automatically trigger autofill (no prompt needed)
+      // Small delay to ensure profile state has the new resume_url
+      setTimeout(() => {
+        handleAutofillExisting();
+      }, 500);
     } catch {
       // uploadResume already shows error toast
     }
@@ -285,7 +287,6 @@ export default function Profile() {
   const handleAutofillPromptYes = async () => {
     setShowAutofillPrompt(false);
     if (!profile?.resume_url && !user) return;
-    // Trigger autofill from the just-uploaded resume
     handleAutofillExisting();
   };
 
