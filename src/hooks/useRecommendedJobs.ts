@@ -205,7 +205,26 @@ function isRoleRelevant(jobTitle: string, userRole: string, targetTitles: string
 }
 
 // Minimum match score to include in recommendations
-const MIN_MATCH_SCORE = 40;
+const MIN_MATCH_SCORE = 45;
+
+// Freshness bonus: jobs posted recently get a score boost
+function freshnessBonus(postedDate: Date): number {
+  const hoursAgo = (Date.now() - postedDate.getTime()) / (1000 * 60 * 60);
+  if (hoursAgo <= 24) return 8;
+  if (hoursAgo <= 48) return 5;
+  if (hoursAgo <= 72) return 3;
+  if (hoursAgo <= 168) return 1; // within 1 week
+  return 0;
+}
+
+// Source quality: Greenhouse/Lever/direct career pages rank higher
+function sourceBonus(link: string): number {
+  const l = (link || "").toLowerCase();
+  if (l.includes("greenhouse.io") || l.includes("greenhouse.com")) return 3;
+  if (l.includes("lever.co")) return 2;
+  if (l.includes("dice.com") || l.includes("lensa.")) return -3;
+  return 0;
+}
 
 export interface RecommendedJob extends Job {
   matchScore: number;
@@ -220,16 +239,22 @@ export function useRecommendedJobs() {
   const hasProfileData = !!(profile?.skills?.length || profile?.current_title || (Array.isArray(profile?.work_experience) && profile.work_experience.length));
   const hasIntelligence = !!(profile?.resume_intelligence);
 
+  // Build a stable fingerprint of resume intelligence to ensure queryKey changes on replacement
+  const intelligence = profile?.resume_intelligence as ResumeIntelligence | null;
+  const intelligenceFingerprint = intelligence
+    ? `${intelligence.primaryRole || ""}|${(intelligence.topSkills || []).slice(0, 5).join(",")}|${intelligence.experienceLevel || ""}`
+    : null;
+
   const enabled = !profileLoading && !!profile;
 
   const query = useQuery({
-    queryKey: ["recommended-jobs", profile?.skills, profile?.current_title, profile?.location, profile?.resume_intelligence],
+    queryKey: ["recommended-jobs", intelligenceFingerprint, profile?.current_title],
     queryFn: async (): Promise<RecommendedJob[]> => {
       if (!profile) return [];
 
-      const intelligence = profile.resume_intelligence as ResumeIntelligence | null;
+      const ri = profile.resume_intelligence as ResumeIntelligence | null;
 
-      // Fetch recent published jobs
+      // Fetch recent published jobs (only last 15 days, sorted by recency)
       const { data, error } = await supabase
         .from("jobs")
         .select("*")
@@ -243,51 +268,61 @@ export function useRecommendedJobs() {
       if (!data) return [];
 
       // If no intelligence data, return recent jobs as fallback
-      if (!intelligence) {
-        return data.slice(0, 50).map(row => ({
+      if (!ri) {
+        return data.slice(0, 30).map(row => ({
           ...parseJob(row),
           matchScore: 0,
           matchedSkills: [],
         }));
       }
 
-      const userRole = intelligence.primaryRole || "";
-      const targetTitles = intelligence.jobTitlesToTarget || [];
+      const userRole = ri.primaryRole || "";
+      const targetTitles = ri.jobTitlesToTarget || [];
+      const now = Date.now();
 
       const scored: RecommendedJob[] = [];
 
       for (const row of data) {
         const job = parseJob(row);
 
+        // Skip jobs older than 15 days (extra safety)
+        const ageMs = now - job.posted_date.getTime();
+        if (ageMs > 15 * 24 * 60 * 60 * 1000) continue;
+
         // Step 1: Strict role relevance filter
         if (!isRoleRelevant(job.title, userRole, targetTitles)) continue;
 
         // Step 2: Calculate match using jobMatcher
-        const match = calculateJobMatch(job, intelligence);
+        const match = calculateJobMatch(job, ri);
 
-        // Step 3: Skip very low matches
-        if (match.score < MIN_MATCH_SCORE) continue;
+        // Step 3: Apply freshness and source bonuses
+        const adjustedScore = Math.min(
+          match.score + freshnessBonus(job.posted_date) + sourceBonus(job.external_apply_link),
+          100
+        );
+
+        // Step 4: Skip low matches (use adjusted score)
+        if (adjustedScore < MIN_MATCH_SCORE) continue;
 
         scored.push({
           ...job,
-          matchScore: match.score,
+          matchScore: adjustedScore,
           matchedSkills: match.matchedSkills,
-          matchResult: match,
+          matchResult: { ...match, score: adjustedScore },
         });
       }
 
-      // Step 4: Sort by match score (highest first), then by recency
+      // Sort: match score desc → recency desc
       scored.sort((a, b) => {
-        // Primary: match score descending
         if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
-        // Secondary: recency
         return b.posted_date.getTime() - a.posted_date.getTime();
       });
 
       return scored.slice(0, 50);
     },
     enabled,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 2 * 60 * 1000, // 2 min — refresh faster after resume changes
+    gcTime: 5 * 60 * 1000,
   });
 
   return {
