@@ -57,6 +57,7 @@ export interface ProfileData {
   disability_status: string | null;
   military_service: string | null;
   resume_intelligence: ResumeIntelligence | null;
+  updated_at: string;
 }
 
 export function useProfile() {
@@ -88,15 +89,21 @@ export function useProfile() {
     mutationFn: async (updates: Partial<ProfileData>) => {
       if (!user) throw new Error("Not authenticated");
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
         .update(updates as any)
-        .eq("user_id", user.id);
+        .eq("user_id", user.id)
+        .select("*")
+        .single();
       
       if (error) throw error;
+      return data as unknown as ProfileData;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+    onSuccess: (updatedProfile) => {
+      queryClient.setQueryData(["profile", user?.id], updatedProfile);
+      queryClient.invalidateQueries({ queryKey: ["recommended-jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["job-matches"] });
+      queryClient.invalidateQueries({ queryKey: ["job-search"] });
       toast({
         title: "Profile updated",
         description: "Your changes have been saved.",
@@ -135,6 +142,18 @@ export function useProfile() {
     
     try {
       const filePath = `${user.id}/${file.name}`;
+      const clearedResumeFields: Partial<ProfileData> = {
+        resume_url: filePath,
+        resume_filename: file.name,
+        resume_intelligence: null,
+        current_company: null,
+        current_title: null,
+        experience_years: null,
+        skills: [],
+        work_experience: [],
+        education: [],
+        certifications: [],
+      };
       
       if (profile?.resume_url) {
         const oldPath = profile.resume_url.split("/").slice(-2).join("/");
@@ -146,19 +165,17 @@ export function useProfile() {
         .upload(filePath, file, { upsert: true });
       
       if (uploadError) throw uploadError;
-      
-      // Clear old resume intelligence immediately so stale recommendations don't persist
-      await updateProfileMutation.mutateAsync({
-        resume_url: filePath,
-        resume_filename: file.name,
-        resume_intelligence: null,
-      });
 
-      // Aggressively invalidate all dependent caches
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
-      queryClient.invalidateQueries({ queryKey: ["recommended-jobs"] });
-      queryClient.invalidateQueries({ queryKey: ["job-matches"] });
-      queryClient.invalidateQueries({ queryKey: ["job-search"] });
+      if (profile) {
+        queryClient.setQueryData(["profile", user.id], {
+          ...profile,
+          ...clearedResumeFields,
+          updated_at: new Date().toISOString(),
+        });
+      }
+      
+      // Clear all resume-derived fields immediately so old resumes can never be reused.
+      await updateProfileMutation.mutateAsync(clearedResumeFields);
       
       if (!silent) {
         toast({
@@ -167,6 +184,7 @@ export function useProfile() {
         });
       }
     } catch (error: any) {
+      queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
       toast({
         title: "Upload failed",
         description: error.message,

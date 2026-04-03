@@ -93,7 +93,7 @@ function buildBaseResume(profile: ProfileData | null | undefined, intelligence: 
     source_signature:
       [
         profile?.resume_filename,
-        (profile as any)?.updated_at || "",
+        profile?.updated_at || "",
         profile?.contact_email || profile?.email,
         JSON.stringify(profile?.work_experience || []),
         JSON.stringify(profile?.education || []),
@@ -205,6 +205,10 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
   const intelligence = profile?.resume_intelligence as ResumeIntelligence | null;
 
   const baseResume = useMemo(() => buildBaseResume(profile, intelligence), [profile, intelligence]);
+
+  useEffect(() => {
+    clearResult();
+  }, [job?.id, baseResume.source_signature, clearResult]);
 
   useEffect(() => {
     if (open && job && !result && !isGenerating) {
