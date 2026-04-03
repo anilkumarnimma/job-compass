@@ -42,7 +42,123 @@ serve(async (req) => {
       });
     }
 
-    const dataUri = `data:${mime_type || "application/pdf"};base64,${file_base64}`;
+    const isDocx = mime_type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
+      || mime_type === "application/msword"
+      || filename.toLowerCase().endsWith(".docx") 
+      || filename.toLowerCase().endsWith(".doc");
+
+    let contentPayload: any[];
+    
+    if (isDocx) {
+      // DOCX/DOC: extract text from the ZIP (DOCX is a ZIP of XML files)
+      // We'll decode base64, unzip, and extract text from word/document.xml
+      const binaryStr = atob(file_base64);
+      const bytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) {
+        bytes[i] = binaryStr.charCodeAt(i);
+      }
+      
+      let extractedText = "";
+      try {
+        // Use DecompressionStream to handle ZIP
+        // DOCX is a ZIP - find word/document.xml using simple ZIP parsing
+        const zip = bytes;
+        const textDecoder = new TextDecoder();
+        
+        // Simple ZIP parser to find word/document.xml
+        let offset = 0;
+        const files: { name: string; data: Uint8Array; compressed: boolean }[] = [];
+        
+        while (offset < zip.length - 4) {
+          const sig = zip[offset] | (zip[offset+1] << 8) | (zip[offset+2] << 16) | (zip[offset+3] << 24);
+          if (sig !== 0x04034b50) break; // Not a local file header
+          
+          const compressionMethod = zip[offset + 8] | (zip[offset + 9] << 8);
+          const compressedSize = zip[offset + 18] | (zip[offset + 19] << 8) | (zip[offset + 20] << 16) | (zip[offset + 21] << 24);
+          const uncompressedSize = zip[offset + 22] | (zip[offset + 23] << 8) | (zip[offset + 24] << 16) | (zip[offset + 25] << 24);
+          const nameLen = zip[offset + 26] | (zip[offset + 27] << 8);
+          const extraLen = zip[offset + 28] | (zip[offset + 29] << 8);
+          const name = textDecoder.decode(zip.slice(offset + 30, offset + 30 + nameLen));
+          const dataStart = offset + 30 + nameLen + extraLen;
+          const dataBytes = zip.slice(dataStart, dataStart + compressedSize);
+          
+          if (name === "word/document.xml" || name === "word/header1.xml" || name === "word/header2.xml") {
+            if (compressionMethod === 8) {
+              // Deflate compressed
+              try {
+                const ds = new DecompressionStream("raw");
+                const writer = ds.writable.getWriter();
+                writer.write(dataBytes);
+                writer.close();
+                const reader = ds.readable.getReader();
+                const chunks: Uint8Array[] = [];
+                while (true) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+                  chunks.push(value);
+                }
+                const totalLen = chunks.reduce((a, c) => a + c.length, 0);
+                const result = new Uint8Array(totalLen);
+                let pos = 0;
+                for (const chunk of chunks) {
+                  result.set(chunk, pos);
+                  pos += chunk.length;
+                }
+                files.push({ name, data: result, compressed: true });
+              } catch {
+                files.push({ name, data: dataBytes, compressed: false });
+              }
+            } else {
+              files.push({ name, data: dataBytes, compressed: false });
+            }
+          }
+          
+          offset = dataStart + compressedSize;
+        }
+        
+        // Extract text from XML by stripping tags and getting <w:t> content
+        for (const f of files) {
+          const xml = textDecoder.decode(f.data);
+          // Extract text between <w:t> and </w:t> tags, preserving paragraph breaks
+          const paragraphs = xml.split(/<\/w:p>/);
+          for (const para of paragraphs) {
+            const texts: string[] = [];
+            const regex = /<w:t[^>]*>([^<]*)<\/w:t>/g;
+            let match;
+            while ((match = regex.exec(para)) !== null) {
+              texts.push(match[1]);
+            }
+            if (texts.length > 0) {
+              extractedText += texts.join("") + "\n";
+            }
+          }
+        }
+      } catch (e) {
+        console.error("DOCX extraction error:", e);
+        // Fallback: strip all XML-like tags from raw text
+        const textDecoder = new TextDecoder("utf-8", { fatal: false });
+        const rawText = textDecoder.decode(bytes);
+        extractedText = rawText.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      }
+      
+      if (!extractedText.trim()) {
+        return new Response(JSON.stringify({ error: "Could not extract text from the document. Please try uploading a PDF version." }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      
+      contentPayload = [
+        { type: "text", text: `Parse this resume text and extract all available profile fields. Only include fields you can clearly find in the document. The filename is: ${filename}\n\nResume content:\n${extractedText}` },
+      ];
+    } else {
+      // PDF or image: send as data URI
+      const dataUri = `data:${mime_type || "application/pdf"};base64,${file_base64}`;
+      contentPayload = [
+        { type: "text", text: `Parse this resume and extract all available profile fields. Only include fields you can clearly find in the document. The filename is: ${filename}` },
+        { type: "image_url", image_url: { url: dataUri } },
+      ];
+    }
 
     const extractionTool = {
       type: "function",
@@ -135,10 +251,7 @@ serve(async (req) => {
           },
           {
             role: "user",
-            content: [
-              { type: "text", text: `Parse this resume and extract all available profile fields. Only include fields you can clearly find in the document. The filename is: ${filename}` },
-              { type: "image_url", image_url: { url: dataUri } },
-            ],
+            content: contentPayload,
           },
         ],
         tools: [extractionTool],
