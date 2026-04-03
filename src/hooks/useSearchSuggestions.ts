@@ -43,7 +43,7 @@ export function useSearchSuggestions(query: string, enabled = true) {
       } finally {
         if (!controller.signal.aborted) setIsLoading(false);
       }
-    }, 180);
+    }, 120);
 
     return () => {
       clearTimeout(debounceRef.current);
