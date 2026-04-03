@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useTransition } from "react";
+import { useState, useMemo, useCallback, useEffect, useTransition, useDeferredValue } from "react";
 import { useProfile } from "@/hooks/useProfile";
 import { calculateMatchesForJobs } from "@/lib/jobMatcher";
 import { calculateLandingProbability } from "@/lib/landingProbability";
