@@ -26,7 +26,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { JobMatchesPanel } from "@/components/JobMatchesPanel";
-import { TopMatchesSection } from "@/components/TopMatchesSection";
+
 import { WelcomeBanner } from "@/components/WelcomeBanner";
 import { VisaFilterPills } from "@/components/VisaFilterPills";
 import { VisaFilter } from "@/lib/visaSponsorship";
@@ -431,7 +431,6 @@ export default function Dashboard() {
           /* Mobile: single column job list */
           <div className="flex flex-col">
             <JobMatchesPanel />
-            <TopMatchesSection onJobTap={handleJobTap} />
             <div className="mt-4">
               <JobListPaginated
                 jobs={jobs}
@@ -467,7 +466,7 @@ export default function Dashboard() {
                   className="mb-4"
                 >
                   <JobMatchesPanel />
-                  <TopMatchesSection onJobTap={handleJobTap} />
+                  
                 </motion.div>
               )}
               <JobListPaginated
