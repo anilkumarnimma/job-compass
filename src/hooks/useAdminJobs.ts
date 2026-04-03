@@ -37,6 +37,8 @@ function parseJob(row: any): Job {
     posted_date: new Date(row.posted_date),
     created_at: new Date(row.created_at),
     updated_at: new Date(row.updated_at),
+    deleted_at: row.deleted_at || null,
+    created_by_user_id: row.created_by_user_id || null,
   };
 }
  

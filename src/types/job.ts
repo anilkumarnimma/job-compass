@@ -18,6 +18,7 @@ export interface Job {
   created_at: Date;
   updated_at: Date;
   is_archived?: boolean;
+  deleted_at?: string | null;
   created_by_user_id?: string | null;
   employer_id?: string | null;
 }
