@@ -201,5 +201,5 @@ export function useTailoredResume() {
     URL.revokeObjectURL(url);
   }, []);
 
-  return { generate, isGenerating, result, clearResult, downloadAsPdf, downloadAsDoc };
+  return { generate, isGenerating, result, clearResult, clearCache, downloadAsPdf, downloadAsDoc };
 }
