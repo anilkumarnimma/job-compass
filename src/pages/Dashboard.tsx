@@ -26,6 +26,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { JobMatchesPanel } from "@/components/JobMatchesPanel";
+import { TopMatchesSection } from "@/components/TopMatchesSection";
 import { WelcomeBanner } from "@/components/WelcomeBanner";
 import { VisaFilterPills } from "@/components/VisaFilterPills";
 import { VisaFilter } from "@/lib/visaSponsorship";
