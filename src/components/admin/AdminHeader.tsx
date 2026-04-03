@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Shield, Crown, Plus, FileSpreadsheet, Users, Bug } from "lucide-react";
+import { Shield, Crown, Plus, FileSpreadsheet, Users, Bug, CreditCard } from "lucide-react";
 
 interface AdminHeaderProps {
   isFounder: boolean;
@@ -45,6 +45,12 @@ export function AdminHeader({
         <div className="flex gap-2">
           {isFounder && (
             <>
+              <Link to="/admin/payments">
+                <Button variant="outline">
+                  <CreditCard className="h-4 w-4" />
+                  Payments
+                </Button>
+              </Link>
               <a href="/admin/error-logs" target="_blank" rel="noopener noreferrer">
                 <Button variant="outline">
                   <Bug className="h-4 w-4" />
