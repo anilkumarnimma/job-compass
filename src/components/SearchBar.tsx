@@ -33,7 +33,7 @@ export const SearchBar = memo(function SearchBar({ value, onChange, placeholder 
     emitTimeoutRef.current = setTimeout(() => {
       // 150ms debounce for snappy live search
       onChange(localValue);
-    }, 200);
+    }, 150);
 
     return () => {
       clearTimeout(emitTimeoutRef.current);
