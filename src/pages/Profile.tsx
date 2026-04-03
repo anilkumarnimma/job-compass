@@ -372,44 +372,51 @@ export default function Profile() {
       if (e[f]) updates[f] = e[f] as string;
     }
 
-    // Build the new form data
-    let newFormData = { ...formData, ...updates };
-    if (e.skills && e.skills.length > 0) newFormData = { ...newFormData, skills: e.skills.join(", ") };
-    if (e.experience_years != null) newFormData = { ...newFormData, experience_years: e.experience_years };
-    setFormData(newFormData);
-
-    let newWork = workExperiences;
-    if (e.work_experience && e.work_experience.length > 0) {
-      newWork = e.work_experience.map(w => ({
+    const nextSkills = Array.isArray(e.skills)
+      ? e.skills.map((skill) => skill.trim()).filter(Boolean)
+      : [];
+    const mappedWork = Array.isArray(e.work_experience)
+      ? e.work_experience.map((w) => ({
         title: w.title || "", company: w.company || "",
         start_date: w.start_date || "", end_date: w.end_date || "",
         is_current: w.is_current || false,
-      }));
-      setWorkExperiences(newWork);
-    }
-    let newEdu = educations;
-    if (e.education && e.education.length > 0) {
-      newEdu = e.education.map(ed => ({
+      }))
+      : [];
+    const mappedEdu = Array.isArray(e.education)
+      ? e.education.map((ed) => ({
         school: ed.school || "", degree: ed.degree || "",
         major: ed.major || "", graduation_year: ed.graduation_year || "",
-      }));
-      setEducations(newEdu);
-    }
-    let newCerts = certifications;
-    if (e.certifications && e.certifications.length > 0) {
-      newCerts = e.certifications.map(c => ({
+      }))
+      : [];
+    const mappedCerts = Array.isArray(e.certifications)
+      ? e.certifications.map((c) => ({
         name: c.name || "", issuer: c.issuer || "",
         date_obtained: c.date_obtained || "", expiration_date: c.expiration_date || "",
-      }));
-      setCertifications(newCerts);
-    }
+      }))
+      : [];
+    const latestCurrentWork = mappedWork.find((w) => w.is_current) || mappedWork[0];
+    const newWork = mappedWork.length > 0 ? mappedWork : [{ ...emptyWork }];
+    const newEdu = mappedEdu.length > 0 ? mappedEdu : [{ ...emptyEdu }];
+    const newCerts = mappedCerts;
+
+    const newFormData = {
+      ...formData,
+      ...updates,
+      skills: nextSkills.join(", "),
+      experience_years: e.experience_years ?? "",
+      current_company: latestCurrentWork?.company || "",
+      current_title: latestCurrentWork?.title || "",
+    };
+
+    setFormData(newFormData);
+    setWorkExperiences(newWork);
+    setEducations(newEdu);
+    setCertifications(newCerts);
 
     // Auto-save to DB immediately so data persists across navigation
-    const skillsArray = newFormData.skills ? newFormData.skills.split(",").map((s) => s.trim()).filter(Boolean) : [];
-    const currentWork = newWork.find((w) => w.is_current);
-    const filteredWork = newWork.filter((w) => w.title || w.company);
-    const filteredEdu = newEdu.filter((ed) => ed.school || ed.degree);
-    const filteredCerts = newCerts.filter((c) => c.name);
+    const filteredWork = mappedWork.filter((w) => w.title || w.company);
+    const filteredEdu = mappedEdu.filter((ed) => ed.school || ed.degree);
+    const filteredCerts = mappedCerts.filter((c) => c.name);
 
     updateProfile({
       first_name: newFormData.first_name || null, last_name: newFormData.last_name || null,
@@ -421,10 +428,10 @@ export default function Profile() {
       linkedin_url: newFormData.linkedin_url || null, github_url: newFormData.github_url || null,
       portfolio_url: newFormData.portfolio_url || null,
       work_authorization: newFormData.work_authorization || null, visa_status: newFormData.visa_status || null,
-      experience_years: newFormData.experience_years ? Number(newFormData.experience_years) : null,
-      current_company: currentWork?.company || newFormData.current_company || null,
-      current_title: currentWork?.title || newFormData.current_title || null,
-      skills: skillsArray,
+      experience_years: e.experience_years ?? null,
+      current_company: latestCurrentWork?.company || null,
+      current_title: latestCurrentWork?.title || null,
+      skills: nextSkills,
       work_experience: filteredWork,
       education: filteredEdu,
       certifications: filteredCerts,
@@ -444,13 +451,13 @@ export default function Profile() {
     toast({ title: "Profile auto-filled & saved", description: "Resume data has been applied and saved to your profile." });
 
     // Trigger resume intelligence analysis in the background
-    if (skillsArray.length > 0 || filteredWork.length > 0) {
+    if (nextSkills.length > 0 || filteredWork.length > 0) {
       analyzeResume({
-        skills: skillsArray,
+        skills: nextSkills,
         workExperience: filteredWork,
         education: filteredEdu,
-        currentTitle: currentWork?.title || newFormData.current_title || undefined,
-        experienceYears: newFormData.experience_years ? Number(newFormData.experience_years) : undefined,
+        currentTitle: latestCurrentWork?.title || undefined,
+        experienceYears: e.experience_years ?? undefined,
       }).then(() => {
         // After analysis completes, send recommendation email for new resume
         // Clear the old "remind" key so the "rec" email fires
