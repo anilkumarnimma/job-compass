@@ -274,11 +274,11 @@ export default function Profile() {
     e.target.value = "";
     try {
       await uploadResume(file);
-      // Automatically trigger autofill (no prompt needed)
-      // Small delay to ensure profile state has the new resume_url
-      setTimeout(() => {
-        handleAutofillExisting();
-      }, 500);
+      // Parse the file we already have in memory — no need to re-download
+      const extracted = await parseResume(file);
+      if (extracted) {
+        buildReviewChanges(extracted);
+      }
     } catch {
       // uploadResume already shows error toast
     }

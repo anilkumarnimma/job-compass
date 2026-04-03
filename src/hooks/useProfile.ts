@@ -147,10 +147,18 @@ export function useProfile() {
       
       if (uploadError) throw uploadError;
       
+      // Clear old resume intelligence immediately so stale recommendations don't persist
       await updateProfileMutation.mutateAsync({
         resume_url: filePath,
         resume_filename: file.name,
+        resume_intelligence: null,
       });
+
+      // Aggressively invalidate all dependent caches
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["recommended-jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["job-matches"] });
+      queryClient.invalidateQueries({ queryKey: ["job-search"] });
       
       if (!silent) {
         toast({
