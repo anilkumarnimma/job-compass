@@ -342,6 +342,7 @@ export type Database = {
           company_logo: string | null
           created_at: string
           created_by_user_id: string | null
+          deleted_at: string | null
           description: string
           employer_id: string | null
           employment_type: string
@@ -364,6 +365,7 @@ export type Database = {
           company_logo?: string | null
           created_at?: string
           created_by_user_id?: string | null
+          deleted_at?: string | null
           description: string
           employer_id?: string | null
           employment_type?: string
@@ -386,6 +388,7 @@ export type Database = {
           company_logo?: string | null
           created_at?: string
           created_by_user_id?: string | null
+          deleted_at?: string | null
           description?: string
           employer_id?: string | null
           employment_type?: string
