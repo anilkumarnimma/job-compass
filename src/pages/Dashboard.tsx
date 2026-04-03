@@ -466,7 +466,7 @@ export default function Dashboard() {
                   className="mb-4"
                 >
                   <JobMatchesPanel />
-                  <TopMatchesSection onJobTap={handleJobTap} />
+                  
                 </motion.div>
               )}
               <JobListPaginated
