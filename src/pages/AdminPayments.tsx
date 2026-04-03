@@ -108,7 +108,7 @@ export default function AdminPayments() {
       case "active": return <Badge variant="success">Active</Badge>;
       case "failed": return <Badge variant="destructive">Failed</Badge>;
       case "canceled": return <Badge variant="destructive">Canceled</Badge>;
-      case "past_due": return <Badge className="bg-yellow-500/10 text-yellow-600 border-transparent">Past Due</Badge>;
+      case "past_due": return <Badge className="bg-accent/10 text-accent border-transparent">Past Due</Badge>;
       case "pending": return <Badge variant="secondary">Pending</Badge>;
       default: return <Badge variant="outline">{status}</Badge>;
     }
