@@ -62,9 +62,12 @@ export function useResumeIntelligence() {
 
       const intelligence = data.intelligence as ResumeIntelligence;
 
-      // Invalidate profile + recommendations so UI picks up new intelligence immediately
+      // Invalidate all dependent queries so UI refreshes everywhere
       queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
       queryClient.invalidateQueries({ queryKey: ["recommended-jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["job-matches"] });
+      queryClient.invalidateQueries({ queryKey: ["job-search"] });
 
       toast({
         title: "Resume analyzed ✨",
