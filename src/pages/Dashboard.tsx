@@ -431,7 +431,7 @@ export default function Dashboard() {
           /* Mobile: single column job list */
           <div className="flex flex-col">
             <JobMatchesPanel />
-            <div className="mt-4">
+            <TopMatchesSection onJobTap={handleJobTap} />
               <JobListPaginated
                 jobs={jobs}
                 isLoading={isLoading}
