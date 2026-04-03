@@ -86,6 +86,9 @@ export default function Dashboard() {
   const { toast } = useToast();
   const isUSUser = useIsUSUser();
 
+  // Trigger resume-based emails on first login
+  useFirstLoginEmails();
+
   const performDashboardReset = useCallback(() => {
     sessionStorage.removeItem("pending_search");
     setSearchInput("");
