@@ -93,6 +93,7 @@ function buildBaseResume(profile: ProfileData | null | undefined, intelligence: 
     source_signature:
       [
         profile?.resume_filename,
+        (profile as any)?.updated_at || "",
         profile?.contact_email || profile?.email,
         JSON.stringify(profile?.work_experience || []),
         JSON.stringify(profile?.education || []),

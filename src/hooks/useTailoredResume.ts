@@ -118,17 +118,26 @@ export function useTailoredResume() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<TailoredResumeData | null>(null);
   const cache = useRef<Map<string, TailoredResumeData>>(new Map());
+  const lastResumeVersion = useRef<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
   const generate = useCallback(async (params: GenerateParams) => {
     if (!user) return;
 
+    const currentVersion = params.resume_version || params.base_resume.source_signature || "resume";
+
+    // If resume version changed, invalidate entire cache
+    if (lastResumeVersion.current && lastResumeVersion.current !== currentVersion) {
+      cache.current.clear();
+    }
+    lastResumeVersion.current = currentVersion;
+
     const cacheKey = [
       user.id,
       params.job_title,
       (params.job_skills || []).join(","),
-      params.resume_version || params.base_resume.source_signature || "resume",
+      currentVersion,
     ].join("::");
 
     const cached = cache.current.get(cacheKey);
@@ -162,6 +171,12 @@ export function useTailoredResume() {
     }
   }, [user, toast]);
 
+  const clearCache = useCallback(() => {
+    cache.current.clear();
+    lastResumeVersion.current = null;
+    setResult(null);
+  }, []);
+
   const clearResult = useCallback(() => setResult(null), []);
 
   const downloadAsPdf = useCallback((data: TailoredResumeData, jobTitle: string, company: string) => {
@@ -186,5 +201,5 @@ export function useTailoredResume() {
     URL.revokeObjectURL(url);
   }, []);
 
-  return { generate, isGenerating, result, clearResult, downloadAsPdf, downloadAsDoc };
+  return { generate, isGenerating, result, clearResult, clearCache, downloadAsPdf, downloadAsDoc };
 }
