@@ -115,6 +115,34 @@ export default function Dashboard() {
     }
   }, [searchParams, setSearchParams, toast]);
 
+  // Show subtle toast for auto-premium (first 100) users — once per session
+  useEffect(() => {
+    if (
+      profile?.is_premium === true &&
+      !sessionStorage.getItem("priority_premium_shown")
+    ) {
+      // Check if this is an auto-premium user (no Stripe subscription)
+      const checkAutoPremium = async () => {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { data } = await supabase
+          .from("user_subscriptions")
+          .select("is_subscribed")
+          .eq("user_id", profile.user_id)
+          .maybeSingle();
+        
+        // If no subscription record or not subscribed via Stripe, they're auto-premium
+        if (!data?.is_subscribed) {
+          toast({
+            title: "🌟 You just unlocked Premium as a priority user",
+            description: "Enjoy unlimited applications and all premium features.",
+          });
+        }
+        sessionStorage.setItem("priority_premium_shown", "true");
+      };
+      checkAutoPremium();
+    }
+  }, [profile?.is_premium, profile?.user_id, toast]);
+
   // Handle pending search from landing page tag click
   useEffect(() => {
     const pendingSearch = sessionStorage.getItem("pending_search");
