@@ -22,6 +22,7 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
 
     // Verify the caller is authenticated and is a founder/admin
     const { createClient: createAuthClient } = await import("https://esm.sh/@supabase/supabase-js@2.94.1");
@@ -53,9 +54,6 @@ Deno.serve(async (req) => {
         });
       }
     }
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
 
     if (!resendApiKey) {
       return new Response(
