@@ -28,6 +28,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { JobMatchesPanel } from "@/components/JobMatchesPanel";
 
 import { WelcomeBanner } from "@/components/WelcomeBanner";
+import { ResumeUploadBanner } from "@/components/ResumeUploadBanner";
 import { VisaFilterPills } from "@/components/VisaFilterPills";
 import { VisaFilter } from "@/lib/visaSponsorship";
 import { useIsUSUser } from "@/hooks/useIsUSUser";
