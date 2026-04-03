@@ -61,7 +61,12 @@ export default function Recommendations() {
     }
   }, [isMobile, jobs]);
 
-  const filteredJobs = useMemo(() => (jobs || []).filter(j => !isApplied(j.id)), [jobs, isApplied]);
+  // Jobs are already sorted by match score from the hook; just filter applied ones
+  const filteredJobs = useMemo(() => {
+    const filtered = (jobs || []).filter(j => !isApplied(j.id));
+    // Already sorted by matchScore desc from hook, no need to re-sort
+    return filtered;
+  }, [jobs, isApplied]);
 
   const totalPages = Math.ceil(filteredJobs.length / PAGE_SIZE);
   const paginatedJobs = useMemo(
