@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useTransition, useDeferredValue } from "react";
 import { useProfile } from "@/hooks/useProfile";
+import { useAuth } from "@/context/AuthContext";
 import { calculateMatchesForJobs } from "@/lib/jobMatcher";
 import { calculateLandingProbability } from "@/lib/landingProbability";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
