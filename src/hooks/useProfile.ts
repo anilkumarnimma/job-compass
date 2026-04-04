@@ -104,6 +104,8 @@ export function useProfile() {
       queryClient.invalidateQueries({ queryKey: ["recommended-jobs"] });
       queryClient.invalidateQueries({ queryKey: ["job-matches"] });
       queryClient.invalidateQueries({ queryKey: ["job-search"] });
+      // Force tailored resume cache to invalidate
+      queryClient.invalidateQueries({ queryKey: ["tailored-resume"] });
       toast({
         title: "Profile updated",
         description: "Your changes have been saved.",
