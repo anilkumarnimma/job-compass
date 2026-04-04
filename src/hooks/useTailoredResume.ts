@@ -2,6 +2,8 @@ import { useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
+import { getResumeVersion } from "@/lib/resumeSync";
 
 export interface TailoredResumeHeader {
   full_name: string;
@@ -121,17 +123,20 @@ export function useTailoredResume() {
   const lastResumeVersion = useRef<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { profile } = useProfile();
+
+  // Auto-invalidate cache when profile resume version changes
+  const currentProfileVersion = getResumeVersion(profile);
+  if (lastResumeVersion.current && lastResumeVersion.current !== currentProfileVersion) {
+    cache.current.clear();
+    setResult(null);
+  }
+  lastResumeVersion.current = currentProfileVersion;
 
   const generate = useCallback(async (params: GenerateParams) => {
     if (!user) return;
 
-    const currentVersion = params.resume_version || params.base_resume.source_signature || "resume";
-
-    // If resume version changed, invalidate entire cache
-    if (lastResumeVersion.current && lastResumeVersion.current !== currentVersion) {
-      cache.current.clear();
-    }
-    lastResumeVersion.current = currentVersion;
+    const currentVersion = params.resume_version || currentProfileVersion;
 
     const cacheKey = [
       user.id,
@@ -169,7 +174,7 @@ export function useTailoredResume() {
     } finally {
       setIsGenerating(false);
     }
-  }, [user, toast]);
+  }, [user, toast, currentProfileVersion]);
 
   const clearCache = useCallback(() => {
     cache.current.clear();
