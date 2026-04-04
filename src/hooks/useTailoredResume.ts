@@ -174,7 +174,7 @@ export function useTailoredResume() {
     } finally {
       setIsGenerating(false);
     }
-  }, [user, toast]);
+  }, [user, toast, currentProfileVersion]);
 
   const clearCache = useCallback(() => {
     cache.current.clear();
