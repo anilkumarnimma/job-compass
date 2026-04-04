@@ -2,6 +2,8 @@ import { useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
+import { getResumeVersion } from "@/lib/resumeSync";
 
 export interface TailoredResumeHeader {
   full_name: string;
