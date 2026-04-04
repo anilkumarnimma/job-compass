@@ -104,6 +104,8 @@ export function useProfile() {
       queryClient.invalidateQueries({ queryKey: ["recommended-jobs"] });
       queryClient.invalidateQueries({ queryKey: ["job-matches"] });
       queryClient.invalidateQueries({ queryKey: ["job-search"] });
+      // Force tailored resume cache to invalidate
+      queryClient.invalidateQueries({ queryKey: ["tailored-resume"] });
       toast({
         title: "Profile updated",
         description: "Your changes have been saved.",
@@ -141,7 +143,9 @@ export function useProfile() {
     setIsUploading(true);
     
     try {
-      const filePath = `${user.id}/${file.name}`;
+      // Add timestamp to path to guarantee unique URL on every upload
+      const timestamp = Date.now();
+      const filePath = `${user.id}/${timestamp}_${file.name}`;
       const clearedResumeFields: Partial<ProfileData> = {
         resume_url: filePath,
         resume_filename: file.name,

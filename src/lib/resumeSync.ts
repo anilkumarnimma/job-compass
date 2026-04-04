@@ -17,5 +17,6 @@ export function getResumeVersion(profile: {
     profile.resume_filename || "",
     profile.updated_at || "",
     JSON.stringify(profile.skills || []),
+    JSON.stringify(profile.work_experience || []),
   ].join("::");
 }
