@@ -273,11 +273,16 @@ export default function Profile() {
     if (!file) return;
     e.target.value = "";
     try {
+      // Temporarily exit edit mode so profile form can refresh with cleared fields
+      setIsEditing(false);
       await uploadResume(file);
       // Parse the file we already have in memory — no need to re-download
       const extracted = await parseResume(file);
       if (extracted) {
         buildReviewChanges(extracted);
+      } else {
+        // If parsing fails, still populate form from cleared profile
+        // The profile query will have the cleared fields from uploadResume
       }
     } catch {
       // uploadResume already shows error toast
