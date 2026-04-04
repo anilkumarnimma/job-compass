@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Job } from "@/types/job";
 import { expandSearchTerms } from "@/lib/searchExpansion";
 import { enrichJobList } from "@/lib/jobEnrichment";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { VisaFilter, filterJobsByVisa } from "@/lib/visaSponsorship";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -140,11 +140,13 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
   const isVisaFiltered = visaFilter !== "all";
   const debouncedCountSearch = useDebounce(searchQuery, 450);
 
-  // Cancel stale in-flight queries when search changes
+  // Cancel stale in-flight queries when search changes (not on unmount)
+  const prevSearchRef = useRef(searchQuery);
   useEffect(() => {
-    return () => {
-      queryClient.cancelQueries({ queryKey: ["jobs", "paginated"] });
-    };
+    if (prevSearchRef.current !== searchQuery) {
+      queryClient.cancelQueries({ queryKey: ["jobs", "paginated", prevSearchRef.current] });
+      prevSearchRef.current = searchQuery;
+    }
   }, [searchQuery, queryClient]);
 
   const jobsQuery = useQuery({
