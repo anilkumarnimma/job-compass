@@ -145,6 +145,7 @@ export function useTailoredResume() {
       currentVersion,
     ].join("::");
 
+    const cached = cache.current.get(cacheKey);
     if (cached) {
       setResult(cached);
       return;
