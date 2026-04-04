@@ -141,7 +141,9 @@ export function useProfile() {
     setIsUploading(true);
     
     try {
-      const filePath = `${user.id}/${file.name}`;
+      // Add timestamp to path to guarantee unique URL on every upload
+      const timestamp = Date.now();
+      const filePath = `${user.id}/${timestamp}_${file.name}`;
       const clearedResumeFields: Partial<ProfileData> = {
         resume_url: filePath,
         resume_filename: file.name,
