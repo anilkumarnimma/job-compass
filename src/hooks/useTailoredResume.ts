@@ -123,6 +123,15 @@ export function useTailoredResume() {
   const lastResumeVersion = useRef<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { profile } = useProfile();
+
+  // Auto-invalidate cache when profile resume version changes
+  const currentProfileVersion = getResumeVersion(profile);
+  if (lastResumeVersion.current && lastResumeVersion.current !== currentProfileVersion) {
+    cache.current.clear();
+    setResult(null);
+  }
+  lastResumeVersion.current = currentProfileVersion;
 
   const generate = useCallback(async (params: GenerateParams) => {
     if (!user) return;
