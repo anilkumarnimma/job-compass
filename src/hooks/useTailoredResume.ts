@@ -136,13 +136,14 @@ export function useTailoredResume() {
   const generate = useCallback(async (params: GenerateParams) => {
     if (!user) return;
 
-    const currentVersion = params.resume_version || params.base_resume.source_signature || "resume";
+    const currentVersion = params.resume_version || currentProfileVersion;
 
-    // If resume version changed, invalidate entire cache
-    if (lastResumeVersion.current && lastResumeVersion.current !== currentVersion) {
-      cache.current.clear();
-    }
-    lastResumeVersion.current = currentVersion;
+    const cacheKey = [
+      user.id,
+      params.job_title,
+      (params.job_skills || []).join(","),
+      currentVersion,
+    ].join("::");
 
     const cacheKey = [
       user.id,
