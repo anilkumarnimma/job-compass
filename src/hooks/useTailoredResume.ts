@@ -145,14 +145,6 @@ export function useTailoredResume() {
       currentVersion,
     ].join("::");
 
-    const cacheKey = [
-      user.id,
-      params.job_title,
-      (params.job_skills || []).join(","),
-      currentVersion,
-    ].join("::");
-
-    const cached = cache.current.get(cacheKey);
     if (cached) {
       setResult(cached);
       return;
