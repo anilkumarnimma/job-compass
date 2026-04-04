@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Job } from "@/types/job";
 import { expandSearchTerms } from "@/lib/searchExpansion";
 import { enrichJobList } from "@/lib/jobEnrichment";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { VisaFilter, filterJobsByVisa } from "@/lib/visaSponsorship";
 import { useDebounce } from "@/hooks/useDebounce";
