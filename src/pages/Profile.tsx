@@ -309,20 +309,8 @@ export default function Profile() {
         lastResumeTextRef.current = parts.join("\n");
         buildReviewChanges(extracted);
       } else {
-        // Parsing failed — use only the freshly cleared profile state plus the uploaded file metadata,
-        // never the old resume-derived fields that were just replaced.
-        const existingSkills = [] as string[];
-        const existingWork = [] as WorkExperience[];
-        const existingEdu = [] as Education[];
-        if (existingSkills.length > 0 || existingWork.length > 0 || profile?.resume_url) {
-          analyzeResume({
-            skills: existingSkills,
-            workExperience: existingWork,
-            education: existingEdu,
-            currentTitle: undefined,
-            experienceYears: undefined,
-          }).catch(() => {});
-        }
+        // Parsing failed, so keep the just-uploaded resume as the source of truth
+        // without reusing any stale fields from the previous resume.
       }
     } catch {
       // uploadResume already shows error toast
@@ -442,9 +430,27 @@ export default function Profile() {
     const newWork = mappedWork.length > 0 ? mappedWork : [{ ...emptyWork }];
     const newEdu = mappedEdu.length > 0 ? mappedEdu : [{ ...emptyEdu }];
     const newCerts = mappedCerts;
+    const clearedResumeFormData = {
+      ...formData,
+      first_name: "",
+      last_name: "",
+      contact_email: "",
+      phone: "",
+      address: "",
+      city: "",
+      state: "",
+      zip: "",
+      linkedin_url: "",
+      github_url: "",
+      portfolio_url: "",
+      experience_years: "",
+      current_company: "",
+      current_title: "",
+      skills: "",
+    };
 
     const newFormData = {
-      ...savedFormData,
+      ...clearedResumeFormData,
       ...updates,
       skills: nextSkills.join(", "),
       experience_years: e.experience_years ?? "",
@@ -490,7 +496,7 @@ export default function Profile() {
     setSavedEdu(newEdu);
     setSavedCerts(newCerts);
 
-    setIsEditing(false);
+    setIsEditing(true);
     setIsDirty(false);
     toast({ title: "Profile auto-filled & saved", description: "Resume data has been applied and saved to your profile." });
 
