@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Layout } from "@/components/Layout";
 import { JobCard } from "@/components/JobCard";
 import { JobPreviewPanel } from "@/components/JobPreviewPanel";
@@ -6,10 +6,7 @@ import { MobileJobPreviewSheet } from "@/components/MobileJobPreviewSheet";
 import { UpgradeDialog } from "@/components/UpgradeDialog";
 import { ApplyConfirmDialog } from "@/components/ApplyConfirmDialog";
 import { ProfileGateDialog } from "@/components/ProfileGateDialog";
-import { CoverLetterDialog } from "@/components/CoverLetterDialog";
-import { TailoredResumeDialog } from "@/components/TailoredResumeDialog";
 import { useRecommendedJobs, RecommendedJob } from "@/hooks/useRecommendedJobs";
-import { useProfile } from "@/hooks/useProfile";
 import { useJobContext } from "@/context/JobContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Job } from "@/types/job";
@@ -29,12 +26,21 @@ import {
   PaginationEllipsis,
 } from "@/components/ui/pagination";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 export default function Recommendations() {
-  const { data: jobs, isLoading, canRecommend, hasResume } = useRecommendedJobs();
-  const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply, isApplied, showProfileGate, setShowProfileGate, profileGateMissingFields } = useJobContext();
-  const { profile } = useProfile();
+  const { data: jobs, isLoading, canRecommend } = useRecommendedJobs();
+  const {
+    showUpgradeDialog,
+    setShowUpgradeDialog,
+    showApplyConfirm,
+    confirmApply,
+    cancelApply,
+    isApplied,
+    showProfileGate,
+    setShowProfileGate,
+    profileGateMissingFields,
+  } = useJobContext();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
@@ -42,43 +48,53 @@ export default function Recommendations() {
   const [mobilePreviewJob, setMobilePreviewJob] = useState<Job | null>(null);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [coverLetterOpen, setCoverLetterOpen] = useState(false);
-  const [coverLetterJob, setCoverLetterJob] = useState<RecommendedJob | null>(null);
-  const [tailoredResumeOpen, setTailoredResumeOpen] = useState(false);
-  const [tailoredResumeJob, setTailoredResumeJob] = useState<RecommendedJob | null>(null);
 
-  const intelligence = profile?.resume_intelligence as any;
+  const handleJobTap = useCallback(
+    (job: Job) => {
+      const recJob = jobs?.find((j) => j.id === job.id) || null;
+      if (isMobile) {
+        setMobilePreviewJob(job);
+        setMobileSheetOpen(true);
+      } else {
+        setSelectedJob((prev) => (prev?.id === job.id ? null : recJob));
+      }
+    },
+    [isMobile, jobs]
+  );
 
-  const handleJobTap = useCallback((job: Job) => {
-    const recJob = jobs?.find(j => j.id === job.id) || null;
-    if (isMobile) {
-      setMobilePreviewJob(job);
-      setMobileSheetOpen(true);
-    } else {
-      setSelectedJob(prev => prev?.id === job.id ? null : recJob);
-    }
-  }, [isMobile, jobs]);
-
-  // Jobs are already sorted by match score from the hook; just filter applied ones
   const filteredJobs = useMemo(() => {
-    const filtered = (jobs || []).filter(j => !isApplied(j.id));
-    // Already sorted by matchScore desc from hook, no need to re-sort
-    return filtered;
+    return (jobs || []).filter((job) => !isApplied(job.id));
   }, [jobs, isApplied]);
 
-  const totalPages = Math.ceil(filteredJobs.length / PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(filteredJobs.length / PAGE_SIZE));
+  const pageStart = filteredJobs.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const pageEnd = Math.min(currentPage * PAGE_SIZE, filteredJobs.length);
+
   const paginatedJobs = useMemo(
     () => filteredJobs.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
     [filteredJobs, currentPage]
   );
 
+  useEffect(() => {
+    setCurrentPage((prev) => Math.min(prev, totalPages));
+  }, [totalPages]);
+
+  useEffect(() => {
+    setSelectedJob((prev) => {
+      if (!prev) return null;
+      return paginatedJobs.some((job) => job.id === prev.id) ? prev : null;
+    });
+  }, [paginatedJobs]);
+
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
+    setSelectedJob(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
   const getPageNumbers = () => {
     const pages: (number | "ellipsis")[] = [];
+
     if (totalPages <= 7) {
       for (let i = 1; i <= totalPages; i++) pages.push(i);
     } else {
@@ -90,6 +106,7 @@ export default function Recommendations() {
       if (currentPage < totalPages - 2) pages.push("ellipsis");
       pages.push(totalPages);
     }
+
     return pages;
   };
 
@@ -102,9 +119,7 @@ export default function Recommendations() {
         className="w-full max-w-[1400px] mx-auto px-4 md:px-6 py-6"
       >
         <div className="flex gap-6 justify-center">
-          {/* Main Content */}
           <div className="flex-1 max-w-[600px] min-w-0">
-            {/* Header */}
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-1">
                 <Sparkles className="h-5 w-5 text-accent" />
@@ -116,13 +131,12 @@ export default function Recommendations() {
                 Jobs matched to your resume, skills, and experience.
                 {filteredJobs.length > 0 && (
                   <span className="ml-1">
-                    <span className="font-medium text-foreground">{filteredJobs.length}</span> recommendation{filteredJobs.length !== 1 ? 's' : ''}
+                    <span className="font-medium text-foreground">{filteredJobs.length}</span> recommendation{filteredJobs.length !== 1 ? "s" : ""}
                   </span>
                 )}
               </p>
             </div>
 
-            {/* Content */}
             {isLoading ? (
               <div className="flex flex-col gap-4">
                 {Array.from({ length: 4 }).map((_, i) => (
@@ -206,13 +220,15 @@ export default function Recommendations() {
                           </Badge>
                         )}
                         {job.matchScore > 0 && (
-                          <Badge className={`${
-                            job.matchScore >= 70
-                              ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                              : job.matchScore >= 50
-                              ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
-                              : "bg-muted text-muted-foreground"
-                          } border-0 text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm cursor-default`}>
+                          <Badge
+                            className={
+                              job.matchScore >= 70
+                                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-0 text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm cursor-default"
+                                : job.matchScore >= 50
+                                  ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-0 text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm cursor-default"
+                                  : "bg-muted text-muted-foreground border-0 text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm cursor-default"
+                            }
+                          >
                             {job.matchScore}% Match
                           </Badge>
                         )}
@@ -227,49 +243,48 @@ export default function Recommendations() {
                   </motion.div>
                 ))}
 
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="py-4">
-                    <Pagination>
-                      <PaginationContent>
-                        <PaginationItem>
-                          <PaginationPrevious
-                            onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
-                            className={currentPage <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                          />
-                        </PaginationItem>
-                        {getPageNumbers().map((page, idx) =>
-                          page === "ellipsis" ? (
-                            <PaginationItem key={`ellipsis-${idx}`}>
-                              <PaginationEllipsis />
-                            </PaginationItem>
-                          ) : (
-                            <PaginationItem key={page}>
-                              <PaginationLink
-                                isActive={currentPage === page}
-                                onClick={() => handlePageChange(page as number)}
-                                className="cursor-pointer"
-                              >
-                                {page}
-                              </PaginationLink>
-                            </PaginationItem>
-                          )
-                        )}
-                        <PaginationItem>
-                          <PaginationNext
-                            onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
-                            className={currentPage >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                          />
-                        </PaginationItem>
-                      </PaginationContent>
-                    </Pagination>
-                  </div>
-                )}
+                <div className="py-4 space-y-3">
+                  <p className="text-center text-xs text-muted-foreground">
+                    Showing {pageStart}–{pageEnd} of {filteredJobs.length}
+                  </p>
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+                          className={currentPage <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                      {getPageNumbers().map((page, idx) =>
+                        page === "ellipsis" ? (
+                          <PaginationItem key={`ellipsis-${idx}`}>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        ) : (
+                          <PaginationItem key={page}>
+                            <PaginationLink
+                              isActive={currentPage === page}
+                              onClick={() => handlePageChange(page as number)}
+                              className="cursor-pointer"
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        )
+                      )}
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+                          className={currentPage >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Right Panel - Job Preview (Desktop) */}
           {!isMobile && (
             <div className="hidden lg:flex shrink-0">
               <AnimatePresence mode="wait">
@@ -304,16 +319,6 @@ export default function Recommendations() {
       <UpgradeDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog} />
       <ApplyConfirmDialog open={showApplyConfirm} onConfirm={confirmApply} onCancel={cancelApply} />
       <ProfileGateDialog open={showProfileGate} onOpenChange={setShowProfileGate} missingFields={profileGateMissingFields} />
-      <CoverLetterDialog
-        open={coverLetterOpen}
-        onOpenChange={setCoverLetterOpen}
-        job={coverLetterJob}
-      />
-      <TailoredResumeDialog
-        open={tailoredResumeOpen}
-        onOpenChange={setTailoredResumeOpen}
-        job={tailoredResumeJob}
-      />
     </Layout>
   );
 }

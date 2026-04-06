@@ -96,15 +96,23 @@ export default function Profile() {
   const [showAutofillPrompt, setShowAutofillPrompt] = useState(false);
   const [pendingExtracted, setPendingExtracted] = useState<ExtractedResumeData | null>(null);
 
-  // Extension password state
+  // Password bridge state for Google users
   const [extPassword, setExtPassword] = useState("");
   const [extConfirmPassword, setExtConfirmPassword] = useState("");
   const [extPasswordSaving, setExtPasswordSaving] = useState(false);
-  const [extPasswordSet, setExtPasswordSet] = useState(false);
   const [showExtPassword, setShowExtPassword] = useState(false);
 
-  const isGoogleOnlyUser = user?.app_metadata?.provider === "google" || 
-    (user?.app_metadata?.providers?.includes("google") && !user?.app_metadata?.providers?.includes("email"));
+  const providers = user?.app_metadata?.providers as string[] | undefined;
+  const mainProvider = user?.app_metadata?.provider as string | undefined;
+  const hasGoogleProvider = mainProvider === "google" || (providers?.includes("google") ?? false);
+  const hasEmailProvider = mainProvider === "email" || (providers?.includes("email") ?? false);
+  const isGoogleOnlyUser = hasGoogleProvider && !hasEmailProvider;
+  const hasPasswordLogin = hasEmailProvider || user?.user_metadata?.password_login_enabled === true;
+  const [extPasswordSet, setExtPasswordSet] = useState(hasPasswordLogin);
+
+  useEffect(() => {
+    setExtPasswordSet(hasPasswordLogin);
+  }, [hasPasswordLogin]);
 
   const handleSetExtensionPassword = async () => {
     if (extPassword.length < 6) {
@@ -117,12 +125,21 @@ export default function Profile() {
     }
     setExtPasswordSaving(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password: extPassword });
+      const { error } = await supabase.auth.updateUser({
+        password: extPassword,
+        data: {
+          ...(user?.user_metadata ?? {}),
+          password_login_enabled: true,
+        },
+      });
       if (error) throw error;
+      if (user) {
+        localStorage.setItem(`sociax_ext_pwd_dismissed:${user.id}`, "true");
+      }
       setExtPasswordSet(true);
       setExtPassword("");
       setExtConfirmPassword("");
-      toast({ title: "Password set!", description: "You can now sign into the Sociax extension with your email and this password." });
+      toast({ title: "Password saved", description: "You can now sign in with your email and password." });
     } catch (err: any) {
       toast({ title: "Failed to set password", description: err.message, variant: "destructive" });
     } finally {
@@ -930,23 +947,23 @@ export default function Profile() {
             </div>
           )}
 
-          {/* Extension Password for Google users */}
-          {isGoogleOnlyUser && (
+          {/* Password sign-in for Google users */}
+          {isGoogleOnlyUser && (!hasPasswordLogin || extPasswordSet) && (
             <Card className="rounded-3xl border-primary/20">
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <KeyRound className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-lg">Extension Sign-In Password</CardTitle>
+                  <CardTitle className="text-lg">Password sign-in</CardTitle>
                 </div>
                 <CardDescription>
-                  You signed in with Google. Set a password here so you can sign into the Sociax browser extension using your email and password.
+                  You signed in with Google. Create a password once so you can also sign in with your email and password.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {extPasswordSet ? (
-                  <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                  <div className="flex items-center gap-2 text-sm text-accent">
                     <Check className="h-4 w-4" />
-                    Password set successfully! You can now sign into the extension.
+                    Password saved successfully. You can now sign in with your email and password.
                   </div>
                 ) : (
                   <>
@@ -975,7 +992,7 @@ export default function Profile() {
                       />
                     </div>
                     <Button onClick={handleSetExtensionPassword} disabled={extPasswordSaving || !extPassword} className="rounded-full">
-                      {extPasswordSaving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : "Set Password"}
+                      {extPasswordSaving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : "Save Password"}
                     </Button>
                   </>
                 )}
