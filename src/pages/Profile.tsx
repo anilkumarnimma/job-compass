@@ -96,15 +96,23 @@ export default function Profile() {
   const [showAutofillPrompt, setShowAutofillPrompt] = useState(false);
   const [pendingExtracted, setPendingExtracted] = useState<ExtractedResumeData | null>(null);
 
-  // Extension password state
+  // Password bridge state for Google users
   const [extPassword, setExtPassword] = useState("");
   const [extConfirmPassword, setExtConfirmPassword] = useState("");
   const [extPasswordSaving, setExtPasswordSaving] = useState(false);
-  const [extPasswordSet, setExtPasswordSet] = useState(false);
   const [showExtPassword, setShowExtPassword] = useState(false);
 
-  const isGoogleOnlyUser = user?.app_metadata?.provider === "google" || 
-    (user?.app_metadata?.providers?.includes("google") && !user?.app_metadata?.providers?.includes("email"));
+  const providers = user?.app_metadata?.providers as string[] | undefined;
+  const mainProvider = user?.app_metadata?.provider as string | undefined;
+  const hasGoogleProvider = mainProvider === "google" || (providers?.includes("google") ?? false);
+  const hasEmailProvider = mainProvider === "email" || (providers?.includes("email") ?? false);
+  const isGoogleOnlyUser = hasGoogleProvider && !hasEmailProvider;
+  const hasPasswordLogin = hasEmailProvider || user?.user_metadata?.password_login_enabled === true;
+  const [extPasswordSet, setExtPasswordSet] = useState(hasPasswordLogin);
+
+  useEffect(() => {
+    setExtPasswordSet(hasPasswordLogin);
+  }, [hasPasswordLogin]);
 
   const handleSetExtensionPassword = async () => {
     if (extPassword.length < 6) {
@@ -117,12 +125,18 @@ export default function Profile() {
     }
     setExtPasswordSaving(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password: extPassword });
+      const { error } = await supabase.auth.updateUser({
+        password: extPassword,
+        data: {
+          ...(user?.user_metadata ?? {}),
+          password_login_enabled: true,
+        },
+      });
       if (error) throw error;
       setExtPasswordSet(true);
       setExtPassword("");
       setExtConfirmPassword("");
-      toast({ title: "Password set!", description: "You can now sign into the Sociax extension with your email and this password." });
+      toast({ title: "Password saved", description: "You can now sign in with your email and password." });
     } catch (err: any) {
       toast({ title: "Failed to set password", description: err.message, variant: "destructive" });
     } finally {

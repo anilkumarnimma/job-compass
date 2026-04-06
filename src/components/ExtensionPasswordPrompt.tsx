@@ -9,6 +9,7 @@ import { KeyRound, Eye, EyeOff, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
 
 const DISMISS_KEY = "sociax_ext_pwd_dismissed";
+const PASSWORD_LOGIN_FLAG = "password_login_enabled";
 
 export function ExtensionPasswordPrompt() {
   const { user } = useAuth();
@@ -24,6 +25,7 @@ export function ExtensionPasswordPrompt() {
   const hasGoogle = mainProvider === "google" || (providers?.includes("google") ?? false);
   const hasEmail = mainProvider === "email" || (providers?.includes("email") ?? false);
   const isGoogleOnly = hasGoogle && !hasEmail;
+  const hasPasswordLogin = hasEmail || user?.user_metadata?.[PASSWORD_LOGIN_FLAG] === true;
   const dismissKey = user ? `${DISMISS_KEY}:${user.id}` : null;
 
   useEffect(() => {
@@ -34,9 +36,10 @@ export function ExtensionPasswordPrompt() {
     }
 
     setDismissed(localStorage.getItem(dismissKey) === "true");
+    setDone(false);
   }, [dismissKey]);
 
-  const isOpen = !!user && isGoogleOnly && !dismissed && !done;
+  const isOpen = !!user && isGoogleOnly && !hasPasswordLogin && !dismissed && !done;
 
   const handleDismiss = () => {
     if (!dismissKey) return;
@@ -56,7 +59,13 @@ export function ExtensionPasswordPrompt() {
 
     setSaving(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password });
+      const { error } = await supabase.auth.updateUser({
+        password,
+        data: {
+          ...(user?.user_metadata ?? {}),
+          [PASSWORD_LOGIN_FLAG]: true,
+        },
+      });
       if (error) throw error;
 
       if (dismissKey) {
@@ -65,7 +74,7 @@ export function ExtensionPasswordPrompt() {
 
       setDismissed(true);
       setDone(true);
-      toast.success("Password set! You can now sign into the Sociax extension.");
+      toast.success("Password saved. You can now sign in with your email and password.");
     } catch (err: any) {
       toast.error(err.message || "Failed to set password.");
     } finally {
@@ -84,10 +93,10 @@ export function ExtensionPasswordPrompt() {
         <DialogHeader>
           <div className="flex items-center gap-2 mb-1">
             <KeyRound className="h-5 w-5 text-primary" />
-            <DialogTitle>Set Extension Password</DialogTitle>
+            <DialogTitle>Set your password</DialogTitle>
           </div>
           <DialogDescription>
-            You signed in with Google. To use the Sociax Chrome extension, please set a password for your account.
+            You signed in with Google. Create a password once so you can also sign in with your email and password.
           </DialogDescription>
         </DialogHeader>
 
@@ -130,11 +139,11 @@ export function ExtensionPasswordPrompt() {
             <Button onClick={handleSetPassword} disabled={saving || !password}>
               {saving ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Setting...
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...
                 </>
               ) : (
                 <>
-                  <Check className="h-4 w-4 mr-2" /> Set Password
+                  <Check className="h-4 w-4 mr-2" /> Save Password
                 </>
               )}
             </Button>
