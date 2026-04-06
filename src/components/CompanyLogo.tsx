@@ -9,7 +9,14 @@ interface CompanyLogoProps {
   className?: string;
 }
 
+// Filter out ATS platform logos (Greenhouse, Lever, etc.)
+function isAtsLogo(url: string): boolean {
+  const l = url.toLowerCase();
+  return l.includes('greenhouse') || l.includes('lever.co') || l.includes('workday') || l.includes('icims') || l.includes('taleo') || l.includes('smartrecruiters') || l.includes('jobvite');
+}
+
 export function CompanyLogo({ logoUrl, companyName, size = "md", className }: CompanyLogoProps) {
+  const effectiveLogoUrl = logoUrl && !isAtsLogo(logoUrl) ? logoUrl : null;
   const sizeClasses = {
     sm: "h-8 w-8 text-xs",
     md: "h-11 w-11 text-sm",
@@ -40,9 +47,9 @@ export function CompanyLogo({ logoUrl, companyName, size = "md", className }: Co
 
   return (
     <Avatar className={cn(sizeClasses[size], "rounded-xl shrink-0", className)}>
-      {logoUrl ? (
+      {effectiveLogoUrl ? (
         <AvatarImage
-          src={logoUrl}
+          src={effectiveLogoUrl}
           alt={`${companyName} logo`}
           className="object-cover"
           onError={(e) => {
