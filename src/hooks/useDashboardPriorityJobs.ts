@@ -60,29 +60,40 @@ export function useDashboardPriorityJobs({
       }
 
       const priorityIds = new Set(priorityJobs.map((job) => job.id));
-      const genericOffset = Math.max(0, pageStart - priorityJobs.length);
+      let genericSkip = Math.max(0, pageStart - priorityJobs.length);
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - 15);
+      let scanOffset = 0;
+      const genericJobs: Job[] = [];
 
-      const { data, error } = await supabase
-        .from("jobs")
-        .select("*")
-        .eq("is_published", true)
-        .eq("is_archived", false)
-        .is("deleted_at", null)
-        .gte("posted_date", cutoff.toISOString())
-        .order("posted_date", { ascending: false })
-        .range(
-          genericOffset,
-          genericOffset + remainingSlots + priorityIds.size + OVERFETCH_BUFFER - 1,
-        );
+      while (genericJobs.length < remainingSlots) {
+        const { data, error } = await supabase
+          .from("jobs")
+          .select("*")
+          .eq("is_published", true)
+          .eq("is_archived", false)
+          .is("deleted_at", null)
+          .gte("posted_date", cutoff.toISOString())
+          .order("posted_date", { ascending: false })
+          .range(scanOffset, scanOffset + priorityIds.size + OVERFETCH_BUFFER - 1);
 
-      if (error) throw error;
+        if (error) throw error;
+        if (!data?.length) break;
 
-      const genericJobs = (data || [])
-        .map(parseJob)
-        .filter((job) => !priorityIds.has(job.id))
-        .slice(0, remainingSlots);
+        const batch = data
+          .map(parseJob)
+          .filter((job) => !priorityIds.has(job.id));
+
+        if (genericSkip >= batch.length) {
+          genericSkip -= batch.length;
+        } else {
+          const startIndex = Math.max(0, genericSkip);
+          genericJobs.push(...batch.slice(startIndex, startIndex + remainingSlots - genericJobs.length));
+          genericSkip = 0;
+        }
+
+        scanOffset += priorityIds.size + OVERFETCH_BUFFER;
+      }
 
       return [...priorityPageJobs, ...genericJobs];
     },
