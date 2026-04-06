@@ -33,8 +33,9 @@ const MIN_MATCH_SCORE = 45;
 
 function freshnessBonus(postedDate: Date): number {
   const hoursAgo = (Date.now() - postedDate.getTime()) / (1000 * 60 * 60);
-  if (hoursAgo <= 24) return 8;
-  if (hoursAgo <= 48) return 5;
+  if (hoursAgo <= 6) return 12;
+  if (hoursAgo <= 24) return 10;
+  if (hoursAgo <= 48) return 6;
   if (hoursAgo <= 72) return 3;
   if (hoursAgo <= 168) return 1;
   return 0;
@@ -134,12 +135,15 @@ export function useRecommendedJobs() {
         });
       }
 
+      // Sort: high-match jobs first, then by recency within similar scores (±5 band)
       scored.sort((a, b) => {
-        if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
+        const scoreBandA = Math.floor(a.matchScore / 5);
+        const scoreBandB = Math.floor(b.matchScore / 5);
+        if (scoreBandB !== scoreBandA) return scoreBandB - scoreBandA;
         return b.posted_date.getTime() - a.posted_date.getTime();
       });
 
-      return scored.slice(0, 50);
+      return scored.slice(0, 100);
     },
     enabled,
     staleTime: 2 * 60 * 1000,
