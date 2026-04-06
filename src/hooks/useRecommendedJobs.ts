@@ -164,11 +164,14 @@ export function useRecommendedJobs() {
           100
         );
 
+        const proximity = computeTitleProximity(job.title, userRole, targetTitles);
+
         const recJob: RecommendedJob = {
           ...job,
           matchScore: adjustedScore,
           matchedSkills: match.matchedSkills,
           matchResult: { ...match, score: adjustedScore },
+          titleProximity: proximity,
         };
 
         // Strict role relevance filter
@@ -177,17 +180,19 @@ export function useRecommendedJobs() {
         if (roleRelevant && adjustedScore >= MIN_MATCH_SCORE) {
           scored.push(recJob);
         } else if (roleRelevant && adjustedScore >= 25) {
-          // Same domain but lower score — fallback within role family
           domainFallback.push(recJob);
         }
       }
 
-      // Primary: strict role-matched jobs sorted by match tier then recency
+      // Primary: sort by title proximity → match score → recency
       if (scored.length > 0) {
         scored.sort((a, b) => {
-          const tierA = a.matchScore >= 70 ? 2 : a.matchScore >= 50 ? 1 : 0;
-          const tierB = b.matchScore >= 70 ? 2 : b.matchScore >= 50 ? 1 : 0;
-          if (tierB !== tierA) return tierB - tierA;
+          // Title proximity first (exact title > near-exact > family > other)
+          const proxDiff = (b.titleProximity ?? 0) - (a.titleProximity ?? 0);
+          if (proxDiff !== 0) return proxDiff;
+          // Then by match score descending
+          if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
+          // Then by recency
           return b.posted_date.getTime() - a.posted_date.getTime();
         });
         return scored.slice(0, 100);
@@ -195,7 +200,11 @@ export function useRecommendedJobs() {
 
       // Fallback: lower-scoring jobs still within the user's role domain
       if (domainFallback.length > 0) {
-        domainFallback.sort((a, b) => b.posted_date.getTime() - a.posted_date.getTime());
+        domainFallback.sort((a, b) => {
+          const proxDiff = (b.titleProximity ?? 0) - (a.titleProximity ?? 0);
+          if (proxDiff !== 0) return proxDiff;
+          return b.posted_date.getTime() - a.posted_date.getTime();
+        });
         return domainFallback.slice(0, 50);
       }
 
@@ -206,15 +215,21 @@ export function useRecommendedJobs() {
         .filter(job => isRoleRelevant(job.title, userRole, targetTitles))
         .map(job => {
           const match = calculateJobMatch(job, ri);
+          const proximity = computeTitleProximity(job.title, userRole, targetTitles);
           return {
             ...job,
             matchScore: match.score,
             matchedSkills: match.matchedSkills,
             matchResult: match,
+            titleProximity: proximity,
           } as RecommendedJob;
         })
         .filter(j => j.matchedSkills.length >= 1)
-        .sort((a, b) => b.posted_date.getTime() - a.posted_date.getTime())
+        .sort((a, b) => {
+          const proxDiff = (b.titleProximity ?? 0) - (a.titleProximity ?? 0);
+          if (proxDiff !== 0) return proxDiff;
+          return b.posted_date.getTime() - a.posted_date.getTime();
+        })
         .slice(0, 30);
 
       return skillFallback;
