@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
+import { useAuth } from "@/context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -126,19 +127,22 @@ function getTooltipStyle(
 }
 
 export function OnboardingTour() {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number; arrowSide: string } | null>(null);
   const [highlightRect, setHighlightRect] = useState<DOMRect | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
+  const storageKey = user ? `${TOUR_STORAGE_KEY}_${user.id}` : TOUR_STORAGE_KEY;
+
   useEffect(() => {
-    const completed = localStorage.getItem(TOUR_STORAGE_KEY);
+    const completed = localStorage.getItem(storageKey);
     if (!completed) {
       const timer = setTimeout(() => setIsOpen(true), 2000);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [storageKey]);
 
   // Position the tooltip relative to the target element
   const positionTooltip = useCallback(() => {
@@ -146,7 +150,6 @@ export function OnboardingTour() {
     const step = tourSteps[currentStep];
     const el = document.querySelector(step.selector);
     if (!el) {
-      // Fallback: center the tooltip if element not found
       setHighlightRect(null);
       setTooltipPos({
         top: window.innerHeight / 2 - 140,
@@ -159,7 +162,6 @@ export function OnboardingTour() {
     const rect = el.getBoundingClientRect();
     setHighlightRect(rect);
 
-    // Use a default tooltip size for calculation
     const tooltipW = 360;
     const tooltipH = 280;
     const pos = getTooltipStyle(rect, step.position, tooltipW, tooltipH);
@@ -177,9 +179,9 @@ export function OnboardingTour() {
   }, [positionTooltip]);
 
   const completeTour = useCallback(() => {
-    localStorage.setItem(TOUR_STORAGE_KEY, "true");
+    localStorage.setItem(storageKey, "true");
     setIsOpen(false);
-  }, []);
+  }, [storageKey]);
 
   const next = () => {
     if (currentStep < tourSteps.length - 1) {
