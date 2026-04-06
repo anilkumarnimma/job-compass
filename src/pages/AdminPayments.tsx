@@ -2,14 +2,14 @@ import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { Layout } from "@/components/Layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DollarSign, Users, CreditCard, TrendingUp, RefreshCw, ArrowLeft, AlertCircle } from "lucide-react";
+import { DollarSign, Users, CreditCard, TrendingUp, RefreshCw, ArrowLeft, AlertCircle, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
@@ -38,6 +38,19 @@ interface Subscription {
   created: number;
 }
 
+interface FailedPayment {
+  id: string;
+  email: string;
+  customer_name: string | null;
+  event_type: string;
+  amount: number | null;
+  currency: string | null;
+  failure_reason: string | null;
+  retry_link: string | null;
+  email_sent: boolean;
+  created_at: string;
+}
+
 interface Stats {
   total_revenue: number;
   paid_users: number;
@@ -45,6 +58,7 @@ interface Stats {
   canceled_subscriptions: number;
   past_due_subscriptions: number;
   total_transactions: number;
+  failed_payments_count: number;
 }
 
 export default function AdminPayments() {
@@ -52,6 +66,7 @@ export default function AdminPayments() {
   const { toast } = useToast();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [failedPayments, setFailedPayments] = useState<FailedPayment[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -72,6 +87,7 @@ export default function AdminPayments() {
 
       setPayments(data.payments || []);
       setSubscriptions(data.subscriptions || []);
+      setFailedPayments(data.failed_payments || []);
       setStats(data.stats || null);
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "Failed to load payment data", variant: "destructive" });
@@ -84,7 +100,7 @@ export default function AdminPayments() {
 
   const filteredPayments = useMemo(() => {
     return payments.filter(p => {
-      const matchesSearch = !search || 
+      const matchesSearch = !search ||
         (p.customer_email || "").toLowerCase().includes(search.toLowerCase()) ||
         (p.customer_name || "").toLowerCase().includes(search.toLowerCase());
       const matchesStatus = statusFilter === "all" || p.status === statusFilter;
@@ -102,6 +118,14 @@ export default function AdminPayments() {
     });
   }, [subscriptions, search, subStatusFilter]);
 
+  const filteredFailed = useMemo(() => {
+    return failedPayments.filter(f => {
+      return !search ||
+        f.email.toLowerCase().includes(search.toLowerCase()) ||
+        (f.customer_name || "").toLowerCase().includes(search.toLowerCase());
+    });
+  }, [failedPayments, search]);
+
   const statusBadge = (status: string) => {
     switch (status) {
       case "succeeded": return <Badge variant="success">Succeeded</Badge>;
@@ -114,8 +138,21 @@ export default function AdminPayments() {
     }
   };
 
+  const eventTypeBadge = (type: string) => {
+    switch (type) {
+      case "checkout_expired": return <Badge variant="secondary">Checkout Expired</Badge>;
+      case "invoice_payment_failed": return <Badge variant="destructive">Invoice Failed</Badge>;
+      case "charge_failed": return <Badge variant="destructive">Charge Failed</Badge>;
+      default: return <Badge variant="outline">{type}</Badge>;
+    }
+  };
+
   const formatDate = (ts: number) => new Date(ts * 1000).toLocaleDateString("en-US", {
     year: "numeric", month: "short", day: "numeric",
+  });
+
+  const formatDateISO = (iso: string) => new Date(iso).toLocaleDateString("en-US", {
+    year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
   });
 
   const formatCurrency = (amount: number, currency = "USD") =>
@@ -143,7 +180,7 @@ export default function AdminPayments() {
 
         {/* Stats Cards */}
         {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
             <Card>
               <CardContent className="pt-4 pb-4">
                 <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
@@ -176,6 +213,14 @@ export default function AdminPayments() {
                 <p className="text-2xl font-bold text-foreground">{stats.total_transactions}</p>
               </CardContent>
             </Card>
+            <Card className="border-destructive/30">
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-center gap-2 text-destructive text-sm mb-1">
+                  <AlertTriangle className="h-4 w-4" /> Failed Payments
+                </div>
+                <p className="text-2xl font-bold text-destructive">{stats.failed_payments_count}</p>
+              </CardContent>
+            </Card>
           </div>
         )}
 
@@ -187,7 +232,6 @@ export default function AdminPayments() {
 
         {!loading && (
           <>
-            {/* Search */}
             <div className="mb-4">
               <Input
                 placeholder="Search by name or email..."
@@ -201,6 +245,10 @@ export default function AdminPayments() {
               <TabsList>
                 <TabsTrigger value="payments">Payments ({payments.length})</TabsTrigger>
                 <TabsTrigger value="subscriptions">Subscriptions ({subscriptions.length})</TabsTrigger>
+                <TabsTrigger value="failed" className="text-destructive">
+                  <AlertTriangle className="h-3.5 w-3.5 mr-1" />
+                  Failed ({failedPayments.length})
+                </TabsTrigger>
               </TabsList>
 
               {/* Payments Tab */}
@@ -307,6 +355,59 @@ export default function AdminPayments() {
                               <TableCell>{statusBadge(s.status)}</TableCell>
                               <TableCell className="text-muted-foreground">{formatDate(s.current_period_end)}</TableCell>
                               <TableCell className="text-muted-foreground">{formatDate(s.created)}</TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </Card>
+              </TabsContent>
+
+              {/* Failed Payments Tab */}
+              <TabsContent value="failed" className="space-y-3">
+                <Card>
+                  <div className="overflow-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Reason</TableHead>
+                          <TableHead>Email Sent</TableHead>
+                          <TableHead>Date</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredFailed.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                              <AlertCircle className="h-5 w-5 mx-auto mb-2" />
+                              No failed payments recorded
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          filteredFailed.map(f => (
+                            <TableRow key={f.id}>
+                              <TableCell className="font-medium">{f.customer_name || "—"}</TableCell>
+                              <TableCell className="text-muted-foreground">{f.email}</TableCell>
+                              <TableCell>{eventTypeBadge(f.event_type)}</TableCell>
+                              <TableCell className="font-semibold">
+                                {f.amount != null ? formatCurrency(f.amount / 100, f.currency || "USD") : "—"}
+                              </TableCell>
+                              <TableCell className="text-muted-foreground max-w-[200px] truncate" title={f.failure_reason || ""}>
+                                {f.failure_reason || "—"}
+                              </TableCell>
+                              <TableCell>
+                                {f.email_sent ? (
+                                  <Badge variant="success">Sent</Badge>
+                                ) : (
+                                  <Badge variant="secondary">Pending</Badge>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-muted-foreground text-sm">{formatDateISO(f.created_at)}</TableCell>
                             </TableRow>
                           ))
                         )}

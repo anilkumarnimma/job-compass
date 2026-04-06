@@ -240,6 +240,48 @@ export type Database = {
         }
         Relationships: []
       }
+      failed_payments: {
+        Row: {
+          amount: number | null
+          created_at: string
+          currency: string | null
+          customer_name: string | null
+          email: string
+          email_sent: boolean
+          event_type: string
+          failure_reason: string | null
+          id: string
+          retry_link: string | null
+          stripe_event_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          currency?: string | null
+          customer_name?: string | null
+          email: string
+          email_sent?: boolean
+          event_type: string
+          failure_reason?: string | null
+          id?: string
+          retry_link?: string | null
+          stripe_event_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          currency?: string | null
+          customer_name?: string | null
+          email?: string
+          email_sent?: boolean
+          event_type?: string
+          failure_reason?: string | null
+          id?: string
+          retry_link?: string | null
+          stripe_event_id?: string | null
+        }
+        Relationships: []
+      }
       hiring_graph_data: {
         Row: {
           created_at: string

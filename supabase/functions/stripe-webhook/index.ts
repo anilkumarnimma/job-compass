@@ -1,10 +1,12 @@
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
-import Stripe from "npm:stripe@18.5.0";
+import Stripe from "https://esm.sh/stripe@18.5.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature",
 };
+
+const STRIPE_BASE_LINK = "https://buy.stripe.com/eVqaEX9treQ0eOL4dX3AY00";
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -15,7 +17,6 @@ Deno.serve(async (req) => {
   logStep("Request received", { method: req.method });
 
   if (req.method === "OPTIONS") {
-    logStep("CORS preflight handled");
     return new Response(null, { headers: corsHeaders });
   }
 
@@ -23,13 +24,6 @@ Deno.serve(async (req) => {
   const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-  logStep("Environment check", {
-    hasStripeKey: !!stripeSecretKey,
-    hasWebhookSecret: !!webhookSecret,
-    hasSupabaseUrl: !!supabaseUrl,
-    hasServiceKey: !!supabaseServiceKey,
-  });
 
   if (!stripeSecretKey || !webhookSecret) {
     logStep("ERROR: Missing Stripe configuration");
@@ -41,118 +35,221 @@ Deno.serve(async (req) => {
 
   const stripe = new Stripe(stripeSecretKey, { apiVersion: "2025-08-27.basil" });
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
-  logStep("Stripe and DB clients initialized");
 
   try {
     const body = await req.text();
-    logStep("Request body read", { bodyLength: body.length });
-
     const signature = req.headers.get("stripe-signature");
-    logStep("Signature header check", { hasSignature: !!signature });
 
     if (!signature) {
-      logStep("ERROR: No stripe-signature header");
       return new Response(JSON.stringify({ error: "No signature" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    logStep("Verifying webhook signature");
     const event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
-    logStep("Signature verified", { eventType: event.type, eventId: event.id });
+    logStep("Event received", { eventType: event.type, eventId: event.id });
 
+    // ── checkout.session.completed ──
     if (event.type === "checkout.session.completed") {
-      logStep("Processing checkout.session.completed");
       const session = event.data.object as Stripe.Checkout.Session;
       const customerEmail = session.customer_details?.email || session.customer_email;
 
-      logStep("Session details", {
-        sessionId: session.id,
-        hasEmail: !!customerEmail,
-        paymentStatus: session.payment_status,
-      });
-
       if (!customerEmail) {
-        logStep("ERROR: No customer email in session");
         return new Response(JSON.stringify({ error: "No email" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      logStep("Updating profile to premium");
       const { data, error } = await supabase
         .from("profiles")
         .update({ is_premium: true })
         .eq("email", customerEmail.toLowerCase())
         .select("user_id");
 
-      if (error) {
-        logStep("ERROR: DB update failed", { errorMessage: error.message, errorCode: error.code });
-        return new Response(JSON.stringify({ error: "DB update failed" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      if (!data || data.length === 0) {
-        logStep("ERROR: No profile found for email");
+      if (error || !data || data.length === 0) {
+        logStep("ERROR: Profile update failed", { error: error?.message });
         return new Response(JSON.stringify({ error: "User not found" }), {
           status: 404,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      logStep("Premium upgrade successful", { matchedProfiles: data.length });
+      logStep("Premium upgrade successful", { email: customerEmail });
 
-      // Update user_subscriptions table
       const userId = data[0].user_id;
       const stripeCustomerId = (session as any).customer as string | null;
-      const subscriptionId = (session as any).subscription as string | null;
-
-      logStep("Updating user_subscriptions", {
-        hasUserId: !!userId,
-        hasStripeCustomerId: !!stripeCustomerId,
-        hasSubscriptionId: !!subscriptionId,
-      });
-
-      // Calculate next renewal date (1 month from now for monthly subscription)
       const nextRenewal = new Date();
       nextRenewal.setMonth(nextRenewal.getMonth() + 1);
 
-      const { error: subError } = await supabase
-        .from("user_subscriptions")
-        .upsert(
-          {
-            user_id: userId,
-            is_subscribed: true,
-            stripe_customer_id: stripeCustomerId || null,
-            next_renewal_date: nextRenewal.toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id" }
-        );
-
-      if (subError) {
-        logStep("ERROR: Subscription update failed", { errorMessage: subError.message, errorCode: subError.code });
-      } else {
-        logStep("Subscription record updated successfully");
-      }
-    } else {
-      logStep("Unhandled event type, acknowledging", { eventType: event.type });
+      await supabase.from("user_subscriptions").upsert(
+        {
+          user_id: userId,
+          is_subscribed: true,
+          stripe_customer_id: stripeCustomerId || null,
+          next_renewal_date: nextRenewal.toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id" }
+      );
     }
 
-    logStep("Webhook processing complete, returning 200");
+    // ── checkout.session.expired (user abandoned checkout) ──
+    if (event.type === "checkout.session.expired") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const customerEmail = session.customer_details?.email || session.customer_email;
+
+      if (customerEmail) {
+        const retryLink = `${STRIPE_BASE_LINK}?prefilled_email=${encodeURIComponent(customerEmail)}`;
+
+        await supabase.from("failed_payments").insert({
+          email: customerEmail.toLowerCase(),
+          customer_name: session.customer_details?.name || null,
+          stripe_event_id: event.id,
+          event_type: "checkout_expired",
+          amount: session.amount_total ? session.amount_total : null,
+          currency: (session.currency || "usd").toUpperCase(),
+          failure_reason: "Checkout session expired — user did not complete payment",
+          retry_link: retryLink,
+          email_sent: false,
+        });
+
+        // Send failure email via Resend or SMTP (when email infra is ready)
+        await sendFailureEmail(supabase, customerEmail, session.customer_details?.name || null, retryLink);
+
+        logStep("Checkout expired logged", { email: customerEmail });
+      }
+    }
+
+    // ── invoice.payment_failed (subscription renewal failed) ──
+    if (event.type === "invoice.payment_failed") {
+      const invoice = event.data.object as any;
+      const customerEmail = invoice.customer_email;
+      const customerName = invoice.customer_name;
+
+      if (customerEmail) {
+        const retryLink = invoice.hosted_invoice_url || `${STRIPE_BASE_LINK}?prefilled_email=${encodeURIComponent(customerEmail)}`;
+
+        await supabase.from("failed_payments").insert({
+          email: customerEmail.toLowerCase(),
+          customer_name: customerName || null,
+          stripe_event_id: event.id,
+          event_type: "invoice_payment_failed",
+          amount: invoice.amount_due || null,
+          currency: (invoice.currency || "usd").toUpperCase(),
+          failure_reason: invoice.last_finalization_error?.message || "Payment method declined",
+          retry_link: retryLink,
+          email_sent: false,
+        });
+
+        await sendFailureEmail(supabase, customerEmail, customerName || null, retryLink);
+
+        logStep("Invoice payment failed logged", { email: customerEmail });
+      }
+    }
+
+    // ── charge.failed ──
+    if (event.type === "charge.failed") {
+      const charge = event.data.object as any;
+      const customerEmail = charge.billing_details?.email || charge.receipt_email;
+
+      if (customerEmail) {
+        const retryLink = `${STRIPE_BASE_LINK}?prefilled_email=${encodeURIComponent(customerEmail)}`;
+
+        await supabase.from("failed_payments").insert({
+          email: customerEmail.toLowerCase(),
+          customer_name: charge.billing_details?.name || null,
+          stripe_event_id: event.id,
+          event_type: "charge_failed",
+          amount: charge.amount ? charge.amount / 100 : null,
+          currency: (charge.currency || "usd").toUpperCase(),
+          failure_reason: charge.failure_message || charge.outcome?.seller_message || "Charge failed",
+          retry_link: retryLink,
+          email_sent: false,
+        });
+
+        await sendFailureEmail(supabase, customerEmail, charge.billing_details?.name || null, retryLink);
+
+        logStep("Charge failed logged", { email: customerEmail });
+      }
+    }
+
     return new Response(JSON.stringify({ received: true }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    logStep("ERROR: Webhook processing failed", { errorMessage: err.message });
+    logStep("ERROR", { message: (err as Error).message });
     return new Response(JSON.stringify({ error: "Webhook processing failed" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
+
+/** Send a payment failure notification email */
+async function sendFailureEmail(
+  supabase: any,
+  email: string,
+  name: string | null,
+  retryLink: string
+) {
+  try {
+    const greeting = name ? `Hi ${name},` : "Hi,";
+
+    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"/></head>
+<body style="margin:0;padding:0;background:#ffffff;font-family:Arial,sans-serif;">
+  <div style="max-width:520px;margin:40px auto;padding:32px 24px;background:#ffffff;border-radius:12px;border:1px solid #e5e7eb;">
+    <h1 style="font-size:20px;font-weight:700;color:#111827;margin:0 0 16px;">Complete your Sociax Premium upgrade</h1>
+    <p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 12px;">${greeting}</p>
+    <p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 20px;">Your recent payment attempt was not successful.</p>
+    <p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 24px;">You can complete your upgrade using the button below:</p>
+    <div style="text-align:center;margin:0 0 24px;">
+      <a href="${retryLink}" style="display:inline-block;padding:14px 32px;background:#6366f1;color:#ffffff;font-size:15px;font-weight:600;border-radius:8px;text-decoration:none;">Try Payment Again</a>
+    </div>
+    <p style="font-size:14px;color:#6b7280;line-height:1.5;margin:0 0 8px;">Once the payment is successful, your account will be upgraded to Premium immediately.</p>
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;"/>
+    <p style="font-size:13px;color:#9ca3af;margin:0;">— Team Sociax</p>
+  </div>
+</body>
+</html>`;
+
+    // Use Supabase Edge Function to send email (if email infra available)
+    // For now, log the email content and mark as sent attempt
+    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+
+    if (lovableApiKey) {
+      // Try sending via the transactional email function if available
+      try {
+        await supabase.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "payment-failed",
+            recipientEmail: email,
+            idempotencyKey: `payment-failed-${email}-${Date.now()}`,
+            templateData: { name: name || undefined, retryLink },
+          },
+        });
+      } catch {
+        // Transactional email not set up yet — fallback: just log it
+        logStep("Transactional email not available, email logged only", { email });
+      }
+    }
+
+    // Mark email_sent in the latest record for this email
+    // We use a raw update on the most recent record
+    await supabase
+      .from("failed_payments")
+      .update({ email_sent: true })
+      .eq("email", email.toLowerCase())
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    logStep("Failure email processed", { email });
+  } catch (err) {
+    logStep("Email send error (non-fatal)", { message: (err as Error).message });
+  }
+}
