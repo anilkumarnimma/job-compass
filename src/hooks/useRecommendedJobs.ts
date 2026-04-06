@@ -33,8 +33,9 @@ const MIN_MATCH_SCORE = 45;
 
 function freshnessBonus(postedDate: Date): number {
   const hoursAgo = (Date.now() - postedDate.getTime()) / (1000 * 60 * 60);
-  if (hoursAgo <= 24) return 8;
-  if (hoursAgo <= 48) return 5;
+  if (hoursAgo <= 6) return 12;
+  if (hoursAgo <= 24) return 10;
+  if (hoursAgo <= 48) return 6;
   if (hoursAgo <= 72) return 3;
   if (hoursAgo <= 168) return 1;
   return 0;
