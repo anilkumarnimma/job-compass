@@ -47,9 +47,9 @@ export function CompanyLogo({ logoUrl, companyName, size = "md", className }: Co
 
   return (
     <Avatar className={cn(sizeClasses[size], "rounded-xl shrink-0", className)}>
-      {logoUrl ? (
+      {effectiveLogoUrl ? (
         <AvatarImage
-          src={logoUrl}
+          src={effectiveLogoUrl}
           alt={`${companyName} logo`}
           className="object-cover"
           onError={(e) => {
