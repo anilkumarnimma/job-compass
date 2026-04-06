@@ -36,15 +36,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const checkAdminRole = async (userId: string) => {
-    const { data } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .in("role", ["admin", "founder"])
-      .maybeSingle();
+    try {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .in("role", ["admin", "founder"])
+        .maybeSingle();
 
-    setIsAdmin(data?.role === "admin" || data?.role === "founder");
-    setIsLoading(false);
+      setIsAdmin(data?.role === "admin" || data?.role === "founder");
+    } catch {
+      // Non-critical — default to non-admin
+      setIsAdmin(false);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
