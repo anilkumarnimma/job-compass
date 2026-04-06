@@ -200,7 +200,7 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
           {job.location}
         </span>
 
-        {job.salary_range && (
+        {job.salary_range && !/nan/i.test(job.salary_range) && (
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-xs font-semibold">
             <DollarSign className="h-3.5 w-3.5" />
             {job.salary_range}
