@@ -271,6 +271,7 @@ export const SociaAIOrb: React.FC = () => {
   return (
     <div
       className="fixed z-[9999]"
+      data-tour="ai-orb"
       style={{
         right: isMobile ? (isOpen ? 0 : 16) : 28,
         bottom: isMobile ? (isOpen ? 0 : 100) : 28,
