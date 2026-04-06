@@ -38,6 +38,7 @@ import { NotificationOptInDialog } from "@/components/NotificationOptInDialog";
 import { ExtensionPasswordPrompt } from "@/components/ExtensionPasswordPrompt";
 import { consumeDashboardResetToken, DASHBOARD_RESET_EVENT } from "@/lib/dashboardReset";
 import { useResumeEmail } from "@/hooks/useResumeEmail";
+import { DASHBOARD_PAGE_SIZE, useDashboardPriorityJobs } from "@/hooks/useDashboardPriorityJobs";
 
 type DateFilter = "all" | "today" | "yesterday" | "custom";
 
@@ -248,16 +249,25 @@ export default function Dashboard() {
     });
   }, [shouldTryPersonalizedFeed, recommendedJobs, intelligence]);
 
-  const usePersonalizedFeed = shouldTryPersonalizedFeed && (recommendedLoading || personalizedJobs.length > 0);
+  const usePriorityOrdering = shouldTryPersonalizedFeed && personalizedJobs.length > 0;
+
+  const prioritizedPageQuery = useDashboardPriorityJobs({
+    currentPage,
+    enabled: usePriorityOrdering,
+    priorityJobs: personalizedJobs,
+  });
 
   const jobs = useMemo(() => {
-    if (!usePersonalizedFeed) return rawJobs;
-    const start = (currentPage - 1) * 20;
-    return personalizedJobs.slice(start, start + 20);
-  }, [usePersonalizedFeed, rawJobs, personalizedJobs, currentPage]);
+    if (!usePriorityOrdering) return rawJobs;
+    return prioritizedPageQuery.data ?? rawJobs;
+  }, [usePriorityOrdering, prioritizedPageQuery.data, rawJobs]);
 
-  const isLoading = usePersonalizedFeed ? recommendedLoading : searchLoading;
-  const isFetching = usePersonalizedFeed ? recommendedFetching : searchFetching;
+  const isLoading = usePriorityOrdering
+    ? recommendedLoading || searchLoading || prioritizedPageQuery.isLoading
+    : searchLoading;
+  const isFetching = usePriorityOrdering
+    ? recommendedFetching || searchFetching || prioritizedPageQuery.isFetching
+    : searchFetching;
 
   // Defer heavy calculations so they don't block typing
   const deferredJobs = useDeferredValue(jobs);
@@ -278,14 +288,14 @@ export default function Dashboard() {
   }, [deferredJobs, matchResults, intelligence]);
 
   useEffect(() => {
-    if (!usePersonalizedFeed && !isLoading && dateFilter !== "all" && !fallbackActive && searchData && searchData.totalCount === 0) {
+    if (!usePriorityOrdering && !isLoading && dateFilter !== "all" && !fallbackActive && searchData && searchData.totalCount === 0) {
       setFallbackActive(true);
     }
-  }, [usePersonalizedFeed, isLoading, dateFilter, fallbackActive, searchData]);
+  }, [usePriorityOrdering, isLoading, dateFilter, fallbackActive, searchData]);
 
-  const totalCount = usePersonalizedFeed ? personalizedJobs.length : (searchData?.totalCount ?? 0);
-  const totalPages = usePersonalizedFeed
-    ? Math.max(1, Math.ceil(personalizedJobs.length / 20))
+  const totalCount = searchData?.totalCount ?? 0;
+  const totalPages = usePriorityOrdering
+    ? Math.max(1, Math.ceil(totalCount / DASHBOARD_PAGE_SIZE))
     : (searchData?.totalPages ?? 1);
 
   useEffect(() => {
