@@ -50,8 +50,34 @@ function sourceBonus(link: string): number {
   return 0;
 }
 
+// Common synonyms within the same role family
+const TITLE_SYNONYMS: Record<string, string[]> = {
+  "software": ["software", "application", "systems"],
+  "engineer": ["engineer", "developer", "programmer"],
+  "frontend": ["frontend", "front-end", "front end", "ui"],
+  "backend": ["backend", "back-end", "back end", "server"],
+  "fullstack": ["fullstack", "full-stack", "full stack"],
+  "data": ["data", "analytics", "bi"],
+  "analyst": ["analyst", "analytics"],
+  "devops": ["devops", "sre", "platform", "infrastructure"],
+  "mobile": ["mobile", "ios", "android", "flutter", "react native"],
+};
+
+function expandRole(role: string): Set<string> {
+  const words = role.toLowerCase().split(/[\s,/\-]+/).filter(w => w.length > 2);
+  const expanded = new Set(words);
+  for (const w of words) {
+    for (const synonyms of Object.values(TITLE_SYNONYMS)) {
+      if (synonyms.includes(w)) {
+        synonyms.forEach(s => expanded.add(s));
+      }
+    }
+  }
+  return expanded;
+}
+
 /**
- * Compute title proximity: 3 = exact/near-exact, 2 = close variant, 1 = same family, 0 = other.
+ * Compute title proximity: 3 = exact/near-exact, 2 = close variant/synonym, 1 = same family, 0 = other.
  */
 function computeTitleProximity(jobTitle: string, userRole: string, targetTitles: string[]): number {
   const jt = jobTitle.toLowerCase().trim();
@@ -63,24 +89,30 @@ function computeTitleProximity(jobTitle: string, userRole: string, targetTitles:
   // Exact match with any target title
   for (const tt of targetTitles) {
     const ttl = tt.toLowerCase().trim();
-    if (jt === ttl || jt.includes(ttl) || ttl.includes(jt)) return 2;
+    if (jt === ttl || jt.includes(ttl) || ttl.includes(jt)) return 3;
   }
 
-  // Word-level overlap: if >50% of role keywords appear in job title → same family
-  const roleWords = pr.split(/[\s,/\-]+/).filter(w => w.length > 2);
-  const jobWords = new Set(jt.split(/[\s,/\-]+/).filter(w => w.length > 2));
-  if (roleWords.length > 0) {
-    const overlap = roleWords.filter(w => jobWords.has(w)).length;
-    if (overlap / roleWords.length >= 0.5) return 1;
+  // Synonym-expanded match: e.g. "Software Developer" ↔ "Software Engineer"
+  const userExpanded = expandRole(userRole);
+  const jobWords = jt.split(/[\s,/\-]+/).filter(w => w.length > 2);
+  if (jobWords.length > 0) {
+    const overlap = jobWords.filter(w => userExpanded.has(w)).length;
+    if (overlap / jobWords.length >= 0.6) return 2;
   }
 
-  // Check target title word overlap
+  // Target title synonym match
   for (const tt of targetTitles) {
-    const ttWords = tt.toLowerCase().split(/[\s,/\-]+/).filter(w => w.length > 2);
-    if (ttWords.length > 0) {
-      const overlap = ttWords.filter(w => jobWords.has(w)).length;
-      if (overlap / ttWords.length >= 0.5) return 1;
-    }
+    const ttExpanded = expandRole(tt);
+    const overlap = jobWords.filter(w => ttExpanded.has(w)).length;
+    if (jobWords.length > 0 && overlap / jobWords.length >= 0.6) return 2;
+  }
+
+  // Word-level overlap without synonyms
+  const roleWords = pr.split(/[\s,/\-]+/).filter(w => w.length > 2);
+  const jobWordSet = new Set(jobWords);
+  if (roleWords.length > 0) {
+    const overlap = roleWords.filter(w => jobWordSet.has(w)).length;
+    if (overlap / roleWords.length >= 0.5) return 1;
   }
 
   return 0;
@@ -183,10 +215,14 @@ export function useRecommendedJobs() {
       const tier4 = allProcessed;
 
       const sortFn = (a: RecommendedJob, b: RecommendedJob) => {
+        // 1. Title proximity is king — exact title matches always on top
         const proxDiff = (b.titleProximity ?? 0) - (a.titleProximity ?? 0);
         if (proxDiff !== 0) return proxDiff;
-        if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
-        return b.posted_date.getTime() - a.posted_date.getTime();
+        // 2. Within same proximity, show newest first (recently uploaded)
+        const timeDiff = b.posted_date.getTime() - a.posted_date.getTime();
+        // Only break recency tie with match score
+        if (Math.abs(timeDiff) > 3600000) return timeDiff; // >1hr apart → recency wins
+        return b.matchScore - a.matchScore;
       };
 
       // Use the highest non-empty tier, or combine tiers to fill
