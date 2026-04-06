@@ -133,6 +133,9 @@ export default function Profile() {
         },
       });
       if (error) throw error;
+      if (user) {
+        localStorage.setItem(`sociax_ext_pwd_dismissed:${user.id}`, "true");
+      }
       setExtPasswordSet(true);
       setExtPassword("");
       setExtConfirmPassword("");
@@ -944,23 +947,23 @@ export default function Profile() {
             </div>
           )}
 
-          {/* Extension Password for Google users */}
+          {/* Password sign-in for Google users */}
           {isGoogleOnlyUser && (
             <Card className="rounded-3xl border-primary/20">
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <KeyRound className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-lg">Extension Sign-In Password</CardTitle>
+                  <CardTitle className="text-lg">Password sign-in</CardTitle>
                 </div>
                 <CardDescription>
-                  You signed in with Google. Set a password here so you can sign into the Sociax browser extension using your email and password.
+                  You signed in with Google. Create a password once so you can also sign in with your email and password.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {extPasswordSet ? (
                   <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
                     <Check className="h-4 w-4" />
-                    Password set successfully! You can now sign into the extension.
+                    Password saved successfully. You can now sign in with your email and password.
                   </div>
                 ) : (
                   <>
@@ -989,9 +992,10 @@ export default function Profile() {
                       />
                     </div>
                     <Button onClick={handleSetExtensionPassword} disabled={extPasswordSaving || !extPassword} className="rounded-full">
-                      {extPasswordSaving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : "Set Password"}
+                      {extPasswordSaving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : "Save Password"}
                     </Button>
                   </>
+                )}
                 )}
               </CardContent>
             </Card>
