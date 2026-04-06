@@ -162,10 +162,11 @@ export function useRecommendedJobs() {
         return domainFallback.slice(0, 50);
       }
 
-      // Last resort: show recent jobs with any skill overlap (still exclude unrelated)
+      // Last resort: show recent jobs with skill overlap AND role relevance
       const skillFallback = data
         .map(parseJob)
         .filter(job => !shouldExcludeJob(job))
+        .filter(job => isRoleRelevant(job.title, userRole, targetTitles))
         .map(job => {
           const match = calculateJobMatch(job, ri);
           return {
@@ -175,7 +176,7 @@ export function useRecommendedJobs() {
             matchResult: match,
           } as RecommendedJob;
         })
-        .filter(j => j.matchedSkills.length >= 2)
+        .filter(j => j.matchedSkills.length >= 1)
         .sort((a, b) => b.posted_date.getTime() - a.posted_date.getTime())
         .slice(0, 30);
 
