@@ -50,6 +50,42 @@ function sourceBonus(link: string): number {
   return 0;
 }
 
+/**
+ * Compute title proximity: 3 = exact/near-exact, 2 = close variant, 1 = same family, 0 = other.
+ */
+function computeTitleProximity(jobTitle: string, userRole: string, targetTitles: string[]): number {
+  const jt = jobTitle.toLowerCase().trim();
+  const pr = userRole.toLowerCase().trim();
+
+  // Exact or substring match with primary role
+  if (jt === pr || jt.includes(pr) || pr.includes(jt)) return 3;
+
+  // Exact match with any target title
+  for (const tt of targetTitles) {
+    const ttl = tt.toLowerCase().trim();
+    if (jt === ttl || jt.includes(ttl) || ttl.includes(jt)) return 2;
+  }
+
+  // Word-level overlap: if >50% of role keywords appear in job title → same family
+  const roleWords = pr.split(/[\s,/\-]+/).filter(w => w.length > 2);
+  const jobWords = new Set(jt.split(/[\s,/\-]+/).filter(w => w.length > 2));
+  if (roleWords.length > 0) {
+    const overlap = roleWords.filter(w => jobWords.has(w)).length;
+    if (overlap / roleWords.length >= 0.5) return 1;
+  }
+
+  // Check target title word overlap
+  for (const tt of targetTitles) {
+    const ttWords = tt.toLowerCase().split(/[\s,/\-]+/).filter(w => w.length > 2);
+    if (ttWords.length > 0) {
+      const overlap = ttWords.filter(w => jobWords.has(w)).length;
+      if (overlap / ttWords.length >= 0.5) return 1;
+    }
+  }
+
+  return 0;
+}
+
 export interface RecommendedJob extends Job {
   matchScore: number;
   matchedSkills: string[];
