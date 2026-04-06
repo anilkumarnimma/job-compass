@@ -293,6 +293,9 @@ export default function Profile() {
     try {
       // Temporarily exit edit mode so profile form can refresh with cleared fields
       setIsEditing(false);
+      clearExtracted();
+      lastResumeTextRef.current = "";
+      setPendingExtracted(null);
       await uploadResume(file);
       // Parse the file we already have in memory — no need to re-download
       const extracted = await parseResume(file);
@@ -306,20 +309,8 @@ export default function Profile() {
         lastResumeTextRef.current = parts.join("\n");
         buildReviewChanges(extracted);
       } else {
-        // Parsing failed — still trigger intelligence analysis with existing profile data
-        // so ATS check and recommendations work even if text extraction fails
-        const existingSkills = profile?.skills || [];
-        const existingWork = Array.isArray(profile?.work_experience) ? profile.work_experience : [];
-        const existingEdu = Array.isArray(profile?.education) ? profile.education : [];
-        if (existingSkills.length > 0 || existingWork.length > 0) {
-          analyzeResume({
-            skills: existingSkills,
-            workExperience: existingWork,
-            education: existingEdu,
-            currentTitle: profile?.current_title || undefined,
-            experienceYears: profile?.experience_years ?? undefined,
-          }).catch(() => {});
-        }
+        // Parsing failed, so keep the just-uploaded resume as the source of truth
+        // without reusing any stale fields from the previous resume.
       }
     } catch {
       // uploadResume already shows error toast
@@ -406,7 +397,6 @@ export default function Profile() {
   };
 
   const applyExtractedData = (e: ExtractedResumeData) => {
-
     const updates: Record<string, string> = {};
     const simpleFields = ["first_name", "last_name", "phone", "city", "state", "zip", "address", "linkedin_url", "github_url", "portfolio_url"] as const;
     if (e.email) updates["contact_email"] = e.email;
@@ -440,9 +430,27 @@ export default function Profile() {
     const newWork = mappedWork.length > 0 ? mappedWork : [{ ...emptyWork }];
     const newEdu = mappedEdu.length > 0 ? mappedEdu : [{ ...emptyEdu }];
     const newCerts = mappedCerts;
+    const clearedResumeFormData = {
+      ...formData,
+      first_name: "",
+      last_name: "",
+      contact_email: "",
+      phone: "",
+      address: "",
+      city: "",
+      state: "",
+      zip: "",
+      linkedin_url: "",
+      github_url: "",
+      portfolio_url: "",
+      experience_years: "",
+      current_company: "",
+      current_title: "",
+      skills: "",
+    };
 
     const newFormData = {
-      ...formData,
+      ...clearedResumeFormData,
       ...updates,
       skills: nextSkills.join(", "),
       experience_years: e.experience_years ?? "",

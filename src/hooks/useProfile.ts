@@ -60,6 +60,34 @@ export interface ProfileData {
   updated_at: string;
 }
 
+function createClearedResumeFields(filePath: string, fileName: string): Partial<ProfileData> {
+  return {
+    resume_url: filePath,
+    resume_filename: fileName,
+    resume_intelligence: null,
+    first_name: null,
+    last_name: null,
+    full_name: null,
+    contact_email: null,
+    phone: null,
+    address: null,
+    city: null,
+    state: null,
+    zip: null,
+    location: null,
+    linkedin_url: null,
+    github_url: null,
+    portfolio_url: null,
+    current_company: null,
+    current_title: null,
+    experience_years: null,
+    skills: [],
+    work_experience: [],
+    education: [],
+    certifications: [],
+  };
+}
+
 export function useProfile() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -146,18 +174,7 @@ export function useProfile() {
       // Add timestamp to path to guarantee unique URL on every upload
       const timestamp = Date.now();
       const filePath = `${user.id}/${timestamp}_${file.name}`;
-      const clearedResumeFields: Partial<ProfileData> = {
-        resume_url: filePath,
-        resume_filename: file.name,
-        resume_intelligence: null,
-        current_company: null,
-        current_title: null,
-        experience_years: null,
-        skills: [],
-        work_experience: [],
-        education: [],
-        certifications: [],
-      };
+      const clearedResumeFields = createClearedResumeFields(filePath, file.name);
       
       if (profile?.resume_url) {
         const oldPath = profile.resume_url.split("/").slice(-2).join("/");
