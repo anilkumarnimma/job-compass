@@ -54,6 +54,7 @@ export interface RecommendedJob extends Job {
   matchScore: number;
   matchedSkills: string[];
   matchResult?: JobMatchResult;
+  titleProximity?: number; // 0-3: 3=exact, 2=near-exact, 1=same-family, 0=other
 }
 
 export function useRecommendedJobs() {
