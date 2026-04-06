@@ -384,7 +384,7 @@ export default function Dashboard() {
                 placeholder="Search jobs by title, company, skills…"
               />
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0" data-tour="date-filters">
               {(["today", "yesterday"] as const).map((filter) => {
                 const isActive = dateFilter === filter && !fallbackActive;
                 return (
