@@ -183,10 +183,14 @@ export function useRecommendedJobs() {
       const tier4 = allProcessed;
 
       const sortFn = (a: RecommendedJob, b: RecommendedJob) => {
+        // 1. Title proximity is king — exact title matches always on top
         const proxDiff = (b.titleProximity ?? 0) - (a.titleProximity ?? 0);
         if (proxDiff !== 0) return proxDiff;
-        if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
-        return b.posted_date.getTime() - a.posted_date.getTime();
+        // 2. Within same proximity, show newest first (recently uploaded)
+        const timeDiff = b.posted_date.getTime() - a.posted_date.getTime();
+        // Only break recency tie with match score
+        if (Math.abs(timeDiff) > 3600000) return timeDiff; // >1hr apart → recency wins
+        return b.matchScore - a.matchScore;
       };
 
       // Use the highest non-empty tier, or combine tiers to fill
