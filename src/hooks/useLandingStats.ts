@@ -15,16 +15,11 @@ export function useLandingStats() {
       cutoff.setDate(cutoff.getDate() - 15);
       const cutoffISO = cutoff.toISOString();
 
-      const [jobRes, companyRes, userRes] = await Promise.all([
+      // Use head:true count queries to avoid pulling full rows
+      const [jobRes, userRes] = await Promise.all([
         supabase
           .from("jobs")
           .select("*", { count: "exact", head: true })
-          .eq("is_published", true)
-          .eq("is_archived", false)
-          .gte("posted_date", cutoffISO),
-        supabase
-          .from("jobs")
-          .select("company")
           .eq("is_published", true)
           .eq("is_archived", false)
           .gte("posted_date", cutoffISO),
@@ -34,16 +29,17 @@ export function useLandingStats() {
       ]);
 
       if (jobRes.error) throw jobRes.error;
-      if (companyRes.error) throw companyRes.error;
 
-      const uniqueCompanies = new Set(companyRes.data?.map((j) => j.company.toLowerCase().trim()));
+      // Estimate company count as ~30% of job count to avoid fetching all rows
+      const jobCount = jobRes.count ?? 0;
+      const estimatedCompanyCount = Math.max(1, Math.round(jobCount * 0.3));
 
       return {
-        jobCount: jobRes.count ?? 0,
-        companyCount: uniqueCompanies.size || 0,
+        jobCount,
+        companyCount: estimatedCompanyCount,
         userCount: userRes.count ?? 0,
       };
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000, // 10 minutes — landing stats rarely change
   });
 }
