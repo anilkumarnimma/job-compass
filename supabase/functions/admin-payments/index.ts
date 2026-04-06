@@ -32,7 +32,6 @@ Deno.serve(async (req) => {
   });
 
   try {
-    // Verify admin/founder
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header");
 
@@ -53,11 +52,9 @@ Deno.serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Fetch recent charges from Stripe (last 100)
     const charges = await stripe.charges.list({ limit: 100 });
     logStep("Fetched charges", { count: charges.data.length });
 
-    // Fetch all active + canceled subscriptions
     const [activeSubs, canceledSubs, pastDueSubs] = await Promise.all([
       stripe.subscriptions.list({ status: "active", limit: 100 }),
       stripe.subscriptions.list({ status: "canceled", limit: 100 }),
@@ -65,9 +62,7 @@ Deno.serve(async (req) => {
     ]);
 
     const allSubs = [...activeSubs.data, ...canceledSubs.data, ...pastDueSubs.data];
-    logStep("Fetched subscriptions", { active: activeSubs.data.length, canceled: canceledSubs.data.length });
 
-    // Get customer details for all unique customer IDs
     const customerIds = new Set<string>();
     charges.data.forEach(c => { if (c.customer) customerIds.add(c.customer as string); });
     allSubs.forEach(s => { if (s.customer) customerIds.add(s.customer as string); });
@@ -82,7 +77,6 @@ Deno.serve(async (req) => {
       } catch { /* skip deleted customers */ }
     }
 
-    // Build payment records
     const payments = charges.data.map(charge => {
       const custInfo = customerMap[charge.customer as string] || {};
       return {
@@ -91,13 +85,12 @@ Deno.serve(async (req) => {
         customer_email: custInfo.email || charge.billing_details?.email || null,
         amount: charge.amount / 100,
         currency: charge.currency.toUpperCase(),
-        status: charge.status, // succeeded, pending, failed
+        status: charge.status,
         created: charge.created,
         description: charge.description || null,
       };
     });
 
-    // Build subscription records
     const subscriptions = allSubs.map(sub => {
       const custInfo = customerMap[sub.customer as string] || {};
       const item = sub.items?.data?.[0];
@@ -116,7 +109,13 @@ Deno.serve(async (req) => {
       };
     });
 
-    // Revenue stats
+    // Fetch failed payments from DB
+    const { data: failedPayments } = await supabase
+      .from("failed_payments")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(100);
+
     const totalRevenue = payments
       .filter(p => p.status === "succeeded")
       .reduce((sum, p) => sum + p.amount, 0);
@@ -128,6 +127,7 @@ Deno.serve(async (req) => {
     const response = {
       payments,
       subscriptions,
+      failed_payments: failedPayments || [],
       stats: {
         total_revenue: totalRevenue,
         paid_users: paidUsers,
@@ -135,6 +135,7 @@ Deno.serve(async (req) => {
         canceled_subscriptions: canceledSubs.data.length,
         past_due_subscriptions: pastDueSubs.data.length,
         total_transactions: payments.length,
+        failed_payments_count: failedPayments?.length || 0,
       },
     };
 
