@@ -81,6 +81,7 @@ export function useApplications() {
       })) as Application[];
     },
     enabled: !!user,
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -102,6 +103,7 @@ export function useTotalApplicationCount() {
       return count ?? 0;
     },
     enabled: !!user,
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -132,6 +134,7 @@ export function useSavedJobs() {
       })) as SavedJob[];
     },
     enabled: !!user,
+    staleTime: 2 * 60 * 1000,
   });
 }
 
