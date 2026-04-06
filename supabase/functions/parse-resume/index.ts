@@ -109,7 +109,7 @@ serve(async (req) => {
           
           let xmlBytes: Uint8Array;
           if (entry.method === 8) {
-            const ds = new DecompressionStream("raw");
+            const ds = new DecompressionStream("deflate-raw");
             const writer = ds.writable.getWriter();
             writer.write(rawData);
             writer.close();
