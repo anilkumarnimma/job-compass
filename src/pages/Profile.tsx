@@ -293,6 +293,9 @@ export default function Profile() {
     try {
       // Temporarily exit edit mode so profile form can refresh with cleared fields
       setIsEditing(false);
+      clearExtracted();
+      lastResumeTextRef.current = "";
+      setPendingExtracted(null);
       await uploadResume(file);
       // Parse the file we already have in memory — no need to re-download
       const extracted = await parseResume(file);
@@ -306,18 +309,18 @@ export default function Profile() {
         lastResumeTextRef.current = parts.join("\n");
         buildReviewChanges(extracted);
       } else {
-        // Parsing failed — still trigger intelligence analysis with existing profile data
-        // so ATS check and recommendations work even if text extraction fails
-        const existingSkills = profile?.skills || [];
-        const existingWork = Array.isArray(profile?.work_experience) ? profile.work_experience : [];
-        const existingEdu = Array.isArray(profile?.education) ? profile.education : [];
-        if (existingSkills.length > 0 || existingWork.length > 0) {
+        // Parsing failed — use only the freshly cleared profile state plus the uploaded file metadata,
+        // never the old resume-derived fields that were just replaced.
+        const existingSkills = [] as string[];
+        const existingWork = [] as WorkExperience[];
+        const existingEdu = [] as Education[];
+        if (existingSkills.length > 0 || existingWork.length > 0 || profile?.resume_url) {
           analyzeResume({
             skills: existingSkills,
             workExperience: existingWork,
             education: existingEdu,
-            currentTitle: profile?.current_title || undefined,
-            experienceYears: profile?.experience_years ?? undefined,
+            currentTitle: undefined,
+            experienceYears: undefined,
           }).catch(() => {});
         }
       }
@@ -406,7 +409,6 @@ export default function Profile() {
   };
 
   const applyExtractedData = (e: ExtractedResumeData) => {
-
     const updates: Record<string, string> = {};
     const simpleFields = ["first_name", "last_name", "phone", "city", "state", "zip", "address", "linkedin_url", "github_url", "portfolio_url"] as const;
     if (e.email) updates["contact_email"] = e.email;
@@ -442,7 +444,7 @@ export default function Profile() {
     const newCerts = mappedCerts;
 
     const newFormData = {
-      ...formData,
+      ...savedFormData,
       ...updates,
       skills: nextSkills.join(", "),
       experience_years: e.experience_years ?? "",
@@ -488,7 +490,7 @@ export default function Profile() {
     setSavedEdu(newEdu);
     setSavedCerts(newCerts);
 
-    setIsEditing(true);
+    setIsEditing(false);
     setIsDirty(false);
     toast({ title: "Profile auto-filled & saved", description: "Resume data has been applied and saved to your profile." });
 
