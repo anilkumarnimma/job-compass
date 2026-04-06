@@ -441,7 +441,7 @@ export function CSVBulkUpload({ onComplete }: CSVBulkUploadProps) {
           employment_type: job.employment_type || "Full Time",
           experience_years: job.experience_years || null,
           salary_range: job.salary_range || extractSalaryFromDescription(job.description) || null,
-          company_logo: job.company_logo || null,
+          company_logo: (job.company_logo && /^https?:\/\/.+\..+/i.test(job.company_logo)) ? job.company_logo : null,
           posted_date: job.posted_date || new Date().toISOString(),
           is_published: true,
           is_reviewing: false,
