@@ -95,6 +95,7 @@ export default function Profile() {
   const [isDownloadingResume, setIsDownloadingResume] = useState(false);
   const [showAutofillPrompt, setShowAutofillPrompt] = useState(false);
   const [pendingExtracted, setPendingExtracted] = useState<ExtractedResumeData | null>(null);
+  const lastResumeTextRef = useRef<string>("");
 
   // Password bridge state for Google users
   const [extPassword, setExtPassword] = useState("");
@@ -296,6 +297,13 @@ export default function Profile() {
       // Parse the file we already have in memory — no need to re-download
       const extracted = await parseResume(file);
       if (extracted) {
+        // Store a rough resume text summary for intelligence analysis
+        const parts: string[] = [];
+        if (extracted.summary) parts.push(extracted.summary);
+        if (extracted.skills?.length) parts.push(`Skills: ${extracted.skills.join(", ")}`);
+        if (extracted.work_experience?.length) parts.push(`Experience: ${extracted.work_experience.map(w => `${w.title} at ${w.company}`).join("; ")}`);
+        if (extracted.education?.length) parts.push(`Education: ${extracted.education.map(e => `${e.degree || ""} ${e.major || ""} at ${e.school}`).join("; ")}`);
+        lastResumeTextRef.current = parts.join("\n");
         buildReviewChanges(extracted);
       } else {
         // Parsing failed — still trigger intelligence analysis with existing profile data
