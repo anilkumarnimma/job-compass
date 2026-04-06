@@ -224,32 +224,31 @@ export default function Dashboard() {
 
   const rawJobs = data?.jobs || [];
 
-  // When no active search and user has resume intelligence, filter to role-relevant jobs only
+  // When no active search and user has resume intelligence, prioritize role-relevant jobs
   const jobs = useMemo(() => {
     const intelligence = profile?.resume_intelligence as ResumeIntelligence | null | undefined;
-    // Only filter/re-rank when there's no search query and user has intelligence
     if (combinedSearchQuery.trim() || !intelligence) return rawJobs;
 
     const userRole = intelligence.primaryRole || "";
     const targetTitles = intelligence.jobTitlesToTarget || [];
 
-    // Filter to role-relevant jobs, then split by match score
-    const matched: Job[] = [];
-    const other: Job[] = [];
-    for (const job of rawJobs) {
-      // Skip jobs that don't match the user's role domain
-      if (!isRoleRelevant(job.title, userRole, targetTitles)) continue;
+    // Three buckets: role-relevant high-match → role-relevant lower → rest
+    const relevant: Job[] = [];
+    const relevantLow: Job[] = [];
+    const rest: Job[] = [];
 
-      const m = calculateMatchesForJobs([job], intelligence);
-      const score = m.get(job.id)?.score ?? 0;
-      if (score >= 40) {
-        matched.push(job);
+    for (const job of rawJobs) {
+      const roleMatch = isRoleRelevant(job.title, userRole, targetTitles);
+      if (roleMatch) {
+        const m = calculateMatchesForJobs([job], intelligence);
+        const score = m.get(job.id)?.score ?? 0;
+        (score >= 40 ? relevant : relevantLow).push(job);
       } else {
-        other.push(job);
+        rest.push(job);
       }
     }
-    // Both groups are already sorted by recency from DB; concat matched first
-    return [...matched, ...other];
+    // Role-relevant jobs first (high match → low match), then everything else
+    return [...relevant, ...relevantLow, ...rest];
   }, [rawJobs, profile?.resume_intelligence, combinedSearchQuery]);
 
   // Defer heavy calculations so they don't block typing
