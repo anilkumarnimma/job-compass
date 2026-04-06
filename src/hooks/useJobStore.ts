@@ -32,15 +32,21 @@ export function useJobs() {
   return useQuery({
     queryKey: ["jobs"],
     queryFn: async () => {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 15);
       const { data, error } = await supabase
         .from("jobs")
         .select("*")
         .eq("is_published", true)
-        .order("posted_date", { ascending: false });
+        .eq("is_archived", false)
+        .gte("posted_date", cutoff.toISOString())
+        .order("posted_date", { ascending: false })
+        .limit(200);
 
       if (error) throw error;
       return enrichJobList((data || []).map(parseJob));
     },
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -75,6 +81,7 @@ export function useApplications() {
       })) as Application[];
     },
     enabled: !!user,
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -96,6 +103,7 @@ export function useTotalApplicationCount() {
       return count ?? 0;
     },
     enabled: !!user,
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -126,6 +134,7 @@ export function useSavedJobs() {
       })) as SavedJob[];
     },
     enabled: !!user,
+    staleTime: 2 * 60 * 1000,
   });
 }
 

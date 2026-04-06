@@ -116,20 +116,12 @@ export function useUserRole() {
 
       if (!roles || roles.length === 0) {
         return "user";
-        return "user";
       }
 
       // Priority: founder > employer > user
       const roleSet = new Set(roles.map(r => r.role));
-      if (roleSet.has("founder")) {
-        return "founder";
-        return "founder";
-      }
-      if (roleSet.has("employer")) {
-        return "employer";
-        return "employer";
-      }
-      return "user";
+      if (roleSet.has("founder")) return "founder";
+      if (roleSet.has("employer")) return "employer";
       return "user";
     },
     enabled: !!user,
