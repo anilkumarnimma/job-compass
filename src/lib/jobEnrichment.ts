@@ -147,37 +147,9 @@ export function extractSalary(job: Job): string | null {
   return null;
 }
 
-/** Get source priority score (lower = better) */
-function getSourcePriority(link: string): number {
-  const l = (link || '').toLowerCase();
-  if (l.includes('greenhouse.io') || l.includes('greenhouse.com')) return 0;
-  if (l.includes('lever.co')) return 1;
-  if (l.includes('workday') || l.includes('icims') || l.includes('taleo') || l.includes('smartrecruiters') || l.includes('jobvite')) return 2;
-  if (l.includes('dice.com') || l.includes('lensa.com') || l.includes('lensa.')) return 9;
-  return 3;
-}
-
-/** Get freshness tier (lower = fresher) */
-function getFreshnessTier(date: Date): number {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const yesterday = new Date(today.getTime() - 86400000);
-  const weekAgo = new Date(today.getTime() - 7 * 86400000);
-  if (date >= today) return 0;
-  if (date >= yesterday) return 1;
-  if (date >= weekAgo) return 2;
-  return 3;
-}
-
-/** Sort jobs by freshness first, then source quality */
-function sortByFreshnessThenSource(jobs: Job[]): Job[] {
+/** Sort jobs strictly by posted_date descending (newest first) */
+function sortByRecency(jobs: Job[]): Job[] {
   return [...jobs].sort((a, b) => {
-    const fa = getFreshnessTier(a.posted_date);
-    const fb = getFreshnessTier(b.posted_date);
-    if (fa !== fb) return fa - fb;
-    const pa = getSourcePriority(a.external_apply_link);
-    const pb = getSourcePriority(b.external_apply_link);
-    if (pa !== pb) return pa - pb;
     return (b.posted_date?.getTime() || 0) - (a.posted_date?.getTime() || 0);
   });
 }
