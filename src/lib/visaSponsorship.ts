@@ -93,7 +93,7 @@ export function analyzeVisaSponsorship(job: Job): VisaSponsorshipResult {
       status: "sponsors",
       visaTypes,
       confidence: "high",
-      label: "✅ Sponsors H1B",
+      label: "H1B Sponsoring",
       emoji: "✅",
       badgeClass: "bg-success/10 text-success border-success/20",
     };
@@ -105,9 +105,9 @@ export function analyzeVisaSponsorship(job: Job): VisaSponsorshipResult {
       status: "stem_opt",
       visaTypes: ["STEM OPT", "OPT"],
       confidence: "medium",
-      label: "🔬 STEM OPT",
+      label: "STEM OPT Accepting",
       emoji: "🔬",
-      badgeClass: "bg-accent/10 text-accent border-accent/20",
+      badgeClass: "bg-success/10 text-success border-success/20",
     };
   }
 
@@ -117,9 +117,9 @@ export function analyzeVisaSponsorship(job: Job): VisaSponsorshipResult {
       status: "opt_friendly",
       visaTypes: ["OPT"],
       confidence: "medium",
-      label: "🎓 OPT Friendly",
+      label: "OPT Accepting",
       emoji: "🎓",
-      badgeClass: "bg-primary/10 text-primary border-primary/20",
+      badgeClass: "bg-success/10 text-success border-success/20",
     };
   }
 
@@ -129,7 +129,7 @@ export function analyzeVisaSponsorship(job: Job): VisaSponsorshipResult {
       status: "sponsors",
       visaTypes: ["H1B"],
       confidence: "medium",
-      label: "✅ Sponsors H1B",
+      label: "H1B Sponsoring",
       emoji: "✅",
       badgeClass: "bg-success/10 text-success border-success/20",
     };
