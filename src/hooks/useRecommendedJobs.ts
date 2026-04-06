@@ -147,15 +147,12 @@ export function useRecommendedJobs() {
       const targetTitles = ri.jobTitlesToTarget || [];
       const now = Date.now();
 
-      const scored: RecommendedJob[] = [];
-      const domainFallback: RecommendedJob[] = [];
+      const allProcessed: RecommendedJob[] = [];
 
       for (const row of data) {
         const job = parseJob(row);
         const ageMs = now - job.posted_date.getTime();
         if (ageMs > 15 * 24 * 60 * 60 * 1000) continue;
-
-        // Exclude tutor/high-experience jobs
         if (shouldExcludeJob(job)) continue;
 
         const match = calculateJobMatch(job, ri);
@@ -163,76 +160,71 @@ export function useRecommendedJobs() {
           match.score + freshnessBonus(job.posted_date) + sourceBonus(job.external_apply_link),
           100
         );
-
         const proximity = computeTitleProximity(job.title, userRole, targetTitles);
+        const roleRelevant = isRoleRelevant(job.title, userRole, targetTitles);
 
-        const recJob: RecommendedJob = {
+        allProcessed.push({
           ...job,
           matchScore: adjustedScore,
           matchedSkills: match.matchedSkills,
           matchResult: { ...match, score: adjustedScore },
           titleProximity: proximity,
-        };
+          _roleRelevant: roleRelevant,
+        } as RecommendedJob & { _roleRelevant: boolean });
+      }
 
-        // Strict role relevance filter
-        const roleRelevant = isRoleRelevant(job.title, userRole, targetTitles);
+      // Tier 1: role-relevant + score >= 45
+      const tier1 = allProcessed.filter(j => (j as any)._roleRelevant && j.matchScore >= MIN_MATCH_SCORE);
+      // Tier 2: role-relevant + score >= 25
+      const tier2 = allProcessed.filter(j => (j as any)._roleRelevant && j.matchScore >= 25 && j.matchScore < MIN_MATCH_SCORE);
+      // Tier 3: any job with skill overlap >= 1
+      const tier3 = allProcessed.filter(j => !(j as any)._roleRelevant && j.matchedSkills.length >= 1);
+      // Tier 4: absolute fallback — recent jobs
+      const tier4 = allProcessed;
 
-        if (roleRelevant && adjustedScore >= MIN_MATCH_SCORE) {
-          scored.push(recJob);
-        } else if (roleRelevant && adjustedScore >= 25) {
-          domainFallback.push(recJob);
+      const sortFn = (a: RecommendedJob, b: RecommendedJob) => {
+        const proxDiff = (b.titleProximity ?? 0) - (a.titleProximity ?? 0);
+        if (proxDiff !== 0) return proxDiff;
+        if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
+        return b.posted_date.getTime() - a.posted_date.getTime();
+      };
+
+      // Use the highest non-empty tier, or combine tiers to fill
+      let results: RecommendedJob[] = [];
+
+      if (tier1.length > 0) {
+        tier1.sort(sortFn);
+        results = tier1.slice(0, 100);
+      }
+
+      // If tier1 is small, supplement with tier2
+      if (results.length < 20 && tier2.length > 0) {
+        tier2.sort(sortFn);
+        const existingIds = new Set(results.map(j => j.id));
+        for (const j of tier2) {
+          if (!existingIds.has(j.id)) { results.push(j); existingIds.add(j.id); }
+          if (results.length >= 50) break;
         }
       }
 
-      // Primary: sort by title proximity → match score → recency
-      if (scored.length > 0) {
-        scored.sort((a, b) => {
-          // Title proximity first (exact title > near-exact > family > other)
-          const proxDiff = (b.titleProximity ?? 0) - (a.titleProximity ?? 0);
-          if (proxDiff !== 0) return proxDiff;
-          // Then by match score descending
-          if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
-          // Then by recency
-          return b.posted_date.getTime() - a.posted_date.getTime();
-        });
-        return scored.slice(0, 100);
+      // Still small? Add tier3
+      if (results.length < 10 && tier3.length > 0) {
+        tier3.sort(sortFn);
+        const existingIds = new Set(results.map(j => j.id));
+        for (const j of tier3) {
+          if (!existingIds.has(j.id)) { results.push(j); existingIds.add(j.id); }
+          if (results.length >= 30) break;
+        }
       }
 
-      // Fallback: lower-scoring jobs still within the user's role domain
-      if (domainFallback.length > 0) {
-        domainFallback.sort((a, b) => {
-          const proxDiff = (b.titleProximity ?? 0) - (a.titleProximity ?? 0);
-          if (proxDiff !== 0) return proxDiff;
-          return b.posted_date.getTime() - a.posted_date.getTime();
-        });
-        return domainFallback.slice(0, 50);
+      // Absolute fallback: show newest jobs so page is never empty
+      if (results.length === 0) {
+        tier4.sort((a, b) => b.posted_date.getTime() - a.posted_date.getTime());
+        results = tier4.slice(0, 30);
       }
 
-      // Last resort: show recent jobs with skill overlap AND role relevance
-      const skillFallback = data
-        .map(parseJob)
-        .filter(job => !shouldExcludeJob(job))
-        .filter(job => isRoleRelevant(job.title, userRole, targetTitles))
-        .map(job => {
-          const match = calculateJobMatch(job, ri);
-          const proximity = computeTitleProximity(job.title, userRole, targetTitles);
-          return {
-            ...job,
-            matchScore: match.score,
-            matchedSkills: match.matchedSkills,
-            matchResult: match,
-            titleProximity: proximity,
-          } as RecommendedJob;
-        })
-        .filter(j => j.matchedSkills.length >= 1)
-        .sort((a, b) => {
-          const proxDiff = (b.titleProximity ?? 0) - (a.titleProximity ?? 0);
-          if (proxDiff !== 0) return proxDiff;
-          return b.posted_date.getTime() - a.posted_date.getTime();
-        })
-        .slice(0, 30);
-
-      return skillFallback;
+      // Clean internal flag
+      return results.map(({ _roleRelevant, ...rest }: any) => rest as RecommendedJob);
     },
     enabled,
     staleTime: 2 * 60 * 1000,
