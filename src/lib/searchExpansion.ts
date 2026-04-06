@@ -437,9 +437,9 @@ export function expandSearchTerms(query: string): string[] {
         broadSet.add(t);
       }
     }
-  }
+  });
 
   // Close terms first, then broad — total capped at 20
-  const result = [...expanded, ...broadSet].filter(t => t.length > 1);
+  const result = Array.from(expanded).concat(Array.from(broadSet)).filter(t => t.length > 1);
   return result.slice(0, 20);
 }
