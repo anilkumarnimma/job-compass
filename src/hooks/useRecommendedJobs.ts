@@ -8,6 +8,31 @@ import { isRoleRelevant } from "@/lib/roleMatching";
 import { getResumeVersion } from "@/lib/resumeSync";
 import { shouldExcludeJob } from "@/lib/jobFilters";
 
+function buildProfileFallbackIntelligence(profile: NonNullable<ReturnType<typeof useProfile>["profile"]>): ResumeIntelligence | null {
+  const profileSkills = Array.isArray(profile.skills) ? profile.skills.filter(Boolean) : [];
+  const profileWork = Array.isArray(profile.work_experience) ? profile.work_experience : [];
+  const currentRole = profile.current_title?.trim() || profileWork.find((item) => item?.title?.trim())?.title?.trim() || "";
+
+  if (!currentRole && profileSkills.length === 0) return null;
+
+  const targetTitles = currentRole
+    ? [currentRole, ...(currentRole.toLowerCase().includes("engineer") ? [currentRole.replace(/engineer/i, "developer")] : []), ...(currentRole.toLowerCase().includes("developer") ? [currentRole.replace(/developer/i, "engineer")] : [])]
+        .map((title) => title.trim())
+        .filter(Boolean)
+    : [];
+
+  return {
+    primaryRole: currentRole || profileSkills.slice(0, 2).join(" / ") || "Candidate",
+    primaryStack: profileSkills.slice(0, 8),
+    experienceLevel: "mid",
+    yearsOfExperience: profile.experience_years ?? undefined,
+    topSkills: profileSkills.slice(0, 12),
+    secondarySkills: profileSkills.slice(12, 24),
+    jobTitlesToTarget: Array.from(new Set(targetTitles)),
+    strengthSummary: "Generated from the latest profile data while resume intelligence refreshes.",
+  };
+}
+
 function parseJob(row: any): Job {
   return {
     id: row.id,
@@ -148,11 +173,8 @@ export function useRecommendedJobs() {
     queryFn: async (): Promise<RecommendedJob[]> => {
       if (!profile) return [];
 
-      const ri = profile.resume_intelligence as ResumeIntelligence | null;
-
-      // If user has a resume but intelligence hasn't synced yet, return empty
-      // so we never show stale/unfiltered results
-      if (hasResume && !ri) return [];
+      const storedIntelligence = profile.resume_intelligence as ResumeIntelligence | null;
+      const ri = storedIntelligence ?? buildProfileFallbackIntelligence(profile);
 
       const { data, error } = await supabase
         .from("jobs")
@@ -166,7 +188,7 @@ export function useRecommendedJobs() {
       if (error) throw error;
       if (!data) return [];
 
-      // No intelligence → recent jobs fallback
+       // No intelligence/profile role → recent jobs fallback
       if (!ri) {
         return data.slice(0, 30).map(row => ({
           ...parseJob(row),
