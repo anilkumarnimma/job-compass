@@ -948,7 +948,7 @@ export default function Profile() {
           )}
 
           {/* Password sign-in for Google users */}
-          {isGoogleOnlyUser && (
+          {isGoogleOnlyUser && (!hasPasswordLogin || extPasswordSet) && (
             <Card className="rounded-3xl border-primary/20">
               <CardHeader>
                 <div className="flex items-center gap-2">
@@ -961,7 +961,7 @@ export default function Profile() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {extPasswordSet ? (
-                  <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                  <div className="flex items-center gap-2 text-sm text-accent">
                     <Check className="h-4 w-4" />
                     Password saved successfully. You can now sign in with your email and password.
                   </div>
@@ -995,7 +995,6 @@ export default function Profile() {
                       {extPasswordSaving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : "Save Password"}
                     </Button>
                   </>
-                )}
                 )}
               </CardContent>
             </Card>

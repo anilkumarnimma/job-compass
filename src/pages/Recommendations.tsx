@@ -221,13 +221,13 @@ export default function Recommendations() {
                         )}
                         {job.matchScore > 0 && (
                           <Badge
-                            className={`$${"{"}
+                            className={
                               job.matchScore >= 70
-                                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-0 text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm cursor-default"
                                 : job.matchScore >= 50
-                                  ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
-                                  : "bg-muted text-muted-foreground"
-                            } border-0 text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm cursor-default`}
+                                  ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-0 text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm cursor-default"
+                                  : "bg-muted text-muted-foreground border-0 text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm cursor-default"
+                            }
                           >
                             {job.matchScore}% Match
                           </Badge>
