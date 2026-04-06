@@ -224,7 +224,7 @@ export default function Dashboard() {
 
   const rawJobs = data?.jobs || [];
 
-  // When no active search and user has resume intelligence, prioritize role-relevant jobs
+  // When no active search and user has resume intelligence, sort by match score so relevant jobs always come first
   const jobs = useMemo(() => {
     const intelligence = profile?.resume_intelligence as ResumeIntelligence | null | undefined;
     if (combinedSearchQuery.trim() || !intelligence) return rawJobs;
@@ -232,23 +232,23 @@ export default function Dashboard() {
     const userRole = intelligence.primaryRole || "";
     const targetTitles = intelligence.jobTitlesToTarget || [];
 
-    // Three buckets: role-relevant high-match → role-relevant lower → rest
-    const relevant: Job[] = [];
-    const relevantLow: Job[] = [];
-    const rest: Job[] = [];
-
-    for (const job of rawJobs) {
+    // Score every job: role-relevant jobs get their real match score, others get 0
+    const scored = rawJobs.map((job) => {
       const roleMatch = isRoleRelevant(job.title, userRole, targetTitles);
-      if (roleMatch) {
-        const m = calculateMatchesForJobs([job], intelligence);
-        const score = m.get(job.id)?.score ?? 0;
-        (score >= 40 ? relevant : relevantLow).push(job);
-      } else {
-        rest.push(job);
-      }
-    }
-    // Role-relevant jobs first (high match → low match), then everything else
-    return [...relevant, ...relevantLow, ...rest];
+      if (!roleMatch) return { job, score: 0 };
+      const m = calculateMatchesForJobs([job], intelligence);
+      return { job, score: m.get(job.id)?.score ?? 0 };
+    });
+
+    // Sort by score desc, then recency within same score band
+    scored.sort((a, b) => {
+      const bandA = Math.floor(a.score / 10);
+      const bandB = Math.floor(b.score / 10);
+      if (bandB !== bandA) return bandB - bandA;
+      return b.job.posted_date.getTime() - a.job.posted_date.getTime();
+    });
+
+    return scored.map((s) => s.job);
   }, [rawJobs, profile?.resume_intelligence, combinedSearchQuery]);
 
   // Defer heavy calculations so they don't block typing
