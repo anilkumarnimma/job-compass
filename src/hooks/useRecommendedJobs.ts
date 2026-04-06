@@ -147,20 +147,18 @@ export function useRecommendedJobs() {
 
       // If strict filtering yields results, use them
       if (scored.length > 0) {
+        // Sort by match tier (high/good/needs-skills) then strictly by recency
         scored.sort((a, b) => {
-          const scoreBandA = Math.floor(a.matchScore / 5);
-          const scoreBandB = Math.floor(b.matchScore / 5);
-          if (scoreBandB !== scoreBandA) return scoreBandB - scoreBandA;
+          const tierA = a.matchScore >= 70 ? 2 : a.matchScore >= 50 ? 1 : 0;
+          const tierB = b.matchScore >= 70 ? 2 : b.matchScore >= 50 ? 1 : 0;
+          if (tierB !== tierA) return tierB - tierA;
           return b.posted_date.getTime() - a.posted_date.getTime();
         });
         return scored.slice(0, 100);
       }
 
-      // Fallback: show best available jobs even if role doesn't match strictly
+      // Fallback: show best available jobs sorted by recency
       fallbackPool.sort((a, b) => {
-        const scoreBandA = Math.floor(a.matchScore / 5);
-        const scoreBandB = Math.floor(b.matchScore / 5);
-        if (scoreBandB !== scoreBandA) return scoreBandB - scoreBandA;
         return b.posted_date.getTime() - a.posted_date.getTime();
       });
       return fallbackPool.slice(0, 50);
