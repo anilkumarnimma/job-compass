@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useTransition, useDeferredVa
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/context/AuthContext";
 import { calculateMatchesForJobs } from "@/lib/jobMatcher";
+import { isRoleRelevant } from "@/lib/roleMatching";
 import { calculateLandingProbability } from "@/lib/landingProbability";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
 import { Layout } from "@/components/Layout";
@@ -223,16 +224,22 @@ export default function Dashboard() {
 
   const rawJobs = data?.jobs || [];
 
-  // When no active search, prioritize profile-matched jobs (sorted by recency within each group)
+  // When no active search and user has resume intelligence, filter to role-relevant jobs only
   const jobs = useMemo(() => {
     const intelligence = profile?.resume_intelligence as ResumeIntelligence | null | undefined;
-    // Only re-rank when there's no search query and user has intelligence
+    // Only filter/re-rank when there's no search query and user has intelligence
     if (combinedSearchQuery.trim() || !intelligence) return rawJobs;
 
-    // Split into profile-matched and other, keeping recency order within each group
+    const userRole = intelligence.primaryRole || "";
+    const targetTitles = intelligence.jobTitlesToTarget || [];
+
+    // Filter to role-relevant jobs, then split by match score
     const matched: Job[] = [];
     const other: Job[] = [];
     for (const job of rawJobs) {
+      // Skip jobs that don't match the user's role domain
+      if (!isRoleRelevant(job.title, userRole, targetTitles)) continue;
+
       const m = calculateMatchesForJobs([job], intelligence);
       const score = m.get(job.id)?.score ?? 0;
       if (score >= 40) {
