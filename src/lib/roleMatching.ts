@@ -152,7 +152,8 @@ export function isRoleRelevant(
   const jobDomain = detectDomain(jobTitle);
   const userDomain = detectDomain(userRole);
 
-  if (!jobDomain) return false;
+  // If we can't classify the job, allow it (let score-based filtering decide)
+  if (!jobDomain) return true;
 
   if (!userDomain) {
     for (const tt of targetTitles) {
