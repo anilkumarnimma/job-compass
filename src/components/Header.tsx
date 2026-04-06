@@ -81,7 +81,7 @@ export function Header() {
 
           {/* Desktop Navigation */}
           {navLinks.length > 0 && (
-            <nav className="hidden md:flex items-center absolute left-1/2 -translate-x-1/2">
+            <nav className="hidden md:flex items-center absolute left-1/2 -translate-x-1/2" data-tour="nav-links">
               <div className="flex items-center bg-secondary/50 rounded-full p-0.5 gap-1.5 backdrop-blur-sm border border-border/20">
                 {navLinks.map((link) => (
                   <Link key={link.path} to={link.path}>

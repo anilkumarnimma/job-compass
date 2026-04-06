@@ -15,7 +15,7 @@ export const RightSidebar = memo(function RightSidebar({ onFilterByRole, classNa
   const { data: activeAlert } = useActiveMarketAlert();
 
   return (
-    <aside className={cn("flex flex-col gap-2", className)}>
+    <aside className={cn("flex flex-col gap-2", className)} data-tour="right-sidebar">
       <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
         <TopHiringsPanelDisplay onFilterByRole={onFilterByRole} />
       </div>
