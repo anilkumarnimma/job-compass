@@ -6,6 +6,7 @@ import { calculateJobMatch, JobMatchResult } from "@/lib/jobMatcher";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
 import { isRoleRelevant } from "@/lib/roleMatching";
 import { getResumeVersion } from "@/lib/resumeSync";
+import { shouldExcludeJob } from "@/lib/jobFilters";
 
 function parseJob(row: any): Job {
   return {
@@ -115,6 +116,9 @@ export function useRecommendedJobs() {
         const job = parseJob(row);
         const ageMs = now - job.posted_date.getTime();
         if (ageMs > 15 * 24 * 60 * 60 * 1000) continue;
+
+        // Exclude tutor/high-experience jobs
+        if (shouldExcludeJob(job)) continue;
 
         // Strict role relevance filter
         if (!isRoleRelevant(job.title, userRole, targetTitles)) continue;

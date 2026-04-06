@@ -226,19 +226,11 @@ export function spreadSimilarJobs(jobs: Job[]): Job[] {
   return result;
 }
 
-/** Titles/keywords that indicate tutor listings we want to exclude */
-const EXCLUDED_TITLE_KEYWORDS = [
-  'tutor', 'tutoring', 'teaching assistant', 'private lesson',
-];
-
-function isTutorListing(job: Job): boolean {
-  const t = job.title.toLowerCase();
-  return EXCLUDED_TITLE_KEYWORDS.some(kw => t.includes(kw));
-}
+import { shouldExcludeJob } from "@/lib/jobFilters";
 
 /** Enrich a list of jobs: skills, salary, source ranking, and ordering */
 export function enrichJobList(jobs: Job[]): Job[] {
-  const filtered = jobs.filter(job => !isTutorListing(job));
+  const filtered = jobs.filter(job => !shouldExcludeJob(job));
   const enriched = filtered.map(job => ({
     ...job,
     skills: enrichJobSkills(job),
