@@ -242,10 +242,8 @@ export default function Dashboard() {
   const personalizedJobs = useMemo(() => {
     if (!shouldTryPersonalizedFeed || !intelligence) return [];
 
+    // Profile-matched jobs sorted strictly by recency (newest first)
     return [...recommendedJobs].sort((a, b) => {
-      const probA = calculateLandingProbability(a, a.matchResult, intelligence)?.probability ?? 0;
-      const probB = calculateLandingProbability(b, b.matchResult, intelligence)?.probability ?? 0;
-      if (probB !== probA) return probB - probA;
       return b.posted_date.getTime() - a.posted_date.getTime();
     });
   }, [shouldTryPersonalizedFeed, recommendedJobs, intelligence]);
