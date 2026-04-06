@@ -152,21 +152,26 @@ export function isRoleRelevant(
   const jobDomain = detectDomain(jobTitle);
   const userDomain = detectDomain(userRole);
 
-  // If we can't classify the job, allow it (let score-based filtering decide)
-  if (!jobDomain) return true;
+  // If we can't classify the job domain, reject it for recommendations
+  if (!jobDomain) return false;
 
+  // If we can't classify the user's role, try target titles
   if (!userDomain) {
     for (const tt of targetTitles) {
       const ttDomain = detectDomain(tt);
       if (ttDomain === jobDomain) return true;
       if (ttDomain && DOMAIN_ADJACENCY[ttDomain]?.includes(jobDomain)) return true;
     }
-    return targetTitles.length === 0;
+    // No detectable user domain and no matching target titles → reject
+    return false;
   }
 
+  // Same domain → relevant
   if (jobDomain === userDomain) return true;
+  // Adjacent domain → relevant
   if (DOMAIN_ADJACENCY[userDomain]?.includes(jobDomain)) return true;
 
+  // Check target titles for additional domain matches
   for (const tt of targetTitles) {
     const ttDomain = detectDomain(tt);
     if (ttDomain === jobDomain) return true;
