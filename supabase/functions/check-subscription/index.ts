@@ -39,21 +39,15 @@ Deno.serve(async (req) => {
     if (!authHeader) throw new Error("No authorization header");
 
     const token = authHeader.replace("Bearer ", "");
-    // Retry auth.getUser up to 3 times to handle transient connection resets
-    let userData: { user: any } | null = null;
-    let lastAuthErr: string | null = null;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const { data, error } = await supabase.auth.getUser(token);
-      if (!error && data?.user) {
-        userData = data;
-        lastAuthErr = null;
-        break;
-      }
-      lastAuthErr = error?.message || "Unknown auth error";
-      logStep(`Auth attempt ${attempt + 1} failed`, { message: lastAuthErr });
-      if (attempt < 2) await new Promise(r => setTimeout(r, 300 * (attempt + 1)));
+    // Single attempt — no retries to reduce backend pressure
+    const { data: userData, error: authErr } = await supabase.auth.getUser(token);
+    if (authErr || !userData?.user) {
+      logStep("Auth failed", { message: authErr?.message });
+      return new Response(JSON.stringify({ error: "Auth unavailable" }), {
+        status: 503,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
-    if (!userData?.user) throw new Error(`Auth error after retries: ${lastAuthErr}`);
 
     const user = userData!.user;
     if (!user?.email) throw new Error("User not authenticated or no email");

@@ -5,13 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 const checkSubscriptionStatus = async () => {
   try {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) {
-      return; // silently skip - no session yet
-    }
-    const { error } = await supabase.functions.invoke("check-subscription");
-    if (error) {
-      console.warn("[AUTH] Subscription check returned error, ignoring");
-    }
+    if (!session?.access_token) return;
+    // Delay 3s to let auth settle and reduce backend pressure on login
+    await new Promise(r => setTimeout(r, 3000));
+    await supabase.functions.invoke("check-subscription");
   } catch {
     // Silently ignore - non-critical background check
   }
