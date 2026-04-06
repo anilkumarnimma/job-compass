@@ -50,10 +50,47 @@ function sourceBonus(link: string): number {
   return 0;
 }
 
+/**
+ * Compute title proximity: 3 = exact/near-exact, 2 = close variant, 1 = same family, 0 = other.
+ */
+function computeTitleProximity(jobTitle: string, userRole: string, targetTitles: string[]): number {
+  const jt = jobTitle.toLowerCase().trim();
+  const pr = userRole.toLowerCase().trim();
+
+  // Exact or substring match with primary role
+  if (jt === pr || jt.includes(pr) || pr.includes(jt)) return 3;
+
+  // Exact match with any target title
+  for (const tt of targetTitles) {
+    const ttl = tt.toLowerCase().trim();
+    if (jt === ttl || jt.includes(ttl) || ttl.includes(jt)) return 2;
+  }
+
+  // Word-level overlap: if >50% of role keywords appear in job title → same family
+  const roleWords = pr.split(/[\s,/\-]+/).filter(w => w.length > 2);
+  const jobWords = new Set(jt.split(/[\s,/\-]+/).filter(w => w.length > 2));
+  if (roleWords.length > 0) {
+    const overlap = roleWords.filter(w => jobWords.has(w)).length;
+    if (overlap / roleWords.length >= 0.5) return 1;
+  }
+
+  // Check target title word overlap
+  for (const tt of targetTitles) {
+    const ttWords = tt.toLowerCase().split(/[\s,/\-]+/).filter(w => w.length > 2);
+    if (ttWords.length > 0) {
+      const overlap = ttWords.filter(w => jobWords.has(w)).length;
+      if (overlap / ttWords.length >= 0.5) return 1;
+    }
+  }
+
+  return 0;
+}
+
 export interface RecommendedJob extends Job {
   matchScore: number;
   matchedSkills: string[];
   matchResult?: JobMatchResult;
+  titleProximity?: number; // 0-3: 3=exact, 2=near-exact, 1=same-family, 0=other
 }
 
 export function useRecommendedJobs() {
@@ -127,11 +164,14 @@ export function useRecommendedJobs() {
           100
         );
 
+        const proximity = computeTitleProximity(job.title, userRole, targetTitles);
+
         const recJob: RecommendedJob = {
           ...job,
           matchScore: adjustedScore,
           matchedSkills: match.matchedSkills,
           matchResult: { ...match, score: adjustedScore },
+          titleProximity: proximity,
         };
 
         // Strict role relevance filter
@@ -140,17 +180,19 @@ export function useRecommendedJobs() {
         if (roleRelevant && adjustedScore >= MIN_MATCH_SCORE) {
           scored.push(recJob);
         } else if (roleRelevant && adjustedScore >= 25) {
-          // Same domain but lower score — fallback within role family
           domainFallback.push(recJob);
         }
       }
 
-      // Primary: strict role-matched jobs sorted by match tier then recency
+      // Primary: sort by title proximity → match score → recency
       if (scored.length > 0) {
         scored.sort((a, b) => {
-          const tierA = a.matchScore >= 70 ? 2 : a.matchScore >= 50 ? 1 : 0;
-          const tierB = b.matchScore >= 70 ? 2 : b.matchScore >= 50 ? 1 : 0;
-          if (tierB !== tierA) return tierB - tierA;
+          // Title proximity first (exact title > near-exact > family > other)
+          const proxDiff = (b.titleProximity ?? 0) - (a.titleProximity ?? 0);
+          if (proxDiff !== 0) return proxDiff;
+          // Then by match score descending
+          if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
+          // Then by recency
           return b.posted_date.getTime() - a.posted_date.getTime();
         });
         return scored.slice(0, 100);
@@ -158,7 +200,11 @@ export function useRecommendedJobs() {
 
       // Fallback: lower-scoring jobs still within the user's role domain
       if (domainFallback.length > 0) {
-        domainFallback.sort((a, b) => b.posted_date.getTime() - a.posted_date.getTime());
+        domainFallback.sort((a, b) => {
+          const proxDiff = (b.titleProximity ?? 0) - (a.titleProximity ?? 0);
+          if (proxDiff !== 0) return proxDiff;
+          return b.posted_date.getTime() - a.posted_date.getTime();
+        });
         return domainFallback.slice(0, 50);
       }
 
@@ -169,15 +215,21 @@ export function useRecommendedJobs() {
         .filter(job => isRoleRelevant(job.title, userRole, targetTitles))
         .map(job => {
           const match = calculateJobMatch(job, ri);
+          const proximity = computeTitleProximity(job.title, userRole, targetTitles);
           return {
             ...job,
             matchScore: match.score,
             matchedSkills: match.matchedSkills,
             matchResult: match,
+            titleProximity: proximity,
           } as RecommendedJob;
         })
         .filter(j => j.matchedSkills.length >= 1)
-        .sort((a, b) => b.posted_date.getTime() - a.posted_date.getTime())
+        .sort((a, b) => {
+          const proxDiff = (b.titleProximity ?? 0) - (a.titleProximity ?? 0);
+          if (proxDiff !== 0) return proxDiff;
+          return b.posted_date.getTime() - a.posted_date.getTime();
+        })
         .slice(0, 30);
 
       return skillFallback;

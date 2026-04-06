@@ -117,14 +117,14 @@ const ROLE_DOMAIN_PATTERNS: { domain: string; patterns: RegExp[] }[] = [
 ];
 
 const DOMAIN_ADJACENCY: Record<string, string[]> = {
-  "software-engineering": ["mobile", "devops", "qa", "data-engineering"],
+  "software-engineering": ["mobile"],
   "mobile": ["software-engineering"],
-  "devops": ["software-engineering", "security"],
+  "devops": ["security"],
   "qa": ["software-engineering"],
   "data-science": ["data-analytics", "data-engineering"],
   "data-analytics": ["data-science", "data-engineering"],
-  "data-engineering": ["data-science", "data-analytics", "software-engineering"],
-  "security": ["devops", "software-engineering"],
+  "data-engineering": ["data-science", "data-analytics"],
+  "security": ["devops"],
   "design": [],
   "product": ["project-management"],
   "project-management": ["product"],
