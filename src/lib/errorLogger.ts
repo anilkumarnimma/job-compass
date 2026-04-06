@@ -29,6 +29,9 @@ function isDuplicate(key: string): boolean {
 
 export async function logError(payload: ErrorLogPayload) {
   try {
+    // Filter out harmless React Query abort signals (normal during unmount/navigation)
+    if (/signal is aborted/i.test(payload.message)) return;
+    
     const dedupeKey = `${payload.error_type}:${payload.message}`;
     if (isDuplicate(dedupeKey)) return;
 

@@ -51,12 +51,12 @@ export function AdminHeader({
                   Payments
                 </Button>
               </Link>
-              <a href="/admin/error-logs" target="_blank" rel="noopener noreferrer">
+              <Link to="/admin/error-logs">
                 <Button variant="outline">
                   <Bug className="h-4 w-4" />
                   Error Logs
                 </Button>
-              </a>
+              </Link>
               <Link to="/founder/employers">
                 <Button variant="outline">
                   <Users className="h-4 w-4" />
