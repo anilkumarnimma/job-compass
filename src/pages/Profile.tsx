@@ -298,8 +298,20 @@ export default function Profile() {
       if (extracted) {
         buildReviewChanges(extracted);
       } else {
-        // If parsing fails, still populate form from cleared profile
-        // The profile query will have the cleared fields from uploadResume
+        // Parsing failed — still trigger intelligence analysis with existing profile data
+        // so ATS check and recommendations work even if text extraction fails
+        const existingSkills = profile?.skills || [];
+        const existingWork = Array.isArray(profile?.work_experience) ? profile.work_experience : [];
+        const existingEdu = Array.isArray(profile?.education) ? profile.education : [];
+        if (existingSkills.length > 0 || existingWork.length > 0) {
+          analyzeResume({
+            skills: existingSkills,
+            workExperience: existingWork,
+            education: existingEdu,
+            currentTitle: profile?.current_title || undefined,
+            experienceYears: profile?.experience_years ?? undefined,
+          }).catch(() => {});
+        }
       }
     } catch {
       // uploadResume already shows error toast
