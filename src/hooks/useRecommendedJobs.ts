@@ -111,6 +111,7 @@ export function useRecommendedJobs() {
       const now = Date.now();
 
       const scored: RecommendedJob[] = [];
+      const fallbackPool: RecommendedJob[] = [];
 
       for (const row of data) {
         const job = parseJob(row);
@@ -120,34 +121,49 @@ export function useRecommendedJobs() {
         // Exclude tutor/high-experience jobs
         if (shouldExcludeJob(job)) continue;
 
-        // Strict role relevance filter
-        if (!isRoleRelevant(job.title, userRole, targetTitles)) continue;
-
         const match = calculateJobMatch(job, ri);
         const adjustedScore = Math.min(
           match.score + freshnessBonus(job.posted_date) + sourceBonus(job.external_apply_link),
           100
         );
 
-        if (adjustedScore < MIN_MATCH_SCORE) continue;
-
-        scored.push({
+        const recJob: RecommendedJob = {
           ...job,
           matchScore: adjustedScore,
           matchedSkills: match.matchedSkills,
           matchResult: { ...match, score: adjustedScore },
-        });
+        };
+
+        // Strict role relevance filter
+        const roleRelevant = isRoleRelevant(job.title, userRole, targetTitles);
+
+        if (roleRelevant && adjustedScore >= MIN_MATCH_SCORE) {
+          scored.push(recJob);
+        } else if (adjustedScore >= 30) {
+          // Keep as fallback (lower threshold, any role)
+          fallbackPool.push(recJob);
+        }
       }
 
-      // Sort: high-match jobs first, then by recency within similar scores (±5 band)
-      scored.sort((a, b) => {
+      // If strict filtering yields results, use them
+      if (scored.length > 0) {
+        scored.sort((a, b) => {
+          const scoreBandA = Math.floor(a.matchScore / 5);
+          const scoreBandB = Math.floor(b.matchScore / 5);
+          if (scoreBandB !== scoreBandA) return scoreBandB - scoreBandA;
+          return b.posted_date.getTime() - a.posted_date.getTime();
+        });
+        return scored.slice(0, 100);
+      }
+
+      // Fallback: show best available jobs even if role doesn't match strictly
+      fallbackPool.sort((a, b) => {
         const scoreBandA = Math.floor(a.matchScore / 5);
         const scoreBandB = Math.floor(b.matchScore / 5);
         if (scoreBandB !== scoreBandA) return scoreBandB - scoreBandA;
         return b.posted_date.getTime() - a.posted_date.getTime();
       });
-
-      return scored.slice(0, 100);
+      return fallbackPool.slice(0, 50);
     },
     enabled,
     staleTime: 2 * 60 * 1000,
