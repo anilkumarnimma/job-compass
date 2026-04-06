@@ -221,7 +221,29 @@ export default function Dashboard() {
     }
   }, [profile?.is_premium, user?.id, toast]);
 
-  const jobs = data?.jobs || [];
+  const rawJobs = data?.jobs || [];
+
+  // When no active search, prioritize profile-matched jobs (sorted by recency within each group)
+  const jobs = useMemo(() => {
+    const intelligence = profile?.resume_intelligence as ResumeIntelligence | null | undefined;
+    // Only re-rank when there's no search query and user has intelligence
+    if (combinedSearchQuery.trim() || !intelligence) return rawJobs;
+
+    // Split into profile-matched and other, keeping recency order within each group
+    const matched: Job[] = [];
+    const other: Job[] = [];
+    for (const job of rawJobs) {
+      const m = calculateMatchesForJobs([job], intelligence);
+      const score = m.get(job.id)?.score ?? 0;
+      if (score >= 40) {
+        matched.push(job);
+      } else {
+        other.push(job);
+      }
+    }
+    // Both groups are already sorted by recency from DB; concat matched first
+    return [...matched, ...other];
+  }, [rawJobs, profile?.resume_intelligence, combinedSearchQuery]);
 
   // Defer heavy calculations so they don't block typing
   const deferredJobs = useDeferredValue(jobs);

@@ -134,12 +134,15 @@ export function useRecommendedJobs() {
         });
       }
 
+      // Sort: high-match jobs first, then by recency within similar scores (±5 band)
       scored.sort((a, b) => {
-        if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
+        const scoreBandA = Math.floor(a.matchScore / 5);
+        const scoreBandB = Math.floor(b.matchScore / 5);
+        if (scoreBandB !== scoreBandA) return scoreBandB - scoreBandA;
         return b.posted_date.getTime() - a.posted_date.getTime();
       });
 
-      return scored.slice(0, 50);
+      return scored.slice(0, 100);
     },
     enabled,
     staleTime: 2 * 60 * 1000,
