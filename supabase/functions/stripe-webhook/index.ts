@@ -112,14 +112,20 @@ Deno.serve(async (req) => {
       );
 
       // ── Mark any prior failed_payments for this email as resolved ──
-      // This prevents sending failure emails if payment succeeds after a prior failure
       await supabase
         .from("failed_payments")
         .update({ email_sent: true, failure_reason: "RESOLVED — payment completed successfully" })
         .eq("email", emailLower)
         .eq("email_sent", false);
 
-      logStep("Cleared pending failure records for user", { email: emailLower });
+      // ── Mark any checkout recovery emails as completed ──
+      await supabase
+        .from("checkout_recovery_emails")
+        .update({ payment_completed: true, completed_at: new Date().toISOString() })
+        .eq("email", emailLower)
+        .eq("payment_completed", false);
+
+      logStep("Cleared pending failure/recovery records for user", { email: emailLower });
     }
 
     // ══════════════════════════════════════════════

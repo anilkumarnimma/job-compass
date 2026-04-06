@@ -88,6 +88,36 @@ export type Database = {
         }
         Relationships: []
       }
+      checkout_recovery_emails: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          email: string
+          id: string
+          payment_completed: boolean
+          sent_at: string
+          stripe_customer_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          payment_completed?: boolean
+          sent_at?: string
+          stripe_customer_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          payment_completed?: boolean
+          sent_at?: string
+          stripe_customer_id?: string | null
+        }
+        Relationships: []
+      }
       cover_letters: {
         Row: {
           company: string
