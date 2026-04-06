@@ -95,6 +95,7 @@ export default function Profile() {
   const [isDownloadingResume, setIsDownloadingResume] = useState(false);
   const [showAutofillPrompt, setShowAutofillPrompt] = useState(false);
   const [pendingExtracted, setPendingExtracted] = useState<ExtractedResumeData | null>(null);
+  const lastResumeTextRef = useRef<string>("");
 
   // Password bridge state for Google users
   const [extPassword, setExtPassword] = useState("");
@@ -296,10 +297,29 @@ export default function Profile() {
       // Parse the file we already have in memory — no need to re-download
       const extracted = await parseResume(file);
       if (extracted) {
+        // Store a rough resume text summary for intelligence analysis
+        const parts: string[] = [];
+        if (extracted.summary) parts.push(extracted.summary);
+        if (extracted.skills?.length) parts.push(`Skills: ${extracted.skills.join(", ")}`);
+        if (extracted.work_experience?.length) parts.push(`Experience: ${extracted.work_experience.map(w => `${w.title} at ${w.company}`).join("; ")}`);
+        if (extracted.education?.length) parts.push(`Education: ${extracted.education.map(e => `${e.degree || ""} ${e.major || ""} at ${e.school}`).join("; ")}`);
+        lastResumeTextRef.current = parts.join("\n");
         buildReviewChanges(extracted);
       } else {
-        // If parsing fails, still populate form from cleared profile
-        // The profile query will have the cleared fields from uploadResume
+        // Parsing failed — still trigger intelligence analysis with existing profile data
+        // so ATS check and recommendations work even if text extraction fails
+        const existingSkills = profile?.skills || [];
+        const existingWork = Array.isArray(profile?.work_experience) ? profile.work_experience : [];
+        const existingEdu = Array.isArray(profile?.education) ? profile.education : [];
+        if (existingSkills.length > 0 || existingWork.length > 0) {
+          analyzeResume({
+            skills: existingSkills,
+            workExperience: existingWork,
+            education: existingEdu,
+            currentTitle: profile?.current_title || undefined,
+            experienceYears: profile?.experience_years ?? undefined,
+          }).catch(() => {});
+        }
       }
     } catch {
       // uploadResume already shows error toast
@@ -475,6 +495,7 @@ export default function Profile() {
     // Trigger resume intelligence analysis in the background
     if (nextSkills.length > 0 || filteredWork.length > 0) {
       analyzeResume({
+        resumeText: lastResumeTextRef.current || undefined,
         skills: nextSkills,
         workExperience: filteredWork,
         education: filteredEdu,
