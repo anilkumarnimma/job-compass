@@ -110,14 +110,14 @@ export const JobListPaginated = memo(function JobListPaginated({
     <div className="flex flex-col gap-4 max-w-[600px]">
       {jobs.map((job, idx) => (
         <div key={job.id} {...(idx === 0 ? { "data-tour": "job-card" } : {})}>
-        <JobCard
-          key={job.id}
-          job={job}
-          onTap={onTap}
-          isSelected={selectedJobId === job.id}
-          matchResult={matchResults?.get(job.id)}
-          landingProbability={landingResults?.get(job.id)}
-        />
+          <JobCard
+            job={job}
+            onTap={onTap}
+            isSelected={selectedJobId === job.id}
+            matchResult={matchResults?.get(job.id)}
+            landingProbability={landingResults?.get(job.id)}
+          />
+        </div>
       ))}
 
       {totalPages > 1 && (
