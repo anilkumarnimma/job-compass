@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Job } from "@/types/job";
+import { shouldExcludeJob } from "@/lib/jobFilters";
 
 export const DASHBOARD_PAGE_SIZE = 20;
 const OVERFETCH_BUFFER = DASHBOARD_PAGE_SIZE;
@@ -82,7 +83,7 @@ export function useDashboardPriorityJobs({
 
         const batch = data
           .map(parseJob)
-          .filter((job) => !priorityIds.has(job.id));
+          .filter((job) => !priorityIds.has(job.id) && !shouldExcludeJob(job));
 
         if (genericSkip >= batch.length) {
           genericSkip -= batch.length;
