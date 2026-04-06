@@ -71,8 +71,7 @@ export function Header() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link
-            to={user ? "/dashboard" : "/"}
-            onClick={handleBrandClick}
+            to="/"
             className="flex items-center gap-2.5 shrink-0 group"
           >
             <img src="/favicon.png" alt="Sociax logo" className="h-9 w-9 rounded-xl shadow-soft group-hover:shadow-glow transition-shadow duration-300" />
