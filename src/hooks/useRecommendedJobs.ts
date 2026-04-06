@@ -111,7 +111,7 @@ export function useRecommendedJobs() {
       const now = Date.now();
 
       const scored: RecommendedJob[] = [];
-      const fallbackPool: RecommendedJob[] = [];
+      const domainFallback: RecommendedJob[] = [];
 
       for (const row of data) {
         const job = parseJob(row);
@@ -139,15 +139,14 @@ export function useRecommendedJobs() {
 
         if (roleRelevant && adjustedScore >= MIN_MATCH_SCORE) {
           scored.push(recJob);
-        } else if (adjustedScore >= 30) {
-          // Keep as fallback (lower threshold, any role)
-          fallbackPool.push(recJob);
+        } else if (roleRelevant && adjustedScore >= 25) {
+          // Same domain but lower score — fallback within role family
+          domainFallback.push(recJob);
         }
       }
 
-      // If strict filtering yields results, use them
+      // Primary: strict role-matched jobs sorted by match tier then recency
       if (scored.length > 0) {
-        // Sort by match tier (high/good/needs-skills) then strictly by recency
         scored.sort((a, b) => {
           const tierA = a.matchScore >= 70 ? 2 : a.matchScore >= 50 ? 1 : 0;
           const tierB = b.matchScore >= 70 ? 2 : b.matchScore >= 50 ? 1 : 0;
@@ -157,11 +156,30 @@ export function useRecommendedJobs() {
         return scored.slice(0, 100);
       }
 
-      // Fallback: show best available jobs sorted by recency
-      fallbackPool.sort((a, b) => {
-        return b.posted_date.getTime() - a.posted_date.getTime();
-      });
-      return fallbackPool.slice(0, 50);
+      // Fallback: lower-scoring jobs still within the user's role domain
+      if (domainFallback.length > 0) {
+        domainFallback.sort((a, b) => b.posted_date.getTime() - a.posted_date.getTime());
+        return domainFallback.slice(0, 50);
+      }
+
+      // Last resort: show recent jobs with any skill overlap (still exclude unrelated)
+      const skillFallback = data
+        .map(parseJob)
+        .filter(job => !shouldExcludeJob(job))
+        .map(job => {
+          const match = calculateJobMatch(job, ri);
+          return {
+            ...job,
+            matchScore: match.score,
+            matchedSkills: match.matchedSkills,
+            matchResult: match,
+          } as RecommendedJob;
+        })
+        .filter(j => j.matchedSkills.length >= 2)
+        .sort((a, b) => b.posted_date.getTime() - a.posted_date.getTime())
+        .slice(0, 30);
+
+      return skillFallback;
     },
     enabled,
     staleTime: 2 * 60 * 1000,
