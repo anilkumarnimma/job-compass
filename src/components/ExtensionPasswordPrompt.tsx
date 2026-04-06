@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,19 +17,31 @@ export function ExtensionPasswordPrompt() {
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
 
-  // Detect Google-only users: check multiple metadata fields
   const providers = user?.app_metadata?.providers as string[] | undefined;
   const mainProvider = user?.app_metadata?.provider as string | undefined;
   const hasGoogle = mainProvider === "google" || (providers?.includes("google") ?? false);
   const hasEmail = mainProvider === "email" || (providers?.includes("email") ?? false);
   const isGoogleOnly = hasGoogle && !hasEmail;
+  const dismissKey = user ? `${DISMISS_KEY}:${user.id}` : null;
 
-  const wasDismissed = !!user && localStorage.getItem(DISMISS_KEY) === user.id;
-  const isOpen = !!user && isGoogleOnly && !wasDismissed && !done;
+  useEffect(() => {
+    if (!dismissKey) {
+      setDismissed(false);
+      setDone(false);
+      return;
+    }
+
+    setDismissed(localStorage.getItem(dismissKey) === "true");
+  }, [dismissKey]);
+
+  const isOpen = !!user && isGoogleOnly && !dismissed && !done;
 
   const handleDismiss = () => {
-    if (user) localStorage.setItem(DISMISS_KEY, user.id);
+    if (!dismissKey) return;
+    localStorage.setItem(dismissKey, "true");
+    setDismissed(true);
   };
 
   const handleSetPassword = async () => {
@@ -41,12 +53,18 @@ export function ExtensionPasswordPrompt() {
       toast.error("Passwords don't match.");
       return;
     }
+
     setSaving(true);
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
+
+      if (dismissKey) {
+        localStorage.setItem(dismissKey, "true");
+      }
+
+      setDismissed(true);
       setDone(true);
-      if (user) localStorage.setItem(DISMISS_KEY, user.id);
       toast.success("Password set! You can now sign into the Sociax extension.");
     } catch (err: any) {
       toast.error(err.message || "Failed to set password.");
@@ -56,7 +74,12 @@ export function ExtensionPasswordPrompt() {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleDismiss(); }}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) handleDismiss();
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex items-center gap-2 mb-1">
@@ -105,7 +128,15 @@ export function ExtensionPasswordPrompt() {
               Skip for now
             </Button>
             <Button onClick={handleSetPassword} disabled={saving || !password}>
-              {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Setting...</> : <><Check className="h-4 w-4 mr-2" /> Set Password</>}
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Setting...
+                </>
+              ) : (
+                <>
+                  <Check className="h-4 w-4 mr-2" /> Set Password
+                </>
+              )}
             </Button>
           </div>
         </div>
