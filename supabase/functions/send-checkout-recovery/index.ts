@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
         "X-Connection-Api-Key": resendApiKey,
       },
       body: JSON.stringify({
-        from: "Sociax <onboarding@resend.dev>",
+        from: "Sociax <noreply@sociax.tech>",
         to: [emailLower],
         subject: "Complete your Sociax Premium upgrade",
         html: htmlContent,
