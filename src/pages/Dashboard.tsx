@@ -39,6 +39,7 @@ import { ExtensionPasswordPrompt } from "@/components/ExtensionPasswordPrompt";
 import { consumeDashboardResetToken, DASHBOARD_RESET_EVENT } from "@/lib/dashboardReset";
 import { useResumeEmail } from "@/hooks/useResumeEmail";
 import { DASHBOARD_PAGE_SIZE, useDashboardPriorityJobs } from "@/hooks/useDashboardPriorityJobs";
+import { OnboardingTour } from "@/components/OnboardingTour";
 
 type DateFilter = "all" | "today" | "yesterday" | "custom";
 
@@ -353,6 +354,7 @@ export default function Dashboard() {
 
   return (
     <Layout>
+        <OnboardingTour />
         <div className="w-full max-w-[1600px] mx-auto px-4 md:px-6 py-4">
         {/* Welcome Banner */}
         <WelcomeBanner />
