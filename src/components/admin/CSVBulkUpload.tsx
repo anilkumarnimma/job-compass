@@ -85,6 +85,9 @@ const HEADER_ALIASES: Record<string, string> = {
   // company_logo (optional)
   'company_logo': 'company_logo', 'companylogo': 'company_logo',
   'company logo': 'company_logo', 'logo': 'company_logo', 'logo url': 'company_logo',
+  'company logo url': 'company_logo', 'company_logo_url': 'company_logo',
+  'logo_url': 'company_logo', 'logourl': 'company_logo', 'image': 'company_logo',
+  'company image': 'company_logo', 'company image url': 'company_logo',
   // posted_date (optional)
   'posted_date': 'posted_date', 'posteddate': 'posted_date',
   'posted date': 'posted_date', 'date posted': 'posted_date', 'date': 'posted_date',
@@ -438,7 +441,7 @@ export function CSVBulkUpload({ onComplete }: CSVBulkUploadProps) {
           employment_type: job.employment_type || "Full Time",
           experience_years: job.experience_years || null,
           salary_range: job.salary_range || extractSalaryFromDescription(job.description) || null,
-          company_logo: job.company_logo || null,
+          company_logo: (job.company_logo && /^https?:\/\/.+\..+/i.test(job.company_logo)) ? job.company_logo : null,
           posted_date: job.posted_date || new Date().toISOString(),
           is_published: true,
           is_reviewing: false,
