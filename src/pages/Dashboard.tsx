@@ -224,7 +224,7 @@ export default function Dashboard() {
 
   const rawJobs = data?.jobs || [];
 
-  // When no active search and user has resume intelligence, sort by match score so relevant jobs always come first
+  // When no active search and user has resume intelligence, sort by landing probability (highest first)
   const jobs = useMemo(() => {
     const intelligence = profile?.resume_intelligence as ResumeIntelligence | null | undefined;
     if (combinedSearchQuery.trim() || !intelligence) return rawJobs;
@@ -232,18 +232,20 @@ export default function Dashboard() {
     const userRole = intelligence.primaryRole || "";
     const targetTitles = intelligence.jobTitlesToTarget || [];
 
-    // Score every job: role-relevant jobs get their real match score, others get 0
+    // Calculate landing probability for every job and sort by it
     const scored = rawJobs.map((job) => {
       const roleMatch = isRoleRelevant(job.title, userRole, targetTitles);
-      if (!roleMatch) return { job, score: 0 };
+      if (!roleMatch) return { job, probability: 0 };
       const m = calculateMatchesForJobs([job], intelligence);
-      return { job, score: m.get(job.id)?.score ?? 0 };
+      const matchResult = m.get(job.id);
+      const lp = calculateLandingProbability(job, matchResult, intelligence);
+      return { job, probability: lp?.probability ?? 0 };
     });
 
-    // Sort by score desc, then recency within same score band
+    // Sort strictly by landing probability desc, then recency within same band
     scored.sort((a, b) => {
-      const bandA = Math.floor(a.score / 10);
-      const bandB = Math.floor(b.score / 10);
+      const bandA = Math.floor(a.probability / 10);
+      const bandB = Math.floor(b.probability / 10);
       if (bandB !== bandA) return bandB - bandA;
       return b.job.posted_date.getTime() - a.job.posted_date.getTime();
     });
