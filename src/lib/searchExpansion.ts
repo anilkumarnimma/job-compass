@@ -423,7 +423,7 @@ export function expandSearchTerms(query: string): string[] {
   }
 
   // Collect close and broad terms from matched families
-  for (const idx of matchedFamilies) {
+  Array.from(matchedFamilies).forEach(idx => {
     const family = ROLE_FAMILIES[idx];
     for (const term of family.close) {
       const t = term.toLowerCase();
