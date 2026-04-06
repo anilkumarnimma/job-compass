@@ -495,6 +495,7 @@ export default function Profile() {
     // Trigger resume intelligence analysis in the background
     if (nextSkills.length > 0 || filteredWork.length > 0) {
       analyzeResume({
+        resumeText: lastResumeTextRef.current || undefined,
         skills: nextSkills,
         workExperience: filteredWork,
         education: filteredEdu,
