@@ -8,6 +8,7 @@ import { AnimatedCounter } from "@/components/AnimatedCounter";
 import { useLandingStats } from "@/hooks/useLandingStats";
 import { FeaturedJobCard } from "@/components/FeaturedJobCard";
 import { FloatingHeroTags } from "@/components/FloatingHeroTags";
+import { AboutSection } from "@/components/AboutSection";
 import {
   Briefcase,
   Search,
@@ -309,6 +310,9 @@ export default function Index() {
           </motion.div>
         </motion.div>
       </section>
+
+      {/* About Section */}
+      <AboutSection />
 
       {/* Hiring Signals Section */}
       <section className="py-20 border-y border-border/30">
