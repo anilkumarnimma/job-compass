@@ -184,7 +184,7 @@ export default function Dashboard() {
     setFallbackActive(false);
   }, [combinedSearchQuery, dateFilter, customDate, visaFilter]);
 
-  const { data, isLoading, isFetching } = useJobSearchPaginated({
+  const { data: searchData, isLoading: searchLoading, isFetching: searchFetching } = useJobSearchPaginated({
     searchQuery: combinedSearchQuery,
     page: currentPage,
     dateFrom: fallbackActive ? null : dateFrom,
@@ -194,6 +194,11 @@ export default function Dashboard() {
 
   const { profile } = useProfile();
   const { user } = useAuth();
+  const {
+    data: recommendedJobs = [],
+    isLoading: recommendedLoading,
+    isFetching: recommendedFetching,
+  } = useRecommendedJobs();
 
   // Show subtle toast for auto-premium (first 100) users — once per session
   useEffect(() => {
@@ -222,47 +227,47 @@ export default function Dashboard() {
     }
   }, [profile?.is_premium, user?.id, toast]);
 
-  const rawJobs = data?.jobs || [];
+  const intelligence = profile?.resume_intelligence as ResumeIntelligence | null | undefined;
+  const rawJobs = searchData?.jobs || [];
+  const shouldTryPersonalizedFeed =
+    !combinedSearchQuery.trim() &&
+    !roleFilter &&
+    !companyFilter &&
+    dateFilter === "all" &&
+    visaFilter === "all" &&
+    !!intelligence;
 
-  // When no active search and user has resume intelligence, sort by landing probability (highest first)
+  const personalizedJobs = useMemo(() => {
+    if (!shouldTryPersonalizedFeed || !intelligence) return [];
+
+    return [...recommendedJobs].sort((a, b) => {
+      const probA = calculateLandingProbability(a, a.matchResult, intelligence)?.probability ?? 0;
+      const probB = calculateLandingProbability(b, b.matchResult, intelligence)?.probability ?? 0;
+      if (probB !== probA) return probB - probA;
+      return b.posted_date.getTime() - a.posted_date.getTime();
+    });
+  }, [shouldTryPersonalizedFeed, recommendedJobs, intelligence]);
+
+  const usePersonalizedFeed = shouldTryPersonalizedFeed && (recommendedLoading || personalizedJobs.length > 0);
+
   const jobs = useMemo(() => {
-    const intelligence = profile?.resume_intelligence as ResumeIntelligence | null | undefined;
-    if (combinedSearchQuery.trim() || !intelligence) return rawJobs;
+    if (!usePersonalizedFeed) return rawJobs;
+    const start = (currentPage - 1) * 20;
+    return personalizedJobs.slice(start, start + 20);
+  }, [usePersonalizedFeed, rawJobs, personalizedJobs, currentPage]);
 
-    const userRole = intelligence.primaryRole || "";
-    const targetTitles = intelligence.jobTitlesToTarget || [];
-
-    // Calculate landing probability for every job and sort by it
-    const scored = rawJobs.map((job) => {
-      const roleMatch = isRoleRelevant(job.title, userRole, targetTitles);
-      if (!roleMatch) return { job, probability: 0 };
-      const m = calculateMatchesForJobs([job], intelligence);
-      const matchResult = m.get(job.id);
-      const lp = calculateLandingProbability(job, matchResult, intelligence);
-      return { job, probability: lp?.probability ?? 0 };
-    });
-
-    // Sort strictly by landing probability desc, then recency within same band
-    scored.sort((a, b) => {
-      const bandA = Math.floor(a.probability / 10);
-      const bandB = Math.floor(b.probability / 10);
-      if (bandB !== bandA) return bandB - bandA;
-      return b.job.posted_date.getTime() - a.job.posted_date.getTime();
-    });
-
-    return scored.map((s) => s.job);
-  }, [rawJobs, profile?.resume_intelligence, combinedSearchQuery]);
+  const isLoading = usePersonalizedFeed ? recommendedLoading : searchLoading;
+  const isFetching = usePersonalizedFeed ? recommendedFetching : searchFetching;
 
   // Defer heavy calculations so they don't block typing
   const deferredJobs = useDeferredValue(jobs);
 
   const matchResults = useMemo(
-    () => calculateMatchesForJobs(deferredJobs, profile?.resume_intelligence),
-    [deferredJobs, profile?.resume_intelligence]
+    () => calculateMatchesForJobs(deferredJobs, intelligence),
+    [deferredJobs, intelligence]
   );
 
   const landingResults = useMemo(() => {
-    const intelligence = profile?.resume_intelligence as ResumeIntelligence | null | undefined;
     if (!intelligence) return new Map();
     const results = new Map();
     for (const job of deferredJobs) {
@@ -270,16 +275,22 @@ export default function Dashboard() {
       if (lr) results.set(job.id, lr);
     }
     return results;
-  }, [deferredJobs, matchResults, profile?.resume_intelligence]);
+  }, [deferredJobs, matchResults, intelligence]);
 
   useEffect(() => {
-    if (!isLoading && dateFilter !== "all" && !fallbackActive && data && data.totalCount === 0) {
+    if (!usePersonalizedFeed && !isLoading && dateFilter !== "all" && !fallbackActive && searchData && searchData.totalCount === 0) {
       setFallbackActive(true);
     }
-  }, [isLoading, dateFilter, fallbackActive, data]);
+  }, [usePersonalizedFeed, isLoading, dateFilter, fallbackActive, searchData]);
 
-  const totalCount = data?.totalCount ?? 0;
-  const totalPages = data?.totalPages ?? 1;
+  const totalCount = usePersonalizedFeed ? personalizedJobs.length : (searchData?.totalCount ?? 0);
+  const totalPages = usePersonalizedFeed
+    ? Math.max(1, Math.ceil(personalizedJobs.length / 20))
+    : (searchData?.totalPages ?? 1);
+
+  useEffect(() => {
+    setCurrentPage((prev) => Math.min(prev, totalPages));
+  }, [totalPages]);
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
