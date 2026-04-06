@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useTransition, useDeferredVa
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/context/AuthContext";
 import { calculateMatchesForJobs } from "@/lib/jobMatcher";
-import { isRoleRelevant } from "@/lib/roleMatching";
+import { useRecommendedJobs } from "@/hooks/useRecommendedJobs";
 import { calculateLandingProbability } from "@/lib/landingProbability";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
 import { Layout } from "@/components/Layout";
