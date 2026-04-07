@@ -365,8 +365,6 @@ export default function Dashboard() {
         <WelcomeBanner />
         {/* Resume Upload CTA (only shown if no resume) */}
         <ResumeUploadBanner />
-        {/* Premium Upgrade Banner (non-premium users only) */}
-        <PremiumUpgradeBanner />
 
         {/* Header + Search + Filters (above columns) */}
         <div className="mb-4">
@@ -604,7 +602,8 @@ export default function Dashboard() {
             )}
 
             {/* RIGHT — Sidebar (always visible) */}
-            <div className="self-start sticky top-[88px]">
+            <div className="self-start sticky top-[88px] space-y-4">
+              <PremiumUpgradeBanner />
               <RightSidebar onFilterByRole={handleFilterByRole} />
             </div>
           </div>
