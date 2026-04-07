@@ -12,6 +12,8 @@ import { X, Loader2, CheckCircle2, Sparkles } from "lucide-react";
 const STORAGE_KEY = "sociax_new_user_role_popup_seen";
 const ONBOARDING_TS_KEY = "sociax_onboarding_completed_at";
 const DELAY_MS = 5 * 60 * 1000; // 5 minutes
+// Users created before this date are never eligible
+const FEATURE_LAUNCH = new Date("2026-04-07T00:00:00Z").getTime();
 
 export function NewUserRolePopup() {
   const { user } = useAuth();
