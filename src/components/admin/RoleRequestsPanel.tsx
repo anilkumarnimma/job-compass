@@ -1,9 +1,16 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { Loader2, MessageSquarePlus } from "lucide-react";
+import { Loader2, MessageSquarePlus, Send, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export function RoleRequestsPanel() {
+  const queryClient = useQueryClient();
+  const [sendingIds, setSendingIds] = useState<Set<string>>(new Set());
+  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ["role-requests-admin"],
     queryFn: async () => {
@@ -17,7 +24,6 @@ export function RoleRequestsPanel() {
     },
   });
 
-  // Fetch user emails for display
   const userIds = [...new Set(requests.map((r: any) => r.user_id))];
   const { data: profiles = [] } = useQuery({
     queryKey: ["role-request-profiles", userIds],
@@ -25,13 +31,46 @@ export function RoleRequestsPanel() {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("user_id, email, full_name")
+        .select("user_id, email, full_name, first_name")
         .in("user_id", userIds);
       return data || [];
     },
   });
 
   const profileMap = new Map(profiles.map((p: any) => [p.user_id, p]));
+
+  const handleSendAck = async (req: any) => {
+    const profile = profileMap.get(req.user_id);
+    if (!profile?.email) {
+      toast.error("No email found for this user");
+      return;
+    }
+
+    setSendingIds((prev) => new Set(prev).add(req.id));
+    try {
+      const { data, error } = await supabase.functions.invoke("role-request-ack", {
+        body: {
+          requestId: req.id,
+          recipientEmail: profile.email,
+          recipientName: profile.first_name || profile.full_name || null,
+          requestedRole: req.requested_role,
+          location: req.location || null,
+        },
+      });
+
+      if (error) throw error;
+      setSentIds((prev) => new Set(prev).add(req.id));
+      toast.success(`Acknowledgment sent to ${profile.email}`);
+    } catch (err: any) {
+      toast.error("Failed to send email: " + (err.message || "Unknown error"));
+    } finally {
+      setSendingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(req.id);
+        return next;
+      });
+    }
+  };
 
   return (
     <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm p-5">
@@ -51,6 +90,9 @@ export function RoleRequestsPanel() {
         <div className="space-y-3 max-h-[400px] overflow-y-auto scrollbar-thin">
           {requests.map((req: any) => {
             const profile = profileMap.get(req.user_id);
+            const isSending = sendingIds.has(req.id);
+            const isSent = sentIds.has(req.id);
+
             return (
               <div
                 key={req.id}
@@ -67,6 +109,22 @@ export function RoleRequestsPanel() {
                     {profile?.email || "Unknown user"} • {format(new Date(req.created_at), "MMM d, yyyy h:mm a")}
                   </p>
                 </div>
+                <Button
+                  size="sm"
+                  variant={isSent ? "outline" : "default"}
+                  disabled={isSending || isSent}
+                  onClick={() => handleSendAck(req)}
+                  className="shrink-0 text-xs h-8 rounded-full"
+                >
+                  {isSending ? (
+                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                  ) : isSent ? (
+                    <Check className="h-3 w-3 mr-1" />
+                  ) : (
+                    <Send className="h-3 w-3 mr-1" />
+                  )}
+                  {isSent ? "Sent" : "Acknowledge"}
+                </Button>
               </div>
             );
           })}
