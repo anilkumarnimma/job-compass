@@ -7,6 +7,7 @@ import { useEffect, useRef } from "react";
 
 import { VisaFilter, filterJobsByVisa } from "@/lib/visaSponsorship";
 import { useDebounce } from "@/hooks/useDebounce";
+import { hasEntryLevelIntent, stripEntryLevelKeywords } from "@/lib/jobFilters";
 
 const PAGE_SIZE = 20;
 const VISA_BATCH_SIZE = 200;
