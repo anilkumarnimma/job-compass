@@ -42,6 +42,7 @@ import { DASHBOARD_PAGE_SIZE, useDashboardPriorityJobs } from "@/hooks/useDashbo
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { RoleRequestBanner } from "@/components/RoleRequestBanner";
 import { RoleRequestModal } from "@/components/RoleRequestModal";
+import { PremiumUpgradeBanner } from "@/components/PremiumUpgradeBanner";
 
 import { NewUserRolePopup } from "@/components/NewUserRolePopup";
 
@@ -364,6 +365,8 @@ export default function Dashboard() {
         <WelcomeBanner />
         {/* Resume Upload CTA (only shown if no resume) */}
         <ResumeUploadBanner />
+        {/* Premium Upgrade Banner (non-premium users only) */}
+        <PremiumUpgradeBanner />
 
         {/* Header + Search + Filters (above columns) */}
         <div className="mb-4">
