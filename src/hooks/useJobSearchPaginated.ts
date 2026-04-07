@@ -148,6 +148,8 @@ async function fetchJobsPage(
 export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, visaFilter = "all" }: UseJobSearchPaginatedOptions) {
   const queryClient = useQueryClient();
   const isVisaFiltered = visaFilter !== "all";
+  const entryLevel = hasEntryLevelIntent(searchQuery);
+  const needsClientFilter = isVisaFiltered || entryLevel;
   const debouncedCountSearch = useDebounce(searchQuery, 450);
 
   // Cancel stale in-flight queries when search changes (not on unmount)
@@ -168,7 +170,7 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
 
   // Prefetch next page in background for instant navigation
   useEffect(() => {
-    if (!isVisaFiltered && jobsQuery.data && jobsQuery.data.jobs.length === PAGE_SIZE) {
+    if (!needsClientFilter && jobsQuery.data && jobsQuery.data.jobs.length === PAGE_SIZE) {
       const nextPage = page + 1;
       queryClient.prefetchQuery({
         queryKey: ["jobs", "paginated", searchQuery, nextPage, dateFrom, dateTo, visaFilter],
@@ -176,16 +178,18 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
         staleTime: STALE_TIME,
       });
     }
-  }, [queryClient, searchQuery, page, dateFrom, dateTo, visaFilter, isVisaFiltered, jobsQuery.data]);
+  }, [queryClient, searchQuery, page, dateFrom, dateTo, visaFilter, needsClientFilter, jobsQuery.data]);
 
   const countQuery = useQuery({
     queryKey: ["jobs", "count", debouncedCountSearch],
     queryFn: async ({ signal }) => {
       const trimmed = debouncedCountSearch.trim();
       if (trimmed) {
-        const expandedTerms = expandSearchTerms(trimmed);
+        const effectiveQ = hasEntryLevelIntent(trimmed) ? stripEntryLevelKeywords(trimmed) : trimmed;
+        const queryForDb = effectiveQ || trimmed;
+        const expandedTerms = expandSearchTerms(queryForDb);
         let rpcQuery = supabase.rpc("count_search_jobs", {
-          search_query: trimmed,
+          search_query: queryForDb,
           expanded_terms: expandedTerms.length > 0 ? expandedTerms : undefined,
         });
 
@@ -216,12 +220,12 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
       return count || 0;
     },
     staleTime: STALE_TIME,
-    enabled: !isVisaFiltered,
+    enabled: !needsClientFilter,
   });
 
-  const visaFilteredCount = (jobsQuery.data as any)?.visaFilteredCount;
-  const totalCount = isVisaFiltered
-    ? (visaFilteredCount ?? 0)
+  const clientFilteredCount = (jobsQuery.data as any)?.visaFilteredCount;
+  const totalCount = needsClientFilter
+    ? (clientFilteredCount ?? 0)
     : (countQuery.data ?? 0);
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
