@@ -73,6 +73,14 @@ const tourSteps: TourStep[] = [
     tip: "Check Recommendations for AI-matched jobs based on your resume",
   },
   {
+    icon: Bookmark,
+    selector: "[data-tour='role-request']",
+    position: "top",
+    title: "Request a Role",
+    description: "Can't find the job you're looking for? Request any role and we'll source it within 24 hours.",
+    tip: "Try requesting 'AI Engineer' or 'Rust Developer'",
+  },
+  {
     icon: MessageSquare,
     selector: "[data-tour='ai-orb']",
     position: "top",

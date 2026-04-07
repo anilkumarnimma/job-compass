@@ -40,6 +40,9 @@ import { consumeDashboardResetToken, DASHBOARD_RESET_EVENT } from "@/lib/dashboa
 import { useResumeEmail } from "@/hooks/useResumeEmail";
 import { DASHBOARD_PAGE_SIZE, useDashboardPriorityJobs } from "@/hooks/useDashboardPriorityJobs";
 import { OnboardingTour } from "@/components/OnboardingTour";
+import { RoleRequestBanner } from "@/components/RoleRequestBanner";
+import { RoleRequestModal } from "@/components/RoleRequestModal";
+import { NewFeatureAnnouncement } from "@/components/NewFeatureAnnouncement";
 
 type DateFilter = "all" | "today" | "yesterday" | "custom";
 
@@ -86,6 +89,7 @@ export default function Dashboard() {
   const [fallbackActive, setFallbackActive] = useState(false);
   const [visaFilter, setVisaFilter] = useState<VisaFilter>("all");
   const [isSearchPending, startSearchTransition] = useTransition();
+  const [roleRequestOpen, setRoleRequestOpen] = useState(false);
 
   const isMobile = useIsMobile();
   const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply, showProfileGate, setShowProfileGate, profileGateMissingFields } = useJobContext();
@@ -356,6 +360,8 @@ export default function Dashboard() {
         <div className="w-full max-w-[1600px] mx-auto px-4 md:px-6 py-4">
         {/* Welcome Banner */}
         <WelcomeBanner />
+        {/* New Feature Announcement (one-time for existing users) */}
+        <NewFeatureAnnouncement onRequestRole={() => setRoleRequestOpen(true)} />
         {/* Resume Upload CTA (only shown if no resume) */}
         <ResumeUploadBanner />
 
@@ -550,10 +556,10 @@ export default function Dashboard() {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="mb-4"
+                  className="mb-4 space-y-3"
                 >
                   <JobMatchesPanel />
-                  
+                  <RoleRequestBanner />
                 </motion.div>
               )}
               <JobListPaginated
@@ -608,6 +614,7 @@ export default function Dashboard() {
       <ProfileGateDialog open={showProfileGate} onOpenChange={setShowProfileGate} missingFields={profileGateMissingFields} />
       <NotificationOptInDialog />
       <ExtensionPasswordPrompt />
+      <RoleRequestModal open={roleRequestOpen} onOpenChange={setRoleRequestOpen} />
     </Layout>
   );
 }
