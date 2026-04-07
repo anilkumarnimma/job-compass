@@ -121,7 +121,7 @@ export function SubscriptionBillingCard() {
                       {planName}
                     </Badge>
                     {pendingCancel && (
-                      <Badge variant="outline" className="text-yellow-500 border-yellow-500/30 bg-yellow-500/10 text-[10px]">
+                      <Badge variant="outline" className="text-warning border-warning/30 bg-warning/10 text-[10px]">
                         Cancelling
                       </Badge>
                     )}
@@ -159,10 +159,10 @@ export function SubscriptionBillingCard() {
 
               {/* Pending cancellation warning */}
               {pendingCancel && (
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
-                  <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" />
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                  <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400">
+                    <p className="text-sm font-medium text-destructive">
                       Your subscription is set to cancel
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
