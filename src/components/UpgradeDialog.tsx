@@ -33,7 +33,7 @@ export function UpgradeDialog({ open, onOpenChange }: UpgradeDialogProps) {
         <DialogHeader className="space-y-2">
           <DialogTitle className="text-xl font-bold text-foreground">Upgrade to apply unlimited</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
-            You've used all 9 free applications. Upgrade to Premium to apply to unlimited jobs.
+            You've used your 5 free applications. Upgrade to continue applying.
           </DialogDescription>
         </DialogHeader>
 
@@ -59,7 +59,7 @@ export function UpgradeDialog({ open, onOpenChange }: UpgradeDialogProps) {
             disabled={loading}
           >
             {loading ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Crown className="h-4 w-4 mr-1.5" />}
-            Upgrade for $6.99/month
+            Upgrade for $5.99/month
           </Button>
           <Button
             variant="ghost"
