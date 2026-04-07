@@ -154,17 +154,17 @@ export default function Admin() {
           duplicateIsPending={duplicateJob.isPending}
         />
 
+        {/* Role Requests - Founder only (TOP PRIORITY) */}
+        {isFounder && (
+          <div className="mb-8">
+            <RoleRequestsPanel />
+          </div>
+        )}
+
         {/* Deleted Jobs Trash - Founder only */}
         {isFounder && (
           <div className="mt-8">
             <DeletedJobsPanel />
-          </div>
-        )}
-
-        {/* Role Requests - Founder only */}
-        {isFounder && (
-          <div className="mt-8">
-            <RoleRequestsPanel />
           </div>
         )}
 
