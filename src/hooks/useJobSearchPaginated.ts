@@ -53,16 +53,22 @@ async function fetchJobsPage(
   signal?: AbortSignal,
 ) {
   const trimmed = searchQuery.trim();
+  const entryLevel = hasEntryLevelIntent(trimmed);
+  const effectiveQuery = entryLevel ? stripEntryLevelKeywords(trimmed) : trimmed;
   const isVisaFiltered = visaFilter !== "all";
+  const needsClientFilter = isVisaFiltered || entryLevel;
   let allJobs: Job[] = [];
 
-  if (trimmed) {
-    const expandedTerms = expandSearchTerms(trimmed);
-    const fetchSize = isVisaFiltered ? VISA_BATCH_SIZE : PAGE_SIZE;
-    const fetchOffset = isVisaFiltered ? 0 : (page - 1) * PAGE_SIZE;
+  if (effectiveQuery || trimmed) {
+    const queryForDb = effectiveQuery || trimmed;
+    const expandedTerms = expandSearchTerms(queryForDb);
+    const fetchSize = needsClientFilter
+      ? (isVisaFiltered ? VISA_BATCH_SIZE : ENTRY_LEVEL_BATCH_SIZE)
+      : PAGE_SIZE;
+    const fetchOffset = needsClientFilter ? 0 : (page - 1) * PAGE_SIZE;
 
     let rpcQuery = supabase.rpc("search_jobs", {
-      search_query: trimmed,
+      search_query: queryForDb,
       page_size: fetchSize,
       page_offset: fetchOffset,
       filter_tab: "all",
