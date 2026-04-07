@@ -42,7 +42,7 @@ import { DASHBOARD_PAGE_SIZE, useDashboardPriorityJobs } from "@/hooks/useDashbo
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { RoleRequestBanner } from "@/components/RoleRequestBanner";
 import { RoleRequestModal } from "@/components/RoleRequestModal";
-import { NewFeatureAnnouncement } from "@/components/NewFeatureAnnouncement";
+
 import { NewUserRolePopup } from "@/components/NewUserRolePopup";
 
 type DateFilter = "all" | "today" | "yesterday" | "custom";
@@ -362,8 +362,6 @@ export default function Dashboard() {
         <div className="w-full max-w-[1600px] mx-auto px-4 md:px-6 py-4">
         {/* Welcome Banner */}
         <WelcomeBanner />
-        {/* New Feature Announcement (one-time for existing users) */}
-        <NewFeatureAnnouncement onRequestRole={() => setRoleRequestOpen(true)} />
         {/* Resume Upload CTA (only shown if no resume) */}
         <ResumeUploadBanner />
 
