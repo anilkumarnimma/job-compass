@@ -369,6 +369,7 @@ export default function Dashboard() {
         >
           🧪 Test Role Popup
         </button>
+        <div className="w-full max-w-[1600px] mx-auto px-4 md:px-6 py-4">
         {/* Welcome Banner */}
         <WelcomeBanner />
         {/* New Feature Announcement (one-time for existing users) */}
