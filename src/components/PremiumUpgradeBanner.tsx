@@ -27,7 +27,11 @@ export function PremiumUpgradeBanner() {
           <span className="text-xs font-bold uppercase tracking-wider text-accent">
             Premium
           </span>
+          <span className="text-[9px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-500 border border-yellow-500/20">
+            Early Birds
+          </span>
         </div>
+        <p className="text-[10px] text-muted-foreground/70 -mt-1 mb-1 italic">Limited slots</p>
 
         <p className="text-sm font-medium text-foreground leading-snug mb-1">
           Unlock full access & unlimited job applications
