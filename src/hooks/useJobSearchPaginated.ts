@@ -99,8 +99,10 @@ async function fetchJobsPage(
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 15);
 
-    const fetchSize = isVisaFiltered ? VISA_BATCH_SIZE : PAGE_SIZE;
-    const rangeStart = isVisaFiltered ? 0 : (page - 1) * PAGE_SIZE;
+    const fetchSize = needsClientFilter
+      ? (isVisaFiltered ? VISA_BATCH_SIZE : ENTRY_LEVEL_BATCH_SIZE)
+      : PAGE_SIZE;
+    const rangeStart = needsClientFilter ? 0 : (page - 1) * PAGE_SIZE;
     const rangeEnd = rangeStart + fetchSize - 1;
 
     let query = supabase
