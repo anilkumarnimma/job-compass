@@ -72,6 +72,7 @@ export default function AdminPayments() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [subStatusFilter, setSubStatusFilter] = useState("all");
+  const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
