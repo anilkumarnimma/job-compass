@@ -128,7 +128,7 @@ export function SubscriptionBillingCard() {
                   </div>
                   {isPremium && (
                     <p className="text-xs text-muted-foreground">
-                      $9.99/month • Unlimited applications
+                      $5.99/month • Unlimited applications
                     </p>
                   )}
                   {!isPremium && (
@@ -180,7 +180,7 @@ export function SubscriptionBillingCard() {
                     className="w-full rounded-full bg-accent text-accent-foreground hover:bg-accent/90"
                   >
                     <Sparkles className="h-4 w-4 mr-1.5" />
-                    Upgrade to Premium — $9.99/mo
+                    Upgrade to Premium — $5.99/mo
                   </Button>
                 )}
 
