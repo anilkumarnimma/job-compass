@@ -157,6 +157,7 @@ export function NewUserRolePopup({ forceOpen, onForceClose }: NewUserRolePopupPr
               </button>
             </>
           )}
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
