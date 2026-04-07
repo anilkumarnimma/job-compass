@@ -12,6 +12,8 @@ import { X, Loader2, CheckCircle2, Sparkles } from "lucide-react";
 const STORAGE_KEY = "sociax_new_user_role_popup_seen";
 const ONBOARDING_TS_KEY = "sociax_onboarding_completed_at";
 const DELAY_MS = 5 * 60 * 1000; // 5 minutes
+// Users created before this date are never eligible
+const FEATURE_LAUNCH = new Date("2026-04-07T00:00:00Z").getTime();
 
 export function NewUserRolePopup() {
   const { user } = useAuth();
@@ -29,11 +31,15 @@ export function NewUserRolePopup() {
     // Already shown before — bail out
     if (localStorage.getItem(STORAGE_KEY)) return;
 
+    // Hard cutoff: accounts created before feature launch are never eligible
+    const createdAt = user.created_at ? new Date(user.created_at).getTime() : 0;
+    if (createdAt < FEATURE_LAUNCH) {
+      localStorage.setItem(STORAGE_KEY, "true");
+      return;
+    }
+
     // Profile + resume must be complete
     if (!isComplete) {
-      // Not ready yet — but record the moment they DO complete it
-      // (clear any previous timestamp so we re-measure from fresh completion)
-      localStorage.removeItem(ONBOARDING_TS_KEY);
       return;
     }
 
