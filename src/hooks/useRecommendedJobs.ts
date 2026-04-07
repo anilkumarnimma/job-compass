@@ -203,7 +203,7 @@ export function useRecommendedJobs() {
 
       // Determine if user is entry-level based on their profile
       const isEntryLevelUser =
-        ri.experienceLevel === "entry" ||
+        ri.experienceLevel === "fresher" ||
         ri.experienceLevel === "junior" ||
         (ri.yearsOfExperience !== undefined && ri.yearsOfExperience <= 3);
 
