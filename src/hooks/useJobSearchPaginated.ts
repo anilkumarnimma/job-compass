@@ -7,8 +7,10 @@ import { useEffect, useRef } from "react";
 
 import { VisaFilter, filterJobsByVisa } from "@/lib/visaSponsorship";
 import { useDebounce } from "@/hooks/useDebounce";
+import { hasEntryLevelIntent, stripEntryLevelKeywords } from "@/lib/jobFilters";
 
 const PAGE_SIZE = 20;
+const ENTRY_LEVEL_BATCH_SIZE = 100;
 const VISA_BATCH_SIZE = 200;
 const STALE_TIME = 5 * 60 * 1000; // 5 minutes
 
@@ -51,16 +53,22 @@ async function fetchJobsPage(
   signal?: AbortSignal,
 ) {
   const trimmed = searchQuery.trim();
+  const entryLevel = hasEntryLevelIntent(trimmed);
+  const effectiveQuery = entryLevel ? stripEntryLevelKeywords(trimmed) : trimmed;
   const isVisaFiltered = visaFilter !== "all";
+  const needsClientFilter = isVisaFiltered || entryLevel;
   let allJobs: Job[] = [];
 
-  if (trimmed) {
-    const expandedTerms = expandSearchTerms(trimmed);
-    const fetchSize = isVisaFiltered ? VISA_BATCH_SIZE : PAGE_SIZE;
-    const fetchOffset = isVisaFiltered ? 0 : (page - 1) * PAGE_SIZE;
+  if (effectiveQuery || trimmed) {
+    const queryForDb = effectiveQuery || trimmed;
+    const expandedTerms = expandSearchTerms(queryForDb);
+    const fetchSize = needsClientFilter
+      ? (isVisaFiltered ? VISA_BATCH_SIZE : ENTRY_LEVEL_BATCH_SIZE)
+      : PAGE_SIZE;
+    const fetchOffset = needsClientFilter ? 0 : (page - 1) * PAGE_SIZE;
 
     let rpcQuery = supabase.rpc("search_jobs", {
-      search_query: trimmed,
+      search_query: queryForDb,
       page_size: fetchSize,
       page_offset: fetchOffset,
       filter_tab: "all",
@@ -91,8 +99,10 @@ async function fetchJobsPage(
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 15);
 
-    const fetchSize = isVisaFiltered ? VISA_BATCH_SIZE : PAGE_SIZE;
-    const rangeStart = isVisaFiltered ? 0 : (page - 1) * PAGE_SIZE;
+    const fetchSize = needsClientFilter
+      ? (isVisaFiltered ? VISA_BATCH_SIZE : ENTRY_LEVEL_BATCH_SIZE)
+      : PAGE_SIZE;
+    const rangeStart = needsClientFilter ? 0 : (page - 1) * PAGE_SIZE;
     const rangeEnd = rangeStart + fetchSize - 1;
 
     let query = supabase
@@ -120,12 +130,12 @@ async function fetchJobsPage(
     allJobs = (data || []).map(parseJob);
   }
 
-  let filteredJobs = enrichJobList(allJobs);
+  let filteredJobs = enrichJobList(allJobs, entryLevel);
   if (isVisaFiltered) {
     filteredJobs = filterJobsByVisa(filteredJobs, visaFilter);
   }
 
-  if (isVisaFiltered) {
+  if (needsClientFilter) {
     const totalFiltered = filteredJobs.length;
     const startIdx = (page - 1) * PAGE_SIZE;
     const pageJobs = filteredJobs.slice(startIdx, startIdx + PAGE_SIZE);
@@ -138,6 +148,8 @@ async function fetchJobsPage(
 export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, visaFilter = "all" }: UseJobSearchPaginatedOptions) {
   const queryClient = useQueryClient();
   const isVisaFiltered = visaFilter !== "all";
+  const entryLevel = hasEntryLevelIntent(searchQuery);
+  const needsClientFilter = isVisaFiltered || entryLevel;
   const debouncedCountSearch = useDebounce(searchQuery, 450);
 
   // Cancel stale in-flight queries when search changes (not on unmount)
@@ -158,7 +170,7 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
 
   // Prefetch next page in background for instant navigation
   useEffect(() => {
-    if (!isVisaFiltered && jobsQuery.data && jobsQuery.data.jobs.length === PAGE_SIZE) {
+    if (!needsClientFilter && jobsQuery.data && jobsQuery.data.jobs.length === PAGE_SIZE) {
       const nextPage = page + 1;
       queryClient.prefetchQuery({
         queryKey: ["jobs", "paginated", searchQuery, nextPage, dateFrom, dateTo, visaFilter],
@@ -166,16 +178,18 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
         staleTime: STALE_TIME,
       });
     }
-  }, [queryClient, searchQuery, page, dateFrom, dateTo, visaFilter, isVisaFiltered, jobsQuery.data]);
+  }, [queryClient, searchQuery, page, dateFrom, dateTo, visaFilter, needsClientFilter, jobsQuery.data]);
 
   const countQuery = useQuery({
     queryKey: ["jobs", "count", debouncedCountSearch],
     queryFn: async ({ signal }) => {
       const trimmed = debouncedCountSearch.trim();
       if (trimmed) {
-        const expandedTerms = expandSearchTerms(trimmed);
+        const effectiveQ = hasEntryLevelIntent(trimmed) ? stripEntryLevelKeywords(trimmed) : trimmed;
+        const queryForDb = effectiveQ || trimmed;
+        const expandedTerms = expandSearchTerms(queryForDb);
         let rpcQuery = supabase.rpc("count_search_jobs", {
-          search_query: trimmed,
+          search_query: queryForDb,
           expanded_terms: expandedTerms.length > 0 ? expandedTerms : undefined,
         });
 
@@ -206,12 +220,12 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
       return count || 0;
     },
     staleTime: STALE_TIME,
-    enabled: !isVisaFiltered,
+    enabled: !needsClientFilter,
   });
 
-  const visaFilteredCount = (jobsQuery.data as any)?.visaFilteredCount;
-  const totalCount = isVisaFiltered
-    ? (visaFilteredCount ?? 0)
+  const clientFilteredCount = (jobsQuery.data as any)?.visaFilteredCount;
+  const totalCount = needsClientFilter
+    ? (clientFilteredCount ?? 0)
     : (countQuery.data ?? 0);
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
