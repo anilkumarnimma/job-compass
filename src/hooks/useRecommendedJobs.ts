@@ -6,7 +6,7 @@ import { calculateJobMatch, JobMatchResult } from "@/lib/jobMatcher";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
 import { isRoleRelevant } from "@/lib/roleMatching";
 import { getResumeVersion } from "@/lib/resumeSync";
-import { shouldExcludeJob } from "@/lib/jobFilters";
+import { shouldExcludeJob, isNonEntryLevelJob } from "@/lib/jobFilters";
 
 function buildProfileFallbackIntelligence(profile: NonNullable<ReturnType<typeof useProfile>["profile"]>): ResumeIntelligence | null {
   const profileSkills = Array.isArray(profile.skills) ? profile.skills.filter(Boolean) : [];
