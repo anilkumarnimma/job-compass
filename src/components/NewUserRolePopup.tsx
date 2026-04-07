@@ -66,7 +66,7 @@ export function NewUserRolePopup({ forceOpen, onForceClose }: NewUserRolePopupPr
       if (error) throw error;
       setSubmitted(true);
       localStorage.setItem(STORAGE_KEY, "true");
-      setTimeout(() => setVisible(false), 2500);
+      setTimeout(() => setVisible(false), 3500);
     } catch {
       toast.error("Failed to submit. Please try again.");
     } finally {
