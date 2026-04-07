@@ -51,7 +51,8 @@ export function NewUserRolePopup({ forceOpen, onForceClose }: NewUserRolePopupPr
 
   const dismiss = () => {
     setVisible(false);
-    localStorage.setItem(STORAGE_KEY, "true");
+    if (!forceOpen) localStorage.setItem(STORAGE_KEY, "true");
+    onForceClose?.();
   };
 
   const handleSubmit = async () => {
