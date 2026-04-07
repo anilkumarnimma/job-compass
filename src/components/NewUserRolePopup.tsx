@@ -31,11 +31,15 @@ export function NewUserRolePopup() {
     // Already shown before — bail out
     if (localStorage.getItem(STORAGE_KEY)) return;
 
+    // Hard cutoff: accounts created before feature launch are never eligible
+    const createdAt = user.created_at ? new Date(user.created_at).getTime() : 0;
+    if (createdAt < FEATURE_LAUNCH) {
+      localStorage.setItem(STORAGE_KEY, "true");
+      return;
+    }
+
     // Profile + resume must be complete
     if (!isComplete) {
-      // Not ready yet — but record the moment they DO complete it
-      // (clear any previous timestamp so we re-measure from fresh completion)
-      localStorage.removeItem(ONBOARDING_TS_KEY);
       return;
     }
 
