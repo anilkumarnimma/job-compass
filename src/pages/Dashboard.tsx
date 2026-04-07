@@ -42,6 +42,7 @@ import { DASHBOARD_PAGE_SIZE, useDashboardPriorityJobs } from "@/hooks/useDashbo
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { RoleRequestBanner } from "@/components/RoleRequestBanner";
 import { RoleRequestModal } from "@/components/RoleRequestModal";
+import { PremiumUpgradeBanner } from "@/components/PremiumUpgradeBanner";
 
 import { NewUserRolePopup } from "@/components/NewUserRolePopup";
 
