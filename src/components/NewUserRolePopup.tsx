@@ -10,7 +10,12 @@ import { X, Loader2, CheckCircle2, Sparkles } from "lucide-react";
 
 const STORAGE_KEY = "sociax_new_user_role_popup_seen";
 
-export function NewUserRolePopup() {
+interface NewUserRolePopupProps {
+  forceOpen?: boolean;
+  onForceClose?: () => void;
+}
+
+export function NewUserRolePopup({ forceOpen, onForceClose }: NewUserRolePopupProps = {}) {
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const [visible, setVisible] = useState(false);
@@ -18,25 +23,31 @@ export function NewUserRolePopup() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  // Support force-open for testing
   useEffect(() => {
+    if (forceOpen) {
+      setVisible(true);
+      setSubmitted(false);
+      setRole("");
+    }
+  }, [forceOpen]);
+
+  useEffect(() => {
+    if (forceOpen) return; // skip auto logic when forced
     if (!user || isMobile) return;
-    // Already seen?
     if (localStorage.getItem(STORAGE_KEY)) return;
 
-    // Check if user is "new" — account created within the last 5 minutes
     const createdAt = user.created_at ? new Date(user.created_at) : null;
     if (!createdAt) return;
     const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
     if (createdAt < fiveMinAgo) {
-      // Not a new user — mark as seen so we never check again
       localStorage.setItem(STORAGE_KEY, "true");
       return;
     }
 
-    // Delay popup so dashboard loads first
     const timer = setTimeout(() => setVisible(true), 3000);
     return () => clearTimeout(timer);
-  }, [user, isMobile]);
+  }, [user, isMobile, forceOpen]);
 
   const dismiss = () => {
     setVisible(false);
