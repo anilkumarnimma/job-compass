@@ -10,6 +10,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { hasEntryLevelIntent, stripEntryLevelKeywords } from "@/lib/jobFilters";
 
 const PAGE_SIZE = 20;
+const ENTRY_LEVEL_BATCH_SIZE = 100;
 const VISA_BATCH_SIZE = 200;
 const STALE_TIME = 5 * 60 * 1000; // 5 minutes
 
