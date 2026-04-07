@@ -137,18 +137,18 @@ export function RoleRequestsPanel() {
                     <Button
                       size="sm"
                       variant={isSent ? "outline" : "default"}
-                      disabled={isSending || isSent}
+                      disabled={isSending}
                       onClick={() => setConfirmReq(req)}
                       className="shrink-0 text-xs h-8 rounded-full"
                     >
                       {isSending ? (
                         <Loader2 className="h-3 w-3 animate-spin mr-1" />
                       ) : isSent ? (
-                        <Check className="h-3 w-3 mr-1" />
+                        <Send className="h-3 w-3 mr-1" />
                       ) : (
                         <Send className="h-3 w-3 mr-1" />
                       )}
-                      {isSent ? "Sent" : "Acknowledge"}
+                      {isSent ? "Resend" : "Acknowledge"}
                     </Button>
                   </div>
                 );
