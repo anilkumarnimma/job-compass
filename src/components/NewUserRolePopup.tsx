@@ -66,7 +66,7 @@ export function NewUserRolePopup({ forceOpen, onForceClose }: NewUserRolePopupPr
       if (error) throw error;
       setSubmitted(true);
       localStorage.setItem(STORAGE_KEY, "true");
-      setTimeout(() => setVisible(false), 2500);
+      setTimeout(() => setVisible(false), 3500);
     } catch {
       toast.error("Failed to submit. Please try again.");
     } finally {
@@ -82,7 +82,22 @@ export function NewUserRolePopup({ forceOpen, onForceClose }: NewUserRolePopupPr
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 10, scale: 0.95 }}
           transition={{ type: "spring", stiffness: 400, damping: 30 }}
-          className="fixed bottom-6 right-6 z-50 w-[360px] rounded-2xl border border-border/60 bg-card/95 backdrop-blur-xl shadow-2xl p-5"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        >
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={dismiss}
+          />
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            className="relative w-full max-w-[400px] rounded-2xl border border-border/60 bg-card/95 backdrop-blur-xl shadow-2xl p-6"
         >
           {/* Close / Skip */}
           <button
@@ -142,6 +157,7 @@ export function NewUserRolePopup({ forceOpen, onForceClose }: NewUserRolePopupPr
               </button>
             </>
           )}
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
