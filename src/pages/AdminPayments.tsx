@@ -144,7 +144,32 @@ export default function AdminPayments() {
       case "checkout_expired": return <Badge variant="secondary">Checkout Expired</Badge>;
       case "invoice_payment_failed": return <Badge variant="destructive">Invoice Failed</Badge>;
       case "charge_failed": return <Badge variant="destructive">Charge Failed</Badge>;
+      case "abandoned_checkout": return <Badge variant="secondary">Abandoned</Badge>;
       default: return <Badge variant="outline">{type}</Badge>;
+    }
+  };
+
+  const handleSendFailedPaymentEmail = async (failedPayment: FailedPayment) => {
+    setSendingEmailId(failedPayment.id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      const { data, error } = await supabase.functions.invoke("send-failed-payment-email", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: { email: failedPayment.email, failed_payment_id: failedPayment.id },
+      });
+
+      if (error) throw error;
+      if (data?.skipped) {
+        toast({ title: "Skipped", description: data.error || "User is already premium", variant: "default" });
+      } else {
+        toast({ title: "Email Sent", description: `Recovery email sent to ${failedPayment.email}` });
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Failed to send email", variant: "destructive" });
+    } finally {
+      setSendingEmailId(null);
     }
   };
 
