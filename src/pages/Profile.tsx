@@ -12,6 +12,7 @@ import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { ProfileWelcomeBanner, SkillsCloudWidget, QuickStatsWidget } from "@/components/ProfileBentoWidgets";
 import { ResumeIntelligenceCard } from "@/components/ResumeIntelligenceCard";
+import { SubscriptionBillingCard } from "@/components/SubscriptionBillingCard";
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Header } from "@/components/Header";
@@ -944,6 +945,9 @@ export default function Profile() {
               )}
             </CardContent>
           </Card>
+
+          {/* Subscription & Billing */}
+          <SubscriptionBillingCard />
 
           {/* Email Notification Preferences */}
           <EmailNotificationPrefsCard userId={user.id} />
