@@ -35,25 +35,22 @@ Deno.serve(async (req) => {
     }
 
     const greeting = recipientName ? `Hi ${recipientName},` : "Hi,";
-    const locationLine = location ? `<p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 12px;">📍 <strong>Location preference:</strong> ${location}</p>` : "";
-    const customLine = customMessage ? `<p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 20px;">${customMessage}</p>` : "";
 
     const htmlContent = `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"/></head>
 <body style="margin:0;padding:0;background:#ffffff;font-family:Arial,sans-serif;">
   <div style="max-width:520px;margin:40px auto;padding:32px 24px;background:#ffffff;border-radius:12px;border:1px solid #e5e7eb;">
-    <h1 style="font-size:20px;font-weight:700;color:#111827;margin:0 0 16px;">We received your role request! 🎯</h1>
+    <h1 style="font-size:20px;font-weight:700;color:#111827;margin:0 0 16px;">Your requested roles are now live! 🚀</h1>
     <p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 12px;">${greeting}</p>
-    <p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 12px;">Thank you for requesting the role <strong>"${requestedRole}"</strong> on Sociax.</p>
-    ${locationLine}
-    ${customLine || '<p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 20px;">Our team is actively sourcing roles matching your request. We\'ll have matching jobs live within <strong>24 hours</strong>!</p>'}
+    <p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 12px;">Your requested role <strong>"${requestedRole}"</strong> has been successfully added to Sociax.</p>
+    <p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 12px;">You can now log in to your dashboard and start applying to relevant jobs immediately.</p>
+    <p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 20px;">We've made sure matching opportunities are available for you.</p>
     <div style="text-align:center;margin:0 0 24px;">
-      <a href="https://sociax.tech/dashboard" style="display:inline-block;padding:14px 32px;background:#6366f1;color:#ffffff;font-size:15px;font-weight:600;border-radius:8px;text-decoration:none;">Browse Jobs</a>
+      <a href="https://sociax.tech" style="display:inline-block;padding:14px 32px;background:#6366f1;color:#ffffff;font-size:15px;font-weight:600;border-radius:8px;text-decoration:none;">Start Exploring Now</a>
     </div>
-    <p style="font-size:14px;color:#6b7280;line-height:1.5;margin:0 0 8px;">Keep an eye on your dashboard — new matches will appear as they're added.</p>
     <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;"/>
-    <p style="font-size:13px;color:#9ca3af;margin:0;">— Team Sociax</p>
+    <p style="font-size:13px;color:#9ca3af;margin:0;">Best,<br/>Team Sociax</p>
   </div>
 </body>
 </html>`;
@@ -68,7 +65,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: "Sociax <noreply@sociax.tech>",
         to: [recipientEmail.toLowerCase()],
-        subject: `Your role request "${requestedRole}" has been received — Sociax`,
+        subject: `Your requested roles are now live on Sociax 🚀`,
         html: htmlContent,
       }),
     });
