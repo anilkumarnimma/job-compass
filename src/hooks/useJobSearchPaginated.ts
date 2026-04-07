@@ -130,12 +130,12 @@ async function fetchJobsPage(
     allJobs = (data || []).map(parseJob);
   }
 
-  let filteredJobs = enrichJobList(allJobs);
+  let filteredJobs = enrichJobList(allJobs, entryLevel);
   if (isVisaFiltered) {
     filteredJobs = filterJobsByVisa(filteredJobs, visaFilter);
   }
 
-  if (isVisaFiltered) {
+  if (needsClientFilter) {
     const totalFiltered = filteredJobs.length;
     const startIdx = (page - 1) * PAGE_SIZE;
     const pageJobs = filteredJobs.slice(startIdx, startIdx + PAGE_SIZE);
