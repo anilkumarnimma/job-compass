@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DollarSign, Users, CreditCard, TrendingUp, RefreshCw, ArrowLeft, AlertCircle, AlertTriangle } from "lucide-react";
+import { DollarSign, Users, CreditCard, TrendingUp, RefreshCw, ArrowLeft, AlertCircle, AlertTriangle, Send, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
