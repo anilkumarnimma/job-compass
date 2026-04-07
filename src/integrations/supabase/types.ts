@@ -660,6 +660,30 @@ export type Database = {
         }
         Relationships: []
       }
+      role_requests: {
+        Row: {
+          created_at: string
+          id: string
+          location: string | null
+          requested_role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location?: string | null
+          requested_role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location?: string | null
+          requested_role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       saved_jobs: {
         Row: {
           id: string

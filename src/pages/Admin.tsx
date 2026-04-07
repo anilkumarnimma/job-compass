@@ -8,6 +8,7 @@ import { JobForm } from "@/components/admin/JobForm";
 import { CSVBulkUpload } from "@/components/admin/CSVBulkUpload";
 import { SupportTicketsPanel } from "@/components/admin/SupportTicketsPanel";
 import { DeletedJobsPanel } from "@/components/admin/DeletedJobsPanel";
+import { RoleRequestsPanel } from "@/components/admin/RoleRequestsPanel";
 
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { AdminJobsList } from "@/components/admin/AdminJobsList";
@@ -157,6 +158,13 @@ export default function Admin() {
         {isFounder && (
           <div className="mt-8">
             <DeletedJobsPanel />
+          </div>
+        )}
+
+        {/* Role Requests - Founder only */}
+        {isFounder && (
+          <div className="mt-8">
+            <RoleRequestsPanel />
           </div>
         )}
 
