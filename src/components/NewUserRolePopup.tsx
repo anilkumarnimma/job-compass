@@ -138,7 +138,7 @@ export function NewUserRolePopup() {
                 <div className="flex items-center gap-2 mb-2">
                   <Sparkles className="h-4 w-4 text-accent shrink-0" />
                   <h3 className="text-sm font-semibold text-foreground">
-                    Not finding your role?
+                    Not finding your role? Request it.
                   </h3>
                 </div>
                 <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
