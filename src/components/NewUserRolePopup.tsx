@@ -116,7 +116,7 @@ export function NewUserRolePopup({ forceOpen, onForceClose }: NewUserRolePopupPr
             >
               <CheckCircle2 className="h-10 w-10 text-accent" />
               <p className="text-sm text-foreground font-medium leading-relaxed">
-                Thanks! Your role will be added and visible in your dashboard within 24 hours.
+                Thanks! Within the next 24 hours, your role will start appearing in your dashboard every day.
               </p>
             </motion.div>
           ) : (
