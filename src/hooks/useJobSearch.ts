@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Job, JobCounts, TabFilter } from "@/types/job";
 import { expandSearchTerms } from "@/lib/searchExpansion";
 import { enrichJobList } from "@/lib/jobEnrichment";
+import { hasEntryLevelIntent, stripEntryLevelKeywords } from "@/lib/jobFilters";
 
 const PAGE_SIZE = 25;
 const STALE_TIME = 60 * 1000; // 60 seconds
@@ -37,12 +38,16 @@ interface UseJobSearchOptions {
 }
 
 export function useJobSearch({ searchQuery, tab, enabled = true }: UseJobSearchOptions) {
+  const entryLevel = hasEntryLevelIntent(searchQuery);
+  // Strip entry-level keywords so DB search focuses on the role
+  const effectiveQuery = entryLevel ? stripEntryLevelKeywords(searchQuery) : searchQuery;
+
   return useInfiniteQuery({
     queryKey: ["jobs", "search", searchQuery, tab],
     queryFn: async ({ pageParam = 0 }) => {
-      const expandedTerms = expandSearchTerms(searchQuery);
+      const expandedTerms = expandSearchTerms(effectiveQuery);
       const { data, error } = await supabase.rpc("search_jobs", {
-        search_query: searchQuery || null,
+        search_query: effectiveQuery || null,
         page_size: PAGE_SIZE,
         page_offset: pageParam,
         filter_tab: tab,
@@ -50,7 +55,7 @@ export function useJobSearch({ searchQuery, tab, enabled = true }: UseJobSearchO
       });
 
       if (error) throw error;
-      return enrichJobList((data || []).map(parseJob));
+      return enrichJobList((data || []).map(parseJob), entryLevel);
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {

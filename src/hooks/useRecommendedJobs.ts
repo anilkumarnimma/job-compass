@@ -6,7 +6,7 @@ import { calculateJobMatch, JobMatchResult } from "@/lib/jobMatcher";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
 import { isRoleRelevant } from "@/lib/roleMatching";
 import { getResumeVersion } from "@/lib/resumeSync";
-import { shouldExcludeJob } from "@/lib/jobFilters";
+import { shouldExcludeJob, isNonEntryLevelJob } from "@/lib/jobFilters";
 
 function buildProfileFallbackIntelligence(profile: NonNullable<ReturnType<typeof useProfile>["profile"]>): ResumeIntelligence | null {
   const profileSkills = Array.isArray(profile.skills) ? profile.skills.filter(Boolean) : [];
@@ -201,6 +201,12 @@ export function useRecommendedJobs() {
       const targetTitles = ri.jobTitlesToTarget || [];
       const now = Date.now();
 
+      // Determine if user is entry-level based on their profile
+      const isEntryLevelUser =
+        ri.experienceLevel === "fresher" ||
+        ri.experienceLevel === "junior" ||
+        (ri.yearsOfExperience !== undefined && ri.yearsOfExperience <= 3);
+
       const allProcessed: RecommendedJob[] = [];
 
       for (const row of data) {
@@ -208,6 +214,8 @@ export function useRecommendedJobs() {
         const ageMs = now - job.posted_date.getTime();
         if (ageMs > 15 * 24 * 60 * 60 * 1000) continue;
         if (shouldExcludeJob(job)) continue;
+        // For entry-level users, also skip senior/mid-senior roles
+        if (isEntryLevelUser && isNonEntryLevelJob(job)) continue;
 
         const match = calculateJobMatch(job, ri);
         const adjustedScore = Math.min(
