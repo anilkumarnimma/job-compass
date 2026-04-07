@@ -404,12 +404,13 @@ export default function AdminPayments() {
                           <TableHead>Reason</TableHead>
                           <TableHead>Email Sent</TableHead>
                           <TableHead>Date</TableHead>
+                          <TableHead>Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {filteredFailed.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                            <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                               <AlertCircle className="h-5 w-5 mx-auto mb-2" />
                               No failed payments recorded
                             </TableCell>
@@ -434,6 +435,22 @@ export default function AdminPayments() {
                                 )}
                               </TableCell>
                               <TableCell className="text-muted-foreground text-sm">{formatDateISO(f.created_at)}</TableCell>
+                              <TableCell>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={sendingEmailId === f.id}
+                                  onClick={() => handleSendFailedPaymentEmail(f)}
+                                  className="gap-1.5"
+                                >
+                                  {sendingEmailId === f.id ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  ) : (
+                                    <Send className="h-3.5 w-3.5" />
+                                  )}
+                                  Send Email
+                                </Button>
+                              </TableCell>
                             </TableRow>
                           ))
                         )}
