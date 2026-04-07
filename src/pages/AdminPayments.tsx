@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DollarSign, Users, CreditCard, TrendingUp, RefreshCw, ArrowLeft, AlertCircle, AlertTriangle } from "lucide-react";
+import { DollarSign, Users, CreditCard, TrendingUp, RefreshCw, ArrowLeft, AlertCircle, AlertTriangle, Send, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
@@ -72,6 +72,7 @@ export default function AdminPayments() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [subStatusFilter, setSubStatusFilter] = useState("all");
+  const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -143,7 +144,32 @@ export default function AdminPayments() {
       case "checkout_expired": return <Badge variant="secondary">Checkout Expired</Badge>;
       case "invoice_payment_failed": return <Badge variant="destructive">Invoice Failed</Badge>;
       case "charge_failed": return <Badge variant="destructive">Charge Failed</Badge>;
+      case "abandoned_checkout": return <Badge variant="secondary">Abandoned</Badge>;
       default: return <Badge variant="outline">{type}</Badge>;
+    }
+  };
+
+  const handleSendFailedPaymentEmail = async (failedPayment: FailedPayment) => {
+    setSendingEmailId(failedPayment.id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      const { data, error } = await supabase.functions.invoke("send-failed-payment-email", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: { email: failedPayment.email, failed_payment_id: failedPayment.id },
+      });
+
+      if (error) throw error;
+      if (data?.skipped) {
+        toast({ title: "Skipped", description: data.error || "User is already premium", variant: "default" });
+      } else {
+        toast({ title: "Email Sent", description: `Recovery email sent to ${failedPayment.email}` });
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Failed to send email", variant: "destructive" });
+    } finally {
+      setSendingEmailId(null);
     }
   };
 
@@ -378,12 +404,13 @@ export default function AdminPayments() {
                           <TableHead>Reason</TableHead>
                           <TableHead>Email Sent</TableHead>
                           <TableHead>Date</TableHead>
+                          <TableHead>Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {filteredFailed.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                            <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                               <AlertCircle className="h-5 w-5 mx-auto mb-2" />
                               No failed payments recorded
                             </TableCell>
@@ -408,6 +435,22 @@ export default function AdminPayments() {
                                 )}
                               </TableCell>
                               <TableCell className="text-muted-foreground text-sm">{formatDateISO(f.created_at)}</TableCell>
+                              <TableCell>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={sendingEmailId === f.id}
+                                  onClick={() => handleSendFailedPaymentEmail(f)}
+                                  className="gap-1.5"
+                                >
+                                  {sendingEmailId === f.id ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  ) : (
+                                    <Send className="h-3.5 w-3.5" />
+                                  )}
+                                  Send Email
+                                </Button>
+                              </TableCell>
                             </TableRow>
                           ))
                         )}
