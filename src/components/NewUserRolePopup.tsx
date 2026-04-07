@@ -1,43 +1,64 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useProfileComplete } from "@/hooks/useProfileComplete";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { X, Loader2, CheckCircle2, Sparkles } from "lucide-react";
 
 const STORAGE_KEY = "sociax_new_user_role_popup_seen";
+const ONBOARDING_TS_KEY = "sociax_onboarding_completed_at";
+const DELAY_MS = 5 * 60 * 1000; // 5 minutes
 
 export function NewUserRolePopup() {
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const { isComplete, isLoading: profileLoading } = useProfileComplete();
   const [visible, setVisible] = useState(false);
   const [role, setRole] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (!user || isMobile) return;
-    // Already seen/dismissed
+    if (!user || isMobile || profileLoading) return;
+
+    // Already shown before — bail out
     if (localStorage.getItem(STORAGE_KEY)) return;
 
-    const createdAt = user.created_at ? new Date(user.created_at) : null;
-    if (!createdAt) return;
-
-    // Only show for accounts created within the last 5 minutes
-    const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
-    if (createdAt < fiveMinAgo) {
-      // Old account – mark as seen so we never check again
-      localStorage.setItem(STORAGE_KEY, "true");
+    // Profile + resume must be complete
+    if (!isComplete) {
+      // Not ready yet — but record the moment they DO complete it
+      // (clear any previous timestamp so we re-measure from fresh completion)
+      localStorage.removeItem(ONBOARDING_TS_KEY);
       return;
     }
 
-    // New account – show popup after 3 seconds
-    const timer = setTimeout(() => setVisible(true), 3000);
-    return () => clearTimeout(timer);
-  }, [user, isMobile]);
+    // Profile is complete — record timestamp if not already recorded
+    let completedAt = localStorage.getItem(ONBOARDING_TS_KEY);
+    if (!completedAt) {
+      completedAt = new Date().toISOString();
+      localStorage.setItem(ONBOARDING_TS_KEY, completedAt);
+    }
+
+    // Calculate remaining wait time
+    const elapsed = Date.now() - new Date(completedAt).getTime();
+    const remaining = Math.max(DELAY_MS - elapsed, 0);
+
+    timerRef.current = setTimeout(() => {
+      // Re-check dismissal flag in case user dismissed via another tab
+      if (!localStorage.getItem(STORAGE_KEY)) {
+        setVisible(true);
+      }
+    }, remaining);
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [user, isMobile, isComplete, profileLoading]);
 
   const dismiss = () => {
     setVisible(false);
@@ -73,7 +94,6 @@ export function NewUserRolePopup() {
           transition={{ type: "spring", stiffness: 400, damping: 30 }}
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
         >
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -88,7 +108,6 @@ export function NewUserRolePopup() {
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
             className="relative w-full max-w-[400px] rounded-2xl border border-border/60 bg-card/95 backdrop-blur-xl shadow-2xl p-6"
           >
-            {/* Close / Skip */}
             <button
               onClick={dismiss}
               className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors"
