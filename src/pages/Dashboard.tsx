@@ -355,10 +355,20 @@ export default function Dashboard() {
   const hasActiveFilter = roleFilter || companyFilter;
   const fallbackLabel = dateFilter === "today" ? "today" : dateFilter === "yesterday" ? "yesterday" : customDate ? format(customDate, "MMM d") : "";
 
+  // Temporary test state for role popup preview
+  const [testPopupOpen, setTestPopupOpen] = useState(false);
+
   return (
     <Layout>
         <OnboardingTour />
-        <NewUserRolePopup />
+        <NewUserRolePopup forceOpen={testPopupOpen} onForceClose={() => setTestPopupOpen(false)} />
+        {/* TEMPORARY TEST BUTTON - Remove before publish */}
+        <button
+          onClick={() => setTestPopupOpen(true)}
+          className="fixed bottom-6 left-6 z-[60] px-4 py-2 rounded-lg bg-accent text-accent-foreground text-sm font-medium shadow-lg hover:bg-accent/90 transition-colors"
+        >
+          🧪 Test Role Popup
+        </button>
         <div className="w-full max-w-[1600px] mx-auto px-4 md:px-6 py-4">
         {/* Welcome Banner */}
         <WelcomeBanner />
