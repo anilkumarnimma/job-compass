@@ -20,7 +20,6 @@ const PAGE_SIZE = 10;
 
 export function RoleRequestsPanel() {
   const [sendingIds, setSendingIds] = useState<Set<string>>(new Set());
-  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
   const [confirmReq, setConfirmReq] = useState<any | null>(null);
   const [page, setPage] = useState(1);
 
@@ -80,7 +79,16 @@ export function RoleRequestsPanel() {
       });
 
       if (error) throw error;
-      setSentIds((prev) => new Set(prev).add(req.id));
+
+      // Persist acknowledged_at in the database
+      await supabase
+        .from("role_requests" as any)
+        .update({ acknowledged_at: new Date().toISOString() } as any)
+        .eq("id", req.id);
+
+      // Update local cache
+      req.acknowledged_at = new Date().toISOString();
+
       toast.success(`Acknowledgment sent to ${profile.email}`);
     } catch (err: any) {
       toast.error("Failed to send email: " + (err.message || "Unknown error"));
@@ -116,7 +124,7 @@ export function RoleRequestsPanel() {
               {pagedRequests.map((req: any) => {
                 const profile = profileMap.get(req.user_id);
                 const isSending = sendingIds.has(req.id);
-                const isSent = sentIds.has(req.id);
+                const isSent = !!req.acknowledged_at;
 
                 return (
                   <div

@@ -662,6 +662,7 @@ export type Database = {
       }
       role_requests: {
         Row: {
+          acknowledged_at: string | null
           created_at: string
           id: string
           location: string | null
@@ -669,6 +670,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          acknowledged_at?: string | null
           created_at?: string
           id?: string
           location?: string | null
@@ -676,6 +678,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          acknowledged_at?: string | null
           created_at?: string
           id?: string
           location?: string | null
