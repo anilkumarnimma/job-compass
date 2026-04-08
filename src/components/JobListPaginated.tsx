@@ -82,7 +82,7 @@ export const JobListPaginated = memo(function JobListPaginated({
     );
   }
 
-  if (jobs.length === 0) {
+  if (visibleJobs.length === 0 && jobs.length === 0) {
     return (
       <div className="text-center py-20 max-w-sm mx-auto">
         <div className="h-20 w-20 rounded-2xl bg-secondary flex items-center justify-center mx-auto mb-5">
