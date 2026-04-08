@@ -45,7 +45,7 @@ export function RoleRequestsPanel() {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("user_id, email, full_name, first_name")
+        .select("user_id, email, full_name, first_name, is_premium")
         .in("user_id", userIds);
       return data || [];
     },
@@ -151,7 +151,7 @@ export function RoleRequestsPanel() {
                       size="sm"
                       variant={isSent ? "outline" : "default"}
                       disabled={isSending}
-                      onClick={() => { setConfirmReq(req); setCustomMessage("Please upgrade to Premium — slots are filling up fast! 🚀"); }}
+                      onClick={() => { setConfirmReq(req); const p = profileMap.get(req.user_id); setCustomMessage(p?.is_premium ? "" : "Please upgrade to Premium — slots are filling up fast! 🚀"); }}
                       className="shrink-0 text-xs h-8 rounded-full"
                     >
                       {isSending ? (
