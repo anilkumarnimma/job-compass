@@ -69,6 +69,9 @@ export const JobListPaginated = memo(function JobListPaginated({
   matchResults,
   landingResults,
 }: JobListPaginatedProps) {
+  const { isApplied } = useJobContext();
+  const visibleJobs = useMemo(() => jobs.filter(job => !isApplied(job.id)), [jobs, isApplied]);
+
   if (isLoading) {
     return (
       <div className="flex flex-col gap-4 max-w-[600px]">
