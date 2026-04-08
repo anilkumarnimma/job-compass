@@ -51,8 +51,14 @@ export function SubscriptionBillingCard() {
       const { data, error } = await supabase.functions.invoke("cancel-subscription", {
         body: { action: "cancel" },
       });
-      if (error) throw new Error(error.message || "Failed to cancel subscription");
-      if (!data?.ok) throw new Error(data?.error || "Failed to cancel subscription");
+      if (error) {
+        console.error("[Cancel] invoke error:", error);
+        throw new Error(error.message || "Failed to cancel subscription");
+      }
+      if (!data?.ok) {
+        console.error("[Cancel] backend error:", data);
+        throw new Error(data?.error || "Failed to cancel subscription");
+      }
 
       setPendingCancel(true);
       setCancelEndDate(data.subscription_end);
@@ -72,8 +78,14 @@ export function SubscriptionBillingCard() {
       const { data, error } = await supabase.functions.invoke("cancel-subscription", {
         body: { action: "resume" },
       });
-      if (error) throw new Error(error.message || "Failed to resume subscription");
-      if (!data?.ok) throw new Error(data?.error || "Failed to resume subscription");
+      if (error) {
+        console.error("[Resume] invoke error:", error);
+        throw new Error(error.message || "Failed to resume subscription");
+      }
+      if (!data?.ok) {
+        console.error("[Resume] backend error:", data);
+        throw new Error(data?.error || "Failed to resume subscription");
+      }
 
       setPendingCancel(false);
       setCancelEndDate(null);
