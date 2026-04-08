@@ -4,7 +4,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { Job } from "@/types/job";
 import { calculateJobMatch, JobMatchResult } from "@/lib/jobMatcher";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
-import { isRoleRelevant } from "@/lib/roleMatching";
+import { isRoleRelevant, detectDomain, getExpandedAdjacency } from "@/lib/roleMatching";
 import { getResumeVersion } from "@/lib/resumeSync";
 import { shouldExcludeJob, isNonEntryLevelJob } from "@/lib/jobFilters";
 
@@ -59,11 +59,17 @@ const MIN_MATCH_SCORE = 45;
 
 function freshnessBonus(postedDate: Date): number {
   const hoursAgo = (Date.now() - postedDate.getTime()) / (1000 * 60 * 60);
+  // Positive bonus for fresh jobs
   if (hoursAgo <= 6) return 12;
   if (hoursAgo <= 24) return 10;
   if (hoursAgo <= 48) return 6;
   if (hoursAgo <= 72) return 3;
   if (hoursAgo <= 168) return 1;
+  // Decay penalty for older jobs (10+ days)
+  const daysAgo = hoursAgo / 24;
+  if (daysAgo >= 13) return -15;
+  if (daysAgo >= 11) return -10;
+  if (daysAgo >= 10) return -5;
   return 0;
 }
 
