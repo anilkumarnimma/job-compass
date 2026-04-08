@@ -112,7 +112,7 @@ export const JobListPaginated = memo(function JobListPaginated({
 
   return (
     <div className="flex flex-col gap-4 max-w-[600px]">
-      {jobs.map((job, idx) => (
+      {visibleJobs.map((job, idx) => (
         <div key={job.id} {...(idx === 0 ? { "data-tour": "job-card" } : {})}>
           <JobCard
             job={job}
