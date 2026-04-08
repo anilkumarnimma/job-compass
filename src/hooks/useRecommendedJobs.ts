@@ -200,16 +200,45 @@ export function useRecommendedJobs() {
       const storedIntelligence = profile.resume_intelligence as ResumeIntelligence | null;
       const ri = storedIntelligence ?? buildProfileFallbackIntelligence(profile);
 
-      const { data, error } = await supabase
-        .from("jobs")
-        .select("*")
-        .eq("is_published", true)
-        .eq("is_archived", false)
-        .is("deleted_at", null)
-        .order("posted_date", { ascending: false })
-        .limit(300);
+      // Build title keywords to filter relevant jobs at the DB level
+      const titleKeywords = ri ? buildTitleKeywords(ri.primaryRole || "", ri.jobTitlesToTarget || []) : [];
 
-      if (error) throw error;
+      let data: any[] | null = null;
+
+      if (titleKeywords.length > 0) {
+        // Fetch jobs whose title matches any of the user's role keywords
+        // Use OR filter to cast a targeted net instead of fetching random 300
+        const titleFilter = titleKeywords
+          .map(k => `title.ilike.%${k}%`)
+          .join(",");
+
+        const { data: filtered, error } = await supabase
+          .from("jobs")
+          .select("*")
+          .eq("is_published", true)
+          .eq("is_archived", false)
+          .is("deleted_at", null)
+          .or(titleFilter)
+          .order("posted_date", { ascending: false })
+          .limit(500);
+
+        if (error) throw error;
+        data = filtered;
+      } else {
+        // Fallback: no keywords, fetch recent
+        const { data: recent, error } = await supabase
+          .from("jobs")
+          .select("*")
+          .eq("is_published", true)
+          .eq("is_archived", false)
+          .is("deleted_at", null)
+          .order("posted_date", { ascending: false })
+          .limit(300);
+
+        if (error) throw error;
+        data = recent;
+      }
+
       if (!data) return [];
 
        // No intelligence/profile role → recent jobs fallback
