@@ -40,6 +40,10 @@ export default function Recommendations() {
     showProfileGate,
     setShowProfileGate,
     profileGateMissingFields,
+    pendingJobTitle,
+    pendingJobCompany,
+    totalAppCount,
+    isPremium: isPremiumUser,
   } = useJobContext();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
