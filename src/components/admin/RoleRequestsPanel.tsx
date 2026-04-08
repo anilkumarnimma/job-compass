@@ -151,7 +151,7 @@ export function RoleRequestsPanel() {
                       size="sm"
                       variant={isSent ? "outline" : "default"}
                       disabled={isSending}
-                      onClick={() => setConfirmReq(req)}
+                      onClick={() => { setConfirmReq(req); setCustomMessage("Please upgrade to Premium — slots are filling up fast! 🚀"); }}
                       className="shrink-0 text-xs h-8 rounded-full"
                     >
                       {isSending ? (
