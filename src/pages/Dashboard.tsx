@@ -94,7 +94,7 @@ export default function Dashboard() {
   const [roleRequestOpen, setRoleRequestOpen] = useState(false);
 
   const isMobile = useIsMobile();
-  const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply, showProfileGate, setShowProfileGate, profileGateMissingFields } = useJobContext();
+  const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply, showProfileGate, setShowProfileGate, profileGateMissingFields, pendingJobTitle, pendingJobCompany, totalAppCount, isPremium: isPremiumUser } = useJobContext();
   const { toast } = useToast();
   const isUSUser = useIsUSUser();
   

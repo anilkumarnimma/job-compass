@@ -33,7 +33,7 @@ export default function VisaJobs() {
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
 
   const isMobile = useIsMobile();
-  const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply, showProfileGate, setShowProfileGate, profileGateMissingFields } = useJobContext();
+  const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply, showProfileGate, setShowProfileGate, profileGateMissingFields, pendingJobTitle, pendingJobCompany, totalAppCount, isPremium: isPremiumUser } = useJobContext();
   const { profile } = useProfile();
   const isUSUser = useIsUSUser();
   const navigate = useNavigate();
