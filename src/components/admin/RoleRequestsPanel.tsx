@@ -79,7 +79,16 @@ export function RoleRequestsPanel() {
       });
 
       if (error) throw error;
-      setSentIds((prev) => new Set(prev).add(req.id));
+
+      // Persist acknowledged_at in the database
+      await supabase
+        .from("role_requests" as any)
+        .update({ acknowledged_at: new Date().toISOString() } as any)
+        .eq("id", req.id);
+
+      // Update local cache
+      req.acknowledged_at = new Date().toISOString();
+
       toast.success(`Acknowledgment sent to ${profile.email}`);
     } catch (err: any) {
       toast.error("Failed to send email: " + (err.message || "Unknown error"));
