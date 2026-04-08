@@ -9,21 +9,16 @@ import { getResumeVersion } from "@/lib/resumeSync";
 import { shouldExcludeJob, isNonEntryLevelJob } from "@/lib/jobFilters";
 
 /**
- * Build title search keywords from user role and target titles for the DB query.
- * This ensures we fetch domain-relevant jobs instead of random recent ones.
+ * Build title-level filters from user role and target titles.
+ * Uses full role/title names only — no word splitting.
  */
-function buildTitleKeywords(primaryRole: string, targetTitles: string[]): string[] {
-  const keywords = new Set<string>();
-  const all = [primaryRole, ...targetTitles].filter(Boolean);
-  for (const title of all) {
-    // Add the full title and individual meaningful words
-    keywords.add(title.toLowerCase().trim());
-    const words = title.toLowerCase().split(/[\s,/\-]+/).filter(w => w.length > 3);
-    words.forEach(w => keywords.add(w));
+function buildTitleFilters(primaryRole: string, targetTitles: string[]): string[] {
+  const titles = new Set<string>();
+  for (const t of [primaryRole, ...targetTitles]) {
+    const clean = t?.toLowerCase().trim();
+    if (clean && clean.length > 2) titles.add(clean);
   }
-  // Remove very generic words
-  const generic = new Set(["with", "from", "that", "this", "have", "been", "will", "more", "than", "also", "full", "time"]);
-  return Array.from(keywords).filter(k => !generic.has(k));
+  return Array.from(titles);
 }
 
 function buildProfileFallbackIntelligence(profile: NonNullable<ReturnType<typeof useProfile>["profile"]>): ResumeIntelligence | null {
