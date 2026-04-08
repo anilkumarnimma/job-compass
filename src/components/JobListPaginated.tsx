@@ -1,5 +1,6 @@
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { Job } from "@/types/job";
+import { useJobContext } from "@/context/JobContext";
 import { JobMatchResult } from "@/lib/jobMatcher";
 import { LandingProbabilityResult } from "@/lib/landingProbability";
 import { JobCard } from "@/components/JobCard";
@@ -68,6 +69,9 @@ export const JobListPaginated = memo(function JobListPaginated({
   matchResults,
   landingResults,
 }: JobListPaginatedProps) {
+  const { isApplied } = useJobContext();
+  const visibleJobs = useMemo(() => jobs.filter(job => !isApplied(job.id)), [jobs, isApplied]);
+
   if (isLoading) {
     return (
       <div className="flex flex-col gap-4 max-w-[600px]">
@@ -78,7 +82,7 @@ export const JobListPaginated = memo(function JobListPaginated({
     );
   }
 
-  if (jobs.length === 0) {
+  if (visibleJobs.length === 0 && jobs.length === 0) {
     return (
       <div className="text-center py-20 max-w-sm mx-auto">
         <div className="h-20 w-20 rounded-2xl bg-secondary flex items-center justify-center mx-auto mb-5">
@@ -108,7 +112,7 @@ export const JobListPaginated = memo(function JobListPaginated({
 
   return (
     <div className="flex flex-col gap-4 max-w-[600px]">
-      {jobs.map((job, idx) => (
+      {visibleJobs.map((job, idx) => (
         <div key={job.id} {...(idx === 0 ? { "data-tour": "job-card" } : {})}>
           <JobCard
             job={job}
