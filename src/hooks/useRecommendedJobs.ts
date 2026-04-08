@@ -4,7 +4,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { Job } from "@/types/job";
 import { calculateJobMatch, JobMatchResult } from "@/lib/jobMatcher";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
-import { isRoleRelevant, detectDomain, getExpandedAdjacency } from "@/lib/roleMatching";
+import { isRoleRelevant } from "@/lib/roleMatching";
 import { getResumeVersion } from "@/lib/resumeSync";
 import { shouldExcludeJob, isNonEntryLevelJob } from "@/lib/jobFilters";
 
