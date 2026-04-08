@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { Loader2, MessageSquarePlus, Send, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -21,6 +22,7 @@ const PAGE_SIZE = 10;
 export function RoleRequestsPanel() {
   const [sendingIds, setSendingIds] = useState<Set<string>>(new Set());
   const [confirmReq, setConfirmReq] = useState<any | null>(null);
+  const [customMessage, setCustomMessage] = useState("");
   const [page, setPage] = useState(1);
 
   const { data: requests = [], isLoading } = useQuery({
@@ -67,6 +69,8 @@ export function RoleRequestsPanel() {
 
     setSendingIds((prev) => new Set(prev).add(req.id));
     setConfirmReq(null);
+    const msgToSend = customMessage.trim() || undefined;
+    setCustomMessage("");
     try {
       const { error } = await supabase.functions.invoke("role-request-ack", {
         body: {
@@ -75,6 +79,7 @@ export function RoleRequestsPanel() {
           recipientName: profile.first_name || profile.full_name || null,
           requestedRole: req.requested_role,
           location: req.location || null,
+          customMessage: msgToSend,
         },
       });
 
@@ -196,7 +201,7 @@ export function RoleRequestsPanel() {
       </div>
 
       {/* Confirmation Dialog */}
-      <AlertDialog open={!!confirmReq} onOpenChange={(open) => { if (!open) setConfirmReq(null); }}>
+      <AlertDialog open={!!confirmReq} onOpenChange={(open) => { if (!open) { setConfirmReq(null); setCustomMessage(""); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Send Acknowledgment Email?</AlertDialogTitle>
@@ -206,6 +211,16 @@ export function RoleRequestsPanel() {
               <span className="font-semibold text-foreground">"{confirmReq?.requested_role}"</span>.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="px-1">
+            <label className="text-sm font-medium text-foreground mb-1.5 block">Custom message (optional)</label>
+            <Textarea
+              placeholder="e.g. We've manually removed your subscription from Stripe. You're now on the free plan."
+              value={customMessage}
+              onChange={(e) => setCustomMessage(e.target.value)}
+              rows={3}
+              className="text-sm"
+            />
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={() => confirmReq && handleSendAck(confirmReq)}>
