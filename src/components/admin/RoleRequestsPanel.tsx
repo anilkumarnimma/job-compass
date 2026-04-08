@@ -124,7 +124,7 @@ export function RoleRequestsPanel() {
               {pagedRequests.map((req: any) => {
                 const profile = profileMap.get(req.user_id);
                 const isSending = sendingIds.has(req.id);
-                const isSent = sentIds.has(req.id);
+                const isSent = !!req.acknowledged_at;
 
                 return (
                   <div
