@@ -23,6 +23,10 @@ interface JobContextType {
   showProfileGate: boolean;
   setShowProfileGate: (open: boolean) => void;
   profileGateMissingFields: string[];
+  pendingJobTitle: string;
+  pendingJobCompany: string;
+  totalAppCount: number;
+  isPremium: boolean;
 }
 
 const JobContext = createContext<JobContextType | undefined>(undefined);
@@ -56,7 +60,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
         setShowUpgradeDialog(true);
         return;
       }
-      window.open(job.external_apply_link, "_blank");
+      // Show confirmation dialog FIRST — no redirect yet
       setPendingJob(job);
       setShowApplyConfirm(true);
     },
@@ -65,8 +69,10 @@ export function JobProvider({ children }: { children: ReactNode }) {
 
   const confirmApply = useCallback(() => {
     if (pendingJob) {
+      // Count the application AND open the external link simultaneously
       rawApply(pendingJob);
       emitWidgetEvent("apply");
+      window.open(pendingJob.external_apply_link, "_blank");
     }
     setPendingJob(null);
     setShowApplyConfirm(false);
@@ -78,6 +84,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const saveJob = useCallback((job: any) => { rawSave(job); emitWidgetEvent("save"); }, [rawSave]);
+  const isPremium = profile?.is_premium === true;
 
   const value = useMemo(() => ({
     applications,
@@ -97,11 +104,16 @@ export function JobProvider({ children }: { children: ReactNode }) {
     showProfileGate,
     setShowProfileGate,
     profileGateMissingFields,
+    pendingJobTitle: pendingJob?.title ?? "",
+    pendingJobCompany: pendingJob?.company ?? "",
+    totalAppCount,
+    isPremium,
   }), [
     applications, savedJobs, appsLoading, savedLoading,
     applyToJob, confirmApply, cancelApply, saveJob, unsaveJob, removeAppliedJob,
     isApplied, isSaved,
     showUpgradeDialog, showApplyConfirm, showProfileGate, profileGateMissingFields,
+    pendingJob, totalAppCount, isPremium,
   ]);
 
   return <JobContext.Provider value={value}>{children}</JobContext.Provider>;
