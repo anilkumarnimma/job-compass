@@ -83,6 +83,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
     setShowApplyConfirm(false);
   }, []);
 
+  const saveJob = useCallback((job: any) => { rawSave(job); emitWidgetEvent("save"); }, [rawSave]);
   const isPremium = profile?.is_premium === true;
 
   const value = useMemo(() => ({
