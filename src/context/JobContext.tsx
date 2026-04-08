@@ -56,7 +56,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
         setShowUpgradeDialog(true);
         return;
       }
-      window.open(job.external_apply_link, "_blank");
+      // Show confirmation dialog FIRST — no redirect yet
       setPendingJob(job);
       setShowApplyConfirm(true);
     },
@@ -65,8 +65,10 @@ export function JobProvider({ children }: { children: ReactNode }) {
 
   const confirmApply = useCallback(() => {
     if (pendingJob) {
+      // Count the application AND open the external link simultaneously
       rawApply(pendingJob);
       emitWidgetEvent("apply");
+      window.open(pendingJob.external_apply_link, "_blank");
     }
     setPendingJob(null);
     setShowApplyConfirm(false);
