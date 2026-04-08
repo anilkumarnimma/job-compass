@@ -23,6 +23,10 @@ interface JobContextType {
   showProfileGate: boolean;
   setShowProfileGate: (open: boolean) => void;
   profileGateMissingFields: string[];
+  pendingJobTitle: string;
+  pendingJobCompany: string;
+  totalAppCount: number;
+  isPremium: boolean;
 }
 
 const JobContext = createContext<JobContextType | undefined>(undefined);
