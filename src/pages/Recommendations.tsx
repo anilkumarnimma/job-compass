@@ -317,7 +317,7 @@ export default function Recommendations() {
 
       <MobileJobPreviewSheet job={mobilePreviewJob} open={mobileSheetOpen} onOpenChange={setMobileSheetOpen} />
       <UpgradeDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog} />
-      <ApplyConfirmDialog open={showApplyConfirm} onConfirm={confirmApply} onCancel={cancelApply} />
+      <ApplyConfirmDialog open={showApplyConfirm} onConfirm={confirmApply} onCancel={cancelApply} jobTitle={pendingJobTitle} company={pendingJobCompany} applicationsUsed={totalAppCount} isPremium={isPremiumUser} />
       <ProfileGateDialog open={showProfileGate} onOpenChange={setShowProfileGate} missingFields={profileGateMissingFields} />
     </Layout>
   );
