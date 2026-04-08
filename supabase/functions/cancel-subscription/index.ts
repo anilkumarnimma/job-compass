@@ -49,12 +49,15 @@ Deno.serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    logStep("Customer lookup", { email: user.email, found: customers.data.length > 0 });
     if (customers.data.length === 0) {
       return respond(false, { error: "No subscription found" });
     }
 
     const customerId = customers.data[0].id;
+    logStep("Found customer", { customerId });
     const subscriptions = await stripe.subscriptions.list({ customer: customerId, status: "active", limit: 1 });
+    logStep("Active subscriptions", { count: subscriptions.data.length });
 
     if (subscriptions.data.length === 0) {
       // Check for cancel_at_period_end subscriptions (for resume)
@@ -76,14 +79,20 @@ Deno.serve(async (req) => {
     const subscription = subscriptions.data[0];
 
     if (action === "cancel") {
-      const updated = await stripe.subscriptions.update(subscription.id, { cancel_at_period_end: true });
-      logStep("Subscription set to cancel at period end", { subscriptionId: subscription.id });
+      logStep("Attempting cancel", { subscriptionId: subscription.id });
+      try {
+        const updated = await stripe.subscriptions.update(subscription.id, { cancel_at_period_end: true });
+        logStep("Subscription set to cancel at period end", { subscriptionId: subscription.id });
 
-      return respond(true, {
-        success: true,
-        action: "cancelled",
-        subscription_end: new Date(updated.current_period_end * 1000).toISOString(),
-      });
+        return respond(true, {
+          success: true,
+          action: "cancelled",
+          subscription_end: new Date(updated.current_period_end * 1000).toISOString(),
+        });
+      } catch (stripeErr: any) {
+        logStep("Stripe update failed", { message: stripeErr?.message, type: stripeErr?.type, code: stripeErr?.code });
+        return respond(false, { error: "Unable to cancel subscription. Please try again or contact support." });
+      }
     }
 
     if (action === "resume") {
@@ -101,7 +110,7 @@ Deno.serve(async (req) => {
 
     return respond(false, { error: "Invalid action" });
   } catch (err) {
-    logStep("ERROR", { message: (err as Error).message });
+    logStep("ERROR", { message: (err as Error).message, stack: (err as Error).stack?.slice(0, 300) });
     return respond(false, { error: "An unexpected error occurred" });
   }
 });
