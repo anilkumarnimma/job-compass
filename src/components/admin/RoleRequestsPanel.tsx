@@ -20,7 +20,6 @@ const PAGE_SIZE = 10;
 
 export function RoleRequestsPanel() {
   const [sendingIds, setSendingIds] = useState<Set<string>>(new Set());
-  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
   const [confirmReq, setConfirmReq] = useState<any | null>(null);
   const [page, setPage] = useState(1);
 
