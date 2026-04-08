@@ -195,15 +195,14 @@ export function useRecommendedJobs() {
       const storedIntelligence = profile.resume_intelligence as ResumeIntelligence | null;
       const ri = storedIntelligence ?? buildProfileFallbackIntelligence(profile);
 
-      // Build title keywords to filter relevant jobs at the DB level
-      const titleKeywords = ri ? buildTitleKeywords(ri.primaryRole || "", ri.jobTitlesToTarget || []) : [];
+      // Build title-level filters to fetch relevant jobs at the DB level
+      const titleFilters = ri ? buildTitleFilters(ri.primaryRole || "", ri.jobTitlesToTarget || []) : [];
 
       let data: any[] | null = null;
 
-      if (titleKeywords.length > 0) {
-        // Fetch jobs whose title matches any of the user's role keywords
-        // Use OR filter to cast a targeted net instead of fetching random 300
-        const titleFilter = titleKeywords
+      if (titleFilters.length > 0) {
+        // Fetch jobs whose title matches any of the user's role/title names
+        const titleFilter = titleFilters
           .map(k => `title.ilike.%${k}%`)
           .join(",");
 
