@@ -80,6 +80,7 @@ export function RoleRequestsPanel() {
           requestedRole: req.requested_role,
           location: req.location || null,
           customMessage: msgToSend,
+          isPremium: !!profile.is_premium,
         },
       });
 
