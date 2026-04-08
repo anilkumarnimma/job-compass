@@ -58,6 +58,10 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
+    const body = await req.json().catch(() => ({}));
+    const offset = body.offset ?? 0;
+    const limit = body.limit ?? BATCH_SIZE;
+
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 15);
 
@@ -70,7 +74,7 @@ Deno.serve(async (req) => {
       .is("deleted_at", null)
       .gte("posted_date", cutoff.toISOString())
       .order("posted_date", { ascending: false })
-      .limit(BATCH_SIZE);
+      .range(offset, offset + limit - 1);
 
     if (error) throw error;
     if (!jobs?.length) {
