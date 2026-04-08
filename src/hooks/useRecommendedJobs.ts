@@ -254,7 +254,9 @@ export function useRecommendedJobs() {
       }
 
       const userRole = ri.primaryRole || "";
-      const targetTitles = ri.jobTitlesToTarget || [];
+      const currentTitle = profile.current_title?.trim() || "";
+      // Use only primary role + current title variants, NOT broad jobTitlesToTarget
+      const strictTitles = Array.from(new Set([userRole, currentTitle].filter(Boolean)));
       const now = Date.now();
 
       // Determine if user is entry-level based on their profile
@@ -274,7 +276,7 @@ export function useRecommendedJobs() {
         if (isEntryLevelUser && isNonEntryLevelJob(job)) continue;
 
         const match = calculateJobMatch(job, ri);
-        const roleRelevant = isRoleRelevant(job.title, userRole, targetTitles);
+        const roleRelevant = isRoleRelevant(job.title, userRole, strictTitles);
 
         // Domain mismatch penalty: -10 when job is outside user's domain/adjacency
         const domainPenalty = roleRelevant ? 0 : -10;
@@ -283,7 +285,7 @@ export function useRecommendedJobs() {
           match.score + freshnessBonus(job.posted_date) + sourceBonus(job.external_apply_link) + domainPenalty,
           100
         ));
-        const proximity = computeTitleProximity(job.title, userRole, targetTitles);
+        const proximity = computeTitleProximity(job.title, userRole, strictTitles);
 
         allProcessed.push({
           ...job,
