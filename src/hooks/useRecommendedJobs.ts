@@ -4,7 +4,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { Job } from "@/types/job";
 import { calculateJobMatch, JobMatchResult } from "@/lib/jobMatcher";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
-import { isRoleRelevant } from "@/lib/roleMatching";
+import { isRoleRelevant, detectDomain, getExpandedAdjacency } from "@/lib/roleMatching";
 import { getResumeVersion } from "@/lib/resumeSync";
 import { shouldExcludeJob, isNonEntryLevelJob } from "@/lib/jobFilters";
 
@@ -59,11 +59,17 @@ const MIN_MATCH_SCORE = 45;
 
 function freshnessBonus(postedDate: Date): number {
   const hoursAgo = (Date.now() - postedDate.getTime()) / (1000 * 60 * 60);
+  // Positive bonus for fresh jobs
   if (hoursAgo <= 6) return 12;
   if (hoursAgo <= 24) return 10;
   if (hoursAgo <= 48) return 6;
   if (hoursAgo <= 72) return 3;
   if (hoursAgo <= 168) return 1;
+  // Decay penalty for older jobs (10+ days)
+  const daysAgo = hoursAgo / 24;
+  if (daysAgo >= 13) return -15;
+  if (daysAgo >= 11) return -10;
+  if (daysAgo >= 10) return -5;
   return 0;
 }
 
@@ -218,12 +224,16 @@ export function useRecommendedJobs() {
         if (isEntryLevelUser && isNonEntryLevelJob(job)) continue;
 
         const match = calculateJobMatch(job, ri);
-        const adjustedScore = Math.min(
-          match.score + freshnessBonus(job.posted_date) + sourceBonus(job.external_apply_link),
-          100
-        );
-        const proximity = computeTitleProximity(job.title, userRole, targetTitles);
         const roleRelevant = isRoleRelevant(job.title, userRole, targetTitles);
+
+        // Domain mismatch penalty: -10 when job is outside user's domain/adjacency
+        const domainPenalty = roleRelevant ? 0 : -10;
+
+        const adjustedScore = Math.max(0, Math.min(
+          match.score + freshnessBonus(job.posted_date) + sourceBonus(job.external_apply_link) + domainPenalty,
+          100
+        ));
+        const proximity = computeTitleProximity(job.title, userRole, targetTitles);
 
         allProcessed.push({
           ...job,
@@ -239,23 +249,33 @@ export function useRecommendedJobs() {
       const tier1 = allProcessed.filter(j => (j as any)._roleRelevant && j.matchScore >= MIN_MATCH_SCORE);
       // Tier 2: role-relevant + score >= 25
       const tier2 = allProcessed.filter(j => (j as any)._roleRelevant && j.matchScore >= 25 && j.matchScore < MIN_MATCH_SCORE);
-      // Tier 3: any job with skill overlap >= 1
-      const tier3 = allProcessed.filter(j => !(j as any)._roleRelevant && j.matchedSkills.length >= 1);
-      // Tier 4: absolute fallback — recent jobs
-      const tier4 = allProcessed;
+      // Tier 3: skill overlap >= 1, not role-relevant, score >= 20 (with domain penalty)
+      const tier3 = allProcessed.filter(j => !(j as any)._roleRelevant && j.matchedSkills.length >= 1 && j.matchScore >= 20);
+
+      // Tier 4: Expanded adjacency (2nd-degree domains) — never random jobs
+      const userDomain = detectDomain(userRole);
+      const expandedDomains = userDomain ? getExpandedAdjacency(userDomain) : new Set<string>();
+      for (const tt of targetTitles) {
+        const ttDomain = detectDomain(tt);
+        if (ttDomain) {
+          for (const d of getExpandedAdjacency(ttDomain)) expandedDomains.add(d);
+        }
+      }
+      const tier4 = expandedDomains.size > 0
+        ? allProcessed.filter(j => {
+            const jobDomain = detectDomain(j.title);
+            return jobDomain && expandedDomains.has(jobDomain) && !(j as any)._roleRelevant;
+          })
+        : [];
 
       const sortFn = (a: RecommendedJob, b: RecommendedJob) => {
-        // 1. Title proximity is king — exact title matches always on top
         const proxDiff = (b.titleProximity ?? 0) - (a.titleProximity ?? 0);
         if (proxDiff !== 0) return proxDiff;
-        // 2. Within same proximity, highest match % first (90% > 85% > 80%)
         const scoreDiff = b.matchScore - a.matchScore;
         if (scoreDiff !== 0) return scoreDiff;
-        // 3. Tie-break by recency
         return b.posted_date.getTime() - a.posted_date.getTime();
       };
 
-      // Use the highest non-empty tier, or combine tiers to fill
       let results: RecommendedJob[] = [];
 
       if (tier1.length > 0) {
@@ -263,7 +283,6 @@ export function useRecommendedJobs() {
         results = tier1.slice(0, 100);
       }
 
-      // If tier1 is small, supplement with tier2
       if (results.length < 20 && tier2.length > 0) {
         tier2.sort(sortFn);
         const existingIds = new Set(results.map(j => j.id));
@@ -273,7 +292,6 @@ export function useRecommendedJobs() {
         }
       }
 
-      // Still small? Add tier3
       if (results.length < 10 && tier3.length > 0) {
         tier3.sort(sortFn);
         const existingIds = new Set(results.map(j => j.id));
@@ -283,10 +301,14 @@ export function useRecommendedJobs() {
         }
       }
 
-      // Absolute fallback: show newest jobs so page is never empty
-      if (results.length === 0) {
-        tier4.sort((a, b) => b.posted_date.getTime() - a.posted_date.getTime());
-        results = tier4.slice(0, 30);
+      // Expanded adjacency fallback — only 2nd-degree domain jobs, never random
+      if (results.length < 5 && tier4.length > 0) {
+        tier4.sort(sortFn);
+        const existingIds = new Set(results.map(j => j.id));
+        for (const j of tier4) {
+          if (!existingIds.has(j.id)) { results.push(j); existingIds.add(j.id); }
+          if (results.length >= 20) break;
+        }
       }
 
       // Clean internal flag
