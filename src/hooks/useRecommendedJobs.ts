@@ -8,6 +8,24 @@ import { isRoleRelevant } from "@/lib/roleMatching";
 import { getResumeVersion } from "@/lib/resumeSync";
 import { shouldExcludeJob, isNonEntryLevelJob } from "@/lib/jobFilters";
 
+/**
+ * Build title search keywords from user role and target titles for the DB query.
+ * This ensures we fetch domain-relevant jobs instead of random recent ones.
+ */
+function buildTitleKeywords(primaryRole: string, targetTitles: string[]): string[] {
+  const keywords = new Set<string>();
+  const all = [primaryRole, ...targetTitles].filter(Boolean);
+  for (const title of all) {
+    // Add the full title and individual meaningful words
+    keywords.add(title.toLowerCase().trim());
+    const words = title.toLowerCase().split(/[\s,/\-]+/).filter(w => w.length > 3);
+    words.forEach(w => keywords.add(w));
+  }
+  // Remove very generic words
+  const generic = new Set(["with", "from", "that", "this", "have", "been", "will", "more", "than", "also", "full", "time"]);
+  return Array.from(keywords).filter(k => !generic.has(k));
+}
+
 function buildProfileFallbackIntelligence(profile: NonNullable<ReturnType<typeof useProfile>["profile"]>): ResumeIntelligence | null {
   const profileSkills = Array.isArray(profile.skills) ? profile.skills.filter(Boolean) : [];
   const profileWork = Array.isArray(profile.work_experience) ? profile.work_experience : [];
