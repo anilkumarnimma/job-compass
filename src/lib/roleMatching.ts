@@ -117,7 +117,7 @@ const ROLE_DOMAIN_PATTERNS: { domain: string; patterns: RegExp[] }[] = [
 ];
 
 const DOMAIN_ADJACENCY: Record<string, string[]> = {
-  "software-engineering": ["mobile", "devops", "data-engineering"],
+  "software-engineering": ["mobile", "devops", "data-engineering", "qa"],
   "mobile": ["software-engineering"],
   "devops": ["software-engineering", "security"],
   "qa": ["software-engineering"],
@@ -125,17 +125,34 @@ const DOMAIN_ADJACENCY: Record<string, string[]> = {
   "data-analytics": ["data-science", "data-engineering"],
   "data-engineering": ["data-science", "data-analytics", "software-engineering"],
   "security": ["devops", "software-engineering"],
-  "design": [],
-  "product": ["project-management"],
-  "project-management": ["product"],
-  "marketing": [],
-  "sales": [],
+  "design": ["product"],
+  "product": ["project-management", "design"],
+  "project-management": ["product", "operations"],
+  "marketing": ["sales"],
+  "sales": ["marketing"],
   "support": [],
   "hr": [],
-  "finance": [],
-  "operations": [],
-  "management-consulting": [],
+  "finance": ["operations"],
+  "operations": ["project-management", "finance"],
+  "management-consulting": ["product", "operations"],
 };
+
+/**
+ * Get 2nd-degree adjacent domains (domains adjacent to adjacent domains).
+ * Used as expanded fallback when direct adjacency yields too few results.
+ */
+export function getExpandedAdjacency(domain: string): Set<string> {
+  const direct = DOMAIN_ADJACENCY[domain] || [];
+  const expanded = new Set<string>(direct);
+  expanded.add(domain); // include own domain
+  for (const adj of direct) {
+    const secondDegree = DOMAIN_ADJACENCY[adj] || [];
+    for (const sd of secondDegree) {
+      expanded.add(sd);
+    }
+  }
+  return expanded;
+}
 
 export function detectDomain(title: string): string | null {
   for (const { domain, patterns } of ROLE_DOMAIN_PATTERNS) {

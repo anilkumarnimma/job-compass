@@ -48,10 +48,10 @@ function titleSimilarity(jobTitle: string, primaryRole: string, targetTitles: st
   // Exact primary role match
   if (jt.includes(pr) || pr.includes(jt)) return 1;
 
-  // Check target titles
+  // Check target titles — treated as near-equal to primary role
   for (const tt of targetTitles) {
     const ttl = tt.toLowerCase();
-    if (jt.includes(ttl) || ttl.includes(jt)) return 0.8;
+    if (jt.includes(ttl) || ttl.includes(jt)) return 0.95;
   }
 
   // Partial keyword overlap
@@ -97,8 +97,8 @@ export function calculateJobMatch(job: Job, intelligence: ResumeIntelligence): J
   const titleScore = titleSimilarity(job.title, intelligence.primaryRole, intelligence.jobTitlesToTarget || []);
   const expScore = experienceMatch(job.experience_years, intelligence);
 
-  // Weighted score
-  const rawScore = (skillRatio * 45) + (titleScore * 35) + (expScore * 20);
+  // Weighted score — title 38%, skills 37%, experience 25%
+  const rawScore = (skillRatio * 37) + (titleScore * 38) + (expScore * 25);
   const score = Math.min(Math.round(rawScore), 100);
 
   // Determine tier
