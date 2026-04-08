@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
-    const { requestId, recipientEmail, recipientName, requestedRole, location, customMessage } = await req.json();
+    const { requestId, recipientEmail, recipientName, requestedRole, location, customMessage, isPremium } = await req.json();
 
     if (!requestId || !recipientEmail || !requestedRole) {
       return new Response(JSON.stringify({ error: "requestId, recipientEmail, and requestedRole are required" }), {
@@ -40,6 +40,13 @@ Deno.serve(async (req) => {
       ? `<p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 12px;padding:12px 16px;background:#fef3c7;border-left:3px solid #f59e0b;border-radius:6px;">${customMessage}</p>`
       : '';
 
+    const upgradeBlock = !isPremium
+      ? `<div style="text-align:center;margin:0 0 20px;padding:16px 20px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:10px;">
+          <p style="font-size:16px;font-weight:700;color:#ffffff;margin:0 0 6px;">⚡ Upgrade to Premium for more results like this!</p>
+          <p style="font-size:13px;color:#e0e7ff;margin:0;">Slots are filling up fast — don't miss out.</p>
+        </div>`
+      : '';
+
     const htmlContent = `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"/></head>
@@ -51,6 +58,7 @@ Deno.serve(async (req) => {
     ${customBlock}
     <p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 12px;">You can now log in to your dashboard and start applying to relevant jobs immediately.</p>
     <p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 20px;">We've made sure matching opportunities are available for you.</p>
+    ${upgradeBlock}
     <div style="text-align:center;margin:0 0 24px;">
       <a href="https://sociax.tech" style="display:inline-block;padding:14px 32px;background:#6366f1;color:#ffffff;font-size:15px;font-weight:600;border-radius:8px;text-decoration:none;">Start Exploring Now</a>
     </div>
