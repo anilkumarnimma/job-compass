@@ -10,6 +10,13 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[CANCEL-SUBSCRIPTION] ${step}${details ? ` - ${JSON.stringify(details)}` : ''}`);
 };
 
+function respond(ok: boolean, payload: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify({ ok, ...payload }), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -20,9 +27,7 @@ Deno.serve(async (req) => {
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
   if (!stripeKey) {
-    return new Response(JSON.stringify({ error: "Server misconfigured" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return respond(false, { error: "Server misconfigured" });
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey, { auth: { persistSession: false } });
@@ -45,9 +50,7 @@ Deno.serve(async (req) => {
 
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     if (customers.data.length === 0) {
-      return new Response(JSON.stringify({ error: "No subscription found" }), {
-        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return respond(false, { error: "No subscription found" });
     }
 
     const customerId = customers.data[0].id;
@@ -61,33 +64,25 @@ Deno.serve(async (req) => {
         if (sub.cancel_at_period_end) {
           const updated = await stripe.subscriptions.update(sub.id, { cancel_at_period_end: false });
           logStep("Subscription resumed", { subscriptionId: sub.id });
-          return new Response(JSON.stringify({
-            success: true,
+          return respond(true, {
             action: "resumed",
             subscription_end: new Date(updated.current_period_end * 1000).toISOString(),
-          }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
       }
-      return new Response(JSON.stringify({ error: "No active subscription" }), {
-        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return respond(false, { error: "No active subscription" });
     }
 
     const subscription = subscriptions.data[0];
 
     if (action === "cancel") {
-      // Cancel at period end — user keeps access until billing cycle ends
       const updated = await stripe.subscriptions.update(subscription.id, { cancel_at_period_end: true });
       logStep("Subscription set to cancel at period end", { subscriptionId: subscription.id });
 
-      return new Response(JSON.stringify({
+      return respond(true, {
         success: true,
         action: "cancelled",
         subscription_end: new Date(updated.current_period_end * 1000).toISOString(),
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -95,26 +90,18 @@ Deno.serve(async (req) => {
       if (subscription.cancel_at_period_end) {
         const updated = await stripe.subscriptions.update(subscription.id, { cancel_at_period_end: false });
         logStep("Subscription resumed", { subscriptionId: subscription.id });
-        return new Response(JSON.stringify({
+        return respond(true, {
           success: true,
           action: "resumed",
           subscription_end: new Date(updated.current_period_end * 1000).toISOString(),
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      return new Response(JSON.stringify({ error: "Subscription is not pending cancellation" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return respond(false, { error: "Subscription is not pending cancellation" });
     }
 
-    return new Response(JSON.stringify({ error: "Invalid action" }), {
-      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return respond(false, { error: "Invalid action" });
   } catch (err) {
     logStep("ERROR", { message: (err as Error).message });
-    return new Response(JSON.stringify({ error: (err as Error).message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return respond(false, { error: "An unexpected error occurred" });
   }
 });
