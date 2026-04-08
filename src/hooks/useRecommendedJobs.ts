@@ -12,11 +12,20 @@ import { shouldExcludeJob, isNonEntryLevelJob } from "@/lib/jobFilters";
  * Build title-level filters from user role and target titles.
  * Uses full role/title names only — no word splitting.
  */
-function buildTitleFilters(primaryRole: string, targetTitles: string[]): string[] {
+/**
+ * Build title-level filters strictly from the primary role only.
+ * Does NOT use jobTitlesToTarget to avoid pulling in unrelated domains.
+ */
+function buildTitleFilters(primaryRole: string, currentTitle: string): string[] {
   const titles = new Set<string>();
-  for (const t of [primaryRole, ...targetTitles]) {
+  for (const t of [primaryRole, currentTitle]) {
     const clean = t?.toLowerCase().trim();
     if (clean && clean.length > 2) titles.add(clean);
+  }
+  // Also add core word variants (engineer↔developer)
+  for (const t of [...titles]) {
+    if (t.includes("engineer")) titles.add(t.replace(/engineer/i, "developer"));
+    if (t.includes("developer")) titles.add(t.replace(/developer/i, "engineer"));
   }
   return Array.from(titles);
 }
@@ -196,7 +205,7 @@ export function useRecommendedJobs() {
       const ri = storedIntelligence ?? buildProfileFallbackIntelligence(profile);
 
       // Build title-level filters to fetch relevant jobs at the DB level
-      const titleFilters = ri ? buildTitleFilters(ri.primaryRole || "", ri.jobTitlesToTarget || []) : [];
+      const titleFilters = ri ? buildTitleFilters(ri.primaryRole || "", profile.current_title || "") : [];
 
       let data: any[] | null = null;
 
