@@ -83,7 +83,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
     setShowApplyConfirm(false);
   }, []);
 
-  const saveJob = useCallback((job: any) => { rawSave(job); emitWidgetEvent("save"); }, [rawSave]);
+  const isPremium = profile?.is_premium === true;
 
   const value = useMemo(() => ({
     applications,
@@ -103,11 +103,16 @@ export function JobProvider({ children }: { children: ReactNode }) {
     showProfileGate,
     setShowProfileGate,
     profileGateMissingFields,
+    pendingJobTitle: pendingJob?.title ?? "",
+    pendingJobCompany: pendingJob?.company ?? "",
+    totalAppCount,
+    isPremium,
   }), [
     applications, savedJobs, appsLoading, savedLoading,
     applyToJob, confirmApply, cancelApply, saveJob, unsaveJob, removeAppliedJob,
     isApplied, isSaved,
     showUpgradeDialog, showApplyConfirm, showProfileGate, profileGateMissingFields,
+    pendingJob, totalAppCount, isPremium,
   ]);
 
   return <JobContext.Provider value={value}>{children}</JobContext.Provider>;
