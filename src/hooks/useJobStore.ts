@@ -39,6 +39,7 @@ export function useJobs() {
         .select("*")
         .eq("is_published", true)
         .eq("is_archived", false)
+        .is("deleted_at", null)
         .gte("posted_date", cutoff.toISOString())
         .order("posted_date", { ascending: false })
         .limit(200);
