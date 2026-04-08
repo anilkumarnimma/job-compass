@@ -4,7 +4,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { Job } from "@/types/job";
 import { calculateJobMatch, JobMatchResult } from "@/lib/jobMatcher";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
-import { isRoleRelevant, detectDomain, getExpandedAdjacency } from "@/lib/roleMatching";
+import { isRoleRelevant } from "@/lib/roleMatching";
 import { getResumeVersion } from "@/lib/resumeSync";
 import { shouldExcludeJob, isNonEntryLevelJob } from "@/lib/jobFilters";
 
@@ -245,71 +245,22 @@ export function useRecommendedJobs() {
         } as RecommendedJob & { _roleRelevant: boolean });
       }
 
-      // Tier 1: role-relevant + score >= 45
-      const tier1 = allProcessed.filter(j => (j as any)._roleRelevant && j.matchScore >= MIN_MATCH_SCORE);
-      // Tier 2: role-relevant + score >= 25
-      const tier2 = allProcessed.filter(j => (j as any)._roleRelevant && j.matchScore >= 25 && j.matchScore < MIN_MATCH_SCORE);
-      // Tier 3: skill overlap >= 1, not role-relevant, score >= 20 (with domain penalty)
-      const tier3 = allProcessed.filter(j => !(j as any)._roleRelevant && j.matchedSkills.length >= 1 && j.matchScore >= 20);
-
-      // Tier 4: Expanded adjacency (2nd-degree domains) — never random jobs
-      const userDomain = detectDomain(userRole);
-      const expandedDomains = userDomain ? getExpandedAdjacency(userDomain) : new Set<string>();
-      for (const tt of targetTitles) {
-        const ttDomain = detectDomain(tt);
-        if (ttDomain) {
-          for (const d of getExpandedAdjacency(ttDomain)) expandedDomains.add(d);
-        }
-      }
-      const tier4 = expandedDomains.size > 0
-        ? allProcessed.filter(j => {
-            const jobDomain = detectDomain(j.title);
-            return jobDomain && expandedDomains.has(jobDomain) && !(j as any)._roleRelevant;
-          })
-        : [];
+      // STRICT: Only show role-relevant jobs (same domain or adjacent domain)
+      const roleRelevantJobs = allProcessed.filter(j => (j as any)._roleRelevant);
 
       const sortFn = (a: RecommendedJob, b: RecommendedJob) => {
+        // Primary sort: title proximity (exact title matches first)
         const proxDiff = (b.titleProximity ?? 0) - (a.titleProximity ?? 0);
         if (proxDiff !== 0) return proxDiff;
+        // Secondary sort: match score (highest first)
         const scoreDiff = b.matchScore - a.matchScore;
         if (scoreDiff !== 0) return scoreDiff;
+        // Tertiary sort: newest first
         return b.posted_date.getTime() - a.posted_date.getTime();
       };
 
-      let results: RecommendedJob[] = [];
-
-      if (tier1.length > 0) {
-        tier1.sort(sortFn);
-        results = tier1.slice(0, 100);
-      }
-
-      if (results.length < 20 && tier2.length > 0) {
-        tier2.sort(sortFn);
-        const existingIds = new Set(results.map(j => j.id));
-        for (const j of tier2) {
-          if (!existingIds.has(j.id)) { results.push(j); existingIds.add(j.id); }
-          if (results.length >= 50) break;
-        }
-      }
-
-      if (results.length < 10 && tier3.length > 0) {
-        tier3.sort(sortFn);
-        const existingIds = new Set(results.map(j => j.id));
-        for (const j of tier3) {
-          if (!existingIds.has(j.id)) { results.push(j); existingIds.add(j.id); }
-          if (results.length >= 30) break;
-        }
-      }
-
-      // Expanded adjacency fallback — only 2nd-degree domain jobs, never random
-      if (results.length < 5 && tier4.length > 0) {
-        tier4.sort(sortFn);
-        const existingIds = new Set(results.map(j => j.id));
-        for (const j of tier4) {
-          if (!existingIds.has(j.id)) { results.push(j); existingIds.add(j.id); }
-          if (results.length >= 20) break;
-        }
-      }
+      roleRelevantJobs.sort(sortFn);
+      let results = roleRelevantJobs.slice(0, 100);
 
       // Clean internal flag
       return results.map(({ _roleRelevant, ...rest }: any) => rest as RecommendedJob);
