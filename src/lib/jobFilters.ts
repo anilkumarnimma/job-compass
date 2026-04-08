@@ -6,6 +6,7 @@ const EXCLUDED_TITLE_KEYWORDS = [
   'instructor', 'lecturer', 'trainer', 'academic coach',
   'private lesson', 'teaching',
   'supervisor', 'cleaning', 'janitor', 'janitorial', 'custodian', 'housekeeper', 'housekeeping',
+  'technician', 'helper',
 ];
 
 // ── High-experience title patterns ─────────────────────────────────
