@@ -51,8 +51,8 @@ export function SubscriptionBillingCard() {
       const { data, error } = await supabase.functions.invoke("cancel-subscription", {
         body: { action: "cancel" },
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error) throw new Error(error.message || "Failed to cancel subscription");
+      if (!data?.ok) throw new Error(data?.error || "Failed to cancel subscription");
 
       setPendingCancel(true);
       setCancelEndDate(data.subscription_end);
