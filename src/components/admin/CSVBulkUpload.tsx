@@ -287,13 +287,65 @@ function deduplicateCSVJobs(jobs: CSVJob[]): { unique: CSVJob[]; csvDuplicates: 
   return { unique, csvDuplicates };
 }
 
+/** RFC 4180-compliant CSV row splitter that handles multiline quoted fields and "" escapes */
+function splitCSVRows(text: string): string[][] {
+  const rows: string[][] = [];
+  let current = "";
+  let inQuotes = false;
+  const fields: string[] = [];
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+
+    if (inQuotes) {
+      if (ch === '"') {
+        // Check for escaped quote ""
+        if (i + 1 < text.length && text[i + 1] === '"') {
+          current += '"';
+          i++; // skip next quote
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        current += ch;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ',') {
+        fields.push(current.trim());
+        current = "";
+      } else if (ch === '\n' || ch === '\r') {
+        if (ch === '\r' && i + 1 < text.length && text[i + 1] === '\n') {
+          i++; // skip \n after \r
+        }
+        fields.push(current.trim());
+        current = "";
+        if (fields.some(f => f.length > 0)) {
+          rows.push([...fields]);
+        }
+        fields.length = 0;
+      } else {
+        current += ch;
+      }
+    }
+  }
+  // Last field / last row
+  fields.push(current.trim());
+  if (fields.some(f => f.length > 0)) {
+    rows.push([...fields]);
+  }
+
+  return rows;
+}
+
 function parseCSV(text: string): ParseResult {
-  const lines = text.trim().split("\n");
-  if (lines.length < 2) {
+  const allRows = splitCSVRows(text);
+  if (allRows.length < 2) {
     return { valid: [], errors: [{ row: 0, message: "CSV must have a header row and at least one data row" }] };
   }
 
-  const rawHeaders = lines[0].split(",").map((h) => h.trim());
+  const rawHeaders = allRows[0].map((h) => h.replace(/^["']|["']$/g, "").trim());
   const { mapped: header, unmapped: missingFields } = mapHeaders(rawHeaders);
   
   if (missingFields.length > 0) {
@@ -303,25 +355,8 @@ function parseCSV(text: string): ParseResult {
   const valid: CSVJob[] = [];
   const errors: { row: number; message: string }[] = [];
 
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-
-    const values: string[] = [];
-    let current = "";
-    let inQuotes = false;
-    
-    for (const char of line) {
-      if (char === '"') {
-        inQuotes = !inQuotes;
-      } else if (char === "," && !inQuotes) {
-        values.push(current.trim());
-        current = "";
-      } else {
-        current += char;
-      }
-    }
-    values.push(current.trim());
+  for (let i = 1; i < allRows.length; i++) {
+    const values = allRows[i];
 
     const row: Record<string, string> = {};
     header.forEach((field, index) => {
@@ -334,9 +369,18 @@ function parseCSV(text: string): ParseResult {
       continue;
     }
 
-    if (!row.external_apply_link.startsWith("https://")) {
-      errors.push({ row: i + 1, message: "external_apply_link must start with https://" });
-      continue;
+    // Auto-prepend https:// if missing but looks like a URL
+    if (!row.external_apply_link.startsWith("http://") && !row.external_apply_link.startsWith("https://")) {
+      if (row.external_apply_link.includes(".")) {
+        row.external_apply_link = "https://" + row.external_apply_link;
+      } else {
+        errors.push({ row: i + 1, message: "external_apply_link must be a valid URL" });
+        continue;
+      }
+    }
+    // Upgrade http to https
+    if (row.external_apply_link.startsWith("http://")) {
+      row.external_apply_link = row.external_apply_link.replace("http://", "https://");
     }
 
     if (isDiceLink(row.external_apply_link)) {
