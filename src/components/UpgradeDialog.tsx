@@ -3,9 +3,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Crown, Check, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { getUserPrice } from "@/lib/pricing";
+import { getUserPrice, getUserStripeLink } from "@/lib/pricing";
 
-const STRIPE_BASE_LINK = "https://buy.stripe.com/6oUeVdcFDdLW5eb7q93AY01";
 const SUCCESS_REDIRECT = `${window.location.origin}/dashboard?premium=true`;
 
 interface UpgradeDialogProps {
