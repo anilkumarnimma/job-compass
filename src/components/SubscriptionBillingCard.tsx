@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { CreditCard, Crown, Loader2, Calendar, AlertTriangle, RefreshCw, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { getUserPrice } from "@/lib/pricing";
 
 export function SubscriptionBillingCard() {
   const { user } = useAuth();
@@ -192,7 +193,7 @@ export function SubscriptionBillingCard() {
                     className="w-full rounded-full bg-accent text-accent-foreground hover:bg-accent/90"
                   >
                     <Sparkles className="h-4 w-4 mr-1.5" />
-                    Upgrade to Premium — $9.99/mo
+                    Upgrade to Premium — {getUserPrice(user?.created_at)}/mo
                   </Button>
                 )}
 

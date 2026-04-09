@@ -3,12 +3,14 @@ import { Sparkles, ArrowRight } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/context/AuthContext";
 import { UpgradeDialog } from "@/components/UpgradeDialog";
+import { getUserPrice } from "@/lib/pricing";
 import { motion } from "framer-motion";
 
 export function PremiumUpgradeBanner() {
   const { profile } = useProfile();
   const { user } = useAuth();
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const price = getUserPrice(user?.created_at);
 
   if (!user || profile?.is_premium) return null;
 
@@ -37,7 +39,7 @@ export function PremiumUpgradeBanner() {
           Unlock full access & unlimited job applications
         </p>
         <p className="text-xs text-muted-foreground mb-3">
-          for just <span className="font-semibold text-foreground">$9.99/month</span>
+          for just <span className="font-semibold text-foreground">{price}/month</span>
         </p>
 
         <button
