@@ -39,7 +39,6 @@ Deno.serve(async (req) => {
     if (!authHeader) throw new Error("No authorization header");
 
     const token = authHeader.replace("Bearer ", "");
-    // Single attempt — no retries to reduce backend pressure
     const { data: userData, error: authErr } = await supabase.auth.getUser(token);
     if (authErr || !userData?.user) {
       logStep("Auth failed", { message: authErr?.message });
@@ -55,13 +54,38 @@ Deno.serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Find Stripe customer by email
+    // Strategy 1: Find Stripe customer by email
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    logStep("Customer lookup", { found: customers.data.length > 0 });
+    let customerId = customers.data.length > 0 ? customers.data[0].id : null;
+    logStep("Customer lookup by email", { found: !!customerId, email: user.email });
 
-    if (customers.data.length === 0) {
-      // No Stripe customer — ensure premium is off
-      logStep("No Stripe customer, revoking premium");
+    // Strategy 2: If not found by email, check user_subscriptions for a stored stripe_customer_id
+    if (!customerId) {
+      const { data: subRecord } = await supabase
+        .from("user_subscriptions")
+        .select("stripe_customer_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (subRecord?.stripe_customer_id) {
+        logStep("Found stored stripe_customer_id, verifying with Stripe", {
+          storedCustomerId: subRecord.stripe_customer_id,
+        });
+        try {
+          const storedCustomer = await stripe.customers.retrieve(subRecord.stripe_customer_id);
+          if (storedCustomer && !storedCustomer.deleted) {
+            customerId = storedCustomer.id;
+            logStep("Verified stored customer exists in Stripe", { customerId });
+          }
+        } catch (e) {
+          logStep("Stored customer not found in Stripe", { error: e.message });
+        }
+      }
+    }
+
+    if (!customerId) {
+      // No Stripe customer found at all — ensure premium is off
+      logStep("No Stripe customer found, revoking premium");
       await supabase.from("profiles").update({ is_premium: false }).eq("user_id", user.id);
       await supabase.from("user_subscriptions").upsert({
         user_id: user.id,
@@ -76,8 +100,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const customerId = customers.data[0].id;
-    logStep("Found customer", { customerId });
+    logStep("Using customer", { customerId });
 
     // Check for active subscriptions
     const subscriptions = await stripe.subscriptions.list({
