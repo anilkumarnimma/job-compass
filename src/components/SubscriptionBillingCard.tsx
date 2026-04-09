@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { CreditCard, Crown, Loader2, Calendar, AlertTriangle, RefreshCw, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { getUserPrice } from "@/lib/pricing";
 
 export function SubscriptionBillingCard() {
   const { user } = useAuth();
