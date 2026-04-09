@@ -193,7 +193,7 @@ export function SubscriptionBillingCard() {
                     className="w-full rounded-full bg-accent text-accent-foreground hover:bg-accent/90"
                   >
                     <Sparkles className="h-4 w-4 mr-1.5" />
-                    Upgrade to Premium — $9.99/mo
+                    Upgrade to Premium — {getUserPrice(user?.created_at)}/mo
                   </Button>
                 )}
 
