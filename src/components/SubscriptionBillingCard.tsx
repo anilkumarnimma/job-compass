@@ -140,7 +140,7 @@ export function SubscriptionBillingCard() {
                   </div>
                   {isPremium && (
                     <p className="text-xs text-muted-foreground">
-                      $5.99/month • Unlimited applications
+                      Premium • Unlimited applications
                     </p>
                   )}
                   {!isPremium && (
