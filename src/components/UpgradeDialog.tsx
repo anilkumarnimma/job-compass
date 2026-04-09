@@ -5,7 +5,7 @@ import { Crown, Check, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getUserPrice, getUserStripeLink } from "@/lib/pricing";
 
-const SUCCESS_REDIRECT = `${window.location.origin}/dashboard?premium=true`;
+const SUCCESS_REDIRECT = `${window.location.origin}/payment-success`;
 
 interface UpgradeDialogProps {
   open: boolean;
