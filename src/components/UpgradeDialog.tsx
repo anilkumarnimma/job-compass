@@ -59,7 +59,7 @@ export function UpgradeDialog({ open, onOpenChange }: UpgradeDialogProps) {
             disabled={loading}
           >
             {loading ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Crown className="h-4 w-4 mr-1.5" />}
-            Upgrade for $5.99/month
+            Upgrade for $9.99/month
           </Button>
           <Button
             variant="ghost"
