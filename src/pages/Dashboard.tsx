@@ -44,7 +44,7 @@ import { RoleRequestBanner } from "@/components/RoleRequestBanner";
 import { RoleRequestModal } from "@/components/RoleRequestModal";
 import { PremiumUpgradeBanner } from "@/components/PremiumUpgradeBanner";
 
-import { NewUserRolePopup } from "@/components/NewUserRolePopup";
+
 
 type DateFilter = "all" | "today" | "yesterday" | "custom";
 
@@ -359,7 +359,7 @@ export default function Dashboard() {
   return (
     <Layout>
         <OnboardingTour />
-        <NewUserRolePopup />
+        
         <div className="w-full max-w-[1600px] mx-auto px-4 md:px-6 py-4">
         {/* Welcome Banner */}
         <WelcomeBanner />
