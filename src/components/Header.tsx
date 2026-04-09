@@ -12,6 +12,7 @@ import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { FloatingHelpButton } from "@/components/FloatingHelpButton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { triggerDashboardReset } from "@/lib/dashboardReset";
+import { getUserStripeLink } from "@/lib/pricing";
 import {
   DropdownMenu,
   DropdownMenuContent,
