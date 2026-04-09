@@ -87,10 +87,10 @@ function freshnessBonus(postedDate: Date): number {
   if (hoursAgo <= 48) return 6;
   if (hoursAgo <= 72) return 3;
   if (hoursAgo <= 168) return 1;
-  // Decay penalty for older jobs (10+ days)
+  // Decay penalty for older jobs (7+ days)
   const daysAgo = hoursAgo / 24;
-  if (daysAgo >= 13) return -15;
-  if (daysAgo >= 11) return -10;
+  if (daysAgo >= 10) return -15;
+  if (daysAgo >= 8) return -10;
   if (daysAgo >= 10) return -5;
   return 0;
 }

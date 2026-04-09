@@ -33,7 +33,7 @@ export function useJobs() {
     queryKey: ["jobs"],
     queryFn: async () => {
       const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - 15);
+      cutoff.setDate(cutoff.getDate() - 10);
       const { data, error } = await supabase
         .from("jobs")
         .select("*")

@@ -63,7 +63,7 @@ export function useDashboardPriorityJobs({
       const priorityIds = new Set(priorityJobs.map((job) => job.id));
       let genericSkip = Math.max(0, pageStart - priorityJobs.length);
       const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - 15);
+      cutoff.setDate(cutoff.getDate() - 10);
       let scanOffset = 0;
       const genericJobs: Job[] = [];
 
