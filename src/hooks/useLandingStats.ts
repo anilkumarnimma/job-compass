@@ -12,7 +12,7 @@ export function useLandingStats() {
     queryKey: ["landing-stats"],
     queryFn: async (): Promise<LandingStats> => {
       const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - 15);
+      cutoff.setDate(cutoff.getDate() - 10);
       const cutoffISO = cutoff.toISOString();
 
       // Use head:true count queries to avoid pulling full rows
