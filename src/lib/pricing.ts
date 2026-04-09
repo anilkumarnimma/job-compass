@@ -9,6 +9,10 @@ const PRICING_CUTOFF = new Date("2026-04-09T00:00:00Z");
 export const PRICE_LEGACY = "$5.99";
 export const PRICE_NEW = "$9.99";
 
+// Stripe payment links
+export const STRIPE_LINK_LEGACY = "https://buy.stripe.com/eVqaEX9treQ0eOL4dX3AY00";
+export const STRIPE_LINK_NEW = "https://buy.stripe.com/6oUeVdcFDdLW5eb7q93AY01";
+
 export function isLegacyUser(createdAt: string | Date | null | undefined): boolean {
   if (!createdAt) return false;
   return new Date(createdAt) < PRICING_CUTOFF;
@@ -16,4 +20,8 @@ export function isLegacyUser(createdAt: string | Date | null | undefined): boole
 
 export function getUserPrice(createdAt: string | Date | null | undefined): string {
   return isLegacyUser(createdAt) ? PRICE_LEGACY : PRICE_NEW;
+}
+
+export function getUserStripeLink(createdAt: string | Date | null | undefined): string {
+  return isLegacyUser(createdAt) ? STRIPE_LINK_LEGACY : STRIPE_LINK_NEW;
 }
