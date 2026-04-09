@@ -369,9 +369,18 @@ function parseCSV(text: string): ParseResult {
       continue;
     }
 
-    if (!row.external_apply_link.startsWith("https://")) {
-      errors.push({ row: i + 1, message: "external_apply_link must start with https://" });
-      continue;
+    // Auto-prepend https:// if missing but looks like a URL
+    if (!row.external_apply_link.startsWith("http://") && !row.external_apply_link.startsWith("https://")) {
+      if (row.external_apply_link.includes(".")) {
+        row.external_apply_link = "https://" + row.external_apply_link;
+      } else {
+        errors.push({ row: i + 1, message: "external_apply_link must be a valid URL" });
+        continue;
+      }
+    }
+    // Upgrade http to https
+    if (row.external_apply_link.startsWith("http://")) {
+      row.external_apply_link = row.external_apply_link.replace("http://", "https://");
     }
 
     if (isDiceLink(row.external_apply_link)) {
