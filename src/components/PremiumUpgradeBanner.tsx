@@ -37,7 +37,7 @@ export function PremiumUpgradeBanner() {
           Unlock full access & unlimited job applications
         </p>
         <p className="text-xs text-muted-foreground mb-3">
-          for just <span className="font-semibold text-foreground">$5.99/month</span>
+          for just <span className="font-semibold text-foreground">$9.99/month</span>
         </p>
 
         <button
