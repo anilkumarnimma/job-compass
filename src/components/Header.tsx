@@ -29,7 +29,7 @@ export function Header() {
   const { profile } = useProfile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const STRIPE_LINK = "https://buy.stripe.com/eVqaEX9treQ0eOL4dX3AY00";
+  const STRIPE_LINK = getUserStripeLink(user?.created_at);
   const isPremium = profile?.is_premium ?? false;
 
   const isActive = (path: string) => location.pathname === path;
