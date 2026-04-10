@@ -241,7 +241,7 @@ function getInitials(name: string): string {
   return (name[0] || "?").toUpperCase();
 }
 
-export function SkillsCloudWidget() {
+export function SkillsCloudWidget({ className }: { className?: string }) {
   const { profile } = useProfile();
   const skills = profile?.skills || [];
 
@@ -252,20 +252,21 @@ export function SkillsCloudWidget() {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1 }}
-      className="rounded-3xl border border-border/40 bg-card p-5 shadow-card"
+      className={`rounded-3xl border border-border/40 bg-card p-5 shadow-card ${className || ""}`}
     >
-      <div className="flex items-center gap-2 mb-3">
-        <Sparkles className="h-4 w-4 text-accent" />
-        <h3 className="font-display font-semibold text-sm text-foreground">Top Skills</h3>
+      <div className="flex items-center gap-2 mb-4">
+        <Sparkles className="h-5 w-5 text-accent" />
+        <h3 className="font-display font-semibold text-base text-foreground">Top Skills</h3>
+        <span className="ml-auto text-xs text-muted-foreground">{skills.length} skills</span>
       </div>
-      <div className="flex flex-wrap gap-1.5">
-        {skills.slice(0, 12).map((skill, i) => (
+      <div className="flex flex-wrap gap-2">
+        {skills.slice(0, 20).map((skill, i) => (
           <motion.span
             key={skill}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: i * 0.04 }}
-            className="px-3 py-1.5 rounded-full text-xs font-medium bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors"
+            transition={{ delay: i * 0.03 }}
+            className="px-3.5 py-2 rounded-full text-sm font-medium bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors"
           >
             {skill}
           </motion.span>
@@ -274,5 +275,3 @@ export function SkillsCloudWidget() {
     </motion.div>
   );
 }
-
-// QuickStatsWidget (Application Pipeline) removed — replaced by manual status tracking on /applied page
