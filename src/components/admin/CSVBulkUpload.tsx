@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Upload, FileSpreadsheet, X, CheckCircle2, AlertCircle, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRemoveDuplicates } from "@/hooks/useRemoveDuplicates";
-import { shouldExcludeJob } from "@/lib/jobFilters";
+
 
 interface CSVJob {
   title: string;
