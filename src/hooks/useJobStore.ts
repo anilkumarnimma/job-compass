@@ -67,7 +67,7 @@ export function useApplications() {
           job:jobs(*)
         `)
         .eq("user_id", user.id)
-        .eq("status", "applied")
+        .neq("status", "withdrawn")
         .order("applied_at", { ascending: false });
 
       if (error) throw error;
