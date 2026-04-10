@@ -388,11 +388,7 @@ function parseCSV(text: string): ParseResult {
       continue;
     }
 
-    // Exclude tutor/teaching and high-experience jobs
-    if (shouldExcludeJob({ title: row.title, description: row.description, experience_years: row.experience_years || null })) {
-      errors.push({ row: i + 1, message: "Excluded: tutor/teaching role or requires 6+ years experience" });
-      continue;
-    }
+
 
     valid.push({
       title: row.title,
