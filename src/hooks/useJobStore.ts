@@ -67,7 +67,7 @@ export function useApplications() {
           job:jobs(*)
         `)
         .eq("user_id", user.id)
-        .eq("status", "applied")
+        .neq("status", "withdrawn")
         .order("applied_at", { ascending: false });
 
       if (error) throw error;
@@ -228,6 +228,24 @@ export function useJobActions() {
     },
   });
 
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ jobId, status }: { jobId: string; status: string }) => {
+      if (!user) throw new Error("Must be logged in");
+      const { error } = await supabase
+        .from("applications")
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq("user_id", user.id)
+        .eq("job_id", jobId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["applications"] });
+    },
+    onError: (error) => {
+      toast.error("Failed to update status: " + error.message);
+    },
+  });
+
   const applyToJob = useCallback(
     (job: Job) => applyMutation.mutate(job),
     [applyMutation]
@@ -248,11 +266,17 @@ export function useJobActions() {
     [removeApplicationMutation]
   );
 
+  const updateApplicationStatus = useCallback(
+    (jobId: string, status: string) => updateStatusMutation.mutate({ jobId, status }),
+    [updateStatusMutation]
+  );
+
   return {
     applyToJob,
     saveJob,
     unsaveJob,
     removeAppliedJob,
+    updateApplicationStatus,
     isApplying: applyMutation.isPending,
     isSaving: saveMutation.isPending,
   };

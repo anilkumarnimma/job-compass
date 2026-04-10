@@ -10,7 +10,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ProfileAtsPanel } from "@/components/ProfileAtsPanel";
 import { useUserRole, useAllUserRoles } from "@/hooks/usePermissions";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
-import { ProfileWelcomeBanner, SkillsCloudWidget, QuickStatsWidget } from "@/components/ProfileBentoWidgets";
+import { ProfileWelcomeBanner, SkillsCloudWidget } from "@/components/ProfileBentoWidgets";
 import { ResumeIntelligenceCard } from "@/components/ResumeIntelligenceCard";
 import { SubscriptionBillingCard } from "@/components/SubscriptionBillingCard";
 
@@ -549,7 +549,7 @@ export default function Profile() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <ProfileWelcomeBanner />
           <SkillsCloudWidget />
-          <QuickStatsWidget />
+          
           <ResumeIntelligenceCard
             intelligence={profile?.resume_intelligence ?? null}
             isAnalyzing={isAnalyzing}
