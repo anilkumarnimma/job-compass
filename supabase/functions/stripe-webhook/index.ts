@@ -70,39 +70,136 @@ Deno.serve(async (req) => {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
       const customerEmail = session.customer_details?.email || session.customer_email;
+      const customerName = session.customer_details?.name || null;
+      const stripeCustomerId = (session as any).customer as string | null;
 
       if (!customerEmail) {
+        logStep("ERROR: No email in checkout session");
         return new Response(JSON.stringify({ error: "No email" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       const emailLower = customerEmail.toLowerCase();
+      logStep("Processing checkout success", { email: emailLower, customerName, stripeCustomerId });
 
-      // Upgrade to premium
-      const { data, error } = await supabase
+      // ── STRATEGY 1: Direct email match ──
+      const { data: emailMatch } = await supabase
         .from("profiles")
-        .update({ is_premium: true })
+        .select("user_id")
         .eq("email", emailLower)
-        .select("user_id");
+        .maybeSingle();
 
-      if (error || !data || data.length === 0) {
-        logStep("ERROR: Profile update failed", { error: error?.message });
-        return new Response(JSON.stringify({ error: "User not found" }), {
-          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      let matchedUserId: string | null = emailMatch?.user_id || null;
+      let matchMethod = "email";
+
+      // ── STRATEGY 2: Match by stored stripe_customer_id ──
+      if (!matchedUserId && stripeCustomerId) {
+        logStep("Email match failed, trying stripe_customer_id fallback", { stripeCustomerId });
+        const { data: subMatch } = await supabase
+          .from("user_subscriptions")
+          .select("user_id")
+          .eq("stripe_customer_id", stripeCustomerId)
+          .maybeSingle();
+
+        if (subMatch?.user_id) {
+          matchedUserId = subMatch.user_id;
+          matchMethod = "stripe_customer_id";
+          logStep("Matched via stripe_customer_id", { userId: matchedUserId });
+        }
+      }
+
+      // ── STRATEGY 3: Match by customer name against profiles ──
+      if (!matchedUserId && customerName && customerName.trim().length > 2) {
+        logStep("Trying name-based fallback", { customerName });
+        const nameParts = customerName.trim().split(/\s+/);
+
+        if (nameParts.length >= 2) {
+          const firstName = nameParts[0].toLowerCase();
+          const lastName = nameParts[nameParts.length - 1].toLowerCase();
+
+          // Try exact first+last name match (must be unique to avoid wrong matches)
+          const { data: nameMatches } = await supabase
+            .from("profiles")
+            .select("user_id, email")
+            .ilike("first_name", firstName)
+            .ilike("last_name", lastName);
+
+          if (nameMatches && nameMatches.length === 1) {
+            matchedUserId = nameMatches[0].user_id;
+            matchMethod = "name";
+            logStep("Matched via unique name", { userId: matchedUserId, profileEmail: nameMatches[0].email });
+          } else if (nameMatches && nameMatches.length > 1) {
+            logStep("Multiple name matches found, skipping name fallback to avoid wrong match", {
+              count: nameMatches.length, customerName
+            });
+          }
+        }
+
+        // Also try full_name if first+last didn't work
+        if (!matchedUserId) {
+          const { data: fullNameMatches } = await supabase
+            .from("profiles")
+            .select("user_id, email")
+            .ilike("full_name", customerName.trim());
+
+          if (fullNameMatches && fullNameMatches.length === 1) {
+            matchedUserId = fullNameMatches[0].user_id;
+            matchMethod = "full_name";
+            logStep("Matched via full_name", { userId: matchedUserId, profileEmail: fullNameMatches[0].email });
+          }
+        }
+      }
+
+      // ── NO MATCH: Log as orphan payment for admin review ──
+      if (!matchedUserId) {
+        logStep("ORPHAN PAYMENT: No matching user found", {
+          email: emailLower, customerName, stripeCustomerId
+        });
+
+        // Log to error_logs for admin visibility
+        await supabase.from("error_logs").insert({
+          error_type: "orphan_payment",
+          message: `Payment received but no matching Sociax account found. Email: ${emailLower}, Name: ${customerName || "N/A"}, Stripe Customer: ${stripeCustomerId || "N/A"}`,
+          metadata: {
+            payment_email: emailLower,
+            customer_name: customerName,
+            stripe_customer_id: stripeCustomerId,
+            stripe_event_id: event.id,
+            session_id: session.id,
+            amount: session.amount_total,
+            currency: session.currency,
+          },
+        });
+
+        return new Response(JSON.stringify({ received: true, warning: "orphan_payment" }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      logStep("Premium upgrade successful", { email: emailLower });
+      // ── Activate premium for matched user ──
+      logStep("Activating premium", { userId: matchedUserId, matchMethod, paymentEmail: emailLower });
 
-      const userId = data[0].user_id;
-      const stripeCustomerId = (session as any).customer as string | null;
+      const { error: updateErr } = await supabase
+        .from("profiles")
+        .update({ is_premium: true })
+        .eq("user_id", matchedUserId);
+
+      if (updateErr) {
+        logStep("ERROR: Profile update failed", { error: updateErr.message });
+        return new Response(JSON.stringify({ error: "Profile update failed" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      logStep("Premium upgrade successful", { userId: matchedUserId, matchMethod });
+
       const nextRenewal = new Date();
       nextRenewal.setMonth(nextRenewal.getMonth() + 1);
 
       await supabase.from("user_subscriptions").upsert(
         {
-          user_id: userId,
+          user_id: matchedUserId,
           is_subscribed: true,
           stripe_customer_id: stripeCustomerId || null,
           next_renewal_date: nextRenewal.toISOString(),
@@ -124,6 +221,22 @@ Deno.serve(async (req) => {
         .update({ payment_completed: true, completed_at: new Date().toISOString() })
         .eq("email", emailLower)
         .eq("payment_completed", false);
+
+      // If matched via non-email method, also log for admin awareness
+      if (matchMethod !== "email") {
+        logStep("EMAIL MISMATCH RESOLVED", { matchMethod, paymentEmail: emailLower, userId: matchedUserId });
+        await supabase.from("error_logs").insert({
+          error_type: "payment_email_mismatch",
+          message: `Payment email "${emailLower}" didn't match account. Resolved via ${matchMethod}. User activated successfully.`,
+          user_id: matchedUserId,
+          metadata: {
+            payment_email: emailLower,
+            match_method: matchMethod,
+            stripe_customer_id: stripeCustomerId,
+            stripe_event_id: event.id,
+          },
+        });
+      }
 
       logStep("Cleared pending failure/recovery records for user", { email: emailLower });
     }
@@ -182,7 +295,6 @@ Deno.serve(async (req) => {
 
         if (profile?.is_premium) {
           logStep("User is already premium, skipping failure email", { email: emailLower });
-          // Still log the event but mark as resolved
           await supabase.from("failed_payments").insert({
             email: emailLower,
             customer_name: customerName,
@@ -190,7 +302,7 @@ Deno.serve(async (req) => {
             event_type: event.type.replace(".", "_"),
             amount, currency, failure_reason: failureReason,
             retry_link: retryLink,
-            email_sent: true, // marked true = no email needed
+            email_sent: true,
           });
         } else {
           // ── Check for duplicate: same email + same event_type within last 30 min ──
@@ -205,7 +317,6 @@ Deno.serve(async (req) => {
 
           const isDuplicate = recentFailures && recentFailures.length > 0;
 
-          // Insert the record
           await supabase.from("failed_payments").insert({
             email: emailLower,
             customer_name: customerName,
@@ -214,7 +325,7 @@ Deno.serve(async (req) => {
             amount, currency,
             failure_reason: failureReason,
             retry_link: retryLink,
-            email_sent: isDuplicate, // if duplicate, skip email
+            email_sent: isDuplicate,
           });
 
           if (!isDuplicate) {
@@ -268,7 +379,6 @@ async function sendFailureEmail(
 </body>
 </html>`;
 
-    // Send via Resend connector
     const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
@@ -299,7 +409,6 @@ async function sendFailureEmail(
       logStep("Email keys not available, skipping send", { email });
     }
 
-    // Mark as sent
     await supabase
       .from("failed_payments")
       .update({ email_sent: true })
