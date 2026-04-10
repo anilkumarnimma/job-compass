@@ -275,40 +275,4 @@ export function SkillsCloudWidget() {
   );
 }
 
-export function QuickStatsWidget() {
-  const { applications } = useJobContext();
-  
-  const stages = useMemo(() => {
-    const total = applications?.length || 0;
-    return [
-      { label: "Applied", count: total, color: "bg-accent" },
-      { label: "In Review", count: Math.floor(total * 0.3), color: "bg-amber-500" },
-      { label: "Interview", count: Math.floor(total * 0.1), color: "bg-success" },
-    ];
-  }, [applications]);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
-      className="rounded-3xl border border-border/40 bg-card p-5 shadow-card"
-    >
-      <div className="flex items-center gap-2 mb-3">
-        <TrendingUp className="h-4 w-4 text-accent" />
-        <h3 className="font-display font-semibold text-sm text-foreground">Application Pipeline</h3>
-      </div>
-      <div className="space-y-3">
-        {stages.map((stage) => (
-          <div key={stage.label} className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${stage.color}`} />
-              <span className="text-xs text-muted-foreground">{stage.label}</span>
-            </div>
-            <span className="text-xs font-semibold text-foreground">{stage.count}</span>
-          </div>
-        ))}
-      </div>
-    </motion.div>
-  );
-}
+// QuickStatsWidget (Application Pipeline) removed — replaced by manual status tracking on /applied page
