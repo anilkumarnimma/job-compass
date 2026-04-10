@@ -548,7 +548,7 @@ export default function Profile() {
         {/* Bento welcome section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <ProfileWelcomeBanner />
-          <SkillsCloudWidget className="md:col-span-1" />
+          <SkillsCloudWidget className="md:col-span-2" />
           
           <ResumeIntelligenceCard
             intelligence={profile?.resume_intelligence ?? null}
