@@ -255,8 +255,8 @@ export function SkillsCloudWidget({ className }: { className?: string }) {
       className={`rounded-3xl border border-border/40 bg-card p-5 shadow-card ${className || ""}`}
     >
       <div className="flex items-center gap-2 mb-4">
-        <Sparkles className="h-5 w-5 text-accent" />
-        <h3 className="font-display font-semibold text-base text-foreground">Top Skills</h3>
+        <Sparkles className="h-4 w-4 text-accent" />
+        <h3 className="font-display font-semibold text-sm text-foreground">Top Skills</h3>
         <span className="ml-auto text-xs text-muted-foreground">{skills.length} skills</span>
       </div>
       <div className="flex flex-wrap gap-2">
@@ -266,7 +266,7 @@ export function SkillsCloudWidget({ className }: { className?: string }) {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: i * 0.03 }}
-            className="px-3.5 py-2 rounded-full text-sm font-medium bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors"
+            className="px-3 py-1.5 rounded-full text-xs font-medium bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors"
           >
             {skill}
           </motion.span>
