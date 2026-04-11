@@ -15,12 +15,13 @@ import { CompanyLogo } from "@/components/CompanyLogo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, BriefcaseBusiness, Target, Brain } from "lucide-react";
+import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, BriefcaseBusiness, Target, Brain, Linkedin } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { analyzeVisaSponsorship } from "@/lib/visaSponsorship";
 import { VisaSponsorshipBadge } from "@/components/VisaSponsorshipBadge";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
+import { LinkedInConnectDialog } from "@/components/LinkedInConnectDialog";
 
 interface JobPreviewPanelProps {
   job: Job;
@@ -37,6 +38,7 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
   const { prep, isLoading: isPrepLoading, generatePrep, clearPrep } = useInterviewPrep();
   const [showAtsDialog, setShowAtsDialog] = useState(false);
   const [showPrepDialog, setShowPrepDialog] = useState(false);
+  const [showLinkedIn, setShowLinkedIn] = useState(false);
 
   const saved = isSaved(job.id);
   const applied = isApplied(job.id);
@@ -169,6 +171,15 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
             <Brain className="h-4 w-4 mr-1.5" />Prep
           </Button>
 
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => { if (!user) { navigate("/auth"); return; } setShowLinkedIn(true); }}
+            className="h-9 px-4 text-sm font-medium rounded-xl active:scale-95 text-[#0A66C2] hover:bg-[#0A66C2]/10"
+          >
+            <Linkedin className="h-4 w-4 mr-1.5" />Connect
+          </Button>
+
           {job.is_reviewing && (
             <Badge className="ml-auto px-2.5 py-1.5 text-xs font-medium bg-success-bg text-success-text border-0 rounded-full">
               Actively Reviewing
@@ -191,6 +202,12 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
         isLoading={isPrepLoading}
         jobTitle={job.title}
         hasResume={!!(profile?.resume_intelligence as ResumeIntelligence | null)?.primaryRole}
+      />
+
+      <LinkedInConnectDialog
+        open={showLinkedIn}
+        onOpenChange={setShowLinkedIn}
+        job={job}
       />
 
       {/* Scrollable Content */}
