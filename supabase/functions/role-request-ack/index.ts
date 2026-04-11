@@ -43,7 +43,8 @@ Deno.serve(async (req) => {
     const upgradeBlock = !isPremium
       ? `<div style="text-align:center;margin:0 0 20px;padding:16px 20px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:10px;">
           <p style="font-size:16px;font-weight:700;color:#ffffff;margin:0 0 6px;">⚡ Upgrade to Premium for more results like this!</p>
-          <p style="font-size:13px;color:#e0e7ff;margin:0;">Slots are filling up fast — don't miss out.</p>
+          <p style="font-size:13px;color:#e0e7ff;margin:0 0 12px;">Slots are filling up fast — don't miss out.</p>
+          <a href="https://buy.stripe.com/6oUeVdcFDdLW5eb7q93AY01" style="display:inline-block;padding:10px 28px;background:#ffffff;color:#6366f1;font-size:14px;font-weight:700;border-radius:6px;text-decoration:none;">Upgrade Now →</a>
         </div>`
       : '';
 
