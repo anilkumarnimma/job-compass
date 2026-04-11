@@ -211,10 +211,12 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
           </span>
         )}
 
-        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary text-foreground text-xs font-medium">
-          <Clock className="h-3.5 w-3.5" />
-          {job.employment_type}
-        </span>
+        {job.employment_type && !/nan/i.test(job.employment_type) && (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary text-foreground text-xs font-medium">
+            <Clock className="h-3.5 w-3.5" />
+            {job.employment_type}
+          </span>
+        )}
       </div>
 
       {/* Skills - max 5 visible + N more */}

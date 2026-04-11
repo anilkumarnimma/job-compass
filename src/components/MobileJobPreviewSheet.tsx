@@ -116,10 +116,12 @@ export function MobileJobPreviewSheet({ job, open, onOpenChange }: MobileJobPrev
                 </span>
               )}
               
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-chip-bg text-xs text-muted-foreground">
-                <Briefcase className="h-3.5 w-3.5" />
-                {job.employment_type}
-              </span>
+              {job.employment_type && !/nan/i.test(job.employment_type) && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-chip-bg text-xs text-muted-foreground">
+                  <Briefcase className="h-3.5 w-3.5" />
+                  {job.employment_type}
+                </span>
+              )}
               
               {job.experience_years && (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-chip-bg text-xs text-muted-foreground">
