@@ -141,16 +141,35 @@ export function OnboardingTour() {
   const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number; arrowSide: string } | null>(null);
   const [highlightRect, setHighlightRect] = useState<DOMRect | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
 
   const storageKey = user ? `${TOUR_STORAGE_KEY}_${user.id}` : TOUR_STORAGE_KEY;
 
   useEffect(() => {
     const completed = localStorage.getItem(storageKey);
-    if (!completed) {
+    if (completed) return;
+
+    const bannerKey = user ? `sociax_linkedin_feature_popup_seen_${user.id}` : "sociax_linkedin_feature_popup_seen";
+    const bannerAlreadySeen = !!localStorage.getItem(bannerKey);
+
+    if (bannerAlreadySeen) {
+      // Banner was already dismissed in a previous session — start tour directly
       const timer = setTimeout(() => setIsOpen(true), 2000);
       return () => clearTimeout(timer);
     }
-  }, [storageKey]);
+
+    // Wait for the banner to be dismissed before starting the tour
+    const handler = () => {
+      const t = setTimeout(() => setIsOpen(true), 600);
+      // cleanup inner timeout on unmount
+      cleanupRef.current = () => clearTimeout(t);
+    };
+    window.addEventListener("linkedin-banner-dismissed", handler);
+    return () => {
+      window.removeEventListener("linkedin-banner-dismissed", handler);
+      cleanupRef.current?.();
+    };
+  }, [storageKey, user]);
 
   // Position the tooltip relative to the target element
   const positionTooltip = useCallback(() => {
