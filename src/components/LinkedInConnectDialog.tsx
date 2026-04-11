@@ -55,12 +55,23 @@ export function LinkedInConnectDialog({ open, onOpenChange, job }: LinkedInConne
     if (isLimitReached) return;
     setIsGenerating(true);
     try {
+      const intelligence = profile?.resume_intelligence as Record<string, any> | null;
+      const education = profile?.education as any[] | null;
+      const workExp = profile?.work_experience as any[] | null;
+
       const { data, error } = await supabase.functions.invoke("generate-linkedin-message", {
         body: {
           job_title: job.title,
           company: job.company,
+          job_skills: job.skills || [],
+          job_description: job.description?.slice(0, 500) || undefined,
           user_name: profile?.full_name || profile?.first_name || undefined,
           user_title: profile?.current_title || undefined,
+          user_skills: profile?.skills || [],
+          user_experience_years: profile?.experience_years || undefined,
+          user_education: education || undefined,
+          user_work_experience: workExp || undefined,
+          user_resume_intelligence: intelligence || undefined,
         },
       });
 
