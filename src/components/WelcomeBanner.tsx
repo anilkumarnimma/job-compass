@@ -33,13 +33,12 @@ export function WelcomeBanner() {
           </div>
         </div>
 
-        {/* New Feature Announcement */}
-        <div className="mt-4 pt-3 border-t border-accent/10 flex items-center gap-2 text-xs text-foreground/80">
-          <span className="px-1.5 py-0.5 rounded bg-accent/15 text-accent text-[10px] font-semibold">NEW</span>
-          <Linkedin className="h-3.5 w-3.5 text-[#0A66C2]" />
-          <span>
-            Generate LinkedIn connection messages instantly — click 
-            <span className="font-medium text-accent">"Connect on LinkedIn"</span> on any job!
+        {/* New Feature Announcement - Separate section */}
+        <div className="mt-4 flex items-center gap-2.5 px-1">
+          <span className="px-2 py-0.5 rounded-md bg-accent text-accent-foreground text-[10px] font-bold tracking-wide">NEW</span>
+          <Linkedin className="h-4 w-4 text-[#0A66C2]" />
+          <span className="text-sm text-foreground/90">
+            Generate LinkedIn connection messages — click <span className="font-semibold text-accent">"Connect on LinkedIn"</span> on any job card
           </span>
         </div>
       </div>
