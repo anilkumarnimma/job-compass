@@ -15,12 +15,13 @@ import { CompanyLogo } from "@/components/CompanyLogo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, BriefcaseBusiness, Target, Brain } from "lucide-react";
+import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, BriefcaseBusiness, Target, Brain, Linkedin } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { analyzeVisaSponsorship } from "@/lib/visaSponsorship";
 import { VisaSponsorshipBadge } from "@/components/VisaSponsorshipBadge";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
+import { LinkedInConnectDialog } from "@/components/LinkedInConnectDialog";
 
 interface JobPreviewPanelProps {
   job: Job;
@@ -37,6 +38,7 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
   const { prep, isLoading: isPrepLoading, generatePrep, clearPrep } = useInterviewPrep();
   const [showAtsDialog, setShowAtsDialog] = useState(false);
   const [showPrepDialog, setShowPrepDialog] = useState(false);
+  const [showLinkedIn, setShowLinkedIn] = useState(false);
 
   const saved = isSaved(job.id);
   const applied = isApplied(job.id);
