@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useJobContext } from "@/context/JobContext";
 import { useAuth } from "@/context/AuthContext";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { format } from "date-fns";
-import { ExternalLink, Trash2, Briefcase, Calendar, Loader2 } from "lucide-react";
+import { ExternalLink, Trash2, Briefcase, Calendar, Loader2, HelpCircle } from "lucide-react";
 import { Link, Navigate } from "react-router-dom";
 
 const APPLICATION_STATUSES = [
@@ -94,27 +95,43 @@ export default function Applied() {
                           <p className="text-muted-foreground font-medium">{job.company}</p>
                         </div>
                         {/* Status Dropdown */}
-                        <Select
-                          value={application.status}
-                          onValueChange={(value) => updateApplicationStatus(job.id, value)}
-                        >
-                          <SelectTrigger className="w-[140px] h-8 text-xs shrink-0">
-                            <div className="flex items-center gap-2">
-                              <div className={`w-2 h-2 rounded-full ${statusConfig.color}`} />
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent side="left" className="max-w-[220px] text-xs">
+                                <p className="font-medium mb-1">Track your application status:</p>
+                                <ul className="space-y-0.5">
+                                  <li><span className="font-medium">Applied</span> — You've submitted</li>
+                                  <li><span className="font-medium">In Review</span> — Being reviewed</li>
+                                  <li><span className="font-medium">Interview</span> — Interview stage</li>
+                                  <li><span className="font-medium">Offer</span> — You got an offer!</li>
+                                  <li><span className="font-medium">Rejected</span> — Not selected</li>
+                                </ul>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                          <Select
+                            value={application.status}
+                            onValueChange={(value) => updateApplicationStatus(job.id, value)}
+                          >
+                            <SelectTrigger className="w-[140px] h-8 text-xs">
                               <SelectValue />
-                            </div>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {APPLICATION_STATUSES.map((s) => (
-                              <SelectItem key={s.value} value={s.value}>
-                                <div className="flex items-center gap-2">
-                                  <div className={`w-2 h-2 rounded-full ${s.color}`} />
-                                  {s.label}
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {APPLICATION_STATUSES.map((s) => (
+                                <SelectItem key={s.value} value={s.value}>
+                                  <div className="flex items-center gap-2">
+                                    <div className={`w-2 h-2 rounded-full ${s.color}`} />
+                                    {s.label}
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
 
                       <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
