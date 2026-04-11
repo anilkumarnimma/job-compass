@@ -27,6 +27,7 @@ export function MobileJobPreviewSheet({ job, open, onOpenChange }: MobileJobPrev
   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [showLinkedIn, setShowLinkedIn] = useState(false);
 
   if (!job) return null;
   
