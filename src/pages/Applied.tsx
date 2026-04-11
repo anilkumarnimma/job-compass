@@ -101,14 +101,14 @@ export default function Applied() {
                               <TooltipTrigger asChild>
                                 <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
                               </TooltipTrigger>
-                              <TooltipContent side="left" className="max-w-[240px] text-xs">
-                                <p className="font-medium mb-1">You can manually update the status to track your progress:</p>
+                              <TooltipContent side="left" className="max-w-[260px] text-xs">
+                                <p className="font-medium mb-1">Update the status as your application progresses to keep track of where you stand.</p>
                                 <ul className="space-y-0.5">
-                                  <li><span className="font-medium">Applied</span> — You've submitted</li>
-                                  <li><span className="font-medium">In Review</span> — Being reviewed</li>
-                                  <li><span className="font-medium">Interview</span> — Interview stage</li>
-                                  <li><span className="font-medium">Offer</span> — You got an offer!</li>
-                                  <li><span className="font-medium">Rejected</span> — Not selected</li>
+                                  <li><span className="font-medium">Applied</span> — Application submitted</li>
+                                  <li><span className="font-medium">In Review</span> — Under employer review</li>
+                                  <li><span className="font-medium">Interview</span> — Interview scheduled or in progress</li>
+                                  <li><span className="font-medium">Offer</span> — Offer received</li>
+                                  <li><span className="font-medium">Rejected</span> — Application unsuccessful</li>
                                 </ul>
                               </TooltipContent>
                             </Tooltip>
