@@ -47,24 +47,25 @@ export function LinkedInFeatureBanner() {
             className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
           >
             <div
-              className="relative w-full max-w-md overflow-hidden rounded-2xl border border-border/50 bg-card shadow-2xl pointer-events-auto"
+              className="relative w-full max-w-xs overflow-hidden rounded-xl border border-border/50 bg-card shadow-2xl pointer-events-auto"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close button */}
               <button
                 onClick={dismiss}
-                className="absolute top-3 right-3 z-20 p-1.5 rounded-full bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-foreground hover:bg-background transition-all"
+                className="absolute top-2 right-2 z-20 p-1 rounded-full bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-foreground hover:bg-background transition-all"
                 aria-label="Dismiss"
               >
-                <X className="h-4 w-4" />
+                <X className="h-3.5 w-3.5" />
               </button>
 
               {/* Image */}
-              <div className="relative w-full h-[200px] overflow-hidden">
+              <div className="relative w-full h-[120px] overflow-hidden">
                 <img
                   src={linkedinBannerImg}
                   alt="LinkedIn Connect Feature"
                   className="w-full h-full object-cover"
+                  loading="lazy"
                   width={1200}
                   height={512}
                 />
@@ -72,21 +73,21 @@ export function LinkedInFeatureBanner() {
               </div>
 
               {/* Content */}
-              <div className="px-6 pb-6 pt-2 text-center">
-                <div className="flex items-center justify-center gap-2 mb-3">
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-accent/15 text-accent">
-                    <Sparkles className="h-3 w-3" />
+              <div className="px-4 pb-4 pt-1 text-center">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-accent/15 text-accent">
+                    <Sparkles className="h-2.5 w-2.5" />
                     New Feature
                   </span>
                 </div>
 
-                <h3 className="text-xl font-bold text-foreground mb-2 leading-tight">
+                <h3 className="text-sm font-bold text-foreground mb-1 leading-tight">
                   LinkedIn Connect & Referrals
                 </h3>
-                <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
-                  Now you can connect with people at the companies you're applying to! Get AI-generated connection messages & referral requests — look for the{" "}
+                <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+                  Connect with people at companies you're applying to! Look for the{" "}
                   <span className="inline-flex items-center gap-0.5 font-medium text-foreground">
-                    <Linkedin className="h-3 w-3 text-[#0077b5]" /> Connect
+                    <Linkedin className="h-2.5 w-2.5 text-[#0077b5]" /> Connect
                   </span>{" "}
                   button on any job card.
                 </p>
