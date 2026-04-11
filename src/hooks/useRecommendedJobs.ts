@@ -270,7 +270,7 @@ export function useRecommendedJobs() {
       for (const row of data) {
         const job = parseJob(row);
         const ageMs = now - job.posted_date.getTime();
-        if (ageMs > 3 * 24 * 60 * 60 * 1000) continue; // Show jobs from last 3 days
+        if (ageMs > 5 * 24 * 60 * 60 * 1000) continue; // Show jobs from last 5 days
         if (shouldExcludeJob(job)) continue;
         // For entry-level users, also skip senior/mid-senior roles
         if (isEntryLevelUser && isNonEntryLevelJob(job)) continue;
