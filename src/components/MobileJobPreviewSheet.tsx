@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Job } from "@/types/job";
 import { useJobContext } from "@/context/JobContext";
 import { useAuth } from "@/context/AuthContext";
@@ -11,9 +12,10 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, BriefcaseBusiness } from "lucide-react";
+import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, BriefcaseBusiness, Linkedin } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { LinkedInConnectDialog } from "@/components/LinkedInConnectDialog";
 
 interface MobileJobPreviewSheetProps {
   job: Job | null;
