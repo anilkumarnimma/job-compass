@@ -9,13 +9,14 @@ import { LandingProbabilityBadge } from "@/components/LandingProbabilityBadge";
 import { useJobContext } from "@/context/JobContext";
 import { useAuth } from "@/context/AuthContext";
 import { CompanyLogo } from "@/components/CompanyLogo";
-import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, ArrowRight, Target, FileText } from "lucide-react";
+import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, ArrowRight, Target, FileText, Linkedin } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { memo, useCallback, useState, useMemo, lazy, Suspense } from "react";
 import { analyzeVisaSponsorship } from "@/lib/visaSponsorship";
 import { VisaSponsorshipBadge } from "@/components/VisaSponsorshipBadge";
 import { useAtsCheck } from "@/hooks/useAtsCheck";
+import { LinkedInConnectDialog } from "@/components/LinkedInConnectDialog";
 
 const AtsCheckDialog = lazy(async () => {
   const module = await import("@/components/AtsCheckDialog");
@@ -62,6 +63,9 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
 
   // Tailored Resume state
   const [tailoredResumeOpen, setTailoredResumeOpen] = useState(false);
+
+  // LinkedIn Connect state
+  const [linkedInOpen, setLinkedInOpen] = useState(false);
 
   const handleAtsClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -272,17 +276,28 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
 
       {/* Actions */}
       <div className="flex items-center justify-between gap-3 pt-3 border-t border-border/30 relative z-10">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleSaveClick}
-          className={`h-9 px-3 text-sm font-normal gap-1.5 rounded-full transition-all duration-200 active:scale-95 ${
-            saved ? "text-accent" : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          {saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
-          {saved ? "Saved" : "Save"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSaveClick}
+            className={`h-9 px-3 text-sm font-normal gap-1.5 rounded-full transition-all duration-200 active:scale-95 ${
+              saved ? "text-accent" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
+            {saved ? "Saved" : "Save"}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => { e.stopPropagation(); if (!user) { navigate("/auth"); return; } setLinkedInOpen(true); }}
+            className="h-9 px-3 text-sm font-normal gap-1.5 rounded-full text-[#0A66C2] hover:bg-[#0A66C2]/10 transition-all duration-200 active:scale-95"
+          >
+            <Linkedin className="h-4 w-4" />
+            Connect
+          </Button>
+        </div>
         <Button
           size="sm"
           onClick={handleApplyClick}
@@ -331,6 +346,13 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
           job={job}
         />
       </Suspense>
+    )}
+    {linkedInOpen && (
+      <LinkedInConnectDialog
+        open={linkedInOpen}
+        onOpenChange={setLinkedInOpen}
+        job={job}
+      />
     )}
     </>
   );
