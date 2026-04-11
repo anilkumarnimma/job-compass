@@ -43,6 +43,7 @@ import { OnboardingTour } from "@/components/OnboardingTour";
 import { RoleRequestBanner } from "@/components/RoleRequestBanner";
 import { RoleRequestModal } from "@/components/RoleRequestModal";
 import { PremiumUpgradeBanner } from "@/components/PremiumUpgradeBanner";
+import { LinkedInFeatureBanner } from "@/components/LinkedInFeatureBanner";
 
 
 
