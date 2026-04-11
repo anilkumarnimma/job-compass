@@ -201,7 +201,7 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
             {job.location}
           </span>
 
-          {job.salary_range && !/nan/i.test(job.salary_range) && (
+          {job.salary_range && !/nan/i.test(job.salary_range) && !/none/i.test(job.salary_range) && (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-success-bg text-xs text-success-text font-medium">
               <DollarSign className="h-3.5 w-3.5" />
               {job.salary_range}
