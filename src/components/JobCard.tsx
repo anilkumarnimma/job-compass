@@ -9,13 +9,14 @@ import { LandingProbabilityBadge } from "@/components/LandingProbabilityBadge";
 import { useJobContext } from "@/context/JobContext";
 import { useAuth } from "@/context/AuthContext";
 import { CompanyLogo } from "@/components/CompanyLogo";
-import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, ArrowRight, Target, FileText } from "lucide-react";
+import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, ArrowRight, Target, FileText, Linkedin } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { memo, useCallback, useState, useMemo, lazy, Suspense } from "react";
 import { analyzeVisaSponsorship } from "@/lib/visaSponsorship";
 import { VisaSponsorshipBadge } from "@/components/VisaSponsorshipBadge";
 import { useAtsCheck } from "@/hooks/useAtsCheck";
+import { LinkedInConnectDialog } from "@/components/LinkedInConnectDialog";
 
 const AtsCheckDialog = lazy(async () => {
   const module = await import("@/components/AtsCheckDialog");
