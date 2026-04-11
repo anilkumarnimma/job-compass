@@ -64,6 +64,9 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
   // Tailored Resume state
   const [tailoredResumeOpen, setTailoredResumeOpen] = useState(false);
 
+  // LinkedIn Connect state
+  const [linkedInOpen, setLinkedInOpen] = useState(false);
+
   const handleAtsClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) { navigate("/auth"); return; }
