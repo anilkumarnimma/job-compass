@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useJobContext } from "@/context/JobContext";
 import { useAuth } from "@/context/AuthContext";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { format } from "date-fns";
-import { ExternalLink, Trash2, Briefcase, Calendar, Loader2 } from "lucide-react";
+import { ExternalLink, Trash2, Briefcase, Calendar, Loader2, HelpCircle } from "lucide-react";
 import { Link, Navigate } from "react-router-dom";
 
 const APPLICATION_STATUSES = [
