@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -6,7 +6,30 @@ import { Job } from "@/types/job";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { toast } from "sonner";
-import { Copy, Check, ExternalLink, Linkedin, Sparkles, RefreshCw } from "lucide-react";
+import { Copy, Check, ExternalLink, Linkedin, Sparkles, RefreshCw, Crown } from "lucide-react";
+
+const FREE_DAILY_LIMIT = 3;
+
+function getUsageKey(): string {
+  const today = new Date().toISOString().slice(0, 10);
+  return `linkedin_msg_usage_${today}`;
+}
+
+function getDailyUsage(): number {
+  try {
+    return parseInt(localStorage.getItem(getUsageKey()) || "0", 10);
+  } catch {
+    return 0;
+  }
+}
+
+function incrementUsage(): void {
+  try {
+    const key = getUsageKey();
+    const current = parseInt(localStorage.getItem(key) || "0", 10);
+    localStorage.setItem(key, String(current + 1));
+  } catch {}
+}
 
 interface LinkedInConnectDialogProps {
   open: boolean;
@@ -20,10 +43,16 @@ export function LinkedInConnectDialog({ open, onOpenChange, job }: LinkedInConne
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(false);
+  const [usageCount, setUsageCount] = useState(getDailyUsage);
+
+  const isPremium = profile?.is_premium ?? false;
+  const remaining = Math.max(0, FREE_DAILY_LIMIT - usageCount);
+  const isLimitReached = !isPremium && remaining <= 0;
 
   const linkedInSearchUrl = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(job.company)}&origin=GLOBAL_SEARCH_HEADER`;
 
   const generateMessage = async () => {
+    if (isLimitReached) return;
     setIsGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-linkedin-message", {
@@ -40,6 +69,11 @@ export function LinkedInConnectDialog({ open, onOpenChange, job }: LinkedInConne
 
       setMessage(data.message);
       setHasGenerated(true);
+
+      if (!isPremium) {
+        incrementUsage();
+        setUsageCount(getDailyUsage());
+      }
     } catch (err: any) {
       console.error("Failed to generate message:", err);
       toast.error(err.message || "Failed to generate message");
@@ -79,13 +113,62 @@ export function LinkedInConnectDialog({ open, onOpenChange, job }: LinkedInConne
         </DialogHeader>
 
         <div className="space-y-4 mt-2">
-          {/* Step 1: Generate Message */}
+          {/* Usage indicator */}
+          {!isPremium && (
+            <div className={`flex items-center justify-between text-xs px-3 py-2 rounded-lg ${
+              remaining === 0
+                ? "bg-destructive/10 text-destructive"
+                : remaining === 1
+                  ? "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
+                  : "bg-muted text-muted-foreground"
+            }`}>
+              <span>
+                {remaining === 0
+                  ? "Daily limit reached"
+                  : `${remaining} of ${FREE_DAILY_LIMIT} free message${remaining === 1 ? "" : "s"} left today`}
+              </span>
+              {remaining <= 1 && (
+                <button
+                  onClick={() => window.open("/profile", "_self")}
+                  className="flex items-center gap-1 font-semibold text-accent hover:underline"
+                >
+                  <Crown className="h-3 w-3" />
+                  Upgrade
+                </button>
+              )}
+            </div>
+          )}
+
+          {isPremium && (
+            <div className="flex items-center gap-1.5 text-xs text-accent px-3 py-2 rounded-lg bg-accent/10">
+              <Crown className="h-3 w-3" />
+              <span className="font-medium">Premium — Unlimited messages</span>
+            </div>
+          )}
+
+          {/* Generate Message */}
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">
               Generate a personalized connection request message for people at <strong>{job.company}</strong> regarding the <strong>{job.title}</strong> role.
             </p>
 
-            {!hasGenerated ? (
+            {isLimitReached && !hasGenerated ? (
+              <div className="text-center py-4 space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  You've used all {FREE_DAILY_LIMIT} free messages for today.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Upgrade to Premium for unlimited AI-generated connection messages.
+                </p>
+                <Button
+                  onClick={() => window.open("/profile", "_self")}
+                  className="bg-accent hover:bg-accent/90 text-accent-foreground"
+                >
+                  <Crown className="h-4 w-4 mr-2" />
+                  Upgrade to Premium
+                </Button>
+              </div>
+            ) : !hasGenerated ? (
               <Button
                 onClick={generateMessage}
                 disabled={isGenerating}
@@ -128,7 +211,7 @@ export function LinkedInConnectDialog({ open, onOpenChange, job }: LinkedInConne
                     variant="ghost"
                     size="sm"
                     onClick={generateMessage}
-                    disabled={isGenerating}
+                    disabled={isGenerating || isLimitReached}
                     className="shrink-0"
                   >
                     <RefreshCw className={`h-4 w-4 ${isGenerating ? "animate-spin" : ""}`} />
@@ -138,7 +221,7 @@ export function LinkedInConnectDialog({ open, onOpenChange, job }: LinkedInConne
             )}
           </div>
 
-          {/* Step 2: Find People */}
+          {/* Find People */}
           <div className="border-t border-border pt-4 space-y-2">
             <p className="text-sm font-medium">Find people at {job.company}</p>
             <p className="text-xs text-muted-foreground">
