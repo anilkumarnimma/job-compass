@@ -171,6 +171,15 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
             <Brain className="h-4 w-4 mr-1.5" />Prep
           </Button>
 
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => { if (!user) { navigate("/auth"); return; } setShowLinkedIn(true); }}
+            className="h-9 px-4 text-sm font-medium rounded-xl active:scale-95 text-[#0A66C2] hover:bg-[#0A66C2]/10"
+          >
+            <Linkedin className="h-4 w-4 mr-1.5" />Connect
+          </Button>
+
           {job.is_reviewing && (
             <Badge className="ml-auto px-2.5 py-1.5 text-xs font-medium bg-success-bg text-success-text border-0 rounded-full">
               Actively Reviewing
