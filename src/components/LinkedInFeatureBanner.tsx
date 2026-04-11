@@ -92,17 +92,17 @@ export function LinkedInFeatureBanner() {
                   button on any job card.
                 </p>
 
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-1.5">
                   <button
                     onClick={dismiss}
-                    className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-accent text-accent-foreground hover:bg-accent/90 transition-colors group"
+                    className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-accent text-accent-foreground hover:bg-accent/90 transition-colors group"
                   >
                     Got it, let me try!
-                    <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                    <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
                   </button>
                   <button
                     onClick={dismiss}
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
+                    className="text-[11px] text-muted-foreground hover:text-foreground transition-colors py-0.5"
                   >
                     Maybe later
                   </button>
