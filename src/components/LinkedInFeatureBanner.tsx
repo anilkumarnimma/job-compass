@@ -22,6 +22,8 @@ export function LinkedInFeatureBanner() {
   const dismiss = () => {
     localStorage.setItem(storageKey, "true");
     setVisible(false);
+    // Signal that the banner is dismissed so the onboarding tour can start
+    window.dispatchEvent(new CustomEvent("linkedin-banner-dismissed"));
   };
 
   return (
