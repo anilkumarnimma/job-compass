@@ -347,6 +347,13 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
         />
       </Suspense>
     )}
+    {linkedInOpen && (
+      <LinkedInConnectDialog
+        open={linkedInOpen}
+        onOpenChange={setLinkedInOpen}
+        job={job}
+      />
+    )}
     </>
   );
 });
