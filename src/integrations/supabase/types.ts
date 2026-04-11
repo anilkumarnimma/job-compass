@@ -480,6 +480,33 @@ export type Database = {
         }
         Relationships: []
       }
+      linkedin_message_usage: {
+        Row: {
+          created_at: string
+          id: string
+          updated_at: string
+          usage_count: number
+          usage_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+          usage_count?: number
+          usage_date?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+          usage_count?: number
+          usage_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       market_alerts: {
         Row: {
           created_at: string
@@ -819,6 +846,10 @@ export type Database = {
     Functions: {
       archive_old_jobs: { Args: never; Returns: number }
       can_access_job: { Args: { job_id: string }; Returns: boolean }
+      check_and_increment_linkedin_usage: {
+        Args: { p_daily_limit: number; p_user_id: string }
+        Returns: Json
+      }
       count_search_jobs: {
         Args: { expanded_terms?: string[]; search_query?: string }
         Returns: number
