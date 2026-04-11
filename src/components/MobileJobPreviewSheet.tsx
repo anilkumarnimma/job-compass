@@ -12,10 +12,10 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, BriefcaseBusiness, Linkedin } from "lucide-react";
+import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, BriefcaseBusiness } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { LinkedInConnectDialog } from "@/components/LinkedInConnectDialog";
+
 
 interface MobileJobPreviewSheetProps {
   job: Job | null;
@@ -27,7 +27,7 @@ export function MobileJobPreviewSheet({ job, open, onOpenChange }: MobileJobPrev
   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [showLinkedIn, setShowLinkedIn] = useState(false);
+  
 
   if (!job) return null;
   
@@ -175,13 +175,6 @@ export function MobileJobPreviewSheet({ job, open, onOpenChange }: MobileJobPrev
               )}
             </Button>
             <Button
-              variant="outline"
-              onClick={() => { if (!user) { navigate("/auth"); onOpenChange(false); return; } setShowLinkedIn(true); }}
-              className="h-12 px-4 text-sm font-medium rounded-xl text-[#0A66C2] border-[#0A66C2]/30 hover:bg-[#0A66C2]/10"
-            >
-              <Linkedin className="h-4 w-4" />
-            </Button>
-            <Button
               onClick={handleApplyClick}
               className={`flex-1 h-12 text-sm font-medium rounded-xl ${
                 applied 
@@ -196,13 +189,6 @@ export function MobileJobPreviewSheet({ job, open, onOpenChange }: MobileJobPrev
           </div>
         </div>
 
-        {job && (
-          <LinkedInConnectDialog
-            open={showLinkedIn}
-            onOpenChange={setShowLinkedIn}
-            job={job}
-          />
-        )}
       </SheetContent>
     </Sheet>
   );
