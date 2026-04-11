@@ -204,6 +204,12 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
         hasResume={!!(profile?.resume_intelligence as ResumeIntelligence | null)?.primaryRole}
       />
 
+      <LinkedInConnectDialog
+        open={showLinkedIn}
+        onOpenChange={setShowLinkedIn}
+        job={job}
+      />
+
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto min-h-0 p-5 overscroll-contain">
         <div className="flex flex-wrap gap-2 mb-5">
