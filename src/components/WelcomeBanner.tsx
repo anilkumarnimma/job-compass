@@ -1,7 +1,7 @@
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Linkedin } from "lucide-react";
 
 export function WelcomeBanner() {
   const { user } = useAuth();
@@ -31,6 +31,16 @@ export function WelcomeBanner() {
               Tailor your resume, run ATS checks, and apply smarter.
             </p>
           </div>
+        </div>
+
+        {/* New Feature Announcement */}
+        <div className="mt-4 pt-3 border-t border-accent/10 flex items-center gap-2 text-xs text-foreground/80">
+          <span className="px-1.5 py-0.5 rounded bg-accent/15 text-accent text-[10px] font-semibold">NEW</span>
+          <Linkedin className="h-3.5 w-3.5 text-[#0A66C2]" />
+          <span>
+            Generate LinkedIn connection messages instantly — click 
+            <span className="font-medium text-accent">"Connect on LinkedIn"</span> on any job!
+          </span>
         </div>
       </div>
     </motion.div>
