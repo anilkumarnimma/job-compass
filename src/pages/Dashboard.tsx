@@ -43,6 +43,7 @@ import { OnboardingTour } from "@/components/OnboardingTour";
 import { RoleRequestBanner } from "@/components/RoleRequestBanner";
 import { RoleRequestModal } from "@/components/RoleRequestModal";
 import { PremiumUpgradeBanner } from "@/components/PremiumUpgradeBanner";
+import { LinkedInFeatureBanner } from "@/components/LinkedInFeatureBanner";
 
 
 
@@ -361,6 +362,7 @@ export default function Dashboard() {
         <OnboardingTour />
         
         <div className="w-full max-w-[1600px] mx-auto px-4 md:px-6 py-4">
+        <LinkedInFeatureBanner />
         {/* Welcome Banner */}
         <WelcomeBanner />
         {/* Resume Upload CTA (only shown if no resume) */}
