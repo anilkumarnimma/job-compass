@@ -99,10 +99,10 @@ export default function Applied() {
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                                <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
                               </TooltipTrigger>
-                              <TooltipContent side="left" className="max-w-[220px] text-xs">
-                                <p className="font-medium mb-1">Track your application status:</p>
+                              <TooltipContent side="left" className="max-w-[240px] text-xs">
+                                <p className="font-medium mb-1">You can manually update the status to track your progress:</p>
                                 <ul className="space-y-0.5">
                                   <li><span className="font-medium">Applied</span> — You've submitted</li>
                                   <li><span className="font-medium">In Review</span> — Being reviewed</li>
