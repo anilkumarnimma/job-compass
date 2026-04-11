@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,27 +9,6 @@ import { toast } from "sonner";
 import { Copy, Check, ExternalLink, Linkedin, Sparkles, RefreshCw, Crown } from "lucide-react";
 
 const FREE_DAILY_LIMIT = 3;
-
-function getUsageKey(): string {
-  const today = new Date().toISOString().slice(0, 10);
-  return `linkedin_msg_usage_${today}`;
-}
-
-function getDailyUsage(): number {
-  try {
-    return parseInt(localStorage.getItem(getUsageKey()) || "0", 10);
-  } catch {
-    return 0;
-  }
-}
-
-function incrementUsage(): void {
-  try {
-    const key = getUsageKey();
-    const current = parseInt(localStorage.getItem(key) || "0", 10);
-    localStorage.setItem(key, String(current + 1));
-  } catch {}
-}
 
 interface LinkedInConnectDialogProps {
   open: boolean;
@@ -43,13 +22,35 @@ export function LinkedInConnectDialog({ open, onOpenChange, job }: LinkedInConne
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(false);
-  const [usageCount, setUsageCount] = useState(getDailyUsage);
+  const [remaining, setRemaining] = useState<number>(FREE_DAILY_LIMIT);
+  const [loadingUsage, setLoadingUsage] = useState(false);
 
   const isPremium = profile?.is_premium ?? false;
-  const remaining = Math.max(0, FREE_DAILY_LIMIT - usageCount);
   const isLimitReached = !isPremium && remaining <= 0;
 
   const linkedInSearchUrl = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(job.company)}&origin=GLOBAL_SEARCH_HEADER`;
+
+  // Fetch current usage from DB when dialog opens
+  useEffect(() => {
+    if (!open || isPremium) return;
+    const fetchUsage = async () => {
+      setLoadingUsage(true);
+      try {
+        const { data } = await supabase
+          .from("linkedin_message_usage")
+          .select("usage_count")
+          .eq("usage_date", new Date().toISOString().slice(0, 10))
+          .maybeSingle();
+        const used = data?.usage_count ?? 0;
+        setRemaining(Math.max(0, FREE_DAILY_LIMIT - used));
+      } catch {
+        // fallback — allow usage
+      } finally {
+        setLoadingUsage(false);
+      }
+    };
+    fetchUsage();
+  }, [open, isPremium]);
 
   const generateMessage = async () => {
     if (isLimitReached) return;
@@ -76,14 +77,22 @@ export function LinkedInConnectDialog({ open, onOpenChange, job }: LinkedInConne
       });
 
       if (error) throw error;
+
+      // Handle limit reached from server
+      if (data?.limit_reached) {
+        setRemaining(0);
+        toast.error("Daily limit reached. Upgrade to Premium for unlimited messages.");
+        return;
+      }
+
       if (data?.error) throw new Error(data.error);
 
       setMessage(data.message);
       setHasGenerated(true);
 
-      if (!isPremium) {
-        incrementUsage();
-        setUsageCount(getDailyUsage());
+      // Update remaining from server response
+      if (typeof data.remaining === "number") {
+        setRemaining(data.remaining);
       }
     } catch (err: any) {
       console.error("Failed to generate message:", err);
@@ -134,11 +143,13 @@ export function LinkedInConnectDialog({ open, onOpenChange, job }: LinkedInConne
                   : "bg-muted text-muted-foreground"
             }`}>
               <span>
-                {remaining === 0
-                  ? "Daily limit reached"
-                  : `${remaining} of ${FREE_DAILY_LIMIT} free message${remaining === 1 ? "" : "s"} left today`}
+                {loadingUsage
+                  ? "Checking usage..."
+                  : remaining === 0
+                    ? "Daily limit reached"
+                    : `${remaining} of ${FREE_DAILY_LIMIT} free message${remaining === 1 ? "" : "s"} left today`}
               </span>
-              {remaining <= 1 && (
+              {remaining <= 1 && !loadingUsage && (
                 <button
                   onClick={() => window.open("/profile", "_self")}
                   className="flex items-center gap-1 font-semibold text-accent hover:underline"
@@ -182,7 +193,7 @@ export function LinkedInConnectDialog({ open, onOpenChange, job }: LinkedInConne
             ) : !hasGenerated ? (
               <Button
                 onClick={generateMessage}
-                disabled={isGenerating}
+                disabled={isGenerating || loadingUsage}
                 className="w-full bg-[#0A66C2] hover:bg-[#004182] text-white"
               >
                 {isGenerating ? (
