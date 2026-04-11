@@ -31,6 +31,7 @@ export function WelcomeBanner() {
               Tailor your resume, run ATS checks, and apply smarter.
             </p>
           </div>
+        </div>
       </div>
     </motion.div>
   );
