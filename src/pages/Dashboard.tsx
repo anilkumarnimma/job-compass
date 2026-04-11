@@ -30,6 +30,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { JobMatchesPanel } from "@/components/JobMatchesPanel";
 
 import { WelcomeBanner } from "@/components/WelcomeBanner";
+import { LinkedInFeatureAnnouncementInline } from "@/components/LinkedInFeatureAnnouncementInline";
 import { ResumeUploadBanner } from "@/components/ResumeUploadBanner";
 import { VisaFilterPills } from "@/components/VisaFilterPills";
 import { VisaFilter } from "@/lib/visaSponsorship";
@@ -365,6 +366,8 @@ export default function Dashboard() {
         <LinkedInFeatureBanner />
         {/* Welcome Banner */}
         <WelcomeBanner />
+        {/* LinkedIn Feature Inline Announcement */}
+        <LinkedInFeatureAnnouncementInline />
         {/* Resume Upload CTA (only shown if no resume) */}
         <ResumeUploadBanner />
 
