@@ -130,7 +130,7 @@ export function enrichJobSkills(job: Job): string[] {
 /** Extract salary from description if not already set */
 export function extractSalary(job: Job): string | null {
   if (job.salary_range) {
-    if (/nan/i.test(job.salary_range)) return null;
+    if (/nan/i.test(job.salary_range) || /none/i.test(job.salary_range)) return null;
     return job.salary_range;
   }
   if (!job.description) return null;
