@@ -1,6 +1,6 @@
 import { Linkedin } from "lucide-react";
 
-export function LinkedInFeatureAnnouncement() {
+export function LinkedInFeatureAnnouncementInline() {
   return (
     <div className="flex items-center gap-2 text-xs text-foreground/80">
       <span className="px-1.5 py-0.5 rounded bg-accent/15 text-accent text-[10px] font-semibold">NEW</span>
