@@ -1,10 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const FREE_DAILY_LIMIT = 3;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -14,6 +17,32 @@ serve(async (req) => {
   try {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    // Validate user auth
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Not authenticated" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    // Get the user from the JWT
+    const anonClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: userError } = await anonClient.auth.getUser();
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Invalid authentication" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const {
       job_title,
@@ -36,7 +65,29 @@ serve(async (req) => {
       );
     }
 
-    // Build a rich context block for the AI
+    // Check and increment usage atomically (server-side enforcement)
+    const { data: usageResult, error: usageError } = await supabase.rpc(
+      "check_and_increment_linkedin_usage",
+      { p_user_id: user.id, p_daily_limit: FREE_DAILY_LIMIT }
+    );
+
+    if (usageError) {
+      console.error("Usage check error:", usageError);
+      throw new Error("Failed to check usage limits");
+    }
+
+    if (!usageResult.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: "Daily limit reached. Upgrade to Premium for unlimited messages.",
+          limit_reached: true,
+          remaining: 0,
+        }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Build rich context for the AI
     const profileParts: string[] = [];
     if (user_name) profileParts.push(`Name: ${user_name}`);
     if (user_title) profileParts.push(`Current role: ${user_title}`);
@@ -75,7 +126,7 @@ serve(async (req) => {
       job_description ? `Job summary: ${job_description.slice(0, 300)}` : "",
     ].filter(Boolean).join("\n");
 
-    // Find overlapping skills for the AI to highlight
+    // Find overlapping skills
     const overlappingSkills: string[] = [];
     if (user_skills?.length && job_skills?.length) {
       const userSkillsLower = new Set(user_skills.map((s: string) => s.toLowerCase()));
@@ -143,14 +194,16 @@ ${jobContext}${profileContext}${overlapHint}`;
 
     const data = await response.json();
     let message = data.choices?.[0]?.message?.content?.trim();
-
     if (!message) throw new Error("No message generated");
 
-    // Clean up any stray quotes
     message = message.replace(/^["']|["']$/g, "");
 
     return new Response(
-      JSON.stringify({ message }),
+      JSON.stringify({
+        message,
+        remaining: usageResult.remaining,
+        is_premium: usageResult.is_premium,
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
