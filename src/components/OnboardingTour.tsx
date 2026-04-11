@@ -165,7 +165,10 @@ export function OnboardingTour() {
       cleanupRef.current = () => clearTimeout(t);
     };
     window.addEventListener("linkedin-banner-dismissed", handler);
-    return () => window.removeEventListener("linkedin-banner-dismissed", handler);
+    return () => {
+      window.removeEventListener("linkedin-banner-dismissed", handler);
+      cleanupRef.current?.();
+    };
   }, [storageKey, user]);
 
   // Position the tooltip relative to the target element
