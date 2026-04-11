@@ -141,6 +141,7 @@ export function OnboardingTour() {
   const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number; arrowSide: string } | null>(null);
   const [highlightRect, setHighlightRect] = useState<DOMRect | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
 
   const storageKey = user ? `${TOUR_STORAGE_KEY}_${user.id}` : TOUR_STORAGE_KEY;
 
