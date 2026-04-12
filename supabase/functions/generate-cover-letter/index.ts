@@ -110,18 +110,20 @@ Write a cover letter that powerfully connects this applicant's background to the
 
     if (!aiResp.ok) {
       if (aiResp.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        return new Response(JSON.stringify({ error: "AI service is busy. Please try again in a moment." }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (aiResp.status === 402) {
-        return new Response(JSON.stringify({ error: "AI service credits exhausted." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        return new Response(JSON.stringify({ error: "AI service is temporarily unavailable. Please try again later." }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const errText = await aiResp.text();
       console.error("AI error:", aiResp.status, errText);
-      throw new Error("AI generation failed");
+      return new Response(JSON.stringify({ error: "Cover letter generation failed. Please try again." }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const aiData = await aiResp.json();
