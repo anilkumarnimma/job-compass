@@ -225,11 +225,11 @@ IMPORTANT REMINDER: Copy every company name, job title, date, education detail, 
 
         if (response.status === 429) {
           console.log("[TAILOR] Rate limited");
-          return new Response(JSON.stringify({ error: "Rate limited, please try again shortly." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          return new Response(JSON.stringify({ error: "AI service is busy. Please try again in a moment." }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
         if (response.status === 402) {
           console.log("[TAILOR] Credits exhausted");
-          return new Response(JSON.stringify({ error: "Credits exhausted. Please add funds." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          return new Response(JSON.stringify({ error: "AI service is temporarily unavailable. Please try again later." }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
 
         if (response.ok) {
