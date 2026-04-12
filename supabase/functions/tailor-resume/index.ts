@@ -107,7 +107,7 @@ PROFESSIONAL SUMMARY REQUIREMENT (CRITICAL):
 - The summary must truthfully reflect the candidate's actual experience from the resume — do NOT fabricate claims.
 
 BULLET POINT DEPTH REQUIREMENT (CRITICAL):
-- Every experience/work role MUST have exactly 6-7 bullet points. No fewer than 6.
+- Every experience/work role MUST have exactly 9-10 bullet points. No fewer than 9.
 - Each bullet must start with a strong action verb.
 - Each bullet must be technically detailed, mentioning specific technologies, tools, frameworks, or methodologies relevant to the target job.
 - Each bullet must demonstrate impact, scale, or measurable contribution.
