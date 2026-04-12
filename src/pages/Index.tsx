@@ -315,6 +315,9 @@ export default function Index() {
       {/* About Section */}
       <AboutSection />
 
+      {/* Pricing Section */}
+      <PricingSection />
+
       {/* Hiring Signals Section */}
       <section className="py-20 border-y border-border/30">
         <div className="container max-w-6xl mx-auto px-4">
