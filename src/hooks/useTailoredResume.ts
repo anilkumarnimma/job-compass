@@ -159,8 +159,13 @@ export function useTailoredResume() {
         body: params,
       });
 
-      if (error) throw new Error(error.message);
+      if (error) {
+        // Try to extract a meaningful message from FunctionsHttpError
+        const msg = typeof error === "object" && "message" in error ? error.message : String(error);
+        throw new Error(msg || "Failed to generate tailored resume");
+      }
       if (data?.error) throw new Error(data.error);
+      if (!data?.header || !data?.sections) throw new Error("Incomplete resume returned. Please try again.");
 
       const tailored = data as TailoredResumeData;
       cache.current.set(cacheKey, tailored);
