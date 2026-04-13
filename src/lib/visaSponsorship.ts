@@ -42,7 +42,6 @@ const SPONSOR_POSITIVE = [
 
 const SPONSOR_OPT = [
   "opt", "optional practical training", "opt friendly", "opt eligible",
-  "recent graduates", "new grad",
 ];
 
 const SPONSOR_STEM_OPT = [
