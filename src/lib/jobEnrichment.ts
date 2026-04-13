@@ -200,8 +200,9 @@ export function spreadSimilarJobs(jobs: Job[]): Job[] {
 
 import { shouldExcludeJob, isNonEntryLevelJob } from "@/lib/jobFilters";
 import { getBestLocation } from "@/lib/locationExtractor";
+import { isUSALocation } from "@/lib/usaLocationFilter";
 
-/** Enrich a list of jobs: skills, salary, location, and ordering */
+/** Enrich a list of jobs: skills, salary, location, USA filter, and ordering */
 export function enrichJobList(jobs: Job[], entryLevelOnly = false): Job[] {
   let filtered = jobs.filter(job => !shouldExcludeJob(job));
   if (entryLevelOnly) {
@@ -213,6 +214,8 @@ export function enrichJobList(jobs: Job[], entryLevelOnly = false): Job[] {
     salary_range: extractSalary(job),
     location: getBestLocation(job.location, job.description),
   }));
-  const sorted = sortByRecency(enriched);
+  // USA-only filter: reject any job whose resolved location is non-US
+  const usaOnly = enriched.filter(job => isUSALocation(job.location));
+  const sorted = sortByRecency(usaOnly);
   return spreadSimilarJobs(sorted);
 }
