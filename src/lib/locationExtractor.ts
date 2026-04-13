@@ -31,31 +31,6 @@ const MAJOR_CITIES = [
   'Salt Lake City', 'San Antonio', 'Arlington', 'Irvine', 'Plano',
   'Redmond', 'Cupertino', 'Mountain View', 'Palo Alto', 'Sunnyvale',
   'Washington', 'McLean', 'Tysons', 'Herndon', 'Reston', 'Richmond',
-  // International cities
-  'London', 'Manchester', 'Edinburgh', 'Cambridge', 'Oxford', 'Bristol',
-  'Toronto', 'Vancouver', 'Montreal', 'Ottawa', 'Calgary',
-  'Berlin', 'Munich', 'Hamburg', 'Frankfurt', 'Stuttgart',
-  'Paris', 'Lyon', 'Marseille',
-  'Amsterdam', 'Rotterdam', 'Dublin', 'Stockholm', 'Copenhagen', 'Oslo', 'Helsinki',
-  'Zurich', 'Geneva', 'Vienna', 'Brussels', 'Lisbon', 'Madrid', 'Barcelona',
-  'Milan', 'Rome', 'Prague', 'Warsaw', 'Budapest', 'Bucharest',
-  'Tokyo', 'Osaka', 'Seoul', 'Singapore', 'Hong Kong', 'Shanghai', 'Beijing',
-  'Bangalore', 'Hyderabad', 'Mumbai', 'Delhi', 'Pune', 'Chennai', 'Kolkata', 'Noida', 'Gurugram',
-  'Sydney', 'Melbourne', 'Brisbane', 'Auckland',
-  'Tel Aviv', 'Dubai', 'Abu Dhabi',
-  'São Paulo', 'Mexico City', 'Buenos Aires', 'Bogota', 'Santiago',
-  'Cape Town', 'Johannesburg', 'Nairobi', 'Lagos',
-  'Taipei', 'Bangkok', 'Jakarta', 'Kuala Lumpur', 'Manila',
-];
-
-// International country names for location extraction
-const COUNTRIES = [
-  'United States', 'United Kingdom', 'Canada', 'Germany', 'France', 'Netherlands',
-  'India', 'Japan', 'China', 'South Korea', 'Singapore', 'Australia', 'New Zealand',
-  'Ireland', 'Sweden', 'Norway', 'Denmark', 'Finland', 'Switzerland', 'Austria',
-  'Belgium', 'Spain', 'Italy', 'Portugal', 'Poland', 'Czech Republic', 'Israel',
-  'UAE', 'Brazil', 'Mexico', 'Argentina', 'Colombia', 'Taiwan', 'Thailand',
-  'Philippines', 'Indonesia', 'Malaysia', 'Vietnam', 'South Africa', 'Nigeria',
 ];
 
 /**
