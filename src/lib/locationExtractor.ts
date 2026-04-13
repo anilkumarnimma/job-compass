@@ -162,13 +162,11 @@ export function extractLocationFromDescription(description: string): string | nu
     }
   }
 
-  // Pattern 5: Remote indicators
+  // Pattern 4: Remote indicators — only US remote
   const remotePattern = /\b(remote|work from home|wfh|telecommute|fully remote|hybrid remote)\b/i;
   const remoteMatch = text.match(remotePattern);
   if (remoteMatch) {
-    const remoteUsPattern = /\bremote\s*[-–—]?\s*(?:US|USA|United States)\b/i;
-    if (remoteUsPattern.test(text)) return 'Remote - US';
-    return 'Remote';
+    return 'Remote - US';
   }
 
   return null;
