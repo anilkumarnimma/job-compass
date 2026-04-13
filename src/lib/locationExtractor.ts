@@ -31,31 +31,6 @@ const MAJOR_CITIES = [
   'Salt Lake City', 'San Antonio', 'Arlington', 'Irvine', 'Plano',
   'Redmond', 'Cupertino', 'Mountain View', 'Palo Alto', 'Sunnyvale',
   'Washington', 'McLean', 'Tysons', 'Herndon', 'Reston', 'Richmond',
-  // International cities
-  'London', 'Manchester', 'Edinburgh', 'Cambridge', 'Oxford', 'Bristol',
-  'Toronto', 'Vancouver', 'Montreal', 'Ottawa', 'Calgary',
-  'Berlin', 'Munich', 'Hamburg', 'Frankfurt', 'Stuttgart',
-  'Paris', 'Lyon', 'Marseille',
-  'Amsterdam', 'Rotterdam', 'Dublin', 'Stockholm', 'Copenhagen', 'Oslo', 'Helsinki',
-  'Zurich', 'Geneva', 'Vienna', 'Brussels', 'Lisbon', 'Madrid', 'Barcelona',
-  'Milan', 'Rome', 'Prague', 'Warsaw', 'Budapest', 'Bucharest',
-  'Tokyo', 'Osaka', 'Seoul', 'Singapore', 'Hong Kong', 'Shanghai', 'Beijing',
-  'Bangalore', 'Hyderabad', 'Mumbai', 'Delhi', 'Pune', 'Chennai', 'Kolkata', 'Noida', 'Gurugram',
-  'Sydney', 'Melbourne', 'Brisbane', 'Auckland',
-  'Tel Aviv', 'Dubai', 'Abu Dhabi',
-  'São Paulo', 'Mexico City', 'Buenos Aires', 'Bogota', 'Santiago',
-  'Cape Town', 'Johannesburg', 'Nairobi', 'Lagos',
-  'Taipei', 'Bangkok', 'Jakarta', 'Kuala Lumpur', 'Manila',
-];
-
-// International country names for location extraction
-const COUNTRIES = [
-  'United States', 'United Kingdom', 'Canada', 'Germany', 'France', 'Netherlands',
-  'India', 'Japan', 'China', 'South Korea', 'Singapore', 'Australia', 'New Zealand',
-  'Ireland', 'Sweden', 'Norway', 'Denmark', 'Finland', 'Switzerland', 'Austria',
-  'Belgium', 'Spain', 'Italy', 'Portugal', 'Poland', 'Czech Republic', 'Israel',
-  'UAE', 'Brazil', 'Mexico', 'Argentina', 'Colombia', 'Taiwan', 'Thailand',
-  'Philippines', 'Indonesia', 'Malaysia', 'Vietnam', 'South Africa', 'Nigeria',
 ];
 
 /**
@@ -173,48 +148,25 @@ export function extractLocationFromDescription(description: string): string | nu
     }
   }
 
-  // Pattern 3: "City, Country" format for international jobs
-  for (const country of COUNTRIES) {
-    const countryRegex = new RegExp(`([A-Z][a-zA-Z\\s]+),\\s*${country.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
-    const countryMatch = text.match(countryRegex);
-    if (countryMatch) {
-      const city = countryMatch[1].trim();
-      if (city.length >= 3 && city.length <= 40 && !containsTrackingCode(city)) {
-        return `${city}, ${country}`;
-      }
-    }
-  }
-
-  // Pattern 4: Known major city names
+  // Pattern 3: Known major US city names
   for (const city of MAJOR_CITIES) {
     const cityRegex = new RegExp(`\\b${city.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
     if (cityRegex.test(text)) {
-      // Try to find the state/country after the city
-      const afterCity = new RegExp(`\\b${city.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')},?\\s*([A-Z][a-zA-Z\\s]+?)(?:\\.|,|;|\\n|$)`, 'i');
+      // Try to find the state after the city
+      const afterCity = new RegExp(`\\b${city.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')},?\\s*([A-Z]{2})\\b`, 'i');
       const afterMatch = text.match(afterCity);
-      if (afterMatch) {
-        const suffix = afterMatch[1].trim();
-        // Check if it's a US state abbreviation
-        if (/^[A-Z]{2}$/.test(suffix) && STATE_ABBREVS.has(suffix)) {
-          return `${city}, ${suffix}`;
-        }
-        // Check if it's a country name
-        const matchedCountry = COUNTRIES.find(c => c.toLowerCase() === suffix.toLowerCase());
-        if (matchedCountry) {
-          return `${city}, ${matchedCountry}`;
-        }
+      if (afterMatch && STATE_ABBREVS.has(afterMatch[1].toUpperCase())) {
+        return `${city}, ${afterMatch[1].toUpperCase()}`;
       }
       return city;
     }
   }
 
-  // Pattern 5: Remote indicators
+  // Pattern 4: Remote indicators — only US remote
   const remotePattern = /\b(remote|work from home|wfh|telecommute|fully remote|hybrid remote)\b/i;
   const remoteMatch = text.match(remotePattern);
   if (remoteMatch) {
-    const remoteUsPattern = /\bremote\s*[-–—]?\s*(?:US|USA|United States)\b/i;
-    if (remoteUsPattern.test(text)) return 'Remote - US';
-    return 'Remote';
+    return 'Remote - US';
   }
 
   return null;
