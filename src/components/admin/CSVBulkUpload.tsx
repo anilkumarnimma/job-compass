@@ -659,9 +659,11 @@ export function CSVBulkUpload({ onComplete }: CSVBulkUploadProps) {
       ) : (
         <div className="space-y-4">
           {/* File info */}
-          <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg flex-wrap">
             <FileSpreadsheet className="h-5 w-5 text-muted-foreground" />
-            <span className="text-sm font-medium text-foreground">{fileName}</span>
+            <span className="text-sm font-medium text-foreground">
+              {fileNames.length === 1 ? fileNames[0] : `${fileNames.length} files: ${fileNames.join(", ")}`}
+            </span>
           </div>
 
           {/* Summary */}
