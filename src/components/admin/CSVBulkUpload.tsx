@@ -414,7 +414,7 @@ interface CSVBulkUploadProps {
 
 export function CSVBulkUpload({ onComplete }: CSVBulkUploadProps) {
   const [parseResult, setParseResult] = useState<ParseResult | null>(null);
-  const [fileName, setFileName] = useState<string | null>(null);
+  const [fileNames, setFileNames] = useState<string[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadSummary, setUploadSummary] = useState<UploadSummary | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
