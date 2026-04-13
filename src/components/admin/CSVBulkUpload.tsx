@@ -414,7 +414,7 @@ interface CSVBulkUploadProps {
 
 export function CSVBulkUpload({ onComplete }: CSVBulkUploadProps) {
   const [parseResult, setParseResult] = useState<ParseResult | null>(null);
-  const [fileName, setFileName] = useState<string | null>(null);
+  const [fileNames, setFileNames] = useState<string[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadSummary, setUploadSummary] = useState<UploadSummary | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -534,24 +534,38 @@ export function CSVBulkUpload({ onComplete }: CSVBulkUploadProps) {
   });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    setFileName(file.name);
+    setFileNames(Array.from(files).map(f => f.name));
     setUploadSummary(null);
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      const result = parseCSV(text);
-      setParseResult(result);
-    };
-    reader.readAsText(file);
+    const allValid: CSVJob[] = [];
+    const allErrors: { row: number; message: string }[] = [];
+    let filesRead = 0;
+
+    Array.from(files).forEach((file, fileIndex) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const text = event.target?.result as string;
+        const result = parseCSV(text);
+        // Prefix errors with file name for clarity
+        for (const err of result.errors) {
+          allErrors.push({ row: err.row, message: `[${file.name}] ${err.message}` });
+        }
+        allValid.push(...result.valid);
+        filesRead++;
+        if (filesRead === files.length) {
+          setParseResult({ valid: allValid, errors: allErrors });
+        }
+      };
+      reader.readAsText(file);
+    });
   };
 
   const reset = () => {
     setParseResult(null);
-    setFileName(null);
+    setFileNames([]);
     setUploadProgress(0);
     setUploadSummary(null);
     if (fileInputRef.current) {
@@ -616,12 +630,13 @@ export function CSVBulkUpload({ onComplete }: CSVBulkUploadProps) {
             ref={fileInputRef}
             type="file"
             accept=".csv"
+            multiple
             onChange={handleFileChange}
             className="hidden"
           />
           <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
           <p className="text-sm text-muted-foreground mb-4">
-            Drag and drop a CSV file, or click to browse
+            Select one or multiple CSV files to upload
           </p>
           <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
             Choose File
@@ -644,9 +659,11 @@ export function CSVBulkUpload({ onComplete }: CSVBulkUploadProps) {
       ) : (
         <div className="space-y-4">
           {/* File info */}
-          <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg flex-wrap">
             <FileSpreadsheet className="h-5 w-5 text-muted-foreground" />
-            <span className="text-sm font-medium text-foreground">{fileName}</span>
+            <span className="text-sm font-medium text-foreground">
+              {fileNames.length === 1 ? fileNames[0] : `${fileNames.length} files: ${fileNames.join(", ")}`}
+            </span>
           </div>
 
           {/* Summary */}
