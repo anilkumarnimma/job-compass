@@ -209,7 +209,7 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
             ✅ {visaResult.label}
           </span>
         )}
-        {job.location && !/nan/i.test(job.location) && !/not specified/i.test(job.location) && job.location.trim() !== '' && (
+        {job.location && !/nan/i.test(job.location) && !/not specified/i.test(job.location) && job.location.trim() !== '' && job.location.length < 100 && !/document\.|window\.|dispatchEvent|analytics/i.test(job.location) && (
           <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${getLocationBadge()}`}>
             <MapPin className="h-3.5 w-3.5" />
             {job.location}
