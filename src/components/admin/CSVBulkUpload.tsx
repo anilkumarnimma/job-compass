@@ -630,6 +630,7 @@ export function CSVBulkUpload({ onComplete }: CSVBulkUploadProps) {
             ref={fileInputRef}
             type="file"
             accept=".csv"
+            multiple
             onChange={handleFileChange}
             className="hidden"
           />
