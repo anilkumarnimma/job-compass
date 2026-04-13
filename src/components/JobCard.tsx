@@ -158,6 +158,12 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
                 {job.company}
               </p>
               <p className="text-muted-foreground text-xs flex items-center gap-1 mt-0.5">
+                <MapPin className="h-3 w-3" />
+                {job.location && !/nan/i.test(job.location) && !/not specified/i.test(job.location) 
+                  ? job.location.split(',')[0] 
+                  : 'Location not specified'}
+              </p>
+              <p className="text-muted-foreground text-xs flex items-center gap-1 mt-0.5">
                 <Clock className="h-3 w-3" />
                 {formatDistanceToNow(job.posted_date, { addSuffix: true })}
               </p>
