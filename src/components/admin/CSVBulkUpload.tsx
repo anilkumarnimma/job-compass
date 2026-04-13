@@ -565,7 +565,7 @@ export function CSVBulkUpload({ onComplete }: CSVBulkUploadProps) {
 
   const reset = () => {
     setParseResult(null);
-    setFileName(null);
+    setFileNames([]);
     setUploadProgress(0);
     setUploadSummary(null);
     if (fileInputRef.current) {
