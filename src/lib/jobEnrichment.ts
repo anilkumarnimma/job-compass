@@ -199,8 +199,9 @@ export function spreadSimilarJobs(jobs: Job[]): Job[] {
 }
 
 import { shouldExcludeJob, isNonEntryLevelJob } from "@/lib/jobFilters";
+import { getBestLocation } from "@/lib/locationExtractor";
 
-/** Enrich a list of jobs: skills, salary, source ranking, and ordering */
+/** Enrich a list of jobs: skills, salary, location, and ordering */
 export function enrichJobList(jobs: Job[], entryLevelOnly = false): Job[] {
   let filtered = jobs.filter(job => !shouldExcludeJob(job));
   if (entryLevelOnly) {
@@ -210,6 +211,7 @@ export function enrichJobList(jobs: Job[], entryLevelOnly = false): Job[] {
     ...job,
     skills: enrichJobSkills(job),
     salary_range: extractSalary(job),
+    location: getBestLocation(job.location, job.description),
   }));
   const sorted = sortByRecency(enriched);
   return spreadSimilarJobs(sorted);
