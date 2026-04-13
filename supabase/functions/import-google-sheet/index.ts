@@ -552,6 +552,12 @@ Deno.serve(async (req) => {
             result.errors.push({ row: rowNum, message: 'Invalid apply_link URL' });
             continue;
           }
+          // USA-only filter
+          const jobLocation = row.location?.trim() || '';
+          if (!isUSALocation(jobLocation)) {
+            result.errors.push({ row: rowNum, message: `Non-USA location rejected: "${jobLocation}"` });
+            continue;
+          }
           if (!row.posted_date?.trim()) {
             result.errors.push({ row: rowNum, message: 'Missing posted_date' });
             continue;
