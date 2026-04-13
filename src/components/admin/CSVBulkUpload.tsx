@@ -534,19 +534,33 @@ export function CSVBulkUpload({ onComplete }: CSVBulkUploadProps) {
   });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    setFileName(file.name);
+    setFileNames(Array.from(files).map(f => f.name));
     setUploadSummary(null);
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      const result = parseCSV(text);
-      setParseResult(result);
-    };
-    reader.readAsText(file);
+    const allValid: CSVJob[] = [];
+    const allErrors: { row: number; message: string }[] = [];
+    let filesRead = 0;
+
+    Array.from(files).forEach((file, fileIndex) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const text = event.target?.result as string;
+        const result = parseCSV(text);
+        // Prefix errors with file name for clarity
+        for (const err of result.errors) {
+          allErrors.push({ row: err.row, message: `[${file.name}] ${err.message}` });
+        }
+        allValid.push(...result.valid);
+        filesRead++;
+        if (filesRead === files.length) {
+          setParseResult({ valid: allValid, errors: allErrors });
+        }
+      };
+      reader.readAsText(file);
+    });
   };
 
   const reset = () => {
