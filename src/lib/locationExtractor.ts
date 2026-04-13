@@ -148,36 +148,15 @@ export function extractLocationFromDescription(description: string): string | nu
     }
   }
 
-  // Pattern 3: "City, Country" format for international jobs
-  for (const country of COUNTRIES) {
-    const countryRegex = new RegExp(`([A-Z][a-zA-Z\\s]+),\\s*${country.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
-    const countryMatch = text.match(countryRegex);
-    if (countryMatch) {
-      const city = countryMatch[1].trim();
-      if (city.length >= 3 && city.length <= 40 && !containsTrackingCode(city)) {
-        return `${city}, ${country}`;
-      }
-    }
-  }
-
-  // Pattern 4: Known major city names
+  // Pattern 3: Known major US city names
   for (const city of MAJOR_CITIES) {
     const cityRegex = new RegExp(`\\b${city.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
     if (cityRegex.test(text)) {
-      // Try to find the state/country after the city
-      const afterCity = new RegExp(`\\b${city.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')},?\\s*([A-Z][a-zA-Z\\s]+?)(?:\\.|,|;|\\n|$)`, 'i');
+      // Try to find the state after the city
+      const afterCity = new RegExp(`\\b${city.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')},?\\s*([A-Z]{2})\\b`, 'i');
       const afterMatch = text.match(afterCity);
-      if (afterMatch) {
-        const suffix = afterMatch[1].trim();
-        // Check if it's a US state abbreviation
-        if (/^[A-Z]{2}$/.test(suffix) && STATE_ABBREVS.has(suffix)) {
-          return `${city}, ${suffix}`;
-        }
-        // Check if it's a country name
-        const matchedCountry = COUNTRIES.find(c => c.toLowerCase() === suffix.toLowerCase());
-        if (matchedCountry) {
-          return `${city}, ${matchedCountry}`;
-        }
+      if (afterMatch && STATE_ABBREVS.has(afterMatch[1].toUpperCase())) {
+        return `${city}, ${afterMatch[1].toUpperCase()}`;
       }
       return city;
     }
