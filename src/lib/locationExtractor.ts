@@ -139,8 +139,18 @@ function salvageFromContaminatedLocation(location: string): string | null {
 export function extractLocationFromDescription(description: string): string | null {
   if (!description || description.length < 20) return null;
 
-  // Take first ~3000 chars (location is usually near the top)
-  const text = description.slice(0, 3000);
+  // Scan more of the description - locations can appear deep in the text
+  const text = description.slice(0, 6000);
+
+  // Pattern 0: "based at/in [Place] headquarters in City, ST" or "team is based in City, ST"
+  const basedInPattern = /(?:based (?:at|in)|headquartered in|offices? in|located in)\s+(?:\w+\s+)*?(?:headquarters\s+in\s+)?([A-Z][a-z]+(?:\s[A-Z][a-z]+)*),\s*([A-Z]{2})\b/g;
+  let basedMatch;
+  while ((basedMatch = basedInPattern.exec(text)) !== null) {
+    const [, city, state] = basedMatch;
+    if (STATE_ABBREVS.has(state) && city.length > 1) {
+      return `${city}, ${state}`;
+    }
+  }
 
   // Pattern 1: "Location: City, Country" or "Location: City, State" labels
   const locationLabelPattern = /(?:location|based in|office in|headquartered in|located in|work location|job location)[:\s]+([A-Z][a-zA-Z\s,]+?)(?:\.|;|\n|$)/im;
