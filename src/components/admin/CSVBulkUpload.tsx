@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Upload, FileSpreadsheet, X, CheckCircle2, AlertCircle, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRemoveDuplicates } from "@/hooks/useRemoveDuplicates";
-import { isUSALocation } from "@/lib/usaLocationFilter";
+
 
 
 interface CSVJob {
@@ -389,11 +389,6 @@ function parseCSV(text: string): ParseResult {
       continue;
     }
 
-    // USA-only filter
-    if (!isUSALocation(row.location)) {
-      errors.push({ row: i + 1, message: `Non-USA location rejected: "${row.location}"` });
-      continue;
-    }
 
     valid.push({
       title: row.title,
