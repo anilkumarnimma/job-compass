@@ -636,7 +636,7 @@ export function CSVBulkUpload({ onComplete }: CSVBulkUploadProps) {
           />
           <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
           <p className="text-sm text-muted-foreground mb-4">
-            Drag and drop a CSV file, or click to browse
+            Select one or multiple CSV files to upload
           </p>
           <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
             Choose File
