@@ -203,12 +203,14 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
             ✅ {visaResult.label}
           </span>
         )}
-        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${getLocationBadge()}`}>
-          <MapPin className="h-3.5 w-3.5" />
-          {job.location}
-        </span>
+        {job.location && !/nan/i.test(job.location) && !/not specified/i.test(job.location) && job.location.trim() !== '' && (
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${getLocationBadge()}`}>
+            <MapPin className="h-3.5 w-3.5" />
+            {job.location}
+          </span>
+        )}
 
-        {job.salary_range && !/nan/i.test(job.salary_range) && !/none/i.test(job.salary_range) && (
+        {job.salary_range && !/nan/i.test(job.salary_range) && !/none/i.test(job.salary_range) && !/not specified/i.test(job.salary_range) && (
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-xs font-semibold">
             <DollarSign className="h-3.5 w-3.5" />
             {job.salary_range}
