@@ -599,7 +599,7 @@ export default function Dashboard() {
                   >
                     <X className="h-4 w-4" />
                   </button>
-                  <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-thin">
+                  <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-thin">
                     <JobPreviewPanel job={selectedJob} matchResult={matchResults.get(selectedJob.id)} landingProbability={landingResults.get(selectedJob.id)} />
                   </div>
                 </motion.div>

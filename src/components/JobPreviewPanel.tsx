@@ -81,8 +81,8 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0">
-      {/* Sticky Header */}
+    <div className="flex flex-col">
+      {/* Header */}
       <div className="p-5 border-b border-border/50 shrink-0 bg-card/90 backdrop-blur-sm sticky top-0 z-10">
         <div className="flex items-start gap-4 mb-3">
           <CompanyLogo
@@ -197,8 +197,8 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
       />
 
 
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto min-h-0 p-5 overscroll-contain">
+      {/* Content */}
+      <div className="p-5">
         <div className="flex flex-wrap gap-2 mb-5">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-chip-bg text-xs text-muted-foreground">
             <MapPin className="h-3.5 w-3.5" />
