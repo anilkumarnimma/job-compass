@@ -23,6 +23,7 @@ import {
 import { HiringGraphManager } from "@/components/founder/HiringGraphManager";
 import { MarketAlertManager } from "@/components/founder/MarketAlertManager";
 import { EmailNotificationManager } from "@/components/founder/EmailNotificationManager";
+import { ManualPremiumManager } from "@/components/founder/ManualPremiumManager";
 import {
   Pagination,
   PaginationContent,
