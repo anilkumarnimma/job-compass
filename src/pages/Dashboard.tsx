@@ -372,19 +372,19 @@ export default function Dashboard() {
         {/* Resume Upload CTA (only shown if no resume) */}
         <ResumeUploadBanner />
 
-        {/* Auto Apply Coming Soon Banner */}
-        <AutoApplyBanner />
-
         {/* Header + Search + Filters (above columns) */}
         <div className="mb-4">
           <div className="flex items-start justify-between mb-4">
-            <div>
-              <h1 className="font-display text-2xl md:text-3xl font-semibold tracking-tight text-foreground mb-1">
-                Job Board
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">{totalCount.toLocaleString()}</span> job{totalCount !== 1 ? 's' : ''} available
-              </p>
+            <div className="flex items-center gap-3">
+              <div>
+                <h1 className="font-display text-2xl md:text-3xl font-semibold tracking-tight text-foreground mb-1">
+                  Job Board
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground">{totalCount.toLocaleString()}</span> job{totalCount !== 1 ? 's' : ''} available
+                </p>
+              </div>
+              <AutoApplyBanner />
             </div>
             
           </div>
