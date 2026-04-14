@@ -485,7 +485,7 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
         setScoringNew(false);
       }).catch(() => setScoringNew(false));
     }
-  }, [result, newScore, scoringNew, job, isRegenerating]);
+  }, [result, newScore, scoringNew, job, isRegenerating, oldScore]);
 
   // Single retry when score decreases
   const retryAttempted = useRef(false);
