@@ -186,8 +186,8 @@ export function ManualPremiumManager() {
   return (
     <Card className="p-6">
       <div className="flex items-center gap-3 mb-6">
-        <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center">
-          <Gift className="h-5 w-5 text-amber-500" />
+        <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+          <Gift className="h-5 w-5 text-primary" />
         </div>
         <div>
           <h2 className="text-lg font-semibold text-foreground">Manual Premium Grants</h2>
