@@ -238,7 +238,11 @@ function ScoreHero({
         </div>
 
         <div className="flex flex-col items-center gap-0.5 px-3">
-          <ArrowUpRight className="h-5 w-5 text-success" />
+          {improvement != null && improvement > 0 ? (
+            <ArrowUpRight className="h-5 w-5 text-success" />
+          ) : (
+            <ArrowUpRight className="h-5 w-5 text-muted-foreground/40" />
+          )}
         </div>
 
         <div className="text-center">
