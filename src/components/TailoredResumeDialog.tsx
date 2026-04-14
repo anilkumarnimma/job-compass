@@ -266,8 +266,8 @@ function ScoreHero({
         <p className="text-center text-sm font-medium text-foreground">
           {improvement > 0 ? (
             <>
-              <ChevronUp className="inline h-4 w-4 text-green-500 -mt-0.5" />
-              <span className="text-green-500">Your resume improved by +{improvement} points</span> for this job
+              <ChevronUp className="inline h-4 w-4 text-success -mt-0.5" />
+              <span className="text-success">Your resume improved by +{improvement} points</span> for this job
             </>
           ) : improvement === 0 ? (
             "Your resume is already well-optimized for this job"
