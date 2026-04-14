@@ -43,7 +43,8 @@ serve(async (req) => {
       });
     }
 
-    const { job_title, job_description, job_skills, resume_intelligence, resume_text, base_resume } = body;
+    const { job_title, job_description, job_skills, resume_intelligence, resume_text, base_resume, regeneration_round } = body;
+    const round = typeof regeneration_round === "number" ? regeneration_round : 1;
 
     if (!job_title) {
       console.log("[TAILOR] Missing job_title");
