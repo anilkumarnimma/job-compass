@@ -238,7 +238,11 @@ function ScoreHero({
         </div>
 
         <div className="flex flex-col items-center gap-0.5 px-3">
-          <ArrowUpRight className="h-5 w-5 text-success" />
+          {improvement != null && improvement > 0 ? (
+            <ArrowUpRight className="h-5 w-5 text-success" />
+          ) : (
+            <ArrowUpRight className="h-5 w-5 text-muted-foreground/40" />
+          )}
         </div>
 
         <div className="text-center">
@@ -354,6 +358,19 @@ function resultToFormProfile(result: TailoredResumeData, profile: ProfileData | 
   };
 }
 
+/** Build a formProfile from the raw user profile (for consistent baseline scoring) */
+function profileToFormProfile(profile: ProfileData | null | undefined) {
+  return {
+    skills: profile?.skills || [],
+    current_title: profile?.current_title || null,
+    current_company: profile?.current_company || null,
+    experience_years: profile?.experience_years || null,
+    work_experience: profile?.work_experience || null,
+    education: profile?.education || null,
+    certifications: profile?.certifications || null,
+  };
+}
+
 export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResumeDialogProps) {
   const { generate, isGenerating, result, clearResult, downloadAsPdf, downloadAsDoc } = useTailoredResume();
   const { runCheck, isChecking } = useAtsCheck();
@@ -402,12 +419,13 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
         regeneration_round: 1,
       });
 
-      // Get old score (current profile vs job)
+      // Get old score using the SAME formProfile approach for consistency
       if (oldScore == null) {
         runCheck({
           job_description: job.description || "",
           job_title: job.title,
           job_skills: job.skills || [],
+          formProfile: profileToFormProfile(profile),
         }).then((res) => {
           if (res) {
             setOldScore(res.overall_score);
