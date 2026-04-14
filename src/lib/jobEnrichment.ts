@@ -214,8 +214,6 @@ export function enrichJobList(jobs: Job[], entryLevelOnly = false): Job[] {
     salary_range: extractSalary(job),
     location: getBestLocation(job.location, job.description),
   }));
-  // USA-only: reject any job whose resolved location is not in the US
-  const usaOnly = enriched.filter(job => isUSALocation(job.location));
-  const sorted = sortByRecency(usaOnly);
+  const sorted = sortByRecency(enriched);
   return spreadSimilarJobs(sorted);
 }
