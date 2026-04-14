@@ -97,7 +97,7 @@ async function fetchJobsPage(
     }
   } else {
     const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 10);
+    cutoff.setDate(cutoff.getDate() - 45);
 
     const fetchSize = needsClientFilter
       ? (isVisaFiltered ? VISA_BATCH_SIZE : ENTRY_LEVEL_BATCH_SIZE)
@@ -204,7 +204,7 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
       }
 
       const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - 10);
+      cutoff.setDate(cutoff.getDate() - 45);
       let baseCountQuery = supabase
         .from("jobs")
         .select("*", { count: "exact", head: true })
