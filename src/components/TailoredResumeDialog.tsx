@@ -429,7 +429,8 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
         }).then((res) => {
           if (res) {
             setOldScore(res.overall_score);
-            setScoreHistory((prev) => prev.length === 0 ? [res.overall_score] : prev);
+            // Always set the original as the first and only initial history entry
+            setScoreHistory([res.overall_score]);
           }
         });
       }
