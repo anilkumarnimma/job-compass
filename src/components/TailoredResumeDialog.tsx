@@ -286,8 +286,8 @@ function ScoreHero({
         </p>
       )}
 
-      {/* Score history line */}
-      {!isLoading && scoreHistory.length > 1 && (
+      {/* Score history line — only show after regeneration (3+ entries: original + round1 + round2) */}
+      {!isLoading && scoreHistory.length > 2 && (
         <div className="mt-2 flex items-center justify-center gap-1 text-xs text-muted-foreground">
           {scoreHistory.map((s, i) => (
             <span key={i} className="inline-flex items-center gap-1">
