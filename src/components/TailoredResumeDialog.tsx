@@ -234,7 +234,7 @@ function ScoreHero({
         </div>
 
         <div className="flex flex-col items-center gap-0.5 px-3">
-          <ArrowUpRight className="h-5 w-5 text-green-500" />
+          <ArrowUpRight className="h-5 w-5 text-success" />
         </div>
 
         <div className="text-center">
