@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,19 +10,19 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useTailoredResume, TailoredResumeData } from "@/hooks/useTailoredResume";
 import { useProfile, ProfileData } from "@/hooks/useProfile";
-import { useAtsCheck, AtsCheckResult } from "@/hooks/useAtsCheck";
+import { useAtsCheck } from "@/hooks/useAtsCheck";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
 import {
   Download,
   Loader2,
-  Sparkles,
-  FileDown,
-  FileType,
   Target,
   ArrowUpRight,
   Eye,
   RefreshCw,
   ChevronUp,
+  FileDown,
+  FileType,
+  CheckCircle2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -213,10 +213,14 @@ function ScoreHero({
   oldScore,
   newScore,
   isLoading,
+  scoreHistory,
+  roundCount,
 }: {
   oldScore: number | null;
   newScore: number | null;
   isLoading: boolean;
+  scoreHistory: number[];
+  roundCount: number;
 }) {
   const improvement = oldScore != null && newScore != null ? newScore - oldScore : null;
   const displayOld = oldScore ?? 0;
@@ -229,7 +233,7 @@ function ScoreHero({
         <div className="text-center">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Original</p>
           <span className="text-3xl font-bold text-muted-foreground/70 tabular-nums">
-            {isLoading ? "—" : `${displayOld}%`}
+            {isLoading && oldScore == null ? "—" : `${displayOld}%`}
           </span>
         </div>
 
@@ -238,7 +242,7 @@ function ScoreHero({
         </div>
 
         <div className="text-center">
-          <p className="text-[10px] uppercase tracking-wider text-accent font-medium mb-1">Tailored</p>
+          <p className="text-[10px] uppercase tracking-wider text-accent font-medium mb-1">Current Best</p>
           <span className="text-3xl font-bold text-accent tabular-nums">
             {isLoading ? (
               <Loader2 className="h-7 w-7 animate-spin inline" />
@@ -267,7 +271,8 @@ function ScoreHero({
           {improvement > 0 ? (
             <>
               <ChevronUp className="inline h-4 w-4 text-success -mt-0.5" />
-              <span className="text-success">Your resume improved by +{improvement} points</span> for this job
+              <span className="text-success">+{improvement} points</span>{" "}
+              {roundCount > 1 ? `across ${roundCount} round${roundCount > 1 ? "s" : ""}` : "for this job"}
             </>
           ) : improvement === 0 ? (
             "Your resume is already well-optimized for this job"
@@ -275,6 +280,20 @@ function ScoreHero({
             "Score recalculated for this version"
           )}
         </p>
+      )}
+
+      {/* Score history line */}
+      {!isLoading && scoreHistory.length > 1 && (
+        <div className="mt-2 flex items-center justify-center gap-1 text-xs text-muted-foreground">
+          {scoreHistory.map((s, i) => (
+            <span key={i} className="inline-flex items-center gap-1">
+              {i > 0 && <span>→</span>}
+              <span className={i === scoreHistory.length - 1 ? "font-semibold text-accent" : ""}>
+                {s}%
+              </span>
+            </span>
+          ))}
+        </div>
       )}
 
       {isLoading && (
@@ -288,6 +307,53 @@ function ScoreHero({
 
 type PopupView = "score" | "preview";
 
+const MAX_ROUNDS = 6;
+const MAX_SCORE = 95;
+
+/** Convert a TailoredResumeData back into a base_resume shape for progressive regeneration */
+function resultToBaseResume(result: TailoredResumeData) {
+  return {
+    header: result.header,
+    summary: result.summary,
+    sections: result.sections,
+    skills_section: result.skills_section,
+    source_signature: undefined,
+  };
+}
+
+/** Extract a formProfile from tailored result for ATS scoring */
+function resultToFormProfile(result: TailoredResumeData, profile: ProfileData | null | undefined) {
+  return {
+    skills: result.skills_section,
+    current_title: result.header.headline || profile?.current_title || null,
+    current_company: profile?.current_company || null,
+    experience_years: profile?.experience_years || null,
+    work_experience: result.sections
+      .find((s) => s.title.toLowerCase().includes("experience"))
+      ?.items.map((it) => ({
+        title: it.heading,
+        company: it.subheading,
+        start_date: it.date?.split(" - ")[0],
+        end_date: it.date?.split(" - ")[1],
+        bullets: it.bullets,
+      })) || profile?.work_experience || null,
+    education: result.sections
+      .find((s) => s.title.toLowerCase().includes("education"))
+      ?.items.map((it) => ({
+        degree: it.heading,
+        school: it.subheading,
+        graduation_year: it.date,
+        major: it.bullets?.[0]?.replace("Field of Study: ", ""),
+      })) || profile?.education || null,
+    certifications: result.sections
+      .find((s) => s.title.toLowerCase().includes("certif"))
+      ?.items.map((it) => ({
+        name: it.heading,
+        issuer: it.subheading,
+      })) || profile?.certifications || null,
+  };
+}
+
 export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResumeDialogProps) {
   const { generate, isGenerating, result, clearResult, downloadAsPdf, downloadAsDoc } = useTailoredResume();
   const { runCheck, isChecking } = useAtsCheck();
@@ -300,6 +366,13 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
   const [view, setView] = useState<PopupView>("score");
   const [isRegenerating, setIsRegenerating] = useState(false);
 
+  // Progressive regeneration state
+  const [scoreHistory, setScoreHistory] = useState<number[]>([]);
+  const [roundCount, setRoundCount] = useState(0);
+  const [bestResult, setBestResult] = useState<TailoredResumeData | null>(null);
+  const [bestScore, setBestScore] = useState<number>(0);
+  const [isMaxed, setIsMaxed] = useState(false);
+
   const baseResume = useMemo(() => buildBaseResume(profile, intelligence), [profile, intelligence]);
 
   // Reset state when job changes
@@ -309,11 +382,16 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
     setNewScore(null);
     setView("score");
     setIsRegenerating(false);
+    setScoreHistory([]);
+    setRoundCount(0);
+    setBestResult(null);
+    setBestScore(0);
+    setIsMaxed(false);
   }, [job?.id, baseResume.source_signature, clearResult]);
 
   // Kick off generation + old ATS score when dialog opens
   useEffect(() => {
-    if (open && job && !result && !isGenerating) {
+    if (open && job && !result && !isGenerating && roundCount === 0) {
       generate({
         job_title: job.title,
         job_description: job.description || "",
@@ -321,6 +399,7 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
         resume_intelligence: intelligence,
         base_resume: baseResume,
         resume_version: baseResume.source_signature,
+        regeneration_round: 1,
       });
 
       // Get old score (current profile vs job)
@@ -330,71 +409,111 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
           job_title: job.title,
           job_skills: job.skills || [],
         }).then((res) => {
-          if (res) setOldScore(res.overall_score);
+          if (res) {
+            setOldScore(res.overall_score);
+            setScoreHistory((prev) => prev.length === 0 ? [res.overall_score] : prev);
+          }
         });
       }
     }
-  }, [open, job?.id, result, isGenerating, generate, intelligence, baseResume, runCheck, oldScore]);
+  }, [open, job?.id, result, isGenerating, roundCount]);
 
-  // Once tailoring completes, compute new ATS score using tailored resume data
+  // Once tailoring completes, compute new ATS score
   useEffect(() => {
-    if (result && newScore == null && !scoringNew && job) {
+    if (result && newScore == null && !scoringNew && job && !isRegenerating) {
       setScoringNew(true);
       runCheck({
         job_description: job.description || "",
         job_title: job.title,
         job_skills: job.skills || [],
-        formProfile: {
-          skills: result.skills_section,
-          current_title: result.header.headline || profile?.current_title || null,
-          current_company: profile?.current_company || null,
-          experience_years: profile?.experience_years || null,
-          work_experience: result.sections
-            .find((s) => s.title.toLowerCase().includes("experience"))
-            ?.items.map((it) => ({
-              title: it.heading,
-              company: it.subheading,
-              start_date: it.date?.split(" - ")[0],
-              end_date: it.date?.split(" - ")[1],
-              bullets: it.bullets,
-            })) || profile?.work_experience || null,
-          education: result.sections
-            .find((s) => s.title.toLowerCase().includes("education"))
-            ?.items.map((it) => ({
-              degree: it.heading,
-              school: it.subheading,
-              graduation_year: it.date,
-              major: it.bullets?.[0]?.replace("Field of Study: ", ""),
-            })) || profile?.education || null,
-          certifications: result.sections
-            .find((s) => s.title.toLowerCase().includes("certif"))
-            ?.items.map((it) => ({
-              name: it.heading,
-              issuer: it.subheading,
-            })) || profile?.certifications || null,
-        },
+        formProfile: resultToFormProfile(result, profile),
       }).then((res) => {
-        if (res) setNewScore(res.overall_score);
+        if (res) {
+          const score = res.overall_score;
+          const currentRound = roundCount || 1;
+
+          // If this score is better than the best, keep it; otherwise discard
+          if (score >= bestScore) {
+            setBestScore(score);
+            setBestResult(result);
+            setNewScore(score);
+            setScoreHistory((prev) => [...prev, score]);
+            setRoundCount(currentRound);
+
+            // Check if maxed out
+            if (score >= MAX_SCORE) {
+              setIsMaxed(true);
+            }
+          } else {
+            // Score went down — discard this result, keep best
+            // Retry once automatically
+            if (!isMaxed && currentRound <= MAX_ROUNDS) {
+              handleRetryOnce(currentRound);
+              return;
+            }
+            // If retry already or maxed, just keep the best
+            setNewScore(bestScore);
+          }
+        }
         setScoringNew(false);
       }).catch(() => setScoringNew(false));
     }
-  }, [result, newScore, scoringNew, job, runCheck, profile]);
+  }, [result, newScore, scoringNew, job, isRegenerating]);
 
-  const handleRegenerate = useCallback(() => {
-    if (!job) return;
-    setIsRegenerating(true);
-    setNewScore(null);
+  // Single retry when score decreases
+  const retryAttempted = useRef(false);
+  const handleRetryOnce = useCallback((round: number) => {
+    if (retryAttempted.current || !job || !bestResult) {
+      // Already retried — just keep best
+      setNewScore(bestScore);
+      setScoringNew(false);
+      return;
+    }
+    retryAttempted.current = true;
     setScoringNew(false);
+    setNewScore(null);
     clearResult();
     generate({
       job_title: job.title,
       job_description: job.description || "",
       job_skills: job.skills || [],
       resume_intelligence: intelligence,
-      base_resume: baseResume,
-      resume_version: baseResume.source_signature + "::" + Date.now(), // bust cache
-    }).finally(() => setIsRegenerating(false));
-  }, [job, clearResult, generate, intelligence, baseResume]);
+      base_resume: resultToBaseResume(bestResult),
+      resume_version: (baseResume.source_signature || "") + "::retry::" + Date.now(),
+      regeneration_round: round,
+    });
+  }, [job, bestResult, bestScore, clearResult, generate, intelligence, baseResume]);
+
+  const handleRegenerate = useCallback(() => {
+    if (!job || isMaxed) return;
+    const nextRound = roundCount + 1;
+    if (nextRound > MAX_ROUNDS) {
+      setIsMaxed(true);
+      return;
+    }
+
+    retryAttempted.current = false;
+    setIsRegenerating(true);
+    setNewScore(null);
+    setScoringNew(false);
+
+    // Use the best result so far as the new base (progressive)
+    const regenBase = bestResult ? resultToBaseResume(bestResult) : baseResume;
+
+    clearResult();
+    generate({
+      job_title: job.title,
+      job_description: job.description || "",
+      job_skills: job.skills || [],
+      resume_intelligence: intelligence,
+      base_resume: regenBase,
+      resume_version: (baseResume.source_signature || "") + "::round" + nextRound + "::" + Date.now(),
+      regeneration_round: nextRound,
+    }).finally(() => {
+      setIsRegenerating(false);
+      setRoundCount(nextRound);
+    });
+  }, [job, roundCount, bestResult, clearResult, generate, intelligence, baseResume, isMaxed]);
 
   const handleClose = () => {
     onOpenChange(false);
@@ -404,9 +523,12 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
     }, 300);
   };
 
+  // The result to display is always the best one
+  const displayResult = bestResult || result;
+
   if (!job) return null;
 
-  const isLoadingTailoring = isGenerating || !result;
+  const isLoadingTailoring = isGenerating || (!displayResult && !result);
   const isLoadingScores = isChecking || scoringNew;
 
   return (
@@ -437,7 +559,9 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
                 className="flex flex-col items-center justify-center py-16 px-6 text-center"
               >
                 <Loader2 className="h-10 w-10 text-accent animate-spin mb-4" />
-                <p className="text-sm font-medium text-foreground mb-1">Tailoring your resume...</p>
+                <p className="text-sm font-medium text-foreground mb-1">
+                  {isRegenerating ? `Re-optimizing (Round ${roundCount + 1})...` : "Tailoring your resume..."}
+                </p>
                 <p className="text-xs text-muted-foreground">Optimizing keywords and aligning with job requirements</p>
               </motion.div>
             ) : view === "score" ? (
@@ -451,8 +575,10 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
                 {/* Score comparison */}
                 <ScoreHero
                   oldScore={oldScore}
-                  newScore={newScore}
+                  newScore={newScore ?? bestScore || null}
                   isLoading={isLoadingScores && newScore == null}
+                  scoreHistory={scoreHistory}
+                  roundCount={roundCount}
                 />
 
                 {/* 3 action buttons */}
@@ -474,11 +600,11 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="center" className="w-48">
-                      <DropdownMenuItem onClick={() => result && downloadAsPdf(result, job.title, job.company)}>
+                      <DropdownMenuItem onClick={() => displayResult && downloadAsPdf(displayResult, job.title, job.company)}>
                         <FileDown className="h-4 w-4 mr-2" />
                         Download as PDF
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => result && downloadAsDoc(result, job.title, job.company)}>
+                      <DropdownMenuItem onClick={() => displayResult && downloadAsDoc(displayResult, job.title, job.company)}>
                         <FileType className="h-4 w-4 mr-2" />
                         Download as DOCX
                       </DropdownMenuItem>
@@ -487,22 +613,24 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
 
                   <Button
                     className="flex-1 rounded-xl"
-                    variant="secondary"
+                    variant={isMaxed ? "outline" : "secondary"}
                     onClick={handleRegenerate}
-                    disabled={isGenerating || isRegenerating}
+                    disabled={isGenerating || isRegenerating || isMaxed || isLoadingScores}
                   >
                     {isGenerating || isRegenerating ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : isMaxed ? (
+                      <CheckCircle2 className="h-4 w-4 mr-2 text-success" />
                     ) : (
                       <RefreshCw className="h-4 w-4 mr-2" />
                     )}
-                    Regenerate
+                    {isMaxed ? "Optimized" : "Regenerate"}
                   </Button>
                 </div>
 
                 {/* Optimization notes preview */}
-                {result?.optimization_notes && (
-                  <p className="text-xs text-muted-foreground italic text-center">{result.optimization_notes}</p>
+                {displayResult?.optimization_notes && (
+                  <p className="text-xs text-muted-foreground italic text-center">{displayResult.optimization_notes}</p>
                 )}
               </motion.div>
             ) : (
@@ -515,7 +643,7 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
                 style={{ height: "100%" }}
               >
                 <div className="overflow-y-auto px-6 py-4" style={{ maxHeight: "calc(90vh - 180px)" }}>
-                  {result && <ResumePreview data={result} />}
+                  {displayResult && <ResumePreview data={displayResult} />}
                 </div>
 
                 <div className="px-6 py-3 border-t border-border/50 flex items-center justify-between gap-3">
@@ -536,11 +664,11 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem onClick={() => result && downloadAsPdf(result, job.title, job.company)}>
+                      <DropdownMenuItem onClick={() => displayResult && downloadAsPdf(displayResult, job.title, job.company)}>
                         <FileDown className="h-4 w-4 mr-2" />
                         Download as PDF
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => result && downloadAsDoc(result, job.title, job.company)}>
+                      <DropdownMenuItem onClick={() => displayResult && downloadAsDoc(displayResult, job.title, job.company)}>
                         <FileType className="h-4 w-4 mr-2" />
                         Download as DOCX
                       </DropdownMenuItem>
