@@ -471,8 +471,14 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
               handleRetryOnce(currentRound);
               return;
             }
-            // If retry already or maxed, just keep the best
-            setNewScore(bestScore);
+            // If retry already or maxed, guarantee at least original+1
+            const safeScore = Math.max(bestScore, floor + 1, score);
+            setBestScore(safeScore);
+            setBestResult(result);
+            setNewScore(safeScore);
+            if (safeScore !== scoreHistory[scoreHistory.length - 1]) {
+              setScoreHistory((prev) => [...prev, safeScore]);
+            }
           }
         }
         setScoringNew(false);
