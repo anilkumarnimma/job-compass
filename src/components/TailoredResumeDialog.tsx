@@ -575,7 +575,7 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
                 {/* Score comparison */}
                 <ScoreHero
                   oldScore={oldScore}
-                  newScore={newScore ?? bestScore || null}
+                  newScore={newScore ?? (bestScore || null)}
                   isLoading={isLoadingScores && newScore == null}
                   scoreHistory={scoreHistory}
                   roundCount={roundCount}
