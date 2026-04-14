@@ -45,6 +45,7 @@ import { RoleRequestBanner } from "@/components/RoleRequestBanner";
 import { RoleRequestModal } from "@/components/RoleRequestModal";
 import { PremiumUpgradeBanner } from "@/components/PremiumUpgradeBanner";
 import { LinkedInFeatureBanner } from "@/components/LinkedInFeatureBanner";
+import { AutoApplyBanner } from "@/components/AutoApplyBanner";
 
 
 
@@ -370,6 +371,9 @@ export default function Dashboard() {
         <LinkedInFeatureAnnouncementInline />
         {/* Resume Upload CTA (only shown if no resume) */}
         <ResumeUploadBanner />
+
+        {/* Auto Apply Coming Soon Banner */}
+        <AutoApplyBanner />
 
         {/* Header + Search + Filters (above columns) */}
         <div className="mb-4">
