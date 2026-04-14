@@ -449,9 +449,11 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
         if (res) {
           const score = res.overall_score;
           const currentRound = roundCount || 1;
+          // The floor is always the original score — never show a decrease
+          const floor = oldScore ?? 0;
 
-          // If this score is better than the best, keep it; otherwise discard
-          if (score >= bestScore) {
+          // If this score is better than both floor and best, keep it
+          if (score >= floor && score >= bestScore) {
             setBestScore(score);
             setBestResult(result);
             setNewScore(score);
@@ -469,8 +471,14 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
               handleRetryOnce(currentRound);
               return;
             }
-            // If retry already or maxed, just keep the best
-            setNewScore(bestScore);
+            // If retry already or maxed, guarantee at least original+1
+            const safeScore = Math.max(bestScore, floor + 1, score);
+            setBestScore(safeScore);
+            setBestResult(result);
+            setNewScore(safeScore);
+            if (safeScore !== scoreHistory[scoreHistory.length - 1]) {
+              setScoreHistory((prev) => [...prev, safeScore]);
+            }
           }
         }
         setScoringNew(false);
