@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -7,10 +7,23 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { useTailoredResume, TailoredResumeData } from "@/hooks/useTailoredResume";
 import { useProfile, ProfileData } from "@/hooks/useProfile";
+import { useAtsCheck, AtsCheckResult } from "@/hooks/useAtsCheck";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
-import { Download, Loader2, Sparkles, FileDown, FileType, Target } from "lucide-react";
+import {
+  Download,
+  Loader2,
+  Sparkles,
+  FileDown,
+  FileType,
+  Target,
+  ArrowUpRight,
+  Eye,
+  RefreshCw,
+  ChevronUp,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   DropdownMenu,
@@ -126,10 +139,8 @@ function ResumePreview({ data }: { data: TailoredResumeData }) {
         )}
       </div>
 
-      {/* Summary */}
       {data.summary && <p className="text-sm text-muted-foreground italic leading-relaxed">{data.summary}</p>}
 
-      {/* Skills */}
       {data.skills_section.length > 0 && (
         <div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-foreground border-b border-border pb-1 mb-3">
@@ -145,7 +156,6 @@ function ResumePreview({ data }: { data: TailoredResumeData }) {
         </div>
       )}
 
-      {/* Sections */}
       {data.sections.map((section, si) => (
         <div key={si}>
           <h3 className="text-xs font-bold uppercase tracking-wider text-foreground border-b border-border pb-1 mb-3">
@@ -178,7 +188,6 @@ function ResumePreview({ data }: { data: TailoredResumeData }) {
         </div>
       ))}
 
-      {/* Keywords added */}
       {data.keywords_added.length > 0 && (
         <div className="pt-3 border-t border-border/50">
           <div className="flex items-center gap-1.5 mb-2">
@@ -199,17 +208,110 @@ function ResumePreview({ data }: { data: TailoredResumeData }) {
   );
 }
 
+/* ── Score comparison hero ── */
+function ScoreHero({
+  oldScore,
+  newScore,
+  isLoading,
+}: {
+  oldScore: number | null;
+  newScore: number | null;
+  isLoading: boolean;
+}) {
+  const improvement = oldScore != null && newScore != null ? newScore - oldScore : null;
+  const displayOld = oldScore ?? 0;
+  const displayNew = newScore ?? 0;
+
+  return (
+    <div className="rounded-xl bg-gradient-to-br from-accent/10 via-accent/5 to-transparent border border-accent/20 p-5">
+      {/* Score numbers */}
+      <div className="flex items-center justify-center gap-3 mb-3">
+        <div className="text-center">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Original</p>
+          <span className="text-3xl font-bold text-muted-foreground/70 tabular-nums">
+            {isLoading ? "—" : `${displayOld}%`}
+          </span>
+        </div>
+
+        <div className="flex flex-col items-center gap-0.5 px-3">
+          <ArrowUpRight className="h-5 w-5 text-green-500" />
+        </div>
+
+        <div className="text-center">
+          <p className="text-[10px] uppercase tracking-wider text-accent font-medium mb-1">Tailored</p>
+          <span className="text-3xl font-bold text-accent tabular-nums">
+            {isLoading ? (
+              <Loader2 className="h-7 w-7 animate-spin inline" />
+            ) : (
+              `${displayNew}%`
+            )}
+          </span>
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div className="relative mb-2">
+        <Progress value={isLoading ? 0 : displayNew} className="h-2.5 bg-muted/50" />
+        {!isLoading && oldScore != null && (
+          <div
+            className="absolute top-0 h-2.5 border-r-2 border-dashed border-muted-foreground/40"
+            style={{ left: `${Math.min(displayOld, 100)}%` }}
+            title={`Original: ${displayOld}%`}
+          />
+        )}
+      </div>
+
+      {/* Improvement text */}
+      {!isLoading && improvement != null && (
+        <p className="text-center text-sm font-medium text-foreground">
+          {improvement > 0 ? (
+            <>
+              <ChevronUp className="inline h-4 w-4 text-green-500 -mt-0.5" />
+              <span className="text-green-500">Your resume improved by +{improvement} points</span> for this job
+            </>
+          ) : improvement === 0 ? (
+            "Your resume is already well-optimized for this job"
+          ) : (
+            "Score recalculated for this version"
+          )}
+        </p>
+      )}
+
+      {isLoading && (
+        <p className="text-center text-xs text-muted-foreground animate-pulse">
+          Calculating ATS compatibility…
+        </p>
+      )}
+    </div>
+  );
+}
+
+type PopupView = "score" | "preview";
+
 export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResumeDialogProps) {
   const { generate, isGenerating, result, clearResult, downloadAsPdf, downloadAsDoc } = useTailoredResume();
+  const { runCheck, isChecking } = useAtsCheck();
   const { profile } = useProfile();
   const intelligence = profile?.resume_intelligence as ResumeIntelligence | null;
 
+  const [oldScore, setOldScore] = useState<number | null>(null);
+  const [newScore, setNewScore] = useState<number | null>(null);
+  const [scoringNew, setScoringNew] = useState(false);
+  const [view, setView] = useState<PopupView>("score");
+  const [isRegenerating, setIsRegenerating] = useState(false);
+
   const baseResume = useMemo(() => buildBaseResume(profile, intelligence), [profile, intelligence]);
 
+  // Reset state when job changes
   useEffect(() => {
     clearResult();
+    setOldScore(null);
+    setNewScore(null);
+    setView("score");
+    setIsRegenerating(false);
   }, [job?.id, baseResume.source_signature, clearResult]);
 
+  // Kick off generation + old ATS score when dialog opens
   useEffect(() => {
     if (open && job && !result && !isGenerating) {
       generate({
@@ -220,15 +322,92 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
         base_resume: baseResume,
         resume_version: baseResume.source_signature,
       });
+
+      // Get old score (current profile vs job)
+      if (oldScore == null) {
+        runCheck({
+          job_description: job.description || "",
+          job_title: job.title,
+          job_skills: job.skills || [],
+        }).then((res) => {
+          if (res) setOldScore(res.overall_score);
+        });
+      }
     }
-  }, [open, job?.id, result, isGenerating, generate, intelligence, baseResume]);
+  }, [open, job?.id, result, isGenerating, generate, intelligence, baseResume, runCheck, oldScore]);
+
+  // Once tailoring completes, compute new ATS score using tailored resume data
+  useEffect(() => {
+    if (result && newScore == null && !scoringNew && job) {
+      setScoringNew(true);
+      runCheck({
+        job_description: job.description || "",
+        job_title: job.title,
+        job_skills: job.skills || [],
+        formProfile: {
+          skills: result.skills_section,
+          current_title: result.header.headline || profile?.current_title || null,
+          current_company: profile?.current_company || null,
+          experience_years: profile?.experience_years || null,
+          work_experience: result.sections
+            .find((s) => s.title.toLowerCase().includes("experience"))
+            ?.items.map((it) => ({
+              title: it.heading,
+              company: it.subheading,
+              start_date: it.date?.split(" - ")[0],
+              end_date: it.date?.split(" - ")[1],
+              bullets: it.bullets,
+            })) || profile?.work_experience || null,
+          education: result.sections
+            .find((s) => s.title.toLowerCase().includes("education"))
+            ?.items.map((it) => ({
+              degree: it.heading,
+              school: it.subheading,
+              graduation_year: it.date,
+              major: it.bullets?.[0]?.replace("Field of Study: ", ""),
+            })) || profile?.education || null,
+          certifications: result.sections
+            .find((s) => s.title.toLowerCase().includes("certif"))
+            ?.items.map((it) => ({
+              name: it.heading,
+              issuer: it.subheading,
+            })) || profile?.certifications || null,
+        },
+      }).then((res) => {
+        if (res) setNewScore(res.overall_score);
+        setScoringNew(false);
+      }).catch(() => setScoringNew(false));
+    }
+  }, [result, newScore, scoringNew, job, runCheck, profile]);
+
+  const handleRegenerate = useCallback(() => {
+    if (!job) return;
+    setIsRegenerating(true);
+    setNewScore(null);
+    setScoringNew(false);
+    clearResult();
+    generate({
+      job_title: job.title,
+      job_description: job.description || "",
+      job_skills: job.skills || [],
+      resume_intelligence: intelligence,
+      base_resume: baseResume,
+      resume_version: baseResume.source_signature + "::" + Date.now(), // bust cache
+    }).finally(() => setIsRegenerating(false));
+  }, [job, clearResult, generate, intelligence, baseResume]);
 
   const handleClose = () => {
     onOpenChange(false);
-    setTimeout(() => clearResult(), 300);
+    setTimeout(() => {
+      clearResult();
+      setView("score");
+    }, 300);
   };
 
   if (!job) return null;
+
+  const isLoadingTailoring = isGenerating || !result;
+  const isLoadingScores = isChecking || scoringNew;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -249,7 +428,7 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
 
         <div className="flex-1 min-h-0 flex flex-col">
           <AnimatePresence mode="wait">
-            {isGenerating || !result ? (
+            {isLoadingTailoring && view === "score" ? (
               <motion.div
                 key="loading"
                 initial={{ opacity: 0 }}
@@ -261,9 +440,74 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
                 <p className="text-sm font-medium text-foreground mb-1">Tailoring your resume...</p>
                 <p className="text-xs text-muted-foreground">Optimizing keywords and aligning with job requirements</p>
               </motion.div>
+            ) : view === "score" ? (
+              <motion.div
+                key="score-view"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="px-6 py-5 space-y-5"
+              >
+                {/* Score comparison */}
+                <ScoreHero
+                  oldScore={oldScore}
+                  newScore={newScore}
+                  isLoading={isLoadingScores && newScore == null}
+                />
+
+                {/* 3 action buttons */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                  <Button
+                    className="flex-1 rounded-xl"
+                    variant="outline"
+                    onClick={() => setView("preview")}
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    Preview Resume
+                  </Button>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button className="flex-1 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90">
+                        <Download className="h-4 w-4 mr-2" />
+                        Download
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="center" className="w-48">
+                      <DropdownMenuItem onClick={() => result && downloadAsPdf(result, job.title, job.company)}>
+                        <FileDown className="h-4 w-4 mr-2" />
+                        Download as PDF
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => result && downloadAsDoc(result, job.title, job.company)}>
+                        <FileType className="h-4 w-4 mr-2" />
+                        Download as DOCX
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <Button
+                    className="flex-1 rounded-xl"
+                    variant="secondary"
+                    onClick={handleRegenerate}
+                    disabled={isGenerating || isRegenerating}
+                  >
+                    {isGenerating || isRegenerating ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                    )}
+                    Regenerate
+                  </Button>
+                </div>
+
+                {/* Optimization notes preview */}
+                {result?.optimization_notes && (
+                  <p className="text-xs text-muted-foreground italic text-center">{result.optimization_notes}</p>
+                )}
+              </motion.div>
             ) : (
               <motion.div
-                key="content"
+                key="preview-view"
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
@@ -271,29 +515,17 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
                 style={{ height: "100%" }}
               >
                 <div className="overflow-y-auto px-6 py-4" style={{ maxHeight: "calc(90vh - 180px)" }}>
-                  <ResumePreview data={result} />
+                  {result && <ResumePreview data={result} />}
                 </div>
 
                 <div className="px-6 py-3 border-t border-border/50 flex items-center justify-between gap-3">
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      clearResult();
-                      generate({
-                        job_title: job.title,
-                        job_description: job.description || "",
-                        job_skills: job.skills || [],
-                        resume_intelligence: intelligence,
-                          base_resume: baseResume,
-                          resume_version: baseResume.source_signature,
-                      });
-                    }}
+                    onClick={() => setView("score")}
                     className="text-xs text-muted-foreground"
-                    disabled={isGenerating}
                   >
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    Regenerate
+                    ← Back to Score
                   </Button>
 
                   <DropdownMenu>
@@ -304,11 +536,11 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem onClick={() => downloadAsPdf(result, job.title, job.company)}>
+                      <DropdownMenuItem onClick={() => result && downloadAsPdf(result, job.title, job.company)}>
                         <FileDown className="h-4 w-4 mr-2" />
                         Download as PDF
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => downloadAsDoc(result, job.title, job.company)}>
+                      <DropdownMenuItem onClick={() => result && downloadAsDoc(result, job.title, job.company)}>
                         <FileType className="h-4 w-4 mr-2" />
                         Download as DOCX
                       </DropdownMenuItem>
