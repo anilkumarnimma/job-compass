@@ -48,14 +48,37 @@ Deno.serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
+    // Strategy 1: Find Stripe customer by email
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    logStep("Customer lookup", { email: user.email, found: customers.data.length > 0 });
-    if (customers.data.length === 0) {
-      return respond(false, { error: "No subscription found" });
+    let customerId = customers.data.length > 0 ? customers.data[0].id : null;
+    logStep("Customer lookup by email", { email: user.email, found: !!customerId });
+
+    // Strategy 2: If not found by email, check user_subscriptions for a stored stripe_customer_id
+    if (!customerId) {
+      const { data: subRecord } = await supabase
+        .from("user_subscriptions")
+        .select("stripe_customer_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (subRecord?.stripe_customer_id) {
+        logStep("Found stored stripe_customer_id", { storedCustomerId: subRecord.stripe_customer_id });
+        try {
+          const storedCustomer = await stripe.customers.retrieve(subRecord.stripe_customer_id);
+          if (storedCustomer && !storedCustomer.deleted) {
+            customerId = storedCustomer.id;
+            logStep("Verified stored customer exists in Stripe", { customerId });
+          }
+        } catch (e) {
+          logStep("Stored customer not found in Stripe", { error: (e as Error).message });
+        }
+      }
     }
 
-    const customerId = customers.data[0].id;
-    logStep("Found customer", { customerId });
+    if (!customerId) {
+      return respond(false, { error: "No subscription found" });
+    }
+    logStep("Using customer", { customerId });
     const subscriptions = await stripe.subscriptions.list({ customer: customerId, status: "active", limit: 1 });
     logStep("Active subscriptions", { count: subscriptions.data.length });
 
