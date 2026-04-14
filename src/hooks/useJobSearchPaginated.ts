@@ -97,7 +97,7 @@ async function fetchJobsPage(
     }
   } else {
     const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 10);
+    cutoff.setDate(cutoff.getDate() - 45);
 
     const fetchSize = needsClientFilter
       ? (isVisaFiltered ? VISA_BATCH_SIZE : ENTRY_LEVEL_BATCH_SIZE)
