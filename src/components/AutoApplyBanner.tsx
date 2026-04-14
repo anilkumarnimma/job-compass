@@ -8,7 +8,8 @@ const BANNER_KEY = "sociax_auto_apply_banner_dismissed";
 export function AutoApplyBanner() {
   const [visible, setVisible] = useState(() => !localStorage.getItem(BANNER_KEY));
 
-  const dismiss = () => {
+  const dismiss = (e: React.MouseEvent) => {
+    e.stopPropagation();
     localStorage.setItem(BANNER_KEY, "true");
     setVisible(false);
   };
@@ -17,30 +18,24 @@ export function AutoApplyBanner() {
     <AnimatePresence>
       {visible && (
         <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-          transition={{ duration: 0.3 }}
-          className="mb-4"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.2 }}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-accent/30 bg-accent/10 backdrop-blur-sm"
         >
-          <div className="relative flex items-center gap-3 px-4 py-3 rounded-xl border border-accent/30 bg-gradient-to-r from-accent/10 via-accent/5 to-transparent backdrop-blur-sm">
-            <div className="flex items-center gap-2 shrink-0">
-              <JobPulseLogo size="sm" showText={false} />
-              <Zap className="h-4 w-4 text-accent" />
-            </div>
-            <p className="text-sm text-foreground flex-1">
-              <span className="font-semibold">🤖 Auto Apply Coming Soon</span>
-              <span className="hidden sm:inline"> — We'll apply to jobs for you automatically 🔥</span>
-              <span className="sm:hidden"> — Auto-apply to jobs 🔥</span>
-            </p>
-            <button
-              onClick={dismiss}
-              className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
-              aria-label="Dismiss"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
+          <JobPulseLogo size="sm" showText={false} />
+          <Zap className="h-3.5 w-3.5 text-accent" />
+          <span className="text-xs font-medium text-foreground whitespace-nowrap">
+            🤖 Auto Apply Coming Soon 🔥
+          </span>
+          <button
+            onClick={dismiss}
+            className="text-muted-foreground hover:text-foreground transition-colors shrink-0 ml-1"
+            aria-label="Dismiss"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
         </motion.div>
       )}
     </AnimatePresence>
