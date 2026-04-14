@@ -372,6 +372,9 @@ export default function Dashboard() {
         {/* Resume Upload CTA (only shown if no resume) */}
         <ResumeUploadBanner />
 
+        {/* Auto Apply Coming Soon Banner */}
+        <AutoApplyBanner />
+
         {/* Header + Search + Filters (above columns) */}
         <div className="mb-4">
           <div className="flex items-start justify-between mb-4">
