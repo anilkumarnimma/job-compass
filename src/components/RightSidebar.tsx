@@ -1,8 +1,6 @@
 import { memo } from "react";
 import { TopHiringsPanelDisplay } from "./TopHiringsPanelDisplay";
 import { MarketAlertCard } from "./MarketAlertCard";
-import { DailyChallengeCard } from "./DailyChallengeCard";
-import { PomodoroTimerCard } from "./PomodoroTimerCard";
 import { cn } from "@/lib/utils";
 import { useActiveMarketAlert } from "@/hooks/useMarketAlerts";
 
@@ -25,9 +23,6 @@ export const RightSidebar = memo(function RightSidebar({ onFilterByRole, classNa
           <MarketAlertCard />
         </div>
       )}
-
-      <DailyChallengeCard />
-      <PomodoroTimerCard />
     </aside>
   );
 });
