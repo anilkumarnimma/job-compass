@@ -354,6 +354,19 @@ function resultToFormProfile(result: TailoredResumeData, profile: ProfileData | 
   };
 }
 
+/** Build a formProfile from the raw user profile (for consistent baseline scoring) */
+function profileToFormProfile(profile: ProfileData | null | undefined) {
+  return {
+    skills: profile?.skills || [],
+    current_title: profile?.current_title || null,
+    current_company: profile?.current_company || null,
+    experience_years: profile?.experience_years || null,
+    work_experience: profile?.work_experience || null,
+    education: profile?.education || null,
+    certifications: profile?.certifications || null,
+  };
+}
+
 export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResumeDialogProps) {
   const { generate, isGenerating, result, clearResult, downloadAsPdf, downloadAsDoc } = useTailoredResume();
   const { runCheck, isChecking } = useAtsCheck();
