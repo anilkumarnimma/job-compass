@@ -142,6 +142,11 @@ export default function FounderEmployers() {
           />
         </div>
 
+        {/* Manual Premium Grants - Founder Only */}
+        <div className="mb-8">
+          <ManualPremiumManager />
+        </div>
+
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
           <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
