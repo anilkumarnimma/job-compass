@@ -429,16 +429,17 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
         }).then((res) => {
           if (res) {
             setOldScore(res.overall_score);
-            setScoreHistory((prev) => prev.length === 0 ? [res.overall_score] : prev);
+            // Always set the original as the first and only initial history entry
+            setScoreHistory([res.overall_score]);
           }
         });
       }
     }
   }, [open, job?.id, result, isGenerating, roundCount]);
 
-  // Once tailoring completes, compute new ATS score
+  // Once tailoring completes AND oldScore is known, compute new ATS score
   useEffect(() => {
-    if (result && newScore == null && !scoringNew && job && !isRegenerating) {
+    if (result && newScore == null && !scoringNew && job && !isRegenerating && oldScore != null) {
       setScoringNew(true);
       runCheck({
         job_description: job.description || "",
@@ -484,7 +485,7 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
         setScoringNew(false);
       }).catch(() => setScoringNew(false));
     }
-  }, [result, newScore, scoringNew, job, isRegenerating]);
+  }, [result, newScore, scoringNew, job, isRegenerating, oldScore]);
 
   // Single retry when score decreases
   const retryAttempted = useRef(false);
