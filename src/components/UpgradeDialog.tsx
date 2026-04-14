@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Crown, Check, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { getUserPrice, getUserStripeLink } from "@/lib/pricing";
+import { getUserPrice, buildCheckoutUrl } from "@/lib/pricing";
 
 const SUCCESS_REDIRECT = `${window.location.origin}/payment-success`;
 
@@ -16,9 +16,12 @@ export function UpgradeDialog({ open, onOpenChange }: UpgradeDialogProps) {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const price = getUserPrice(user?.created_at);
-  const stripeBaseLink = getUserStripeLink(user?.created_at);
-
-  const stripeLink = `${stripeBaseLink}?success_url=${encodeURIComponent(SUCCESS_REDIRECT)}${user?.email ? `&prefilled_email=${encodeURIComponent(user.email)}` : ""}${user?.id ? `&client_reference_id=${user.id}` : ""}`;
+  const stripeLink = buildCheckoutUrl({
+    createdAt: user?.created_at,
+    email: user?.email,
+    userId: user?.id,
+    successUrl: SUCCESS_REDIRECT,
+  });
 
   const handleUpgrade = () => {
     setLoading(true);
