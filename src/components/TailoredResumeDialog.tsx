@@ -415,12 +415,13 @@ export function TailoredResumeDialog({ open, onOpenChange, job }: TailoredResume
         regeneration_round: 1,
       });
 
-      // Get old score (current profile vs job)
+      // Get old score using the SAME formProfile approach for consistency
       if (oldScore == null) {
         runCheck({
           job_description: job.description || "",
           job_title: job.title,
           job_skills: job.skills || [],
+          formProfile: profileToFormProfile(profile),
         }).then((res) => {
           if (res) {
             setOldScore(res.overall_score);
