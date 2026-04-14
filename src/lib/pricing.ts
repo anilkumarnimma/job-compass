@@ -25,3 +25,23 @@ export function getUserPrice(createdAt: string | Date | null | undefined): strin
 export function getUserStripeLink(createdAt: string | Date | null | undefined): string {
   return isLegacyUser(createdAt) ? STRIPE_LINK_LEGACY : STRIPE_LINK_NEW;
 }
+
+/**
+ * Build a full Stripe checkout URL with user identification params.
+ * This ensures the webhook can always link the payment to the correct user,
+ * even if the customer enters a different email at checkout.
+ */
+export function buildCheckoutUrl(opts: {
+  createdAt?: string | Date | null;
+  email?: string | null;
+  userId?: string | null;
+  successUrl?: string;
+}): string {
+  const base = getUserStripeLink(opts.createdAt);
+  const params = new URLSearchParams();
+  if (opts.successUrl) params.set("success_url", opts.successUrl);
+  if (opts.email) params.set("prefilled_email", opts.email);
+  if (opts.userId) params.set("client_reference_id", opts.userId);
+  const qs = params.toString();
+  return qs ? `${base}?${qs}` : base;
+}

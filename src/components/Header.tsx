@@ -12,7 +12,7 @@ import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { FloatingHelpButton } from "@/components/FloatingHelpButton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { triggerDashboardReset } from "@/lib/dashboardReset";
-import { getUserStripeLink } from "@/lib/pricing";
+import { buildCheckoutUrl } from "@/lib/pricing";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,7 +30,7 @@ export function Header() {
   const { profile } = useProfile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const STRIPE_LINK = getUserStripeLink(user?.created_at);
+  const STRIPE_LINK = buildCheckoutUrl({ createdAt: user?.created_at, email: user?.email, userId: user?.id });
   const isPremium = profile?.is_premium ?? false;
 
   const isActive = (path: string) => location.pathname === path;

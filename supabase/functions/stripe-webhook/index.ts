@@ -72,6 +72,7 @@ Deno.serve(async (req) => {
       const customerEmail = session.customer_details?.email || session.customer_email;
       const customerName = session.customer_details?.name || null;
       const stripeCustomerId = (session as any).customer as string | null;
+      const clientReferenceId = session.client_reference_id || null;
 
       if (!customerEmail) {
         logStep("ERROR: No email in checkout session");
@@ -81,17 +82,41 @@ Deno.serve(async (req) => {
       }
 
       const emailLower = customerEmail.toLowerCase();
-      logStep("Processing checkout success", { email: emailLower, customerName, stripeCustomerId });
+      logStep("Processing checkout success", { email: emailLower, customerName, stripeCustomerId, clientReferenceId });
+
+      let matchedUserId: string | null = null;
+      let matchMethod = "";
+
+      // ── STRATEGY 0: client_reference_id (most reliable — set at checkout) ──
+      if (clientReferenceId) {
+        const { data: refMatch } = await supabase
+          .from("profiles")
+          .select("user_id")
+          .eq("user_id", clientReferenceId)
+          .maybeSingle();
+
+        if (refMatch?.user_id) {
+          matchedUserId = refMatch.user_id;
+          matchMethod = "client_reference_id";
+          logStep("Matched via client_reference_id", { userId: matchedUserId });
+        } else {
+          logStep("client_reference_id provided but no matching profile found", { clientReferenceId });
+        }
+      }
 
       // ── STRATEGY 1: Direct email match ──
-      const { data: emailMatch } = await supabase
-        .from("profiles")
-        .select("user_id")
-        .eq("email", emailLower)
-        .maybeSingle();
+      if (!matchedUserId) {
+        const { data: emailMatch } = await supabase
+          .from("profiles")
+          .select("user_id")
+          .eq("email", emailLower)
+          .maybeSingle();
 
-      let matchedUserId: string | null = emailMatch?.user_id || null;
-      let matchMethod = "email";
+        if (emailMatch?.user_id) {
+          matchedUserId = emailMatch.user_id;
+          matchMethod = "email";
+        }
+      }
 
       // ── STRATEGY 2: Match by stored stripe_customer_id ──
       if (!matchedUserId && stripeCustomerId) {
