@@ -18,7 +18,7 @@ export function UpgradeDialog({ open, onOpenChange }: UpgradeDialogProps) {
   const price = getUserPrice(user?.created_at);
   const stripeBaseLink = getUserStripeLink(user?.created_at);
 
-  const stripeLink = `${stripeBaseLink}?success_url=${encodeURIComponent(SUCCESS_REDIRECT)}${user?.email ? `&prefilled_email=${encodeURIComponent(user.email)}` : ""}`;
+  const stripeLink = `${stripeBaseLink}?success_url=${encodeURIComponent(SUCCESS_REDIRECT)}${user?.email ? `&prefilled_email=${encodeURIComponent(user.email)}` : ""}${user?.id ? `&client_reference_id=${user.id}` : ""}`;
 
   const handleUpgrade = () => {
     setLoading(true);
