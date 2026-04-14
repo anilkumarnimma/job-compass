@@ -46,6 +46,7 @@ interface GenerateParams {
   resume_filename?: string;
   resume_mime_type?: string;
   resume_version?: string;
+  regeneration_round?: number;
 }
 
 function escapeHtml(value: string) {

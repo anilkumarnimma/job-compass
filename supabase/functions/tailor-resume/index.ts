@@ -43,7 +43,8 @@ serve(async (req) => {
       });
     }
 
-    const { job_title, job_description, job_skills, resume_intelligence, resume_text, base_resume } = body;
+    const { job_title, job_description, job_skills, resume_intelligence, resume_text, base_resume, regeneration_round } = body;
+    const round = typeof regeneration_round === "number" ? regeneration_round : 1;
 
     if (!job_title) {
       console.log("[TAILOR] Missing job_title");
@@ -66,11 +67,36 @@ serve(async (req) => {
 
     console.log("[TAILOR] Generating for job:", job_title, "| has base_resume:", !!base_resume, "| has resume_text:", !!resume_text, "| has intelligence:", !!resume_intelligence);
 
+    // Round-specific deepening instructions
+    const roundInstructions = round <= 1
+      ? `OPTIMIZATION FOCUS (Round 1 — Keyword Alignment):
+- Match keywords and skills from the job description into the resume
+- Add missing relevant skills to the skills section
+- Strengthen action verbs in bullet points
+- Add a tailored professional summary`
+      : round === 2
+      ? `OPTIMIZATION FOCUS (Round 2 — Deep Rewrite):
+- This resume was ALREADY tailored once. You must improve upon it further.
+- Rewrite bullet points to more closely mirror the exact language used in the job description
+- Use the same terminology, phrases, and technical terms as the job posting
+- Quantify more achievements with realistic metrics
+- Ensure every bullet starts with a powerful, job-relevant action verb`
+      : `OPTIMIZATION FOCUS (Round ${round} — Maximum ATS Optimization):
+- This resume has been through ${round - 1} rounds of optimization already. Push it further.
+- Tighten keyword density — ensure every important keyword from the job description appears at least once
+- Add any still-missing skills that the candidate plausibly has
+- Reorder sections and bullet points to put the most ATS-relevant content first
+- Remove or condense any content not relevant to this specific job
+- Ensure the summary perfectly mirrors the job requirements
+- Maximize keyword overlap without sounding unnatural`;
+
     const systemPrompt = `You are an expert ATS resume optimizer. You tailor a candidate's existing resume for a specific job posting.
+${round > 1 ? `\nIMPORTANT: This is regeneration round ${round}. The base resume provided is the OUTPUT of the previous round. You MUST improve upon it — produce a BETTER ATS-optimized version, not the same one.\n` : ""}
+${roundInstructions}
 
 ABSOLUTE MANDATORY RULES — NEVER EVER CHANGE THESE:
 0. The uploaded/base resume structure is the source of truth. Preserve the same header identity, section order, section titles, core entries, company names, job titles, education entries, and dates exactly.
-1. Company names — copy them EXACTLY character-for-character from the candidate's resume. Do NOT rename, abbreviate, expand, normalize, or replace any company name. If the resume says "Acme Corp", output "Acme Corp" exactly. If it says "ABC Technologies Pvt Ltd", output "ABC Technologies Pvt Ltd" exactly.
+1. Company names — copy them EXACTLY character-for-character from the candidate's resume. Do NOT rename, abbreviate, expand, normalize, or replace any company name.
 2. Job titles / role names — keep EXACTLY as written in the resume
 3. Employment dates / years — keep EXACTLY as written in the resume
 4. Education institution names — keep EXACTLY as written in the resume
@@ -94,16 +120,8 @@ ALLOWED OPTIMIZATIONS — DO these aggressively:
 PROFESSIONAL SUMMARY REQUIREMENT (CRITICAL):
 - The summary field MUST be a strong, detailed professional summary of exactly 5-6 sentences (NOT a one-liner).
 - It must read as a single cohesive paragraph placed at the top of the resume.
-- Content requirements for the summary:
-  1. Open with a compelling statement about the candidate's total years of experience, core domain, and professional identity.
-  2. Highlight the candidate's strongest technical skills and technologies that align with the target job description.
-  3. Mention specific domains, industries, or problem areas the candidate has worked in.
-  4. Include measurable impact or scale where realistic.
-  5. Reference leadership, collaboration, or cross-functional abilities if supported by the resume.
-  6. Close with a forward-looking statement tying the candidate's strengths to the target role's requirements.
 - Use ATS-optimized keywords from the job description naturally throughout the summary.
 - Tone must be professional, confident, and impactful.
-- Do NOT use generic filler phrases like "team player" or "hard worker" without specific context.
 - The summary must truthfully reflect the candidate's actual experience from the resume — do NOT fabricate claims.
 
 BULLET POINT DEPTH REQUIREMENT (CRITICAL):
@@ -111,9 +129,6 @@ BULLET POINT DEPTH REQUIREMENT (CRITICAL):
 - Each bullet must start with a strong action verb.
 - Each bullet must be technically detailed, mentioning specific technologies, tools, frameworks, or methodologies relevant to the target job.
 - Each bullet must demonstrate impact, scale, or measurable contribution.
-- Expand existing short bullets into richer, more detailed statements.
-- Add realistic new bullets that align with the candidate's role, tools, and industry — but do NOT fabricate fake projects or companies.
-- Avoid generic filler bullets.
 - Prioritize bullets that align with the target job description's requirements and keywords.
 
 NEVER fabricate fake companies, fake roles, fake projects, or fake dates.
