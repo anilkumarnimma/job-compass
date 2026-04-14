@@ -23,6 +23,7 @@ import {
 import { HiringGraphManager } from "@/components/founder/HiringGraphManager";
 import { MarketAlertManager } from "@/components/founder/MarketAlertManager";
 import { EmailNotificationManager } from "@/components/founder/EmailNotificationManager";
+import { ManualPremiumManager } from "@/components/founder/ManualPremiumManager";
 import {
   Pagination,
   PaginationContent,
@@ -139,6 +140,11 @@ export default function FounderEmployers() {
           <EmailNotificationManager
             users={otherUsers.map((u) => ({ id: u.id, email: u.email, full_name: u.full_name }))}
           />
+        </div>
+
+        {/* Manual Premium Grants - Founder Only */}
+        <div className="mb-8">
+          <ManualPremiumManager />
         </div>
 
         {/* Header */}
