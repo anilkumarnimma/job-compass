@@ -74,6 +74,9 @@ export default function Profile() {
 
   const { data: effectiveRole, isLoading: roleLoading } = useUserRole();
   const { data: allRoles } = useAllUserRoles();
+  const hasAdminRole = allRoles?.some(({ role }) => role === "admin") ?? false;
+  const showRoleDebug = effectiveRole === "founder" || hasAdminRole;
+  const debugDisplayRole = effectiveRole === "founder" ? "founder" : hasAdminRole ? "admin" : effectiveRole || "user";
   const fileInputRef = useRef<HTMLInputElement>(null);
   
 
@@ -1034,7 +1037,7 @@ export default function Profile() {
           )}
 
           {/* Debug Role Section - only visible to founder/admin */}
-          {(effectiveRole === "founder" || effectiveRole === "employer") && (
+          {showRoleDebug && (
           <Card className="border-dashed border-accent/50 bg-accent/5 rounded-3xl">
             <CardHeader>
               <div className="flex items-center gap-2">
@@ -1048,7 +1051,7 @@ export default function Profile() {
                 <>
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground">Effective Role:</span>
-                    <Badge variant={effectiveRole === "founder" ? "default" : effectiveRole === "employer" ? "secondary" : "outline"}>{effectiveRole || "user"}</Badge>
+                    <Badge variant={debugDisplayRole === "founder" ? "default" : "secondary"}>{debugDisplayRole}</Badge>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-sm text-muted-foreground">All Assigned Roles:</span>
