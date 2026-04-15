@@ -155,13 +155,30 @@ Deno.serve(async (req) => {
       logStep("Active subscription found", { nextRenewal, periodEnd });
     }
 
+    // If no active Stripe sub, check manual grants before revoking
+    let isPremium = hasActive;
+    if (!hasActive) {
+      const { data: manualGrant } = await supabase
+        .from("manual_premium_grants")
+        .select("id, expires_at")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .limit(1)
+        .maybeSingle();
+
+      if (manualGrant && (!manualGrant.expires_at || new Date(manualGrant.expires_at) > new Date())) {
+        isPremium = true;
+        logStep("Manual premium grant active, preserving premium", { grantId: manualGrant.id });
+      }
+    }
+
     // Update profiles
     const { error: profileErr } = await supabase
       .from("profiles")
-      .update({ is_premium: hasActive })
+      .update({ is_premium: isPremium })
       .eq("user_id", user.id);
     if (profileErr) logStep("ERROR: Profile update failed", { message: profileErr.message });
-    else logStep("Profile updated", { is_premium: hasActive });
+    else logStep("Profile updated", { is_premium: isPremium });
 
     // Update user_subscriptions
     const { error: subErr } = await supabase
