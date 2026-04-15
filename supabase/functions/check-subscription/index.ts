@@ -194,7 +194,7 @@ Deno.serve(async (req) => {
     else logStep("Subscription record updated");
 
     return new Response(JSON.stringify({
-      subscribed: hasActive,
+      subscribed: isPremium,
       subscription_end: nextRenewal,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
