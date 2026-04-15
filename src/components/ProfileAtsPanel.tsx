@@ -5,9 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAtsCheck, AtsCheckResult } from "@/hooks/useAtsCheck";
+import { useProfile } from "@/hooks/useProfile";
+import { useNavigate } from "react-router-dom";
 import {
   Target, Loader2, Sparkles, CheckCircle2, XCircle, TrendingUp,
-  Lightbulb, Zap, ShieldCheck, Briefcase, GraduationCap, FileSearch,
+  Lightbulb, Zap, ShieldCheck, Briefcase, GraduationCap, FileSearch, Upload,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -75,7 +77,10 @@ interface ProfileAtsPanelProps {
 
 export function ProfileAtsPanel({ formProfile }: ProfileAtsPanelProps = {}) {
   const { runCheck, isChecking, result, clearResult } = useAtsCheck();
+  const { profile } = useProfile();
+  const navigate = useNavigate();
   const [customDescription, setCustomDescription] = useState("");
+  const hasResume = Boolean(profile?.resume_url);
 
   const handleSubmit = () => {
     if (customDescription.trim()) {
@@ -102,7 +107,15 @@ export function ProfileAtsPanel({ formProfile }: ProfileAtsPanelProps = {}) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {(!result || isChecking) && (
+          {!hasResume ? (
+            <div className="text-center py-6 space-y-3">
+              <Upload className="h-10 w-10 text-muted-foreground mx-auto" />
+              <p className="text-sm text-muted-foreground">Upload your resume first to run an ATS compatibility check.</p>
+              <Button onClick={() => { const el = document.getElementById("resume-upload-section"); if (el) el.scrollIntoView({ behavior: "smooth" }); }} variant="outline" className="rounded-xl">
+                Upload Resume
+              </Button>
+            </div>
+          ) : (!result || isChecking) ? (
             <>
               <Textarea
                 placeholder="Paste job description here..."

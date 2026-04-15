@@ -16,6 +16,8 @@ import { memo, useCallback, useState, useMemo, lazy, Suspense } from "react";
 import { analyzeVisaSponsorship } from "@/lib/visaSponsorship";
 import { VisaSponsorshipBadge } from "@/components/VisaSponsorshipBadge";
 import { useAtsCheck } from "@/hooks/useAtsCheck";
+import { useProfile } from "@/hooks/useProfile";
+import { useToast } from "@/hooks/use-toast";
 import { LinkedInConnectDialog } from "@/components/LinkedInConnectDialog";
 
 const AtsCheckDialog = lazy(async () => {
@@ -48,7 +50,10 @@ interface JobCardProps {
 export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSelected, style, matchResult, landingProbability, context = 'dashboard' }: JobCardProps) {
   const { applyToJob, saveJob, unsaveJob, isApplied, isSaved } = useJobContext();
   const { user } = useAuth();
+  const { profile } = useProfile();
+  const { toast } = useToast();
   const navigate = useNavigate();
+  const hasResume = Boolean(profile?.resume_url);
 
   const saved = isSaved(job.id);
   const applied = isApplied(job.id);
@@ -67,9 +72,24 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
   // LinkedIn Connect state
   const [linkedInOpen, setLinkedInOpen] = useState(false);
 
+  const requireResume = (featureName: string): boolean => {
+    if (hasResume) return true;
+    toast({
+      title: "Resume required",
+      description: `Please upload your resume first to use ${featureName}.`,
+      action: (
+        <Button variant="outline" size="sm" className="shrink-0" onClick={() => navigate("/profile")}>
+          Upload Resume
+        </Button>
+      ),
+    });
+    return false;
+  };
+
   const handleAtsClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) { navigate("/auth"); return; }
+    if (!requireResume("ATS Check")) return;
     runCheck({
       job_description: job.description,
       job_title: job.title,
@@ -81,12 +101,14 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
   const handleCoverLetterClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) { navigate("/auth"); return; }
+    if (!requireResume("Cover Letter")) return;
     setCoverLetterOpen(true);
   };
 
   const handleTailoredResumeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) { navigate("/auth"); return; }
+    if (!requireResume("Tailored Resume")) return;
     setTailoredResumeOpen(true);
   };
 

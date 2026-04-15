@@ -57,8 +57,14 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
     // Title click should not trigger external apply; it's a no-op in the preview panel
   };
 
+  const hasResume = Boolean(profile?.resume_url);
+
   const handleAtsCheck = () => {
     if (!user) { navigate("/auth"); return; }
+    if (!hasResume) {
+      navigate("/profile");
+      return;
+    }
     clearResult();
     setShowAtsDialog(true);
     runCheck({
