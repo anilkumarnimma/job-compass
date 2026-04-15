@@ -24,7 +24,7 @@ import {
 export function Header() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const { data: userRole } = useUserRole();
   const { data: allRoles } = useAllUserRoles();
   const { profile } = useProfile();
@@ -38,6 +38,14 @@ export function Header() {
   const role = userRole || "user";
   const isFounder = role === "founder";
   const isEmployer = role === "employer";
+  const visibleRoles = (allRoles ?? []).filter(({ role: assignedRole }) => assignedRole !== "user");
+  const displayedRole =
+    role === "founder"
+      ? "founder"
+      : visibleRoles.find(({ role: assignedRole }) => assignedRole === "founder")?.role ??
+        visibleRoles.find(({ role: assignedRole }) => assignedRole === "admin")?.role ??
+        null;
+  const showRoleDetails = isAdmin && Boolean(displayedRole);
 
   const handleBrandClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     if (!user) return;
@@ -151,21 +159,21 @@ export function Header() {
                         <User className="h-4 w-4 mr-2" />
                         My Profile
                       </DropdownMenuItem>
-                      {(isFounder || isEmployer) && userRole !== "user" && (
+                      {showRoleDetails && displayedRole && (
                         <>
                           <DropdownMenuSeparator />
                           <div className="px-2 py-1.5 text-xs text-muted-foreground">
                             <div className="flex items-center gap-2 mb-1">
                               <span>Role:</span>
-                              <Badge variant={isFounder ? "default" : "secondary"} className="text-xs">
-                                {role}
+                              <Badge variant={displayedRole === "founder" ? "default" : "secondary"} className="text-xs">
+                                {displayedRole}
                               </Badge>
                             </div>
-                            {allRoles && allRoles.length > 1 && (
+                            {visibleRoles.length > 1 && (
                               <div className="flex flex-wrap gap-1">
                                 <span>All:</span>
-                                {allRoles.map((r, i) => (
-                                  <Badge key={i} variant="outline" className="text-xs">{r.role}</Badge>
+                                {visibleRoles.map((assignedRole, i) => (
+                                  <Badge key={i} variant="outline" className="text-xs">{assignedRole.role}</Badge>
                                 ))}
                               </div>
                             )}
@@ -267,11 +275,11 @@ export function Header() {
                         </Button>
                       </Link>
                     )}
-                    {(isFounder || isEmployer) && userRole !== "user" && (
+                    {showRoleDetails && displayedRole && (
                       <div className="px-3 py-2 text-xs text-muted-foreground flex items-center gap-2">
                         <span>Current role:</span>
-                        <Badge variant={isFounder ? "default" : "secondary"} className="text-xs">
-                          {role}
+                        <Badge variant={displayedRole === "founder" ? "default" : "secondary"} className="text-xs">
+                          {displayedRole}
                         </Badge>
                       </div>
                     )}
