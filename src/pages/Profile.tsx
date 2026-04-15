@@ -1057,7 +1057,6 @@ export default function Profile() {
                     <span className="text-sm text-muted-foreground">All Assigned Roles:</span>
                     {allRoles && allRoles.length > 0 ? allRoles.map((r, i) => <Badge key={i} variant="outline" className="text-xs">{r.role}</Badge>) : <Badge variant="outline">user (default)</Badge>}
                   </div>
-                  </div>
                   <div className="text-xs text-muted-foreground mt-2">User ID: {user?.id}</div>
                 </>
               )}
