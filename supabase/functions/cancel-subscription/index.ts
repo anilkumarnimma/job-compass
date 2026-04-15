@@ -10,12 +10,13 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[CANCEL-SUBSCRIPTION] ${step}${details ? ` - ${JSON.stringify(details)}` : ''}`);
 };
 
-function respond(ok: boolean, payload: Record<string, unknown>, status = 200) {
-  return new Response(JSON.stringify({ ok, ...payload }), {
+const respond = (payload: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(payload), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
-}
+
+const isValidStripeKey = (key: string) => /^(sk|rk)_(live|test)_/.test(key.trim());
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -26,34 +27,49 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-  if (!stripeKey) {
-    return respond(false, { error: "Server misconfigured" });
+  if (!stripeKey || !isValidStripeKey(stripeKey)) {
+    logStep("CONFIG_ERROR", {
+      hasKey: !!stripeKey,
+      prefix: stripeKey?.slice(0, 7) ?? null,
+      length: stripeKey?.length ?? 0,
+    });
+    return respond({
+      ok: false,
+      error: "Billing service is temporarily unavailable.",
+      fallback: true,
+    });
   }
 
-  const supabase = createClient(supabaseUrl, supabaseServiceKey, { auth: { persistSession: false } });
+  const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: { persistSession: false },
+  });
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
+    if (!authHeader) {
+      return respond({ ok: false, error: "Not authenticated" });
+    }
 
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: authErr } = await supabase.auth.getUser(token);
-    if (authErr || !userData?.user) throw new Error("Auth failed");
+    if (authErr || !userData?.user) {
+      logStep("Auth failed", { message: authErr?.message });
+      return respond({ ok: false, error: "Auth unavailable" });
+    }
 
     const user = userData.user;
-    if (!user?.email) throw new Error("No email");
+    if (!user?.email) {
+      return respond({ ok: false, error: "User email unavailable" });
+    }
     logStep("User authenticated", { userId: user.id });
 
     const { action } = await req.json().catch(() => ({ action: "cancel" }));
+    const stripe = new Stripe(stripeKey.trim(), { apiVersion: "2025-08-27.basil" });
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-
-    // Strategy 1: Find Stripe customer by email
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId = customers.data.length > 0 ? customers.data[0].id : null;
     logStep("Customer lookup by email", { email: user.email, found: !!customerId });
 
-    // Strategy 2: If not found by email, check user_subscriptions for a stored stripe_customer_id
     if (!customerId) {
       const { data: subRecord } = await supabase
         .from("user_subscriptions")
@@ -65,75 +81,121 @@ Deno.serve(async (req) => {
         logStep("Found stored stripe_customer_id", { storedCustomerId: subRecord.stripe_customer_id });
         try {
           const storedCustomer = await stripe.customers.retrieve(subRecord.stripe_customer_id);
-          if (storedCustomer && !storedCustomer.deleted) {
+          if (storedCustomer && !("deleted" in storedCustomer && storedCustomer.deleted)) {
             customerId = storedCustomer.id;
             logStep("Verified stored customer exists in Stripe", { customerId });
           }
         } catch (e) {
-          logStep("Stored customer not found in Stripe", { error: (e as Error).message });
+          logStep("Stored customer not found in Stripe", {
+            error: e instanceof Error ? e.message : String(e),
+          });
         }
       }
     }
 
     if (!customerId) {
-      return respond(false, { error: "No subscription found" });
+      return respond({ ok: false, error: "No subscription found" });
     }
-    logStep("Using customer", { customerId });
-    const subscriptions = await stripe.subscriptions.list({ customer: customerId, status: "active", limit: 1 });
-    logStep("Active subscriptions", { count: subscriptions.data.length });
 
-    if (subscriptions.data.length === 0) {
-      // Check for cancel_at_period_end subscriptions (for resume)
-      const allSubs = await stripe.subscriptions.list({ customer: customerId, limit: 1 });
-      if (allSubs.data.length > 0 && action === "resume") {
-        const sub = allSubs.data[0];
-        if (sub.cancel_at_period_end) {
-          const updated = await stripe.subscriptions.update(sub.id, { cancel_at_period_end: false });
-          logStep("Subscription resumed", { subscriptionId: sub.id });
-          return respond(true, {
+    logStep("Using customer", { customerId, action });
+
+    const activeSubscriptions = await stripe.subscriptions.list({
+      customer: customerId,
+      status: "active",
+      limit: 1,
+    });
+    logStep("Active subscriptions", { count: activeSubscriptions.data.length });
+
+    if (activeSubscriptions.data.length === 0) {
+      const allSubscriptions = await stripe.subscriptions.list({ customer: customerId, limit: 5 });
+      const resumableSubscription = allSubscriptions.data.find((sub) => sub.cancel_at_period_end);
+
+      if (action === "resume" && resumableSubscription) {
+        try {
+          const updated = await stripe.subscriptions.update(resumableSubscription.id, {
+            cancel_at_period_end: false,
+          });
+          logStep("Subscription resumed", { subscriptionId: resumableSubscription.id });
+          return respond({
+            ok: true,
             action: "resumed",
             subscription_end: new Date(updated.current_period_end * 1000).toISOString(),
           });
+        } catch (stripeErr) {
+          const message = stripeErr instanceof Error ? stripeErr.message : String(stripeErr);
+          logStep("Stripe resume failed", { message });
+          return respond({ ok: false, error: "Unable to resume subscription right now." });
         }
       }
-      return respond(false, { error: "No active subscription" });
+
+      return respond({ ok: false, error: "No active subscription" });
     }
 
-    const subscription = subscriptions.data[0];
+    const subscription = activeSubscriptions.data[0];
 
     if (action === "cancel") {
       logStep("Attempting cancel", { subscriptionId: subscription.id });
       try {
-        const updated = await stripe.subscriptions.update(subscription.id, { cancel_at_period_end: true });
+        const updated = await stripe.subscriptions.update(subscription.id, {
+          cancel_at_period_end: true,
+        });
         logStep("Subscription set to cancel at period end", { subscriptionId: subscription.id });
 
-        return respond(true, {
-          success: true,
+        return respond({
+          ok: true,
           action: "cancelled",
           subscription_end: new Date(updated.current_period_end * 1000).toISOString(),
         });
-      } catch (stripeErr: any) {
-        logStep("Stripe update failed", { message: stripeErr?.message, type: stripeErr?.type, code: stripeErr?.code });
-        return respond(false, { error: "Unable to cancel subscription. Please try again or contact support." });
+      } catch (stripeErr) {
+        const message = stripeErr instanceof Error ? stripeErr.message : String(stripeErr);
+        logStep("Stripe update failed", { message });
+
+        const isPermissionError =
+          message.includes("permission") ||
+          message.includes("not allowed") ||
+          message.includes("Invalid API Key provided") ||
+          message.includes("api key");
+
+        return respond({
+          ok: false,
+          error: isPermissionError
+            ? "Billing service is temporarily unavailable."
+            : "Unable to cancel subscription right now.",
+          fallback: isPermissionError,
+        });
       }
     }
 
     if (action === "resume") {
-      if (subscription.cancel_at_period_end) {
-        const updated = await stripe.subscriptions.update(subscription.id, { cancel_at_period_end: false });
+      if (!subscription.cancel_at_period_end) {
+        return respond({ ok: false, error: "Subscription is not pending cancellation" });
+      }
+
+      try {
+        const updated = await stripe.subscriptions.update(subscription.id, {
+          cancel_at_period_end: false,
+        });
         logStep("Subscription resumed", { subscriptionId: subscription.id });
-        return respond(true, {
-          success: true,
+        return respond({
+          ok: true,
           action: "resumed",
           subscription_end: new Date(updated.current_period_end * 1000).toISOString(),
         });
+      } catch (stripeErr) {
+        const message = stripeErr instanceof Error ? stripeErr.message : String(stripeErr);
+        logStep("Stripe resume failed", { message });
+        return respond({ ok: false, error: "Unable to resume subscription right now." });
       }
-      return respond(false, { error: "Subscription is not pending cancellation" });
     }
 
-    return respond(false, { error: "Invalid action" });
+    return respond({ ok: false, error: "Invalid action" });
   } catch (err) {
-    logStep("ERROR", { message: (err as Error).message, stack: (err as Error).stack?.slice(0, 300) });
-    return respond(false, { error: "An unexpected error occurred" });
+    const message = err instanceof Error ? err.message : String(err);
+    logStep("ERROR", { message });
+    return respond({
+      ok: false,
+      error: "Unable to manage subscription right now.",
+      fallback: true,
+    });
   }
 });
