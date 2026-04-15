@@ -142,7 +142,7 @@ export function ProfileAtsPanel({ formProfile }: ProfileAtsPanelProps = {}) {
                 )}
               </Button>
             </>
-          )}
+          ) : null}
 
           {/* Loading animation */}
           {isChecking && (
