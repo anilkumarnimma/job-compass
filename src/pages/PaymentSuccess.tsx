@@ -26,7 +26,14 @@ export default function PaymentSuccess() {
       for (let attempt = 0; attempt < 10; attempt += 1) {
         if (cancelled) return;
 
-        const { data } = await supabase.functions.invoke("check-subscription");
+        const { data, error } = await supabase.functions.invoke("check-subscription");
+
+        if (error || data?.error || data?.fallback) {
+          if (!cancelled) {
+            setIsSyncing(false);
+          }
+          return;
+        }
 
         if (data?.subscribed) {
           queryClient.removeQueries({ queryKey: ["profile", user.id] });

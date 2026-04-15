@@ -11,6 +11,14 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);
 };
 
+const respond = (payload: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
+const isValidStripeKey = (key: string) => /^(sk|rk)_(live|test)_/.test(key.trim());
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -21,10 +29,26 @@ Deno.serve(async (req) => {
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
   if (!stripeKey) {
-    logStep("ERROR: Missing STRIPE_SECRET_KEY");
-    return new Response(JSON.stringify({ error: "Server misconfigured" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    logStep("CONFIG_ERROR", { reason: "missing_stripe_secret_key" });
+    return respond({
+      ok: false,
+      error: "Billing service is temporarily unavailable.",
+      fallback: true,
+      subscribed: null,
+    });
+  }
+
+  if (!isValidStripeKey(stripeKey)) {
+    logStep("CONFIG_ERROR", {
+      reason: "invalid_stripe_key_prefix",
+      prefix: stripeKey.slice(0, 7),
+      length: stripeKey.length,
+    });
+    return respond({
+      ok: false,
+      error: "Billing service is temporarily unavailable.",
+      fallback: true,
+      subscribed: null,
     });
   }
 
@@ -36,30 +60,29 @@ Deno.serve(async (req) => {
     logStep("Function started");
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
+    if (!authHeader) {
+      return respond({ ok: false, error: "Not authenticated", subscribed: null });
+    }
 
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: authErr } = await supabase.auth.getUser(token);
     if (authErr || !userData?.user) {
       logStep("Auth failed", { message: authErr?.message });
-      return new Response(JSON.stringify({ error: "Auth unavailable" }), {
-        status: 503,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return respond({ ok: false, error: "Auth unavailable", subscribed: null });
     }
 
-    const user = userData!.user;
-    if (!user?.email) throw new Error("User not authenticated or no email");
+    const user = userData.user;
+    if (!user?.email) {
+      return respond({ ok: false, error: "User email unavailable", subscribed: null });
+    }
     logStep("User authenticated", { userId: user.id });
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+    const stripe = new Stripe(stripeKey.trim(), { apiVersion: "2025-08-27.basil" });
 
-    // Strategy 1: Find Stripe customer by email
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId = customers.data.length > 0 ? customers.data[0].id : null;
     logStep("Customer lookup by email", { found: !!customerId, email: user.email });
 
-    // Strategy 2: If not found by email, check user_subscriptions for a stored stripe_customer_id
     if (!customerId) {
       const { data: subRecord } = await supabase
         .from("user_subscriptions")
@@ -71,12 +94,13 @@ Deno.serve(async (req) => {
         logStep("Found stored stripe_customer_id, verifying with Stripe", {
           storedCustomerId: subRecord.stripe_customer_id,
         });
+
         try {
           const storedCustomer = await stripe.customers.retrieve(subRecord.stripe_customer_id);
-          if (storedCustomer && !storedCustomer.deleted) {
-            // Verify the Stripe customer's email matches the authenticated user's email
+          if (storedCustomer && !("deleted" in storedCustomer && storedCustomer.deleted)) {
             const stripeEmail = (storedCustomer as { email?: string }).email?.toLowerCase();
-            const userEmail = user.email!.toLowerCase();
+            const userEmail = user.email.toLowerCase();
+
             if (stripeEmail === userEmail) {
               customerId = storedCustomer.id;
               logStep("Verified stored customer exists and email matches", { customerId });
@@ -86,21 +110,25 @@ Deno.serve(async (req) => {
                 userEmail,
                 storedCustomerId: subRecord.stripe_customer_id,
               });
-              // Clear the mismatched stripe_customer_id
-              await supabase.from("user_subscriptions").update({
-                stripe_customer_id: null,
-                updated_at: new Date().toISOString(),
-              }).eq("user_id", user.id);
+
+              await supabase
+                .from("user_subscriptions")
+                .update({
+                  stripe_customer_id: null,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq("user_id", user.id);
             }
           }
         } catch (e) {
-          logStep("Stored customer not found in Stripe", { error: e.message });
+          logStep("Stored customer not found in Stripe", {
+            error: e instanceof Error ? e.message : String(e),
+          });
         }
       }
     }
 
     if (!customerId) {
-      // No Stripe customer — check for manual premium grants before revoking
       logStep("No Stripe customer found, checking manual grants");
       const { data: manualGrant } = await supabase
         .from("manual_premium_grants")
@@ -110,8 +138,8 @@ Deno.serve(async (req) => {
         .limit(1)
         .maybeSingle();
 
-      const hasValidGrant = manualGrant && (
-        !manualGrant.expires_at || new Date(manualGrant.expires_at) > new Date()
+      const hasValidGrant = !!(
+        manualGrant && (!manualGrant.expires_at || new Date(manualGrant.expires_at) > new Date())
       );
 
       if (hasValidGrant) {
@@ -122,22 +150,27 @@ Deno.serve(async (req) => {
         await supabase.from("profiles").update({ is_premium: false }).eq("user_id", user.id);
       }
 
-      await supabase.from("user_subscriptions").upsert({
-        user_id: user.id,
-        is_subscribed: false,
-        stripe_customer_id: null,
-        next_renewal_date: null,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id" });
+      await supabase.from("user_subscriptions").upsert(
+        {
+          user_id: user.id,
+          is_subscribed: false,
+          stripe_customer_id: null,
+          next_renewal_date: null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id" },
+      );
 
-      return new Response(JSON.stringify({ subscribed: hasValidGrant ? true : false, manual_grant: !!hasValidGrant }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return respond({
+        ok: true,
+        subscribed: hasValidGrant,
+        manual_grant: hasValidGrant,
+        subscription_end: null,
       });
     }
 
     logStep("Using customer", { customerId });
 
-    // Check for active subscriptions
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
@@ -149,13 +182,12 @@ Deno.serve(async (req) => {
     let nextRenewal: string | null = null;
     if (hasActive) {
       const periodEnd = subscriptions.data[0].current_period_end;
-      if (periodEnd && !isNaN(periodEnd)) {
+      if (typeof periodEnd === "number" && !Number.isNaN(periodEnd)) {
         nextRenewal = new Date(periodEnd * 1000).toISOString();
       }
       logStep("Active subscription found", { nextRenewal, periodEnd });
     }
 
-    // If no active Stripe sub, check manual grants before revoking
     let isPremium = hasActive;
     if (!hasActive) {
       const { data: manualGrant } = await supabase
@@ -172,7 +204,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update profiles
     const { error: profileErr } = await supabase
       .from("profiles")
       .update({ is_premium: isPremium })
@@ -180,30 +211,43 @@ Deno.serve(async (req) => {
     if (profileErr) logStep("ERROR: Profile update failed", { message: profileErr.message });
     else logStep("Profile updated", { is_premium: isPremium });
 
-    // Update user_subscriptions
     const { error: subErr } = await supabase
       .from("user_subscriptions")
-      .upsert({
-        user_id: user.id,
-        is_subscribed: hasActive,
-        stripe_customer_id: customerId,
-        next_renewal_date: nextRenewal,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id" });
+      .upsert(
+        {
+          user_id: user.id,
+          is_subscribed: hasActive,
+          stripe_customer_id: customerId,
+          next_renewal_date: nextRenewal,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id" },
+      );
     if (subErr) logStep("ERROR: Subscription update failed", { message: subErr.message });
     else logStep("Subscription record updated");
 
-    return new Response(JSON.stringify({
+    return respond({
+      ok: true,
       subscribed: isPremium,
       subscription_end: nextRenewal,
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    logStep("ERROR", { message: err.message });
-    return new Response(JSON.stringify({ error: "An unexpected error occurred" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const message = err instanceof Error ? err.message : String(err);
+    logStep("ERROR", { message });
+
+    const isStripeConfigError =
+      message.includes("Invalid API Key provided") ||
+      message.includes("You did not provide an API key") ||
+      message.includes("api key") ||
+      message.includes("API key");
+
+    return respond({
+      ok: false,
+      error: isStripeConfigError
+        ? "Billing service is temporarily unavailable."
+        : "Unable to verify subscription right now.",
+      fallback: true,
+      subscribed: null,
     });
   }
 });

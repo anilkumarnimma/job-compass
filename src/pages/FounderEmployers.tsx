@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Navigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -66,7 +66,9 @@ export default function FounderEmployers() {
   const paginatedUsers = otherUsers.slice((currentPage - 1) * USERS_PER_PAGE, currentPage * USERS_PER_PAGE);
 
   // Reset page when search changes
-  useMemo(() => { setCurrentPage(1); }, [searchQuery]);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   const handleRoleChange = async (userId: string, newRole: "user" | "employer" | "founder") => {
     await updateRole.mutateAsync({ userId, newRole });
