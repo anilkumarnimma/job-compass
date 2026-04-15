@@ -74,8 +74,24 @@ Deno.serve(async (req) => {
         try {
           const storedCustomer = await stripe.customers.retrieve(subRecord.stripe_customer_id);
           if (storedCustomer && !storedCustomer.deleted) {
-            customerId = storedCustomer.id;
-            logStep("Verified stored customer exists in Stripe", { customerId });
+            // Verify the Stripe customer's email matches the authenticated user's email
+            const stripeEmail = (storedCustomer as { email?: string }).email?.toLowerCase();
+            const userEmail = user.email!.toLowerCase();
+            if (stripeEmail === userEmail) {
+              customerId = storedCustomer.id;
+              logStep("Verified stored customer exists and email matches", { customerId });
+            } else {
+              logStep("WARNING: Stored customer email mismatch, detaching", {
+                stripeEmail,
+                userEmail,
+                storedCustomerId: subRecord.stripe_customer_id,
+              });
+              // Clear the mismatched stripe_customer_id
+              await supabase.from("user_subscriptions").update({
+                stripe_customer_id: null,
+                updated_at: new Date().toISOString(),
+              }).eq("user_id", user.id);
+            }
           }
         } catch (e) {
           logStep("Stored customer not found in Stripe", { error: e.message });
