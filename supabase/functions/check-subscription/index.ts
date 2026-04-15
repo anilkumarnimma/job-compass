@@ -100,9 +100,28 @@ Deno.serve(async (req) => {
     }
 
     if (!customerId) {
-      // No Stripe customer found at all — ensure premium is off
-      logStep("No Stripe customer found, revoking premium");
-      await supabase.from("profiles").update({ is_premium: false }).eq("user_id", user.id);
+      // No Stripe customer — check for manual premium grants before revoking
+      logStep("No Stripe customer found, checking manual grants");
+      const { data: manualGrant } = await supabase
+        .from("manual_premium_grants")
+        .select("id, duration_type, expires_at")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .limit(1)
+        .maybeSingle();
+
+      const hasValidGrant = manualGrant && (
+        !manualGrant.expires_at || new Date(manualGrant.expires_at) > new Date()
+      );
+
+      if (hasValidGrant) {
+        logStep("Manual premium grant active, preserving premium", { grantId: manualGrant.id });
+        await supabase.from("profiles").update({ is_premium: true }).eq("user_id", user.id);
+      } else {
+        logStep("No manual grant found, revoking premium");
+        await supabase.from("profiles").update({ is_premium: false }).eq("user_id", user.id);
+      }
+
       await supabase.from("user_subscriptions").upsert({
         user_id: user.id,
         is_subscribed: false,
@@ -111,7 +130,7 @@ Deno.serve(async (req) => {
         updated_at: new Date().toISOString(),
       }, { onConflict: "user_id" });
 
-      return new Response(JSON.stringify({ subscribed: false }), {
+      return new Response(JSON.stringify({ subscribed: hasValidGrant ? true : false, manual_grant: !!hasValidGrant }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
