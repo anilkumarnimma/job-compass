@@ -236,7 +236,10 @@ export function SubscriptionBillingCard() {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isCancelling}>Keep Subscription</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleCancel}
+              onClick={(e) => {
+                e.preventDefault();
+                handleCancel();
+              }}
               disabled={isCancelling}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
