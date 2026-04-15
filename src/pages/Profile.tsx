@@ -74,6 +74,7 @@ export default function Profile() {
 
   const { data: effectiveRole, isLoading: roleLoading } = useUserRole();
   const { data: allRoles } = useAllUserRoles();
+  const showRoleDebug = effectiveRole === "founder" || effectiveRole === "admin";
   const fileInputRef = useRef<HTMLInputElement>(null);
   
 
