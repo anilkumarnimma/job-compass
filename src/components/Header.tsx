@@ -151,23 +151,27 @@ export function Header() {
                         <User className="h-4 w-4 mr-2" />
                         My Profile
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span>Role:</span>
-                          <Badge variant={isFounder ? "default" : isEmployer ? "secondary" : "outline"} className="text-xs">
-                            {role}
-                          </Badge>
-                        </div>
-                        {allRoles && allRoles.length > 1 && (
-                          <div className="flex flex-wrap gap-1">
-                            <span>All:</span>
-                            {allRoles.map((r, i) => (
-                              <Badge key={i} variant="outline" className="text-xs">{r.role}</Badge>
-                            ))}
+                      {(isFounder || isEmployer) && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span>Role:</span>
+                              <Badge variant={isFounder ? "default" : "secondary"} className="text-xs">
+                                {role}
+                              </Badge>
+                            </div>
+                            {allRoles && allRoles.length > 1 && (
+                              <div className="flex flex-wrap gap-1">
+                                <span>All:</span>
+                                {allRoles.map((r, i) => (
+                                  <Badge key={i} variant="outline" className="text-xs">{r.role}</Badge>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
+                        </>
+                      )}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive rounded-lg">
                         <LogOut className="h-4 w-4 mr-2" />
@@ -263,12 +267,14 @@ export function Header() {
                         </Button>
                       </Link>
                     )}
-                    <div className="px-3 py-2 text-xs text-muted-foreground flex items-center gap-2">
-                      <span>Current role:</span>
-                      <Badge variant={isFounder ? "default" : isEmployer ? "secondary" : "outline"} className="text-xs">
-                        {role}
-                      </Badge>
-                    </div>
+                    {(isFounder || isEmployer) && (
+                      <div className="px-3 py-2 text-xs text-muted-foreground flex items-center gap-2">
+                        <span>Current role:</span>
+                        <Badge variant={isFounder ? "default" : "secondary"} className="text-xs">
+                          {role}
+                        </Badge>
+                      </div>
+                    )}
                     {isEmployer && !isFounder && (
                       <Link to="/employer" className="w-full" onClick={() => setMobileMenuOpen(false)}>
                         <Button variant="outline" className="w-full rounded-xl justify-start">
