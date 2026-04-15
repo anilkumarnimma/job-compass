@@ -151,7 +151,7 @@ export function Header() {
                         <User className="h-4 w-4 mr-2" />
                         My Profile
                       </DropdownMenuItem>
-                      {(isFounder || isEmployer) && role !== "user" && (
+                      {(isFounder || isEmployer) && userRole !== "user" && (
                         <>
                           <DropdownMenuSeparator />
                           <div className="px-2 py-1.5 text-xs text-muted-foreground">
