@@ -1033,7 +1033,8 @@ export default function Profile() {
             </Card>
           )}
 
-          {/* Debug Role Section */}
+          {/* Debug Role Section - only visible to founder/admin */}
+          {(effectiveRole === "founder" || effectiveRole === "employer") && (
           <Card className="border-dashed border-accent/50 bg-accent/5 rounded-3xl">
             <CardHeader>
               <div className="flex items-center gap-2">
@@ -1058,6 +1059,7 @@ export default function Profile() {
               )}
             </CardContent>
           </Card>
+          )}
           </div>
 
           {/* Right column - ATS Panel (sticky) */}
