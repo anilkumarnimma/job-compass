@@ -267,7 +267,7 @@ export function Header() {
                         </Button>
                       </Link>
                     )}
-                    {(isFounder || isEmployer) && (
+                    {(isFounder || isEmployer) && userRole !== "user" && (
                       <div className="px-3 py-2 text-xs text-muted-foreground flex items-center gap-2">
                         <span>Current role:</span>
                         <Badge variant={isFounder ? "default" : "secondary"} className="text-xs">
