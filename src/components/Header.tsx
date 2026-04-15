@@ -151,7 +151,7 @@ export function Header() {
                         <User className="h-4 w-4 mr-2" />
                         My Profile
                       </DropdownMenuItem>
-                      {(isFounder || isEmployer) && (
+                      {(isFounder || isEmployer) && userRole !== "user" && (
                         <>
                           <DropdownMenuSeparator />
                           <div className="px-2 py-1.5 text-xs text-muted-foreground">
@@ -267,7 +267,7 @@ export function Header() {
                         </Button>
                       </Link>
                     )}
-                    {(isFounder || isEmployer) && (
+                    {(isFounder || isEmployer) && userRole !== "user" && (
                       <div className="px-3 py-2 text-xs text-muted-foreground flex items-center gap-2">
                         <span>Current role:</span>
                         <Badge variant={isFounder ? "default" : "secondary"} className="text-xs">
