@@ -37,7 +37,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
   const { data: savedJobs = [], isLoading: savedLoading } = useSavedJobs();
   const { data: totalAppCount = 0 } = useTotalApplicationCount();
   const { applyToJob: rawApply, saveJob: rawSave, unsaveJob, removeAppliedJob, updateApplicationStatus } = useJobActions();
-  const { profile } = useProfile();
+  const { profile, isLoading: profileLoading } = useProfile();
   const { isComplete: profileComplete, missingFields: profileGateMissingFields } = useProfileComplete();
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [showApplyConfirm, setShowApplyConfirm] = useState(false);
@@ -56,8 +56,9 @@ export function JobProvider({ children }: { children: ReactNode }) {
         setShowProfileGate(true);
         return;
       }
-      const isPremium = profile?.is_premium === true;
-      if (!isPremium && totalAppCount >= 5) {
+      // While profile is still loading, don't block — assume premium to avoid false gates
+      const isPremiumResolved = profileLoading ? true : (profile?.is_premium === true);
+      if (!isPremiumResolved && totalAppCount >= 5) {
         setShowUpgradeDialog(true);
         return;
       }
@@ -65,7 +66,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
       setPendingJob(job);
       setShowApplyConfirm(true);
     },
-    [profile?.is_premium, totalAppCount, profileComplete],
+    [profile?.is_premium, profileLoading, totalAppCount, profileComplete],
   );
 
   const confirmApply = useCallback(() => {
@@ -85,7 +86,8 @@ export function JobProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const saveJob = useCallback((job: any) => { rawSave(job); emitWidgetEvent("save"); }, [rawSave]);
-  const isPremium = profile?.is_premium === true;
+  // While profile is loading, treat as premium to prevent false upgrade prompts
+  const isPremium = profileLoading ? true : (profile?.is_premium === true);
 
   const value = useMemo(() => ({
     applications,

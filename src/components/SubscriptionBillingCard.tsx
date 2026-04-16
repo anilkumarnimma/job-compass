@@ -15,7 +15,7 @@ import { getUserPrice } from "@/lib/pricing";
 
 export function SubscriptionBillingCard() {
   const { user } = useAuth();
-  const { profile } = useProfile();
+  const { profile, isLoading: profileLoading } = useProfile();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showUpgrade, setShowUpgrade] = useState(false);
@@ -38,7 +38,8 @@ export function SubscriptionBillingCard() {
     enabled: !!user?.id,
   });
 
-  const isPremium = profile?.is_premium ?? false;
+  // While profile is loading, treat as premium to avoid false upgrade prompts
+  const isPremium = profileLoading ? true : (profile?.is_premium ?? false);
   const isSubscribed = subscription?.is_subscribed ?? false;
   const nextRenewal = subscription?.next_renewal_date;
   // Detect cancel-at-period-end: premium + subscribed but renewal is in the past or we check via cancel flag
