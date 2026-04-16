@@ -7,6 +7,7 @@ import { JobPreviewPanel } from "@/components/JobPreviewPanel";
 import { MobileJobPreviewSheet } from "@/components/MobileJobPreviewSheet";
 import { UpgradeDialog } from "@/components/UpgradeDialog";
 import { ApplyConfirmDialog } from "@/components/ApplyConfirmDialog";
+import { PostApplyConfirmDialog } from "@/components/PostApplyConfirmDialog";
 import { ProfileGateDialog } from "@/components/ProfileGateDialog";
 import { VisaFilterPills } from "@/components/VisaFilterPills";
 import { VisaSponsorshipBadge } from "@/components/VisaSponsorshipBadge";
