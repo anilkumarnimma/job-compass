@@ -26,6 +26,7 @@ interface JobListPaginatedProps {
   selectedJobId?: string | null;
   matchResults?: Map<string, JobMatchResult>;
   landingResults?: Map<string, LandingProbabilityResult>;
+  searchQuery?: string;
 }
 
 function JobCardSkeleton() {
@@ -68,6 +69,7 @@ export const JobListPaginated = memo(function JobListPaginated({
   selectedJobId,
   matchResults,
   landingResults,
+  searchQuery,
 }: JobListPaginatedProps) {
   const { isApplied } = useJobContext();
   const visibleJobs = useMemo(() => jobs.filter(job => !isApplied(job.id)), [jobs, isApplied]);
@@ -89,7 +91,11 @@ export const JobListPaginated = memo(function JobListPaginated({
           <Search className="h-8 w-8 text-muted-foreground/50" />
         </div>
         <h3 className="font-display font-semibold text-foreground text-lg mb-2">No jobs found</h3>
-        <p className="text-muted-foreground text-sm">Try adjusting your search or filters to find what you're looking for.</p>
+        <p className="text-muted-foreground text-sm">
+          {searchQuery?.trim()
+            ? `No jobs found for "${searchQuery.trim()}". Try a different search term.`
+            : "Try adjusting your search or filters to find what you're looking for."}
+        </p>
       </div>
     );
   }
