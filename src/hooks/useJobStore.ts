@@ -67,7 +67,7 @@ export function useApplications() {
           job:jobs(*)
         `)
         .eq("user_id", user.id)
-        .neq("status", "withdrawn")
+        .not("status", "in", '("withdrawn","clicked")')
         .order("applied_at", { ascending: false });
 
       if (error) throw error;
@@ -144,13 +144,13 @@ export function useJobActions() {
   const queryClient = useQueryClient();
 
   const applyMutation = useMutation({
-    mutationFn: async (job: Job) => {
+    mutationFn: async ({ job, status = "applied" }: { job: Job; status?: string }) => {
       if (!user) throw new Error("Must be logged in to apply");
 
       const { error } = await supabase.from("applications").insert({
         user_id: user.id,
         job_id: job.id,
-        status: "applied",
+        status,
       });
 
       if (error && error.code !== "23505") throw error;
@@ -247,7 +247,7 @@ export function useJobActions() {
   });
 
   const applyToJob = useCallback(
-    (job: Job) => applyMutation.mutate(job),
+    (job: Job, status?: string) => applyMutation.mutate({ job, status }),
     [applyMutation]
   );
 

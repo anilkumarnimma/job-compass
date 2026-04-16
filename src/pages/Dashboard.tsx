@@ -13,6 +13,7 @@ import { JobPreviewPanel } from "@/components/JobPreviewPanel";
 import { JobListPaginated } from "@/components/JobListPaginated";
 import { UpgradeDialog } from "@/components/UpgradeDialog";
 import { ApplyConfirmDialog } from "@/components/ApplyConfirmDialog";
+import { PostApplyConfirmDialog } from "@/components/PostApplyConfirmDialog";
 import { ProfileGateDialog } from "@/components/ProfileGateDialog";
 import { useJobSearchPaginated } from "@/hooks/useJobSearchPaginated";
 import { useJobContext } from "@/context/JobContext";
@@ -97,7 +98,7 @@ export default function Dashboard() {
   const [roleRequestOpen, setRoleRequestOpen] = useState(false);
 
   const isMobile = useIsMobile();
-  const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply, showProfileGate, setShowProfileGate, profileGateMissingFields, pendingJobTitle, pendingJobCompany, totalAppCount, isPremium: isPremiumUser } = useJobContext();
+  const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply, showPostApplyConfirm, confirmPostApply, dismissPostApply, showProfileGate, setShowProfileGate, profileGateMissingFields, pendingJobTitle, pendingJobCompany, totalAppCount, isPremium: isPremiumUser } = useJobContext();
   const { toast } = useToast();
   const isUSUser = useIsUSUser();
   
@@ -621,6 +622,7 @@ export default function Dashboard() {
       <MobileJobPreviewSheet job={mobilePreviewJob} open={mobileSheetOpen} onOpenChange={setMobileSheetOpen} />
       <UpgradeDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog} />
       <ApplyConfirmDialog open={showApplyConfirm} onConfirm={confirmApply} onCancel={cancelApply} jobTitle={pendingJobTitle} company={pendingJobCompany} applicationsUsed={totalAppCount} isPremium={isPremiumUser} />
+      <PostApplyConfirmDialog open={showPostApplyConfirm} onYes={confirmPostApply} onNo={dismissPostApply} jobTitle={pendingJobTitle} company={pendingJobCompany} />
       <ProfileGateDialog open={showProfileGate} onOpenChange={setShowProfileGate} missingFields={profileGateMissingFields} />
       <NotificationOptInDialog />
       <ExtensionPasswordPrompt />

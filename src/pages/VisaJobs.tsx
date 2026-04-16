@@ -7,6 +7,7 @@ import { JobPreviewPanel } from "@/components/JobPreviewPanel";
 import { MobileJobPreviewSheet } from "@/components/MobileJobPreviewSheet";
 import { UpgradeDialog } from "@/components/UpgradeDialog";
 import { ApplyConfirmDialog } from "@/components/ApplyConfirmDialog";
+import { PostApplyConfirmDialog } from "@/components/PostApplyConfirmDialog";
 import { ProfileGateDialog } from "@/components/ProfileGateDialog";
 import { VisaFilterPills } from "@/components/VisaFilterPills";
 import { VisaSponsorshipBadge } from "@/components/VisaSponsorshipBadge";
@@ -33,7 +34,7 @@ export default function VisaJobs() {
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
 
   const isMobile = useIsMobile();
-  const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply, showProfileGate, setShowProfileGate, profileGateMissingFields, pendingJobTitle, pendingJobCompany, totalAppCount, isPremium: isPremiumUser } = useJobContext();
+  const { showUpgradeDialog, setShowUpgradeDialog, showApplyConfirm, confirmApply, cancelApply, showPostApplyConfirm, confirmPostApply, dismissPostApply, showProfileGate, setShowProfileGate, profileGateMissingFields, pendingJobTitle, pendingJobCompany, totalAppCount, isPremium: isPremiumUser } = useJobContext();
   const { profile } = useProfile();
   const isUSUser = useIsUSUser();
   const navigate = useNavigate();
@@ -219,6 +220,7 @@ export default function VisaJobs() {
       <MobileJobPreviewSheet job={mobilePreviewJob} open={mobileSheetOpen} onOpenChange={setMobileSheetOpen} />
       <UpgradeDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog} />
       <ApplyConfirmDialog open={showApplyConfirm} onConfirm={confirmApply} onCancel={cancelApply} jobTitle={pendingJobTitle} company={pendingJobCompany} applicationsUsed={totalAppCount} isPremium={isPremiumUser} />
+      <PostApplyConfirmDialog open={showPostApplyConfirm} onYes={confirmPostApply} onNo={dismissPostApply} jobTitle={pendingJobTitle} company={pendingJobCompany} />
       <ProfileGateDialog open={showProfileGate} onOpenChange={setShowProfileGate} missingFields={profileGateMissingFields} />
     </Layout>
   );

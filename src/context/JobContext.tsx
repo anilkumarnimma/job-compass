@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode, useMemo, useState, useCallback } from "react";
+import { createContext, useContext, ReactNode, useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { useApplications, useSavedJobs, useJobActions, useTotalApplicationCount } from "@/hooks/useJobStore";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfileComplete } from "@/hooks/useProfileComplete";
@@ -12,6 +12,8 @@ interface JobContextType {
   applyToJob: (job: any) => void;
   confirmApply: () => void;
   cancelApply: () => void;
+  confirmPostApply: () => void;
+  dismissPostApply: () => void;
   saveJob: (job: any) => void;
   unsaveJob: (jobId: string) => void;
   removeAppliedJob: (jobId: string) => void;
@@ -21,6 +23,7 @@ interface JobContextType {
   showUpgradeDialog: boolean;
   setShowUpgradeDialog: (open: boolean) => void;
   showApplyConfirm: boolean;
+  showPostApplyConfirm: boolean;
   showProfileGate: boolean;
   setShowProfileGate: (open: boolean) => void;
   profileGateMissingFields: string[];
@@ -41,8 +44,12 @@ export function JobProvider({ children }: { children: ReactNode }) {
   const { isComplete: profileComplete, missingFields: profileGateMissingFields } = useProfileComplete();
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [showApplyConfirm, setShowApplyConfirm] = useState(false);
+  const [showPostApplyConfirm, setShowPostApplyConfirm] = useState(false);
   const [showProfileGate, setShowProfileGate] = useState(false);
   const [pendingJob, setPendingJob] = useState<Job | null>(null);
+  // Track job that was clicked and is awaiting post-apply confirmation
+  const [clickedJob, setClickedJob] = useState<Job | null>(null);
+  const waitingForReturn = useRef(false);
 
   const appliedJobIds = useMemo(() => new Set(applications.map((a) => a.job_id)), [applications]);
   const savedJobIds = useMemo(() => new Set(savedJobs.map((s) => s.job_id)), [savedJobs]);
@@ -50,31 +57,47 @@ export function JobProvider({ children }: { children: ReactNode }) {
   const isApplied = useCallback((jobId: string) => appliedJobIds.has(jobId), [appliedJobIds]);
   const isSaved = useCallback((jobId: string) => savedJobIds.has(jobId), [savedJobIds]);
 
+  // Listen for tab visibility change to show post-apply confirmation
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible" && waitingForReturn.current && clickedJob) {
+        waitingForReturn.current = false;
+        setShowPostApplyConfirm(true);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [clickedJob]);
+
   const applyToJob = useCallback(
     (job: any) => {
       if (!profileComplete) {
         setShowProfileGate(true);
         return;
       }
-      // While profile is still loading, don't block — assume premium to avoid false gates
       const isPremiumResolved = profileLoading ? true : (profile?.is_premium === true);
       if (!isPremiumResolved && totalAppCount >= 5) {
         setShowUpgradeDialog(true);
         return;
       }
-      // Show confirmation dialog FIRST — no redirect yet
+      // Show pre-apply confirmation dialog
       setPendingJob(job);
       setShowApplyConfirm(true);
     },
     [profile?.is_premium, profileLoading, totalAppCount, profileComplete],
   );
 
+  // User confirms "Proceed & Apply" — insert clicked record + open link
   const confirmApply = useCallback(() => {
     if (pendingJob) {
-      // Count the application AND open the external link simultaneously
-      rawApply(pendingJob);
+      // Insert as 'clicked' status (counts toward free limit)
+      rawApply(pendingJob, "clicked");
       emitWidgetEvent("apply");
+      // Open external link
       window.open(pendingJob.external_apply_link, "_blank");
+      // Set up for post-apply confirmation on tab return
+      setClickedJob(pendingJob);
+      waitingForReturn.current = true;
     }
     setPendingJob(null);
     setShowApplyConfirm(false);
@@ -85,8 +108,22 @@ export function JobProvider({ children }: { children: ReactNode }) {
     setShowApplyConfirm(false);
   }, []);
 
+  // User confirms they applied — update status to 'applied'
+  const confirmPostApply = useCallback(() => {
+    if (clickedJob) {
+      updateApplicationStatus(clickedJob.id, "applied");
+    }
+    setClickedJob(null);
+    setShowPostApplyConfirm(false);
+  }, [clickedJob, updateApplicationStatus]);
+
+  // User says they didn't apply — keep as 'clicked' (still counts toward limit)
+  const dismissPostApply = useCallback(() => {
+    setClickedJob(null);
+    setShowPostApplyConfirm(false);
+  }, []);
+
   const saveJob = useCallback((job: any) => { rawSave(job); emitWidgetEvent("save"); }, [rawSave]);
-  // While profile is loading, treat as premium to prevent false upgrade prompts
   const isPremium = profileLoading ? true : (profile?.is_premium === true);
 
   const value = useMemo(() => ({
@@ -96,6 +133,8 @@ export function JobProvider({ children }: { children: ReactNode }) {
     applyToJob,
     confirmApply,
     cancelApply,
+    confirmPostApply,
+    dismissPostApply,
     saveJob,
     unsaveJob,
     removeAppliedJob,
@@ -105,19 +144,21 @@ export function JobProvider({ children }: { children: ReactNode }) {
     showUpgradeDialog,
     setShowUpgradeDialog,
     showApplyConfirm,
+    showPostApplyConfirm,
     showProfileGate,
     setShowProfileGate,
     profileGateMissingFields,
-    pendingJobTitle: pendingJob?.title ?? "",
-    pendingJobCompany: pendingJob?.company ?? "",
+    pendingJobTitle: pendingJob?.title ?? clickedJob?.title ?? "",
+    pendingJobCompany: pendingJob?.company ?? clickedJob?.company ?? "",
     totalAppCount,
     isPremium,
   }), [
     applications, savedJobs, appsLoading, savedLoading,
-    applyToJob, confirmApply, cancelApply, saveJob, unsaveJob, removeAppliedJob, updateApplicationStatus,
+    applyToJob, confirmApply, cancelApply, confirmPostApply, dismissPostApply,
+    saveJob, unsaveJob, removeAppliedJob, updateApplicationStatus,
     isApplied, isSaved,
-    showUpgradeDialog, showApplyConfirm, showProfileGate, profileGateMissingFields,
-    pendingJob, totalAppCount, isPremium,
+    showUpgradeDialog, showApplyConfirm, showPostApplyConfirm, showProfileGate, profileGateMissingFields,
+    pendingJob, clickedJob, totalAppCount, isPremium,
   ]);
 
   return <JobContext.Provider value={value}>{children}</JobContext.Provider>;

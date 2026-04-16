@@ -5,6 +5,7 @@ import { JobPreviewPanel } from "@/components/JobPreviewPanel";
 import { MobileJobPreviewSheet } from "@/components/MobileJobPreviewSheet";
 import { UpgradeDialog } from "@/components/UpgradeDialog";
 import { ApplyConfirmDialog } from "@/components/ApplyConfirmDialog";
+import { PostApplyConfirmDialog } from "@/components/PostApplyConfirmDialog";
 import { ProfileGateDialog } from "@/components/ProfileGateDialog";
 import { useRecommendedJobs, RecommendedJob } from "@/hooks/useRecommendedJobs";
 import { useJobContext } from "@/context/JobContext";
@@ -36,6 +37,9 @@ export default function Recommendations() {
     showApplyConfirm,
     confirmApply,
     cancelApply,
+    showPostApplyConfirm,
+    confirmPostApply,
+    dismissPostApply,
     isApplied,
     showProfileGate,
     setShowProfileGate,
@@ -322,6 +326,7 @@ export default function Recommendations() {
       <MobileJobPreviewSheet job={mobilePreviewJob} open={mobileSheetOpen} onOpenChange={setMobileSheetOpen} />
       <UpgradeDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog} />
       <ApplyConfirmDialog open={showApplyConfirm} onConfirm={confirmApply} onCancel={cancelApply} jobTitle={pendingJobTitle} company={pendingJobCompany} applicationsUsed={totalAppCount} isPremium={isPremiumUser} />
+      <PostApplyConfirmDialog open={showPostApplyConfirm} onYes={confirmPostApply} onNo={dismissPostApply} jobTitle={pendingJobTitle} company={pendingJobCompany} />
       <ProfileGateDialog open={showProfileGate} onOpenChange={setShowProfileGate} missingFields={profileGateMissingFields} />
     </Layout>
   );
