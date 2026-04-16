@@ -17,7 +17,7 @@ interface LinkedInConnectDialogProps {
 }
 
 export function LinkedInConnectDialog({ open, onOpenChange, job }: LinkedInConnectDialogProps) {
-  const { profile } = useProfile();
+  const { profile, isLoading: profileLoading } = useProfile();
   const [message, setMessage] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -25,7 +25,7 @@ export function LinkedInConnectDialog({ open, onOpenChange, job }: LinkedInConne
   const [remaining, setRemaining] = useState<number>(FREE_DAILY_LIMIT);
   const [loadingUsage, setLoadingUsage] = useState(false);
 
-  const isPremium = profile?.is_premium ?? false;
+  const isPremium = profileLoading ? true : (profile?.is_premium ?? false);
   const isLimitReached = !isPremium && remaining <= 0;
 
   const linkedInSearchUrl = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(job.company)}&origin=GLOBAL_SEARCH_HEADER`;
