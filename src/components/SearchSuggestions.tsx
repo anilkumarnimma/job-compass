@@ -1,10 +1,6 @@
-import { Search, TrendingUp } from "lucide-react";
+import { Search, Building2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
-interface Suggestion {
-  suggestion: string;
-  match_count: number;
-}
+import { Suggestion } from "@/hooks/useSearchSuggestions";
 
 interface SearchSuggestionsProps {
   suggestions: Suggestion[];
@@ -45,7 +41,7 @@ export function SearchSuggestions({ suggestions, isOpen, onSelect, highlightedIn
         <div className="py-1.5">
           {suggestions.map((s, i) => (
             <button
-              key={s.suggestion}
+              key={`${s.suggestion}-${s.company_name}`}
               onMouseDown={(e) => {
                 e.preventDefault();
                 onSelect(s.suggestion);
@@ -57,13 +53,15 @@ export function SearchSuggestions({ suggestions, isOpen, onSelect, highlightedIn
                 }`}
             >
               <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <span className="flex-1 text-left truncate">
-                {highlightMatch(s.suggestion, query)}
-              </span>
-              <span className="flex items-center gap-1 text-[11px] text-muted-foreground/60 shrink-0">
-                <TrendingUp className="h-3 w-3" />
-                {s.match_count}
-              </span>
+              <div className="flex-1 text-left truncate">
+                <span className="block truncate">
+                  {highlightMatch(s.suggestion, query)}
+                </span>
+                <span className="flex items-center gap-1 text-[11px] text-muted-foreground/70 mt-0.5">
+                  <Building2 className="h-3 w-3" />
+                  {highlightMatch(s.company_name, query)}
+                </span>
+              </div>
             </button>
           ))}
         </div>
