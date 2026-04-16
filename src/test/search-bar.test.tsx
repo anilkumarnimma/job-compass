@@ -36,7 +36,7 @@ describe("SearchBar", () => {
     expect(onChange).not.toHaveBeenCalled();
 
     act(() => {
-      vi.advanceTimersByTime(199);
+      vi.advanceTimersByTime(299);
     });
 
     expect(onChange).not.toHaveBeenCalled();
