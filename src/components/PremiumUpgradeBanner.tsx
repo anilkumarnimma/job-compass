@@ -7,12 +7,13 @@ import { getUserPrice } from "@/lib/pricing";
 import { motion } from "framer-motion";
 
 export function PremiumUpgradeBanner() {
-  const { profile } = useProfile();
+  const { profile, isLoading } = useProfile();
   const { user } = useAuth();
   const [showUpgrade, setShowUpgrade] = useState(false);
   const price = getUserPrice(user?.created_at);
 
-  if (!user || profile?.is_premium) return null;
+  // Wait for profile to load before deciding — prevents flash of upgrade prompt for premium users
+  if (!user || isLoading || profile?.is_premium) return null;
 
   return (
     <>
