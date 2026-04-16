@@ -27,11 +27,12 @@ export function Header() {
   const { user, signOut, isAdmin } = useAuth();
   const { data: userRole } = useUserRole();
   const { data: allRoles } = useAllUserRoles();
-  const { profile } = useProfile();
+  const { profile, isLoading: profileLoading } = useProfile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const STRIPE_LINK = buildCheckoutUrl({ createdAt: user?.created_at, email: user?.email, userId: user?.id });
-  const isPremium = profile?.is_premium ?? false;
+  // While profile is loading, hide upgrade button to avoid flash for premium users
+  const isPremium = profileLoading ? true : (profile?.is_premium ?? false);
 
   const isActive = (path: string) => location.pathname === path;
 
