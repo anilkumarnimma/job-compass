@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-interface Suggestion {
+export interface Suggestion {
   suggestion: string;
+  company_name: string;
   match_count: number;
 }
 
@@ -30,7 +31,7 @@ export function useSearchSuggestions(query: string, enabled = true) {
       try {
         const request = supabase.rpc("suggest_job_titles", {
           query_text: query.trim(),
-          max_results: 6,
+          max_results: 10,
         }).abortSignal(controller.signal);
 
         const { data, error } = await request;
@@ -43,7 +44,7 @@ export function useSearchSuggestions(query: string, enabled = true) {
       } finally {
         if (!controller.signal.aborted) setIsLoading(false);
       }
-    }, 120);
+    }, 150);
 
     return () => {
       clearTimeout(debounceRef.current);

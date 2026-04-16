@@ -953,6 +953,7 @@ export type Database = {
       suggest_job_titles: {
         Args: { max_results?: number; query_text: string }
         Returns: {
+          company_name: string
           match_count: number
           suggestion: string
         }[]

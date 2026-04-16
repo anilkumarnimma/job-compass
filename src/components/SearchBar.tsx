@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect, memo } from "react";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useSearchSuggestions } from "@/hooks/useSearchSuggestions";
 import { SearchSuggestions } from "@/components/SearchSuggestions";
@@ -13,7 +13,6 @@ interface SearchBarProps {
 }
 
 export const SearchBar = memo(function SearchBar({ value, onChange, placeholder = "Search jobs by title, company, skills…", onSearch, onSuggestionSelect }: SearchBarProps) {
-  // Local state for instant keystrokes — decoupled from parent re-renders
   const [localValue, setLocalValue] = useState(value);
   const [isFocused, setIsFocused] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -21,7 +20,6 @@ export const SearchBar = memo(function SearchBar({ value, onChange, placeholder 
   const inputRef = useRef<HTMLInputElement>(null);
   const emitTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // Sync external value changes (e.g. reset, suggestion select from outside)
   useEffect(() => {
     setLocalValue(value);
   }, [value]);
@@ -31,9 +29,8 @@ export const SearchBar = memo(function SearchBar({ value, onChange, placeholder 
 
     clearTimeout(emitTimeoutRef.current);
     emitTimeoutRef.current = setTimeout(() => {
-      // 150ms debounce for snappy live search
       onChange(localValue);
-    }, 150);
+    }, 300);
 
     return () => {
       clearTimeout(emitTimeoutRef.current);
@@ -52,6 +49,14 @@ export const SearchBar = memo(function SearchBar({ value, onChange, placeholder 
     setLocalValue(v);
     setHighlightedIndex(-1);
   }, []);
+
+  const handleClear = useCallback(() => {
+    setLocalValue("");
+    flushChange("");
+    onChange("");
+    onSearch?.();
+    inputRef.current?.focus();
+  }, [flushChange, onChange, onSearch]);
 
   const showSuggestions = isFocused && localValue.trim().length >= 2 && suggestions.length > 0;
 
@@ -106,9 +111,19 @@ export const SearchBar = memo(function SearchBar({ value, onChange, placeholder 
         onFocus={() => setIsFocused(true)}
         onBlur={() => setTimeout(() => setIsFocused(false), 150)}
         onKeyDown={handleKeyDown}
-        className="pl-12 h-12 bg-card border-border/60 rounded-full text-base shadow-soft focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all duration-300 placeholder:text-muted-foreground/50"
+        className="pl-12 pr-10 h-12 bg-card border-border/60 rounded-full text-base shadow-soft focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all duration-300 placeholder:text-muted-foreground/50"
         autoComplete="off"
       />
+      {localValue && (
+        <button
+          type="button"
+          onClick={handleClear}
+          className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-muted hover:bg-muted-foreground/20 flex items-center justify-center transition-colors"
+          aria-label="Clear search"
+        >
+          <X className="h-3 w-3 text-muted-foreground" />
+        </button>
+      )}
       <SearchSuggestions
         suggestions={suggestions}
         isOpen={showSuggestions}

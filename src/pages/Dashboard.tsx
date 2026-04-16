@@ -542,6 +542,7 @@ export default function Dashboard() {
                 selectedJobId={selectedJob?.id}
                 matchResults={matchResults}
                 landingResults={landingResults}
+                searchQuery={searchInput}
               />
             </div>
           </div>
@@ -579,6 +580,7 @@ export default function Dashboard() {
                 selectedJobId={selectedJob?.id}
                 matchResults={matchResults}
                 landingResults={landingResults}
+                searchQuery={searchInput}
               />
             </div>
 
