@@ -2,6 +2,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
+import { scheduleFeedbackPrompt } from "@/hooks/useFeedbackPrompt";
 
 export interface AtsCheckResult {
   overall_score: number;
@@ -70,6 +71,8 @@ export function useAtsCheck() {
 
       const atsResult = data.result as AtsCheckResult;
       setResult(atsResult);
+      // Schedule feedback prompt 5s after result appears
+      scheduleFeedbackPrompt("ats", 5000);
       return atsResult;
     } catch (err: any) {
       toast({
