@@ -174,7 +174,7 @@ async function fetchJSearch(
   const params = new URLSearchParams({
     query,
     page: "1",
-    num_pages: "1",
+    num_pages: "5",
     country,
     date_posted: datePosted,
     employment_types: employmentTypes,
