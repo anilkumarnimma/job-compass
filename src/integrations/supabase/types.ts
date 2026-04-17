@@ -507,6 +507,102 @@ export type Database = {
         }
         Relationships: []
       }
+      jsearch_ingest_runs: {
+        Row: {
+          completed_at: string | null
+          details: Json | null
+          duplicates_removed: number
+          duration_ms: number | null
+          errors: Json | null
+          id: string
+          started_at: string
+          status: string
+          total_fetched: number
+          total_filtered: number
+          total_imported: number
+          total_skipped: number
+          trigger_type: string
+          triggered_by: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          details?: Json | null
+          duplicates_removed?: number
+          duration_ms?: number | null
+          errors?: Json | null
+          id?: string
+          started_at?: string
+          status?: string
+          total_fetched?: number
+          total_filtered?: number
+          total_imported?: number
+          total_skipped?: number
+          trigger_type?: string
+          triggered_by?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          details?: Json | null
+          duplicates_removed?: number
+          duration_ms?: number | null
+          errors?: Json | null
+          id?: string
+          started_at?: string
+          status?: string
+          total_fetched?: number
+          total_filtered?: number
+          total_imported?: number
+          total_skipped?: number
+          trigger_type?: string
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
+      jsearch_query_seeds: {
+        Row: {
+          country: string
+          created_at: string
+          date_posted: string
+          employment_types: string
+          id: string
+          is_active: boolean
+          job_requirements: string | null
+          last_imported_count: number | null
+          last_run_at: string | null
+          query: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          country?: string
+          created_at?: string
+          date_posted?: string
+          employment_types?: string
+          id?: string
+          is_active?: boolean
+          job_requirements?: string | null
+          last_imported_count?: number | null
+          last_run_at?: string | null
+          query: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          date_posted?: string
+          employment_types?: string
+          id?: string
+          is_active?: boolean
+          job_requirements?: string | null
+          last_imported_count?: number | null
+          last_run_at?: string | null
+          query?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       linkedin_message_usage: {
         Row: {
           created_at: string
