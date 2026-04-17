@@ -312,6 +312,33 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_feedback: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          rating: number
+          trigger_source: string
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating: number
+          trigger_source: string
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: number
+          trigger_source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       hiring_graph_data: {
         Row: {
           created_at: string
@@ -605,6 +632,7 @@ export type Database = {
           emoji_avatar: string | null
           employer_id: string | null
           experience_years: number | null
+          feedback_given_at: string | null
           first_name: string | null
           full_name: string | null
           gender: string | null
@@ -649,6 +677,7 @@ export type Database = {
           emoji_avatar?: string | null
           employer_id?: string | null
           experience_years?: number | null
+          feedback_given_at?: string | null
           first_name?: string | null
           full_name?: string | null
           gender?: string | null
@@ -693,6 +722,7 @@ export type Database = {
           emoji_avatar?: string | null
           employer_id?: string | null
           experience_years?: number | null
+          feedback_given_at?: string | null
           first_name?: string | null
           full_name?: string | null
           gender?: string | null
