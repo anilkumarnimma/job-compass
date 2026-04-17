@@ -32,6 +32,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { JSearchIngestPanel } from "@/components/admin/JSearchIngestPanel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AdminImport() {
   const { user, isAdmin, isLoading: authLoading } = useAuth();
@@ -117,13 +119,24 @@ export default function AdminImport() {
             </div>
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                Google Sheets Import
+                Job Import
               </h1>
-              <p className="text-muted-foreground">Bulk import jobs from a public Google Sheet</p>
+              <p className="text-muted-foreground">Auto-ingest from JSearch or bulk import via Google Sheets</p>
             </div>
           </div>
         </div>
 
+        <Tabs defaultValue="jsearch" className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="jsearch">🌐 JSearch Auto-Ingest</TabsTrigger>
+            <TabsTrigger value="sheets">📋 Google Sheets</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="jsearch">
+            <JSearchIngestPanel />
+          </TabsContent>
+
+          <TabsContent value="sheets">
         {/* Import Form */}
         <Card className="p-6 mb-8 border-border/60">
           <div className="space-y-4">
@@ -350,6 +363,8 @@ export default function AdminImport() {
             </Table>
           )}
         </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );
