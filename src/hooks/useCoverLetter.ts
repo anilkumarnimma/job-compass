@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
+import { scheduleFeedbackPrompt } from "@/hooks/useFeedbackPrompt";
 
 interface GenerateParams {
   jobId: string;
@@ -54,6 +55,9 @@ export function useCoverLetter() {
         title: "Cover letter generated ✨",
         description: `Draft ready for ${params.company}`,
       });
+
+      // Schedule feedback prompt 5s after generation
+      scheduleFeedbackPrompt("cover_letter", 5000);
 
       return data as CoverLetterResult;
     } catch (err: any) {

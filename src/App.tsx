@@ -14,6 +14,7 @@ import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { SociaAIOrb } from "@/components/SociaAIOrb";
 import { FullPageLoader } from "@/components/FullPageLoader";
+import { FeedbackPopup } from "@/components/FeedbackPopup";
 
 // Eager load critical pages
 import Index from "./pages/Index";
@@ -142,6 +143,7 @@ const App = () => (
               
               <MobileBottomNav />
               <SociaAIOrb />
+              <FeedbackPopup />
             </BrowserRouter>
             </IntroSplash>
           </JobProvider>

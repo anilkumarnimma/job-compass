@@ -4,6 +4,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useProfileComplete } from "@/hooks/useProfileComplete";
 import { Application, SavedJob, Job } from "@/types/job";
 import { emitWidgetEvent } from "@/hooks/useWidgetTracker";
+import { trackApplyClickForFeedback } from "@/hooks/useFeedbackPrompt";
 
 interface JobContextType {
   applications: Application[];
@@ -93,6 +94,8 @@ export function JobProvider({ children }: { children: ReactNode }) {
       // Insert as 'clicked' status (counts toward free limit)
       rawApply(pendingJob, "clicked");
       emitWidgetEvent("apply");
+      // Track for feedback prompt (3rd click triggers popup)
+      trackApplyClickForFeedback();
       // Open external link
       window.open(pendingJob.external_apply_link, "_blank");
       // Set up for post-apply confirmation on tab return
