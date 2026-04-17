@@ -363,6 +363,8 @@ export default function AdminImport() {
             </Table>
           )}
         </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );
