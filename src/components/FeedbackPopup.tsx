@@ -68,8 +68,12 @@ export function FeedbackPopup() {
           exit={{ opacity: 0, y: 40, scale: 0.95 }}
           transition={{ type: "spring", damping: 22, stiffness: 280 }}
           className="fixed bottom-4 left-4 z-[60] w-[340px] max-w-[calc(100vw-2rem)] pointer-events-auto"
-          role="dialog"
+          role="region"
           aria-label="Feedback prompt"
+          onPointerDownCapture={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
         >
           <div className="bg-card border border-border/60 rounded-2xl shadow-2xl p-4 backdrop-blur-sm">
             <button
