@@ -360,7 +360,8 @@ Deno.serve(async (req) => {
           external_apply_link: j.job_apply_link,
           employment_type: j.job_employment_type === "INTERN" ? "Internship" : "Full Time",
           salary_range: formatSalary(j),
-          posted_date: j.job_posted_at_datetime_utc || new Date().toISOString(),
+          // Always stamp ingestion time so freshly pulled jobs surface at the top of the dashboard
+          posted_date: new Date().toISOString(),
           is_published: true,
           is_archived: false,
         });
