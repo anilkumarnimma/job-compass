@@ -67,7 +67,7 @@ export function FeedbackPopup() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 40, scale: 0.95 }}
           transition={{ type: "spring", damping: 22, stiffness: 280 }}
-          className="fixed bottom-4 right-4 z-[60] w-[340px] max-w-[calc(100vw-2rem)] pointer-events-auto"
+          className="fixed bottom-4 left-4 z-[60] w-[340px] max-w-[calc(100vw-2rem)] pointer-events-auto"
           role="dialog"
           aria-label="Feedback prompt"
         >
