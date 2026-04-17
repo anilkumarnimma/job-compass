@@ -1,5 +1,5 @@
 // JSearch auto-ingestion edge function
-// Fetches jobs from JSearch API, applies USA + entry-level + sponsorship filters,
+// Fetches jobs from JSearch API, applies USA + entry-level filters,
 // enriches skills, deduplicates, and inserts into the jobs table.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
