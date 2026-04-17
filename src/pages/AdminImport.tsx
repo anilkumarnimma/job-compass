@@ -32,6 +32,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { JSearchIngestPanel } from "@/components/admin/JSearchIngestPanel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AdminImport() {
   const { user, isAdmin, isLoading: authLoading } = useAuth();

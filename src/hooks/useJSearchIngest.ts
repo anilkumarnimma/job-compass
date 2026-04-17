@@ -55,7 +55,7 @@ export function useJSearchRuns() {
         .order("started_at", { ascending: false })
         .limit(20);
       if (error) throw error;
-      return data as JSearchRun[];
+      return (data as unknown) as JSearchRun[];
     },
     refetchInterval: 5000,
   });
