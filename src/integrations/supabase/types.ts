@@ -1044,6 +1044,7 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_founder: { Args: never; Returns: boolean }
       publish_hiring_graph: { Args: never; Returns: undefined }
+      read_vault_secret: { Args: { secret_name: string }; Returns: string }
       remove_duplicate_jobs: { Args: never; Returns: Json }
       search_jobs: {
         Args: {
@@ -1076,6 +1077,10 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      store_vault_secret: {
+        Args: { secret_name: string; secret_value: string }
+        Returns: string
+      }
       suggest_job_titles: {
         Args: { max_results?: number; query_text: string }
         Returns: {
