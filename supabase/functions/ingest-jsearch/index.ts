@@ -143,6 +143,80 @@ function isUSALocation(loc: string): boolean {
   return false;
 }
 
+// ───────────────────────── Aggregator blocklist ─────────────────────────
+// These domains either block iframing (ERR_BLOCKED_BY_RESPONSE), redirect
+// through trackers, or are aggregator listings rather than direct employer
+// career sites. Jobs whose only apply link is on one of these domains will
+// be skipped at ingest.
+const BLOCKED_APPLY_DOMAINS = new Set([
+  "talent.com", "www.talent.com",
+  "indeed.com", "www.indeed.com", "in.indeed.com",
+  "click.appcast.io", "appcast.io",
+  "jsv3.recruitics.com", "recruitics.com",
+  "apply-v3.jobsync.io", "jobsync.io",
+  "ziprecruiter.com", "www.ziprecruiter.com",
+  "glassdoor.com", "www.glassdoor.com",
+  "monster.com", "www.monster.com",
+  "simplyhired.com", "www.simplyhired.com",
+  "snagajob.com", "www.snagajob.com",
+  "careerbuilder.com", "www.careerbuilder.com",
+  "neuvoo.com", "www.neuvoo.com",
+  "jobcase.com", "www.jobcase.com",
+  "joblist.com", "www.joblist.com",
+  "jooble.org", "www.jooble.org",
+  "trabajo.org",
+]);
+
+function getDomain(url: string): string {
+  try {
+    return new URL(url).hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+function isBlockedApplyLink(url: string): boolean {
+  const d = getDomain(url);
+  if (!d) return true;
+  return BLOCKED_APPLY_DOMAINS.has(d);
+}
+
+interface ApplyOption {
+  publisher?: string;
+  apply_link?: string;
+  is_direct?: boolean;
+}
+
+/**
+ * Pick a direct employer career-site link from JSearch's apply_options[].
+ * Falls back to job_apply_link only if it's not on the aggregator blocklist.
+ * Returns null if no usable direct link can be found.
+ */
+function pickDirectApplyLink(j: JSearchJob): string | null {
+  const opts = Array.isArray(j.apply_options) ? j.apply_options : [];
+
+  // 1. Prefer is_direct === true with an unblocked domain
+  for (const opt of opts) {
+    if (opt?.is_direct === true && opt.apply_link && !isBlockedApplyLink(opt.apply_link)) {
+      return opt.apply_link;
+    }
+  }
+
+  // 2. Any apply_options link on a non-blocked domain
+  for (const opt of opts) {
+    if (opt?.apply_link && !isBlockedApplyLink(opt.apply_link)) {
+      return opt.apply_link;
+    }
+  }
+
+  // 3. Fall back to job_apply_link only if it's not blocked
+  if (j.job_apply_link && !isBlockedApplyLink(j.job_apply_link)) {
+    return j.job_apply_link;
+  }
+
+  return null;
+}
+
 // ───────────────────────── JSearch fetch ─────────────────────────
 interface JSearchJob {
   job_id: string;
@@ -151,6 +225,7 @@ interface JSearchJob {
   employer_logo?: string;
   job_employment_type?: string;
   job_apply_link: string;
+  apply_options?: ApplyOption[];
   job_description: string;
   job_city?: string;
   job_state?: string;
