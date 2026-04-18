@@ -450,6 +450,7 @@ Deno.serve(async (req) => {
             posted_date: new Date().toISOString(),
             is_published: true,
             is_archived: false,
+            is_direct_apply: true,
           });
 
           if (insertErr) {

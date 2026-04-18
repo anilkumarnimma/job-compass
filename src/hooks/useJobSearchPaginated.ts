@@ -110,6 +110,7 @@ async function fetchJobsPage(
       .select("*", { count: "exact" })
       .eq("is_published", true)
       .eq("is_archived", false)
+      .eq("is_direct_apply", true)
       .is("deleted_at", null)
       .gte("posted_date", cutoff.toISOString())
       .order("posted_date", { ascending: false })
@@ -210,6 +211,7 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
         .select("*", { count: "exact", head: true })
         .eq("is_published", true)
         .eq("is_archived", false)
+        .eq("is_direct_apply", true)
         .is("deleted_at", null)
         .gte("posted_date", cutoff.toISOString());
 
