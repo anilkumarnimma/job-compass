@@ -394,10 +394,19 @@ Deno.serve(async (req) => {
       let importedThisSeed = 0;
 
       for (const j of jobs) {
-        if (!j.job_apply_link || !j.job_title || !j.employer_name) {
+        if (!j.job_title || !j.employer_name) {
           stats.total_skipped++;
           continue;
         }
+
+        // STRICT: only ingest jobs with a direct employer career-site link.
+        // Aggregators (talent.com, indeed, ziprecruiter, etc.) get filtered out.
+        const directApplyLink = pickDirectApplyLink(j);
+        if (!directApplyLink) {
+          stats.total_filtered++;
+          continue;
+        }
+
         const location = buildLocation(j);
         if (!isUSALocation(location)) {
           stats.total_filtered++;
@@ -412,7 +421,7 @@ Deno.serve(async (req) => {
         const { data: existing } = await admin
           .from("jobs")
           .select("id")
-          .eq("external_apply_link", j.job_apply_link)
+          .eq("external_apply_link", directApplyLink)
           .maybeSingle();
         if (existing) {
           stats.total_skipped++;
@@ -432,7 +441,7 @@ Deno.serve(async (req) => {
           location,
           description: j.job_description || "",
           skills: enrichedSkills,
-          external_apply_link: j.job_apply_link,
+          external_apply_link: directApplyLink,
           employment_type: j.job_employment_type === "INTERN" ? "Internship" : "Full Time",
           salary_range: formatSalary(j),
           // Always stamp ingestion time so freshly pulled jobs surface at the top of the dashboard
