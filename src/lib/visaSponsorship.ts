@@ -126,8 +126,8 @@ export function analyzeVisaSponsorship(job: Job): VisaSponsorshipResult {
     };
   }
 
-  // Explicit negative overrides
-  if (hasNegative && !hasPositive) {
+  // Explicit negative overrides (including negated sponsorship phrases)
+  if (effectiveNegative && !hasPositive) {
     return {
       status: "unlikely",
       visaTypes: [],
