@@ -693,6 +693,96 @@ export type Database = {
         }
         Relationships: []
       }
+      muse_ingest_runs: {
+        Row: {
+          completed_at: string | null
+          details: Json | null
+          duplicates_removed: number
+          duration_ms: number | null
+          errors: Json | null
+          id: string
+          started_at: string
+          status: string
+          total_fetched: number
+          total_filtered: number
+          total_imported: number
+          total_skipped: number
+          trigger_type: string
+          triggered_by: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          details?: Json | null
+          duplicates_removed?: number
+          duration_ms?: number | null
+          errors?: Json | null
+          id?: string
+          started_at?: string
+          status?: string
+          total_fetched?: number
+          total_filtered?: number
+          total_imported?: number
+          total_skipped?: number
+          trigger_type?: string
+          triggered_by?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          details?: Json | null
+          duplicates_removed?: number
+          duration_ms?: number | null
+          errors?: Json | null
+          id?: string
+          started_at?: string
+          status?: string
+          total_fetched?: number
+          total_filtered?: number
+          total_imported?: number
+          total_skipped?: number
+          trigger_type?: string
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
+      muse_query_seeds: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          is_active: boolean
+          last_imported_count: number | null
+          last_run_at: string | null
+          level: string
+          location: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_imported_count?: number | null
+          last_run_at?: string | null
+          level?: string
+          location?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_imported_count?: number | null
+          last_run_at?: string | null
+          level?: string
+          location?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       processed_stripe_events: {
         Row: {
           event_id: string
