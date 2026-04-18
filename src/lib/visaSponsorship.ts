@@ -66,6 +66,22 @@ const SPONSOR_NEGATIVE = [
   "authorized to work in the us", "authorized to work in the united states",
   "without sponsorship", "no visa sponsorship", "not able to sponsor",
   "legally authorized", "work authorization required",
+  "cannot be considered", "will not be considered", "not be considered",
+  "unable to sponsor", "do not sponsor", "does not sponsor",
+  "are not able to sponsor", "are unable to sponsor",
+  "no visa sponsorship is available", "sponsorship is not available",
+  "sponsorship not available", "sponsorship will not be provided",
+  "not offer sponsorship", "do not offer sponsorship",
+  "without the need for sponsorship", "without requiring sponsorship",
+];
+
+// Phrases that, when present near a "sponsorship" mention, flip it negative.
+// Catches patterns like "visa sponsorship ... cannot be considered" or
+// "candidates requiring sponsorship will not be considered".
+const NEGATION_NEAR_SPONSORSHIP = [
+  "cannot be considered", "will not be considered", "not be considered",
+  "unable to", "not able to", "do not", "does not", "will not",
+  "no longer", "ineligible",
 ];
 
 export function analyzeVisaSponsorship(job: Job): VisaSponsorshipResult {
@@ -74,12 +90,27 @@ export function analyzeVisaSponsorship(job: Job): VisaSponsorshipResult {
 
   // Check negative signals first
   const hasNegative = SPONSOR_NEGATIVE.some(s => text.includes(s));
-  const hasPositive = SPONSOR_POSITIVE.some(s => text.includes(s));
+
+  // Detect sponsorship phrases that appear in a negative/refusal context.
+  // E.g. "visa sponsorship ... cannot be considered" within a 120-char window.
+  const sponsorshipMentions = [...text.matchAll(/\b(visa\s+sponsorship|sponsorship|sponsor\s+(?:a\s+)?visa|h-?1b\s+sponsor)/g)];
+  const hasNegatedSponsorship = sponsorshipMentions.some(m => {
+    const start = Math.max(0, (m.index ?? 0) - 60);
+    const end = Math.min(text.length, (m.index ?? 0) + (m[0]?.length ?? 0) + 120);
+    const window = text.slice(start, end);
+    return NEGATION_NEAR_SPONSORSHIP.some(neg => window.includes(neg));
+  });
+
+  // Only count positive signals if they are NOT in a negated context
+  const hasPositive = SPONSOR_POSITIVE.some(s => text.includes(s)) && !hasNegatedSponsorship;
   // Strict OPT detection: explicit phrase OR word-boundary token match
   const hasOpt = SPONSOR_OPT.some(s => text.includes(s)) || OPT_STRICT_REGEX.test(text);
   const hasStemOpt = SPONSOR_STEM_OPT.some(s => text.includes(s));
   const isKnownSponsor = KNOWN_SPONSORS.has(companyLower) ||
     Array.from(KNOWN_SPONSORS).some(s => companyLower.includes(s));
+
+  // Treat negated-sponsorship as an explicit negative
+  const effectiveNegative = hasNegative || hasNegatedSponsorship;
 
   // Senior / high-experience guard: never auto-tag OPT/STEM-OPT for senior roles
   // unless the description explicitly mentions sponsorship/visa terms.
@@ -95,8 +126,8 @@ export function analyzeVisaSponsorship(job: Job): VisaSponsorshipResult {
     };
   }
 
-  // Explicit negative overrides
-  if (hasNegative && !hasPositive) {
+  // Explicit negative overrides (including negated sponsorship phrases)
+  if (effectiveNegative && !hasPositive) {
     return {
       status: "unlikely",
       visaTypes: [],
@@ -146,8 +177,8 @@ export function analyzeVisaSponsorship(job: Job): VisaSponsorshipResult {
     };
   }
 
-  // Known sponsor company with no explicit mention
-  if (isKnownSponsor) {
+  // Known sponsor company with no explicit mention (skip if negated)
+  if (isKnownSponsor && !effectiveNegative) {
     return {
       status: "sponsors",
       visaTypes: ["H1B"],
