@@ -135,8 +135,26 @@ const US_STATES_ABBR = new Set([
   "NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC",
 ]);
 
+const FOREIGN_LOCATION_TOKENS = [
+  "india","bengaluru","bangalore","mumbai","hyderabad","chennai","pune","delhi","gurgaon","noida","kolkata",
+  "canada","toronto","vancouver","montreal","ottawa","ontario","quebec","alberta","british columbia",
+  "united kingdom","england","london","manchester","scotland","wales","ireland","dublin",
+  "germany","berlin","munich","france","paris","spain","madrid","barcelona","portugal","lisbon",
+  "netherlands","amsterdam","belgium","brussels","sweden","stockholm","denmark","copenhagen",
+  "norway","finland","poland","romania","czech","switzerland","zurich",
+  "australia","sydney","melbourne","new zealand","auckland",
+  "singapore","japan","tokyo","china","beijing","shanghai","hong kong","taiwan","korea","seoul",
+  "philippines","manila","indonesia","jakarta","thailand","bangkok","vietnam","malaysia",
+  "mexico","brazil","argentina","colombia","chile","peru",
+  "south africa","nigeria","kenya","uae","dubai","saudi","israel","tel aviv",
+  "remote - emea","remote - apac","remote - latam","remote - canada","remote canada","emea","apac","latam",
+];
+
 function isUSALocation(loc: string): boolean {
   if (!loc) return false;
+  const lower = ` ${loc.toLowerCase()} `;
+  // Reject if any foreign token is present
+  if (FOREIGN_LOCATION_TOKENS.some((tok) => lower.includes(tok))) return false;
   if (/\bUS\b|\bUSA\b|united states/i.test(loc)) return true;
   const m = loc.match(/,\s*([A-Z]{2})\b/);
   if (m && US_STATES_ABBR.has(m[1])) return true;

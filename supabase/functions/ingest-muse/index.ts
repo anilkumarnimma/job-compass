@@ -159,18 +159,50 @@ const US_STATE_NAMES = new Set([
   "wisconsin","wyoming","district of columbia",
 ]);
 
-function isUSALocation(loc: string): boolean {
+// Hard blocklist of foreign country/city tokens — if ANY appear in a single location, reject it.
+const FOREIGN_TOKENS = [
+  "india","bengaluru","bangalore","mumbai","hyderabad","chennai","pune","delhi","gurgaon","noida","kolkata",
+  "canada","toronto","vancouver","montreal","ottawa","calgary","ontario","quebec","alberta","british columbia",
+  "united kingdom"," uk","england","london","manchester","scotland","wales","ireland","dublin",
+  "germany","berlin","munich","france","paris","spain","madrid","barcelona","portugal","lisbon",
+  "netherlands","amsterdam","belgium","brussels","sweden","stockholm","denmark","copenhagen",
+  "norway","oslo","finland","helsinki","poland","warsaw","romania","czech","switzerland","zurich",
+  "australia","sydney","melbourne","brisbane","new zealand","auckland",
+  "singapore","japan","tokyo","china","beijing","shanghai","hong kong","taiwan","korea","seoul",
+  "philippines","manila","indonesia","jakarta","thailand","bangkok","vietnam","malaysia",
+  "mexico","brazil","argentina","colombia","chile","peru",
+  "south africa","egypt","nigeria","kenya","uae","dubai","saudi","israel","tel aviv",
+  "remote - emea","remote - apac","remote - latam","remote - canada","emea","apac","latam",
+];
+
+function isForeignLocation(loc: string): boolean {
+  const lower = ` ${loc.toLowerCase()} `;
+  return FOREIGN_TOKENS.some((tok) => lower.includes(tok));
+}
+
+function isSingleUSLocation(loc: string): boolean {
   if (!loc) return false;
-  const lower = loc.toLowerCase();
-  // Muse uses "Flexible / Remote" — accept as US-friendly remote
-  if (/flexible\s*\/\s*remote/i.test(loc)) return true;
+  if (isForeignLocation(loc)) return false;
+  if (/^flexible\s*\/\s*remote$/i.test(loc.trim())) return true;
   if (/\bUS\b|\bUSA\b|united states/i.test(loc)) return true;
   const m = loc.match(/,\s*([A-Z]{2})\b/);
   if (m && US_STATES_ABBR.has(m[1])) return true;
-  for (const name of US_STATE_NAMES) {
-    if (lower.includes(name)) return true;
+  // State-name match must be an exact comma-segment to avoid false positives
+  const segments = loc.split(/[,•|]/).map((s) => s.trim().toLowerCase());
+  for (const seg of segments) {
+    if (US_STATE_NAMES.has(seg)) return true;
   }
   return false;
+}
+
+// Returns the filtered location string keeping only US segments,
+// or null if no US location remains.
+function extractUSLocations(rawLoc: string): string | null {
+  if (!rawLoc) return null;
+  const parts = rawLoc.split(/\s*•\s*/).map((p) => p.trim()).filter(Boolean);
+  const usParts = parts.filter((p) => isSingleUSLocation(p));
+  if (usParts.length === 0) return null;
+  return usParts.join(" • ");
 }
 
 // ───────────────────────── Aggregator blocklist ─────────────────────────
@@ -410,8 +442,9 @@ Deno.serve(async (req) => {
             continue;
           }
 
-          const location = buildLocation(j);
-          if (!isUSALocation(location)) {
+          const rawLocation = buildLocation(j);
+          const location = extractUSLocations(rawLocation);
+          if (!location) {
             stats.total_filtered++;
             continue;
           }
