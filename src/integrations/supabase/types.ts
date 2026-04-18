@@ -449,6 +449,7 @@ export type Database = {
           external_apply_link: string
           id: string
           is_archived: boolean
+          is_direct_apply: boolean
           is_published: boolean
           is_reviewing: boolean
           location: string
@@ -472,6 +473,7 @@ export type Database = {
           external_apply_link: string
           id?: string
           is_archived?: boolean
+          is_direct_apply?: boolean
           is_published?: boolean
           is_reviewing?: boolean
           location: string
@@ -495,6 +497,7 @@ export type Database = {
           external_apply_link?: string
           id?: string
           is_archived?: boolean
+          is_direct_apply?: boolean
           is_published?: boolean
           is_reviewing?: boolean
           location?: string
