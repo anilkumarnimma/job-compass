@@ -167,7 +167,22 @@ const BLOCKED_APPLY_DOMAINS = new Set([
   "trabajo.org",
   "sundayy.com", "www.sundayy.com",
   "bestjobtool.com", "www.bestjobtool.com",
+  "learn4good.com", "www.learn4good.com",
+  "adzuna.com", "www.adzuna.com", "www.adzuna.com.au", "www.adzuna.com.mx",
+  "linkedin.com", "www.linkedin.com",
+  "uk.linkedin.com", "ca.linkedin.com", "cn.linkedin.com", "il.linkedin.com",
+  "nl.linkedin.com", "ae.linkedin.com", "ch.linkedin.com", "de.linkedin.com",
+  "fr.linkedin.com",
+  "ad.doubleclick.net", "doubleclick.net",
 ]);
+
+// Domains matched by suffix (any subdomain). Useful when aggregators use
+// many regional/random subdomains (e.g. tnl2.jometer.com, rr.jobsyn.org).
+const BLOCKED_APPLY_DOMAIN_SUFFIXES = [
+  "jometer.com",
+  "jobsyn.org",
+  "learn4good.com",
+];
 
 function getDomain(url: string): string {
   try {
