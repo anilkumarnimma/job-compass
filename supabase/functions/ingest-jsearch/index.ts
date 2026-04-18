@@ -165,6 +165,8 @@ const BLOCKED_APPLY_DOMAINS = new Set([
   "joblist.com", "www.joblist.com",
   "jooble.org", "www.jooble.org",
   "trabajo.org",
+  "sundayy.com", "www.sundayy.com",
+  "bestjobtool.com", "www.bestjobtool.com",
 ]);
 
 function getDomain(url: string): string {
