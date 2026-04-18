@@ -379,123 +379,148 @@ Deno.serve(async (req) => {
     );
   }
 
-  // Process each seed
-  for (const seed of seeds) {
-    try {
-      const jobs = await fetchJSearch(
-        JSEARCH_API_KEY,
-        seed.query,
-        seed.country,
-        seed.date_posted,
-        seed.employment_types,
-        seed.job_requirements
-      );
-      stats.total_fetched += jobs.length;
-      let importedThisSeed = 0;
-
-      for (const j of jobs) {
-        if (!j.job_title || !j.employer_name) {
-          stats.total_skipped++;
-          continue;
-        }
-
-        // STRICT: only ingest jobs with a direct employer career-site link.
-        // Aggregators (talent.com, indeed, ziprecruiter, etc.) get filtered out.
-        const directApplyLink = pickDirectApplyLink(j);
-        if (!directApplyLink) {
-          stats.total_filtered++;
-          continue;
-        }
-
-        const location = buildLocation(j);
-        if (!isUSALocation(location)) {
-          stats.total_filtered++;
-          continue;
-        }
-        if (isExcludedJob(j.job_title, j.job_description || "")) {
-          stats.total_filtered++;
-          continue;
-        }
-
-        // Dedupe by external_apply_link
-        const { data: existing } = await admin
-          .from("jobs")
-          .select("id")
-          .eq("external_apply_link", directApplyLink)
-          .maybeSingle();
-        if (existing) {
-          stats.total_skipped++;
-          continue;
-        }
-
-        const enrichedSkills = enrichSkills(
-          j.job_title,
-          j.job_description || "",
-          j.job_required_skills || []
+  // Background task: process all seeds without blocking the HTTP response.
+  // Edge Function HTTP responses time out at ~150s, but EdgeRuntime.waitUntil
+  // keeps the worker alive for the full background task duration (up to ~400s).
+  const backgroundWork = async () => {
+    console.log(`[ingest-jsearch] Starting background processing of ${seeds.length} seeds (run ${runId})`);
+    for (const seed of seeds) {
+      try {
+        console.log(`[ingest-jsearch] Processing seed: ${seed.query}`);
+        const jobs = await fetchJSearch(
+          JSEARCH_API_KEY,
+          seed.query,
+          seed.country,
+          seed.date_posted,
+          seed.employment_types,
+          seed.job_requirements
         );
+        stats.total_fetched += jobs.length;
+        let importedThisSeed = 0;
 
-        const { error: insertErr } = await admin.from("jobs").insert({
-          title: j.job_title.trim(),
-          company: j.employer_name.trim(),
-          company_logo: j.employer_logo || null,
-          location,
-          description: j.job_description || "",
-          skills: enrichedSkills,
-          external_apply_link: directApplyLink,
-          employment_type: j.job_employment_type === "INTERN" ? "Internship" : "Full Time",
-          salary_range: formatSalary(j),
-          // Always stamp ingestion time so freshly pulled jobs surface at the top of the dashboard
-          posted_date: new Date().toISOString(),
-          is_published: true,
-          is_archived: false,
-        });
+        for (const j of jobs) {
+          if (!j.job_title || !j.employer_name) {
+            stats.total_skipped++;
+            continue;
+          }
 
-        if (insertErr) {
-          stats.errors.push({ query: seed.query, error: insertErr.message });
-          stats.total_skipped++;
-        } else {
-          stats.total_imported++;
-          importedThisSeed++;
+          // STRICT: only ingest jobs with a direct employer career-site link.
+          const directApplyLink = pickDirectApplyLink(j);
+          if (!directApplyLink) {
+            stats.total_filtered++;
+            continue;
+          }
+
+          const location = buildLocation(j);
+          if (!isUSALocation(location)) {
+            stats.total_filtered++;
+            continue;
+          }
+          if (isExcludedJob(j.job_title, j.job_description || "")) {
+            stats.total_filtered++;
+            continue;
+          }
+
+          const { data: existing } = await admin
+            .from("jobs")
+            .select("id")
+            .eq("external_apply_link", directApplyLink)
+            .maybeSingle();
+          if (existing) {
+            stats.total_skipped++;
+            continue;
+          }
+
+          const enrichedSkills = enrichSkills(
+            j.job_title,
+            j.job_description || "",
+            j.job_required_skills || []
+          );
+
+          const { error: insertErr } = await admin.from("jobs").insert({
+            title: j.job_title.trim(),
+            company: j.employer_name.trim(),
+            company_logo: j.employer_logo || null,
+            location,
+            description: j.job_description || "",
+            skills: enrichedSkills,
+            external_apply_link: directApplyLink,
+            employment_type: j.job_employment_type === "INTERN" ? "Internship" : "Full Time",
+            salary_range: formatSalary(j),
+            posted_date: new Date().toISOString(),
+            is_published: true,
+            is_archived: false,
+          });
+
+          if (insertErr) {
+            stats.errors.push({ query: seed.query, error: insertErr.message });
+            stats.total_skipped++;
+          } else {
+            stats.total_imported++;
+            importedThisSeed++;
+          }
         }
+
+        stats.per_query.push({ query: seed.query, fetched: jobs.length, imported: importedThisSeed });
+
+        await admin
+          .from("jsearch_query_seeds")
+          .update({ last_run_at: new Date().toISOString(), last_imported_count: importedThisSeed })
+          .eq("id", seed.id);
+
+        // Persist progress after every seed so the UI shows live progress
+        await admin.from("jsearch_ingest_runs").update({
+          total_fetched: stats.total_fetched,
+          total_imported: stats.total_imported,
+          total_skipped: stats.total_skipped,
+          total_filtered: stats.total_filtered,
+          details: { per_query: stats.per_query },
+        }).eq("id", runId);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.error(`[ingest-jsearch] Error on "${seed.query}":`, msg);
+        stats.errors.push({ query: seed.query, error: msg });
       }
-
-      stats.per_query.push({ query: seed.query, fetched: jobs.length, imported: importedThisSeed });
-
-      // Update last_run on seed
-      await admin
-        .from("jsearch_query_seeds")
-        .update({ last_run_at: new Date().toISOString(), last_imported_count: importedThisSeed })
-        .eq("id", seed.id);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      console.error(`[ingest-jsearch] Error on "${seed.query}":`, msg);
-      stats.errors.push({ query: seed.query, error: msg });
     }
-  }
 
-  // Run dedup sweep
-  try {
-    const { data: dedupRes } = await admin.rpc("remove_duplicate_jobs");
-    stats.duplicates_removed = (dedupRes as { removed?: number })?.removed || 0;
-  } catch (e) {
-    console.error("[ingest-jsearch] Dedup error:", e);
-  }
+    // Run dedup sweep
+    try {
+      const { data: dedupRes } = await admin.rpc("remove_duplicate_jobs");
+      stats.duplicates_removed = (dedupRes as { removed?: number })?.removed || 0;
+    } catch (e) {
+      console.error("[ingest-jsearch] Dedup error:", e);
+    }
 
-  await admin.from("jsearch_ingest_runs").update({
-    status: stats.errors.length > 0 ? "completed_with_errors" : "completed",
-    completed_at: new Date().toISOString(),
-    duration_ms: Date.now() - startedAt,
-    total_fetched: stats.total_fetched,
-    total_imported: stats.total_imported,
-    total_skipped: stats.total_skipped,
-    total_filtered: stats.total_filtered,
-    duplicates_removed: stats.duplicates_removed,
-    errors: stats.errors,
-    details: { per_query: stats.per_query },
-  }).eq("id", runId);
+    await admin.from("jsearch_ingest_runs").update({
+      status: stats.errors.length > 0 ? "completed_with_errors" : "completed",
+      completed_at: new Date().toISOString(),
+      duration_ms: Date.now() - startedAt,
+      total_fetched: stats.total_fetched,
+      total_imported: stats.total_imported,
+      total_skipped: stats.total_skipped,
+      total_filtered: stats.total_filtered,
+      duplicates_removed: stats.duplicates_removed,
+      errors: stats.errors,
+      details: { per_query: stats.per_query },
+    }).eq("id", runId);
 
-  return new Response(JSON.stringify({ success: true, run_id: runId, ...stats }), {
-    status: 200,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+    console.log(`[ingest-jsearch] Background run ${runId} complete: ${stats.total_imported} imported, ${stats.total_filtered} filtered`);
+  };
+
+  // @ts-ignore - EdgeRuntime is available in Supabase Edge Functions
+  EdgeRuntime.waitUntil(backgroundWork());
+
+  // Respond immediately with 202 Accepted
+  return new Response(
+    JSON.stringify({
+      success: true,
+      run_id: runId,
+      message: "Ingest started in background — check /admin/import for progress",
+      seeds_count: seeds.length,
+    }),
+    {
+      status: 202,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    }
+  );
 });
