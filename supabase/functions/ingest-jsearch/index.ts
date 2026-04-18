@@ -174,6 +174,7 @@ const BLOCKED_APPLY_DOMAINS = new Set([
   "nl.linkedin.com", "ae.linkedin.com", "ch.linkedin.com", "de.linkedin.com",
   "fr.linkedin.com",
   "ad.doubleclick.net", "doubleclick.net",
+  "clearancejobs.com", "www.clearancejobs.com",
 ]);
 
 // Domains matched by suffix (any subdomain). Useful when aggregators use
