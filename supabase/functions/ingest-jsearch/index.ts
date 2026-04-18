@@ -195,7 +195,11 @@ function getDomain(url: string): string {
 function isBlockedApplyLink(url: string): boolean {
   const d = getDomain(url);
   if (!d) return true;
-  return BLOCKED_APPLY_DOMAINS.has(d);
+  if (BLOCKED_APPLY_DOMAINS.has(d)) return true;
+  for (const suffix of BLOCKED_APPLY_DOMAIN_SUFFIXES) {
+    if (d === suffix || d.endsWith("." + suffix)) return true;
+  }
+  return false;
 }
 
 interface ApplyOption {
