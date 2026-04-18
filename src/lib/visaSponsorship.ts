@@ -1,4 +1,5 @@
 import { Job } from "@/types/job";
+import { isHighExperienceJob, isNonEntryLevelJob } from "./jobFilters";
 
 export type SponsorshipStatus = "sponsors" | "opt_friendly" | "stem_opt" | "unlikely" | "unknown";
 
@@ -40,15 +41,22 @@ const SPONSOR_POSITIVE = [
   "open to sponsorship", "provides sponsorship",
 ];
 
+// Strict OPT signals — must be explicit visa/work-authorization terms.
+// "recent graduates" / "new grad" alone are NOT visa signals.
 const SPONSOR_OPT = [
   "opt", "optional practical training", "opt friendly", "opt eligible",
-  "recent graduates", "new grad",
+  "f-1", "f1 visa", "cpt", "curricular practical training",
 ];
 
 const SPONSOR_STEM_OPT = [
-  "stem opt", "stem-opt", "stem extension", "24-month",
-  "stem eligible", "e-verify",
+  "stem opt", "stem-opt", "stem extension", "24-month opt",
+  "stem eligible",
 ];
+
+// Word-boundary regex for short tokens like "opt", "cpt", "f-1" to avoid
+// false positives ("optional", "captain", etc.). "opt" must appear as a
+// standalone token, not inside another word.
+const OPT_STRICT_REGEX = /\b(opt|cpt|f-1|f1)\b/i;
 
 const SPONSOR_NEGATIVE = [
   "must be authorized to work", "no sponsorship", "citizens only",
@@ -67,10 +75,25 @@ export function analyzeVisaSponsorship(job: Job): VisaSponsorshipResult {
   // Check negative signals first
   const hasNegative = SPONSOR_NEGATIVE.some(s => text.includes(s));
   const hasPositive = SPONSOR_POSITIVE.some(s => text.includes(s));
-  const hasOpt = SPONSOR_OPT.some(s => text.includes(s));
+  // Strict OPT detection: explicit phrase OR word-boundary token match
+  const hasOpt = SPONSOR_OPT.some(s => text.includes(s)) || OPT_STRICT_REGEX.test(text);
   const hasStemOpt = SPONSOR_STEM_OPT.some(s => text.includes(s));
-  const isKnownSponsor = KNOWN_SPONSORS.has(companyLower) || 
+  const isKnownSponsor = KNOWN_SPONSORS.has(companyLower) ||
     Array.from(KNOWN_SPONSORS).some(s => companyLower.includes(s));
+
+  // Senior / high-experience guard: never auto-tag OPT/STEM-OPT for senior roles
+  // unless the description explicitly mentions sponsorship/visa terms.
+  const isSenior = isHighExperienceJob(job) || isNonEntryLevelJob(job);
+  if (isSenior && !hasPositive) {
+    return {
+      status: "unknown",
+      visaTypes: [],
+      confidence: "low",
+      label: "❓ Not specified",
+      emoji: "❓",
+      badgeClass: "bg-muted text-muted-foreground border-border/40",
+    };
+  }
 
   // Explicit negative overrides
   if (hasNegative && !hasPositive) {
