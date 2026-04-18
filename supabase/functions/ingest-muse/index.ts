@@ -442,8 +442,9 @@ Deno.serve(async (req) => {
             continue;
           }
 
-          const location = buildLocation(j);
-          if (!isUSALocation(location)) {
+          const rawLocation = buildLocation(j);
+          const location = extractUSLocations(rawLocation);
+          if (!location) {
             stats.total_filtered++;
             continue;
           }
