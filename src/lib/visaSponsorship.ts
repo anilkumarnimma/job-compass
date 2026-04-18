@@ -66,6 +66,22 @@ const SPONSOR_NEGATIVE = [
   "authorized to work in the us", "authorized to work in the united states",
   "without sponsorship", "no visa sponsorship", "not able to sponsor",
   "legally authorized", "work authorization required",
+  "cannot be considered", "will not be considered", "not be considered",
+  "unable to sponsor", "do not sponsor", "does not sponsor",
+  "are not able to sponsor", "are unable to sponsor",
+  "no visa sponsorship is available", "sponsorship is not available",
+  "sponsorship not available", "sponsorship will not be provided",
+  "not offer sponsorship", "do not offer sponsorship",
+  "without the need for sponsorship", "without requiring sponsorship",
+];
+
+// Phrases that, when present near a "sponsorship" mention, flip it negative.
+// Catches patterns like "visa sponsorship ... cannot be considered" or
+// "candidates requiring sponsorship will not be considered".
+const NEGATION_NEAR_SPONSORSHIP = [
+  "cannot be considered", "will not be considered", "not be considered",
+  "unable to", "not able to", "do not", "does not", "will not",
+  "no longer", "ineligible",
 ];
 
 export function analyzeVisaSponsorship(job: Job): VisaSponsorshipResult {
