@@ -177,8 +177,8 @@ export function analyzeVisaSponsorship(job: Job): VisaSponsorshipResult {
     };
   }
 
-  // Known sponsor company with no explicit mention
-  if (isKnownSponsor) {
+  // Known sponsor company with no explicit mention (skip if negated)
+  if (isKnownSponsor && !effectiveNegative) {
     return {
       status: "sponsors",
       visaTypes: ["H1B"],
