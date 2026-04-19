@@ -512,6 +512,12 @@ export default function Dashboard() {
           {isUSUser && <VisaFilterPills value={visaFilter} onChange={setVisaFilter} />}
         </div>
 
+        {/* Title-based role category feed pills */}
+        <RoleCategoryPills
+          selectedCategoryId={categoryId}
+          onSelect={handleSelectCategory}
+        />
+
         {/* Fallback note */}
         <AnimatePresence>
           {fallbackActive && (
