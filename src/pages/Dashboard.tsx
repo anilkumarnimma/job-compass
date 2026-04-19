@@ -47,6 +47,8 @@ import { RoleRequestModal } from "@/components/RoleRequestModal";
 import { PremiumUpgradeBanner } from "@/components/PremiumUpgradeBanner";
 import { LinkedInFeatureBanner } from "@/components/LinkedInFeatureBanner";
 import { AutoApplyBanner } from "@/components/AutoApplyBanner";
+import { RoleCategoryPills } from "@/components/RoleCategoryPills";
+import { getCategoryById, titleMatchesCategory } from "@/lib/roleCategories";
 
 
 
@@ -89,6 +91,7 @@ export default function Dashboard() {
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
+  const [categoryId, setCategoryId] = useState<string | null>(null);
   const [companyFilter, setCompanyFilter] = useState<string | null>(null);
   const [allTimeDropdownOpen, setAllTimeDropdownOpen] = useState(false);
   const [customDate, setCustomDate] = useState<Date | undefined>(undefined);
@@ -113,6 +116,7 @@ export default function Dashboard() {
     setMobileSheetOpen(false);
     setSelectedJob(null);
     setRoleFilter(null);
+    setCategoryId(null);
     setCompanyFilter(null);
     setAllTimeDropdownOpen(false);
     setCustomDate(undefined);
@@ -160,6 +164,7 @@ export default function Dashboard() {
     if (!urlSearch) {
       setSearchInput("");
       setRoleFilter(null);
+      setCategoryId(null);
       setCompanyFilter(null);
       setDateFilter("all");
       setCustomDate(undefined);
@@ -179,15 +184,21 @@ export default function Dashboard() {
     setFallbackActive(false);
   }, []);
 
+  const selectedCategory = useMemo(
+    () => (categoryId ? getCategoryById(categoryId) : undefined),
+    [categoryId]
+  );
+
   const combinedSearchQuery = useMemo(() => {
     const parts: string[] = [];
     const search = searchInput.trim();
     // Skip very short partial queries to avoid broad/slow DB searches
     if (search.length >= 2) parts.push(search);
+    if (selectedCategory) parts.push(selectedCategory.searchTerm);
     if (roleFilter) parts.push(roleFilter);
     if (companyFilter) parts.push(companyFilter);
     return parts.join(" ");
-  }, [searchInput, roleFilter, companyFilter]);
+  }, [searchInput, selectedCategory, roleFilter, companyFilter]);
 
   const { dateFrom, dateTo } = getDateRange(dateFilter, customDate);
 
@@ -267,9 +278,19 @@ export default function Dashboard() {
   });
 
   const jobs = useMemo(() => {
-    if (!usePriorityOrdering) return rawJobs;
-    return prioritizedPageQuery.data ?? rawJobs;
-  }, [usePriorityOrdering, prioritizedPageQuery.data, rawJobs]);
+    const base = !usePriorityOrdering
+      ? rawJobs
+      : (prioritizedPageQuery.data ?? rawJobs);
+
+    if (!categoryId) return base;
+
+    // Strict title-only enforcement: the search RPC may match a category term
+    // in company/skills, so we re-check the title here. Also sort by recency.
+    const filtered = base.filter((j) => titleMatchesCategory(j.title, categoryId));
+    return [...filtered].sort(
+      (a, b) => b.posted_date.getTime() - a.posted_date.getTime()
+    );
+  }, [usePriorityOrdering, prioritizedPageQuery.data, rawJobs, categoryId]);
 
   const isLoading = usePriorityOrdering
     ? recommendedLoading || searchLoading || prioritizedPageQuery.isLoading
@@ -355,6 +376,11 @@ export default function Dashboard() {
     setCustomDate(undefined);
     setDateFilter("all");
     setAllTimeDropdownOpen(false);
+  }, []);
+
+  const handleSelectCategory = useCallback((id: string | null) => {
+    setCategoryId(id);
+    setCurrentPage(1);
   }, []);
 
   const hasActiveFilter = roleFilter || companyFilter;
@@ -485,6 +511,12 @@ export default function Dashboard() {
           )}
           {isUSUser && <VisaFilterPills value={visaFilter} onChange={setVisaFilter} />}
         </div>
+
+        {/* Title-based role category feed pills */}
+        <RoleCategoryPills
+          selectedCategoryId={categoryId}
+          onSelect={handleSelectCategory}
+        />
 
         {/* Fallback note */}
         <AnimatePresence>
