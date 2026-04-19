@@ -164,6 +164,7 @@ export default function Dashboard() {
     if (!urlSearch) {
       setSearchInput("");
       setRoleFilter(null);
+      setCategoryId(null);
       setCompanyFilter(null);
       setDateFilter("all");
       setCustomDate(undefined);
