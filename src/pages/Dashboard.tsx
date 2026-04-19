@@ -184,15 +184,21 @@ export default function Dashboard() {
     setFallbackActive(false);
   }, []);
 
+  const selectedCategory = useMemo(
+    () => (categoryId ? getCategoryById(categoryId) : undefined),
+    [categoryId]
+  );
+
   const combinedSearchQuery = useMemo(() => {
     const parts: string[] = [];
     const search = searchInput.trim();
     // Skip very short partial queries to avoid broad/slow DB searches
     if (search.length >= 2) parts.push(search);
+    if (selectedCategory) parts.push(selectedCategory.searchTerm);
     if (roleFilter) parts.push(roleFilter);
     if (companyFilter) parts.push(companyFilter);
     return parts.join(" ");
-  }, [searchInput, roleFilter, companyFilter]);
+  }, [searchInput, selectedCategory, roleFilter, companyFilter]);
 
   const { dateFrom, dateTo } = getDateRange(dateFilter, customDate);
 
