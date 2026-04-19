@@ -278,9 +278,19 @@ export default function Dashboard() {
   });
 
   const jobs = useMemo(() => {
-    if (!usePriorityOrdering) return rawJobs;
-    return prioritizedPageQuery.data ?? rawJobs;
-  }, [usePriorityOrdering, prioritizedPageQuery.data, rawJobs]);
+    const base = !usePriorityOrdering
+      ? rawJobs
+      : (prioritizedPageQuery.data ?? rawJobs);
+
+    if (!categoryId) return base;
+
+    // Strict title-only enforcement: the search RPC may match a category term
+    // in company/skills, so we re-check the title here. Also sort by recency.
+    const filtered = base.filter((j) => titleMatchesCategory(j.title, categoryId));
+    return [...filtered].sort(
+      (a, b) => b.posted_date.getTime() - a.posted_date.getTime()
+    );
+  }, [usePriorityOrdering, prioritizedPageQuery.data, rawJobs, categoryId]);
 
   const isLoading = usePriorityOrdering
     ? recommendedLoading || searchLoading || prioritizedPageQuery.isLoading
