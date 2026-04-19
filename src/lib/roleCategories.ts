@@ -80,8 +80,12 @@ export const CURATED_ROLE_CATEGORIES: RoleCategory[] = [
   {
     id: "ai-ml",
     label: "AI / ML",
-    searchTerm: "Machine Learning Engineer",
-    pattern: /\b(ai\s*engineer|ml\s*engineer|machine\s*learning|deep\s*learning|nlp\s*engineer|computer\s*vision\s*engineer|genai|llm\s*engineer)\b/i,
+    searchTerm: "AI Engineer",
+    // Matches: "AI" as a standalone word (AI Engineer, Applied AI, Generative AI, etc.),
+    // "Artificial Intelligence", ML/Machine Learning, Deep Learning, NLP, Computer Vision,
+    // GenAI, LLM Engineer. Uses \b boundaries so "ai" inside words like "main", "chair",
+    // "captain" never matches.
+    pattern: /\b(ai|a\.i\.|artificial\s*intelligence|ml\s*engineer|machine\s*learning|deep\s*learning|nlp\s*engineer|computer\s*vision\s*engineer|gen\s*ai|genai|llm\s*engineer)\b/i,
     curated: true,
   },
   {
