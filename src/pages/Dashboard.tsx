@@ -47,6 +47,8 @@ import { RoleRequestModal } from "@/components/RoleRequestModal";
 import { PremiumUpgradeBanner } from "@/components/PremiumUpgradeBanner";
 import { LinkedInFeatureBanner } from "@/components/LinkedInFeatureBanner";
 import { AutoApplyBanner } from "@/components/AutoApplyBanner";
+import { RoleCategoryPills } from "@/components/RoleCategoryPills";
+import { getCategoryById, titleMatchesCategory } from "@/lib/roleCategories";
 
 
 
