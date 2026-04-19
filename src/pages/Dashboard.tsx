@@ -91,6 +91,7 @@ export default function Dashboard() {
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
+  const [categoryId, setCategoryId] = useState<string | null>(null);
   const [companyFilter, setCompanyFilter] = useState<string | null>(null);
   const [allTimeDropdownOpen, setAllTimeDropdownOpen] = useState(false);
   const [customDate, setCustomDate] = useState<Date | undefined>(undefined);
