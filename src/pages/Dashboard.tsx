@@ -116,6 +116,7 @@ export default function Dashboard() {
     setMobileSheetOpen(false);
     setSelectedJob(null);
     setRoleFilter(null);
+    setCategoryId(null);
     setCompanyFilter(null);
     setAllTimeDropdownOpen(false);
     setCustomDate(undefined);
