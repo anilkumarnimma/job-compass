@@ -378,6 +378,11 @@ export default function Dashboard() {
     setAllTimeDropdownOpen(false);
   }, []);
 
+  const handleSelectCategory = useCallback((id: string | null) => {
+    setCategoryId(id);
+    setCurrentPage(1);
+  }, []);
+
   const hasActiveFilter = roleFilter || companyFilter;
   const fallbackLabel = dateFilter === "today" ? "today" : dateFilter === "yesterday" ? "yesterday" : customDate ? format(customDate, "MMM d") : "";
 
