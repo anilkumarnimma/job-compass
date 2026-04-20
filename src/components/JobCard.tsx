@@ -19,6 +19,7 @@ import { useAtsCheck } from "@/hooks/useAtsCheck";
 import { useProfile } from "@/hooks/useProfile";
 import { useToast } from "@/hooks/use-toast";
 import { LinkedInConnectDialog } from "@/components/LinkedInConnectDialog";
+import { hasUsableDescription, NO_DESCRIPTION_TOOLTIP } from "@/lib/jobDescriptionGate";
 
 const AtsCheckDialog = lazy(async () => {
   const module = await import("@/components/AtsCheckDialog");
@@ -58,6 +59,7 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
   const saved = isSaved(job.id);
   const applied = isApplied(job.id);
   const visaResult = useMemo(() => analyzeVisaSponsorship(job), [job]);
+  const aiEnabled = useMemo(() => hasUsableDescription(job), [job]);
 
   // ATS Check state
   const { runCheck, isChecking, result: atsResult, clearResult: clearAts } = useAtsCheck();
@@ -273,36 +275,38 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
         </div>
       )}
 
-      {/* AI Actions Row */}
-      <div className="flex flex-wrap items-center gap-1.5 mb-2 relative z-10">
-        <Button
-          variant="outline"
-          size="sm"
-          className="text-xs font-medium h-7 px-3 rounded-full border-accent/30 bg-accent/5 text-accent hover:bg-accent/15 hover:border-accent/50 hover:shadow-[0_0_8px_hsl(var(--accent)/0.15)] transition-all duration-300"
-          onClick={handleAtsClick}
-        >
-          <Target className="h-3.5 w-3.5 mr-1" />
-          ATS Check
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className={`text-xs font-medium h-7 px-3 rounded-full border-accent/30 bg-accent/5 text-accent hover:bg-accent/15 hover:border-accent/50 hover:shadow-[0_0_8px_hsl(var(--accent)/0.15)] transition-all duration-300${context === 'recommendations' ? ' animate-[ats-glow_4s_ease-in-out_infinite]' : ''}`}
-          onClick={handleCoverLetterClick}
-        >
-          <FileText className="h-3.5 w-3.5 mr-1" />
-          Cover Letter
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className={`text-xs font-medium h-7 px-3 rounded-full border-accent/30 bg-accent/5 text-accent hover:bg-accent/15 hover:border-accent/50 hover:shadow-[0_0_8px_hsl(var(--accent)/0.15)] transition-all duration-300${context === 'recommendations' ? ' animate-[ats-glow_4s_ease-in-out_infinite]' : ''}`}
-          onClick={handleTailoredResumeClick}
-        >
-          <Target className="h-3.5 w-3.5 mr-1" />
-          Tailored Resume
-        </Button>
-      </div>
+      {/* AI Actions Row — hidden when job description is unavailable AND enrichment failed/pending */}
+      {aiEnabled && (
+        <div className="flex flex-wrap items-center gap-1.5 mb-2 relative z-10">
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs font-medium h-7 px-3 rounded-full border-accent/30 bg-accent/5 text-accent hover:bg-accent/15 hover:border-accent/50 hover:shadow-[0_0_8px_hsl(var(--accent)/0.15)] transition-all duration-300"
+            onClick={handleAtsClick}
+          >
+            <Target className="h-3.5 w-3.5 mr-1" />
+            ATS Check
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className={`text-xs font-medium h-7 px-3 rounded-full border-accent/30 bg-accent/5 text-accent hover:bg-accent/15 hover:border-accent/50 hover:shadow-[0_0_8px_hsl(var(--accent)/0.15)] transition-all duration-300${context === 'recommendations' ? ' animate-[ats-glow_4s_ease-in-out_infinite]' : ''}`}
+            onClick={handleCoverLetterClick}
+          >
+            <FileText className="h-3.5 w-3.5 mr-1" />
+            Cover Letter
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className={`text-xs font-medium h-7 px-3 rounded-full border-accent/30 bg-accent/5 text-accent hover:bg-accent/15 hover:border-accent/50 hover:shadow-[0_0_8px_hsl(var(--accent)/0.15)] transition-all duration-300${context === 'recommendations' ? ' animate-[ats-glow_4s_ease-in-out_infinite]' : ''}`}
+            onClick={handleTailoredResumeClick}
+          >
+            <Target className="h-3.5 w-3.5 mr-1" />
+            Tailored Resume
+          </Button>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex items-center justify-between gap-3 pt-3 border-t border-border/30 relative z-10">

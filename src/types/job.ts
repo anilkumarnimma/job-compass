@@ -21,6 +21,8 @@ export interface Job {
   deleted_at?: string | null;
   created_by_user_id?: string | null;
   employer_id?: string | null;
+  description_enriched?: boolean;
+  description_source?: string | null;
 }
 
 export interface Application {

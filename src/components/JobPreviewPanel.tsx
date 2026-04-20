@@ -21,6 +21,7 @@ import { useNavigate } from "react-router-dom";
 import { analyzeVisaSponsorship } from "@/lib/visaSponsorship";
 import { VisaSponsorshipBadge } from "@/components/VisaSponsorshipBadge";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
+import { hasUsableDescription } from "@/lib/jobDescriptionGate";
 
 
 interface JobPreviewPanelProps {
@@ -58,6 +59,7 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
   };
 
   const hasResume = Boolean(profile?.resume_url);
+  const aiEnabled = hasUsableDescription(job);
 
   const handleAtsCheck = () => {
     if (!user) { navigate("/auth"); return; }
@@ -159,23 +161,27 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
             )}
           </Button>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleAtsCheck}
-            className="h-9 px-4 text-sm font-medium rounded-xl active:scale-95 border border-accent/30 bg-accent/5 text-accent hover:bg-accent/15 hover:border-accent/50 animate-[ats-glow_4s_ease-in-out_infinite] transition-all duration-300"
-          >
-            <Target className="h-4 w-4 mr-1.5" />ATS Check
-          </Button>
+          {aiEnabled && (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleAtsCheck}
+                className="h-9 px-4 text-sm font-medium rounded-xl active:scale-95 border border-accent/30 bg-accent/5 text-accent hover:bg-accent/15 hover:border-accent/50 animate-[ats-glow_4s_ease-in-out_infinite] transition-all duration-300"
+              >
+                <Target className="h-4 w-4 mr-1.5" />ATS Check
+              </Button>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleInterviewPrep}
-            className="h-9 px-4 text-sm font-medium rounded-xl active:scale-95 text-accent hover:text-accent-foreground hover:bg-accent/20"
-          >
-            <Brain className="h-4 w-4 mr-1.5" />Prep
-          </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleInterviewPrep}
+                className="h-9 px-4 text-sm font-medium rounded-xl active:scale-95 text-accent hover:text-accent-foreground hover:bg-accent/20"
+              >
+                <Brain className="h-4 w-4 mr-1.5" />Prep
+              </Button>
+            </>
+          )}
 
 
           {job.is_reviewing && (

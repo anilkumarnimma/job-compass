@@ -547,6 +547,20 @@ Deno.serve(async (req) => {
           );
         }
         result.imported = jobsToInsert.length;
+
+        // Trigger silent description enrichment for short descriptions (background, non-blocking)
+        try {
+          fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/enrich-job-description`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+            },
+            body: JSON.stringify({}),
+          }).catch((e) => console.error("[import-google-sheet] enrich trigger failed:", e));
+        } catch (e) {
+          console.error("[import-google-sheet] enrich trigger failed:", e);
+        }
       }
 
       // Save import history
