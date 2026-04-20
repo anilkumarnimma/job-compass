@@ -83,35 +83,7 @@ async function plainFetch(url: string): Promise<string | null> {
   }
 }
 
-async function firecrawlScrape(url: string, apiKey: string): Promise<string | null> {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), PER_FETCH_TIMEOUT_MS + 8_000);
-  try {
-    const res = await fetch(`${FIRECRAWL_GATEWAY}/scrape`, {
-      method: "POST",
-      signal: ctrl.signal,
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        url,
-        formats: ["markdown"],
-        onlyMainContent: true,
-      }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const md: string | undefined = data?.data?.markdown ?? data?.markdown;
-    if (!md) return null;
-    const cleaned = md.replace(/\s+/g, " ").trim();
-    return cleaned.length >= MIN_DESC_LENGTH ? cleaned.slice(0, MAX_DESC_LENGTH) : null;
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(t);
-  }
-}
+// Firecrawl fallback removed — plain fetch only.
 
 // ──────────────────────────────────── Handler ────────────────────────────────────
 Deno.serve(async (req) => {
