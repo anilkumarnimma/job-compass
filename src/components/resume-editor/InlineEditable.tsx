@@ -71,9 +71,11 @@ export const InlineEditable = forwardRef<HTMLDivElement, InlineEditableProps>(
         onKeyDown={handleKeyDown}
         onInput={(e) => onChange((e.target as HTMLDivElement).innerText)}
         className={cn(
-          "outline-none rounded px-0.5 -mx-0.5 hover:bg-accent/5 focus:bg-accent/10 transition-colors",
-          "empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/50 empty:before:italic",
-          !multiline && "whitespace-nowrap overflow-hidden text-ellipsis",
+          "outline-none rounded px-0.5 -mx-0.5 transition-colors text-black",
+          "hover:bg-[#e0faf5]/40 focus:bg-[#e0faf5]/60",
+          "empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 empty:before:italic",
+          // Allow wrapping by default — overflow-ellipsis only when explicitly desired
+          // via className. (Skills used to be clipped because of nowrap.)
           className,
         )}
       />

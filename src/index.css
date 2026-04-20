@@ -469,7 +469,11 @@
   50% { background-position: -100% 50%; }
 }
 
-/* Tailored Resume — keyword highlight (preview only, never exported) */
+/* ─────────────────────────────────────────────────────────────
+   Tailored Resume Editor
+   - Keyword highlights are preview-only and stripped on export.
+   - All resume text MUST be solid black; nothing faded/translucent.
+   ───────────────────────────────────────────────────────────── */
 .resume-kw-highlight {
   background-color: hsl(174 72% 56% / 0.28);
   border-radius: 2px;
@@ -479,4 +483,46 @@
 }
 .resume-kw-highlight:hover {
   background-color: hsl(174 72% 56% / 0.45);
+}
+
+/* AI-rewritten bullet wrapper. Subtle teal underline tint, text stays black. */
+.resume-changed-bullet {
+  background-color: hsl(174 72% 56% / 0.10);
+  box-shadow: inset 0 -2px 0 0 hsl(174 72% 56% / 0.55);
+}
+
+/* Force every text node inside the canvas to solid black, no opacity ghosting. */
+[data-resume-canvas],
+[data-resume-canvas] * {
+  color: #000 !important;
+}
+[data-resume-canvas] [contenteditable]:empty::before,
+[data-resume-canvas] .is-editor-empty::before {
+  color: #9ca3af !important; /* placeholder-only grey */
+}
+[data-resume-canvas] mark.resume-kw-highlight,
+[data-resume-canvas] mark.resume-kw-highlight * {
+  color: #000 !important;
+}
+
+/* Hidden-from-export marker. Item is still editable & recoverable. */
+.resume-hidden-item {
+  opacity: 0.45;
+  text-decoration: line-through;
+  text-decoration-color: hsl(0 0% 30% / 0.5);
+}
+.resume-hidden-item [contenteditable] {
+  text-decoration: line-through;
+}
+
+/* Light teal hover for "Add bullet" / "Add skill" buttons inside the canvas. */
+[data-resume-canvas] .resume-add-btn {
+  color: #0f6e56;
+  background-color: transparent;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+[data-resume-canvas] .resume-add-btn:hover,
+[data-resume-canvas] .resume-add-btn:focus-visible {
+  background-color: #e0faf5 !important;
+  color: #0f6e56 !important;
 }
