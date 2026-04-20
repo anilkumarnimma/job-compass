@@ -114,7 +114,8 @@ function mapHeaders(rawHeaders: string[]): { mapped: string[]; unmapped: string[
     const norm = normalizeHeader(h);
     return HEADER_ALIASES[norm] || norm;
   });
-  const unmapped = REQUIRED_FIELDS.filter((f) => !mapped.includes(f));
+  // Only critical columns (title + external_apply_link) are required to exist as headers.
+  const unmapped = CRITICAL_FIELDS.filter((f) => !mapped.includes(f));
   return { mapped, unmapped };
 }
 
