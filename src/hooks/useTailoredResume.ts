@@ -44,6 +44,8 @@ interface GenerateParams {
   resume_structure: ResumeStructure;
   /** stable key for caching this combination (job + resume version) */
   cache_key: string;
+  /** when true, ignore any cached result and force a fresh AI call */
+  force?: boolean;
 }
 
 export function useTailoredResume() {
