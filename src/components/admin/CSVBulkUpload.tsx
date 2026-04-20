@@ -37,6 +37,10 @@ interface UploadSummary {
   oldDuplicatesRemoved: number;
 }
 
+// Critical fields: row is rejected only if these are missing.
+// Other fields (company, location, description) get sensible defaults.
+const CRITICAL_FIELDS = ["title", "external_apply_link"];
+// Required for header mapping (so we know which columns to look for) — but rows missing the non-critical ones are still allowed.
 const REQUIRED_FIELDS = ["title", "company", "location", "description", "external_apply_link"];
 
 // Smart header mapping: maps common CSV column name variations to our internal field names
@@ -110,7 +114,8 @@ function mapHeaders(rawHeaders: string[]): { mapped: string[]; unmapped: string[
     const norm = normalizeHeader(h);
     return HEADER_ALIASES[norm] || norm;
   });
-  const unmapped = REQUIRED_FIELDS.filter((f) => !mapped.includes(f));
+  // Only critical columns (title + external_apply_link) are required to exist as headers.
+  const unmapped = CRITICAL_FIELDS.filter((f) => !mapped.includes(f));
   return { mapped, unmapped };
 }
 
@@ -364,9 +369,10 @@ function parseCSV(text: string): ParseResult {
       row[field] = sanitizeCSVValue(values[index]?.replace(/^["']|["']$/g, "") || "");
     });
 
-    const rowMissing = REQUIRED_FIELDS.filter((f) => !row[f]);
+    // Only block the row if a CRITICAL field (title or external_apply_link) is missing.
+    const rowMissing = CRITICAL_FIELDS.filter((f) => !row[f]);
     if (rowMissing.length > 0) {
-      errors.push({ row: i + 1, message: `Missing: ${rowMissing.join(", ")}` });
+      errors.push({ row: i + 1, message: `Missing critical field(s): ${rowMissing.join(", ")}` });
       continue;
     }
 
@@ -389,12 +395,12 @@ function parseCSV(text: string): ParseResult {
       continue;
     }
 
-
+    // Apply graceful defaults for non-critical fields so we don't lose real jobs.
     valid.push({
       title: row.title,
-      company: row.company,
-      location: row.location,
-      description: row.description,
+      company: row.company || "Unknown Company",
+      location: row.location || "Location not specified",
+      description: row.description || "No description available",
       skills: row.skills,
       external_apply_link: row.external_apply_link,
       employment_type: row.employment_type || "Full Time",
