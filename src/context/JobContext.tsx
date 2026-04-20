@@ -76,11 +76,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
         setShowProfileGate(true);
         return;
       }
-      const isPremiumResolved = profileLoading ? true : (profile?.is_premium === true);
-      if (!isPremiumResolved && totalAppCount >= 5) {
-        setShowUpgradeDialog(true);
-        return;
-      }
+      // Promo: free 1 month for everyone — upgrade popup disabled until further notice
       // Show pre-apply confirmation dialog
       setPendingJob(job);
       setShowApplyConfirm(true);
