@@ -13,8 +13,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus, Minus, X, EyeOff } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { GripVertical, Plus, Minus, X, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   EditableResume,
@@ -58,8 +57,6 @@ function SortableBullet({
     opacity: isDragging ? 0.6 : 1,
   };
 
-  // A bullet is "still changed" only if its current text matches the AI rewrite
-  // (not the original). When the user reverts to the original, drop the highlight.
   const stillChanged =
     !!bullet.changed &&
     !!bullet.original &&
@@ -69,18 +66,18 @@ function SortableBullet({
     <li
       ref={setNodeRef}
       style={style}
-      className="group flex items-start gap-1.5 -ml-2 pl-2 rounded hover:bg-black/[0.03]"
+      className="group flex items-start gap-1.5 -ml-2 pl-2 rounded hover:bg-black/[0.02]"
     >
       <button
         type="button"
         {...attributes}
         {...listeners}
         aria-label="Drag bullet"
-        className="opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing mt-1 text-black/40 hover:text-black"
+        className="opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing mt-1 text-black"
       >
         <GripVertical className="h-3.5 w-3.5" />
       </button>
-      <span className="mt-1.5 leading-none text-black">•</span>
+      <span className="mt-1.5 leading-none text-black font-bold">•</span>
       <div
         className={cn(
           "flex-1 min-w-0 rounded px-1 -mx-1 transition-colors",
@@ -101,7 +98,7 @@ function SortableBullet({
           type="button"
           aria-label="Remove bullet"
           onClick={onRemove}
-          className="mt-0.5 p-0.5 rounded hover:bg-destructive/10 text-black/50 hover:text-destructive"
+          className="mt-0.5 p-0.5 rounded text-black hover:text-destructive hover:bg-destructive/10"
         >
           <Minus className="h-3.5 w-3.5" />
         </button>
@@ -109,7 +106,10 @@ function SortableBullet({
           type="button"
           aria-label="Add bullet below"
           onClick={onAddBelow}
-          className="mt-0.5 p-0.5 rounded hover:bg-black/5 text-black/50 hover:text-black"
+          className="mt-0.5 p-0.5 rounded text-black"
+          style={{ transition: "background-color 120ms" }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#e0faf5")}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
         >
           <Plus className="h-3.5 w-3.5" />
         </button>
@@ -157,12 +157,12 @@ function ItemBlock({
             />
             {item.subheading !== undefined && (
               <>
-                <span className="text-black/60 text-xs">—</span>
+                <span className="text-black text-xs">—</span>
                 <InlineEditable
                   value={item.subheading || ""}
                   onChange={(v) => onItemChange({ ...item, subheading: v })}
                   placeholder="Company"
-                  className="text-[13px] text-black/70"
+                  className="text-[13px] text-black"
                   ariaLabel="Subheading"
                 />
               </>
@@ -173,14 +173,14 @@ function ItemBlock({
           value={item.date || ""}
           onChange={(v) => onItemChange({ ...item, date: v })}
           placeholder="Dates"
-          className="text-[11px] text-black/60 whitespace-nowrap"
+          className="text-[11px] text-black whitespace-nowrap"
           ariaLabel="Dates"
         />
         <button
           type="button"
           aria-label="Remove entry"
           onClick={onRemoveItem}
-          className="opacity-0 group-hover/item:opacity-100 p-0.5 rounded hover:bg-destructive/10 text-black/40 hover:text-destructive"
+          className="opacity-0 group-hover/item:opacity-100 p-0.5 rounded text-black hover:text-destructive hover:bg-destructive/10"
         >
           <X className="h-3.5 w-3.5" />
         </button>
@@ -188,7 +188,7 @@ function ItemBlock({
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={item.bullets.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-          <ul className="space-y-0.5 ml-2 mt-1 text-[12.5px]">
+          <ul className="space-y-0.5 ml-4 mt-1 text-[12.5px] text-black">
             {item.bullets.map((b, i) => (
               <SortableBullet
                 key={b.id}
@@ -209,16 +209,14 @@ function ItemBlock({
         </SortableContext>
       </DndContext>
 
-      <Button
+      <button
         type="button"
-        variant="ghost"
-        size="sm"
         onClick={() => setBullets([...item.bullets, { id: newId("bul"), text: "" }])}
-        className="h-6 px-1.5 text-[11px] text-black/50 hover:text-black"
+        className="resume-add-btn inline-flex items-center gap-1 mt-1 ml-4 px-1.5 py-0.5 rounded text-[11px] font-medium"
       >
-        <Plus className="h-3 w-3 mr-1" />
+        <Plus className="h-3 w-3" />
         Add bullet
-      </Button>
+      </button>
     </div>
   );
 }
@@ -231,9 +229,6 @@ export function ResumeCanvas({ resume, onChange, keywords }: ResumeCanvasProps) 
       sections: resume.sections.map((s) => (s.id === sectionId ? mut(s) : s)),
     });
 
-  const removeSection = (sectionId: string) =>
-    onChange({ ...resume, sections: resume.sections.filter((s) => s.id !== sectionId) });
-
   // Highlight summary as "changed" only while it still matches the AI rewrite.
   const summaryStillChanged =
     !!resume.summary_changed &&
@@ -242,135 +237,138 @@ export function ResumeCanvas({ resume, onChange, keywords }: ResumeCanvasProps) 
 
   return (
     <div
-      className={cn("bg-white text-black mx-auto shadow-lg rounded-sm", "px-12 py-10")}
+      className="bg-white mx-auto rounded-sm px-12 py-10"
       style={{
         width: "min(100%, 8.5in)",
         minHeight: "11in",
         fontFamily: "'Calibri', 'Helvetica Neue', Arial, sans-serif",
         color: "#000",
+        boxShadow: "0 10px 30px -10px rgba(0,0,0,0.18), 0 4px 10px -2px rgba(0,0,0,0.08)",
       }}
       data-resume-canvas
     >
       {/* Header */}
-      <div className="text-center pb-3 border-b border-black/80">
-        <div className="text-[24pt] font-bold leading-tight" style={{ color: "#000" }}>
+      <div className="text-center pb-3 border-b-2 border-black">
+        <div className="text-[24pt] font-bold leading-tight text-black">
           <InlineEditable
             value={resume.header.full_name}
             onChange={(v) => onChange({ ...resume, header: { ...resume.header, full_name: v } })}
             placeholder="Full Name"
             ariaLabel="Full Name"
-            className="text-center"
+            className="text-center text-black"
           />
         </div>
-        <div className="text-[10pt] text-black/80 mt-1">
+        <div className="text-[10pt] mt-1 text-black">
           <InlineEditable
             value={resume.header.contact_line}
             onChange={(v) => onChange({ ...resume, header: { ...resume.header, contact_line: v } })}
             placeholder="email • phone • city • linkedin"
             ariaLabel="Contact line"
-            className="text-center"
+            className="text-center text-black"
+            multiline
           />
         </div>
       </div>
 
-      {/* Summary */}
-      {resume.visibility.summary && (
-        <SectionWrap
-          title="Summary"
-          onHide={() =>
-            onChange({ ...resume, visibility: { ...resume.visibility, summary: false } })
-          }
+      {/* Summary — always rendered; dimmed/struck when hidden */}
+      <SectionWrap
+        title="Summary"
+        hidden={!resume.visibility.summary}
+        onToggleHidden={() =>
+          onChange({
+            ...resume,
+            visibility: { ...resume.visibility, summary: !resume.visibility.summary },
+          })
+        }
+      >
+        <div
+          className={cn(
+            "text-[10.5pt] leading-relaxed rounded px-1 -mx-1 transition-colors text-black",
+            summaryStillChanged && "resume-changed-bullet",
+          )}
+          title={summaryStillChanged ? `Original: ${resume.summary_original}` : undefined}
         >
-          <div
-            className={cn(
-              "text-[10.5pt] leading-relaxed rounded px-1 -mx-1 transition-colors",
-              summaryStillChanged && "resume-changed-bullet",
-            )}
-            title={summaryStillChanged ? `Original: ${resume.summary_original}` : undefined}
-          >
-            <RichTextEditor
-              value={resume.summary}
-              onChange={(html) => onChange({ ...resume, summary: html })}
-              placeholder="Tailored summary…"
-              minHeight={48}
-              keywords={keywords}
-            />
-          </div>
-        </SectionWrap>
-      )}
-
-      {/* Skills */}
-      {resume.visibility.skills && (
-        <SectionWrap
-          title="Skills"
-          onHide={() =>
-            onChange({ ...resume, visibility: { ...resume.visibility, skills: false } })
-          }
-        >
-          <SkillsEditor
-            skills={resume.skills}
-            onChange={(skills) => onChange({ ...resume, skills })}
+          <RichTextEditor
+            value={resume.summary}
+            onChange={(html) => onChange({ ...resume, summary: html })}
+            placeholder="Tailored summary…"
+            minHeight={48}
+            keywords={keywords}
           />
-        </SectionWrap>
-      )}
+        </div>
+      </SectionWrap>
+
+      {/* Skills — always rendered; dimmed/struck when hidden */}
+      <SectionWrap
+        title="Skills"
+        hidden={!resume.visibility.skills}
+        onToggleHidden={() =>
+          onChange({
+            ...resume,
+            visibility: { ...resume.visibility, skills: !resume.visibility.skills },
+          })
+        }
+      >
+        <SkillsEditor
+          skills={resume.skills}
+          onChange={(skills) => onChange({ ...resume, skills })}
+        />
+      </SectionWrap>
 
       {/* Other sections — preserved in the user's original order */}
-      {resume.sections.map((section) => {
-        if (!section.visible) return null;
-        return (
-          <SectionWrap
-            key={section.id}
-            title={section.title}
-            onTitleChange={(t) => setSection(section.id, (s) => ({ ...s, title: t }))}
-            onHide={() => setSection(section.id, (s) => ({ ...s, visible: false }))}
-            onDelete={() => removeSection(section.id)}
-          >
-            {section.items.map((item) => (
-              <ItemBlock
-                key={item.id}
-                item={item}
-                keywords={keywords}
-                onItemChange={(next) =>
-                  setSection(section.id, (s) => ({
-                    ...s,
-                    items: s.items.map((x) => (x.id === next.id ? next : x)),
-                  }))
-                }
-                onRemoveItem={() =>
-                  setSection(section.id, (s) => ({
-                    ...s,
-                    items: s.items.filter((x) => x.id !== item.id),
-                  }))
-                }
-              />
-            ))}
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() =>
+      {resume.sections.map((section) => (
+        <SectionWrap
+          key={section.id}
+          title={section.title}
+          hidden={!section.visible}
+          onTitleChange={(t) => setSection(section.id, (s) => ({ ...s, title: t }))}
+          onToggleHidden={() =>
+            setSection(section.id, (s) => ({ ...s, visible: !s.visible }))
+          }
+        >
+          {section.items.map((item) => (
+            <ItemBlock
+              key={item.id}
+              item={item}
+              keywords={keywords}
+              onItemChange={(next) =>
                 setSection(section.id, (s) => ({
                   ...s,
-                  items: [
-                    ...s.items,
-                    {
-                      id: newId("item"),
-                      heading: "",
-                      subheading: "",
-                      date: "",
-                      bullets: [{ id: newId("bul"), text: "" }],
-                    },
-                  ],
+                  items: s.items.map((x) => (x.id === next.id ? next : x)),
                 }))
               }
-              className="h-7 px-2 text-[11px] text-black/60 hover:text-black"
-            >
-              <Plus className="h-3 w-3 mr-1" />
-              Add entry
-            </Button>
-          </SectionWrap>
-        );
-      })}
+              onRemoveItem={() =>
+                setSection(section.id, (s) => ({
+                  ...s,
+                  items: s.items.filter((x) => x.id !== item.id),
+                }))
+              }
+            />
+          ))}
+          <button
+            type="button"
+            onClick={() =>
+              setSection(section.id, (s) => ({
+                ...s,
+                items: [
+                  ...s.items,
+                  {
+                    id: newId("item"),
+                    heading: "",
+                    subheading: "",
+                    date: "",
+                    bullets: [{ id: newId("bul"), text: "" }],
+                  },
+                ],
+              }))
+            }
+            className="resume-add-btn inline-flex items-center gap-1 mt-1 px-2 py-1 rounded text-[11px] font-medium"
+          >
+            <Plus className="h-3 w-3" />
+            Add entry
+          </button>
+        </SectionWrap>
+      ))}
     </div>
   );
 }
@@ -378,52 +376,52 @@ export function ResumeCanvas({ resume, onChange, keywords }: ResumeCanvasProps) 
 function SectionWrap({
   title,
   onTitleChange,
-  onHide,
-  onDelete,
+  hidden,
+  onToggleHidden,
   children,
 }: {
   title: string;
   onTitleChange?: (next: string) => void;
-  onHide?: () => void;
-  onDelete?: () => void;
+  hidden?: boolean;
+  onToggleHidden?: () => void;
   children: React.ReactNode;
 }) {
   return (
-    <section className="mt-5 group/section">
-      <div className="flex items-center justify-between border-b border-black/80 pb-1 mb-2">
+    <section
+      className={cn(
+        "mt-5 group/section",
+        hidden && "resume-hidden-item",
+      )}
+      title={hidden ? "Hidden from PDF — click eye to show" : undefined}
+    >
+      <div className="flex items-center justify-between border-b-2 border-black pb-1 mb-2">
         {onTitleChange ? (
           <InlineEditable
             value={title}
             onChange={onTitleChange}
             placeholder="Section title"
-            className="text-[11pt] font-bold uppercase tracking-[0.12em]"
+            className="text-[11pt] font-bold uppercase tracking-[0.12em] text-black"
             ariaLabel="Section title"
           />
         ) : (
-          <h2 className="text-[11pt] font-bold uppercase tracking-[0.12em]">{title}</h2>
+          <h2 className="text-[11pt] font-bold uppercase tracking-[0.12em] text-black">
+            {title}
+          </h2>
         )}
-        <div className="flex items-center gap-0.5 opacity-0 group-hover/section:opacity-100">
-          {onHide && (
-            <button
-              type="button"
-              onClick={onHide}
-              aria-label="Hide section"
-              className="p-0.5 rounded hover:bg-black/5 text-black/50 hover:text-black"
-            >
-              <EyeOff className="h-3.5 w-3.5" />
-            </button>
-          )}
-          {onDelete && (
-            <button
-              type="button"
-              onClick={onDelete}
-              aria-label="Delete section"
-              className="p-0.5 rounded hover:bg-destructive/10 text-black/50 hover:text-destructive"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
+        {onToggleHidden && (
+          <button
+            type="button"
+            onClick={onToggleHidden}
+            aria-label={hidden ? "Show in PDF" : "Hide from PDF"}
+            title={hidden ? "Show in PDF" : "Hide from PDF (text stays here)"}
+            className="opacity-0 group-hover/section:opacity-100 p-1 rounded text-black"
+            style={{ transition: "background-color 120ms" }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#e0faf5")}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+          >
+            {hidden ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+          </button>
+        )}
       </div>
       {children}
     </section>
@@ -438,9 +436,12 @@ function SkillsEditor({
   onChange: (skills: string[]) => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-1 gap-y-1 text-[10.5pt]">
+    <div className="flex flex-wrap items-center gap-x-1 gap-y-1.5 text-[10.5pt] text-black w-full overflow-hidden">
       {skills.map((s, i) => (
-        <span key={`${s}-${i}`} className="group/skill inline-flex items-center">
+        <span
+          key={`${s}-${i}`}
+          className="group/skill inline-flex items-center max-w-full break-words"
+        >
           <InlineEditable
             value={s}
             onChange={(v) => {
@@ -449,15 +450,15 @@ function SkillsEditor({
               onChange(next);
             }}
             placeholder="Skill"
-            className="inline"
+            className="inline text-black break-words"
             ariaLabel={`Skill ${i + 1}`}
           />
-          {i < skills.length - 1 && <span className="mx-1.5 text-black/50">•</span>}
+          {i < skills.length - 1 && <span className="mx-1.5 text-black">•</span>}
           <button
             type="button"
             aria-label="Remove skill"
             onClick={() => onChange(skills.filter((_, idx) => idx !== i))}
-            className="ml-1 opacity-0 group-hover/skill:opacity-100 text-black/40 hover:text-destructive"
+            className="ml-1 opacity-0 group-hover/skill:opacity-100 text-black hover:text-destructive"
           >
             <X className="h-3 w-3" />
           </button>
@@ -466,7 +467,7 @@ function SkillsEditor({
       <button
         type="button"
         onClick={() => onChange([...skills, "New skill"])}
-        className="ml-2 inline-flex items-center gap-1 text-[10.5pt] text-black/50 hover:text-black"
+        className="resume-add-btn ml-2 inline-flex items-center gap-1 text-[10.5pt] px-1.5 py-0.5 rounded font-medium"
       >
         <Plus className="h-3 w-3" />
         Add skill
