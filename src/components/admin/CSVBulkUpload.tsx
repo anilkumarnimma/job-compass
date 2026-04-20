@@ -369,9 +369,10 @@ function parseCSV(text: string): ParseResult {
       row[field] = sanitizeCSVValue(values[index]?.replace(/^["']|["']$/g, "") || "");
     });
 
-    const rowMissing = REQUIRED_FIELDS.filter((f) => !row[f]);
+    // Only block the row if a CRITICAL field (title or external_apply_link) is missing.
+    const rowMissing = CRITICAL_FIELDS.filter((f) => !row[f]);
     if (rowMissing.length > 0) {
-      errors.push({ row: i + 1, message: `Missing: ${rowMissing.join(", ")}` });
+      errors.push({ row: i + 1, message: `Missing critical field(s): ${rowMissing.join(", ")}` });
       continue;
     }
 
@@ -394,12 +395,12 @@ function parseCSV(text: string): ParseResult {
       continue;
     }
 
-
+    // Apply graceful defaults for non-critical fields so we don't lose real jobs.
     valid.push({
       title: row.title,
-      company: row.company,
-      location: row.location,
-      description: row.description,
+      company: row.company || "Unknown Company",
+      location: row.location || "Location not specified",
+      description: row.description || "No description available",
       skills: row.skills,
       external_apply_link: row.external_apply_link,
       employment_type: row.employment_type || "Full Time",
