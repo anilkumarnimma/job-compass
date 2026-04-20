@@ -238,7 +238,7 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[1100px] max-w-[96vw] max-h-[94vh] flex flex-col gap-0 p-0 overflow-hidden">
-        <DialogHeader className="px-5 py-3 border-b border-border/60 shrink-0">
+        <DialogHeader className="px-5 py-3 border-b border-border/60 shrink-0 bg-background sticky top-0 z-20">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2 min-w-0">
               <div className="h-8 w-8 rounded-lg bg-foreground/5 flex items-center justify-center">
@@ -306,7 +306,11 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
           )}
         </DialogHeader>
 
-        <div ref={canvasContainerRef} className="flex-1 min-h-0 overflow-y-auto bg-muted/30 p-6">
+        <div
+          ref={canvasContainerRef}
+          className="flex-1 min-h-0 overflow-y-auto p-6"
+          style={{ backgroundColor: "#f5f5f5" }}
+        >
           {!hasResume ? (
             <EmptyState
               icon={<AlertCircle className="h-10 w-10 text-muted-foreground/60" />}

@@ -166,16 +166,73 @@ export function buildEditableResume(
   };
 }
 
-/** Used for live keyword highlighting in the editor preview. */
+/**
+ * Used for live keyword highlighting in the editor preview.
+ *
+ * Strategy: highlight only HIGH-SIGNAL terms — never common English words.
+ *  1. Every explicit job_skill (already curated by ingestion).
+ *  2. Capitalized multi-word phrases lifted from the job description
+ *     (likely tools, platforms, proper nouns — e.g. "Power BI", "Snowflake").
+ *  3. Single tokens are kept ONLY if they're at least 4 chars AND not in the
+ *     stop-word list AND look like a tech term (mixed case, acronym, or
+ *     contain a digit / + / # / . — e.g. "C++", "k8s", "Node.js").
+ */
+const KEYWORD_STOP_WORDS = new Set([
+  "through","across","within","between","during","because","without","including",
+  "intelligence","synchronization","experience","experienced","working","knowledge",
+  "ability","strong","excellent","proven","ensure","support","provide","develop",
+  "developing","developed","build","building","built","create","created","creating",
+  "manage","managing","managed","lead","leading","help","helping","work","working",
+  "team","teams","role","roles","skills","skill","year","years","month","months",
+  "company","companies","client","clients","customer","customers","product","products",
+  "service","services","project","projects","business","technical","professional",
+  "responsibilities","requirements","qualifications","preferred","required","candidate",
+  "candidates","opportunity","opportunities","environment","solution","solutions",
+  "platform","platforms","system","systems","application","applications","software",
+  "process","processes","data","information","internal","external","global","across",
+  "junior","senior","mid","entry","level","fulltime","parttime","remote","hybrid",
+  "onsite","office","based","united","states","india","europe","america",
+  "must","should","will","would","could","have","been","with","that","this","they",
+  "their","them","there","than","also","more","most","other","such","into","from",
+  "about","over","under","each","every","any","all","both","some","what","when",
+  "where","while","whether","using","used","new","good","great","best","high","top",
+]);
+
 export function extractKeywords(jobDescription: string, jobSkills: string[]): string[] {
-  const skills = jobSkills.map((s) => s.trim()).filter(Boolean);
-  const fromDesc = (jobDescription || "")
-    .replace(/[^a-zA-Z0-9+#./\- ]/g, " ")
-    .split(/\s+/)
-    .filter((w) => w.length > 3 && /^[A-Z]/.test(w));
-  const dedup = new Set<string>();
-  [...skills, ...fromDesc].forEach((w) => dedup.add(w.toLowerCase()));
-  return [...dedup].slice(0, 60);
+  const out = new Set<string>();
+
+  // 1. Curated skills (already vetted by ingestion).
+  for (const s of jobSkills || []) {
+    const t = (s || "").trim();
+    if (t.length >= 2) out.add(t.toLowerCase());
+  }
+
+  const desc = jobDescription || "";
+
+  // 2. Capitalized multi-word phrases (proper nouns / product names).
+  const phraseRe = /\b([A-Z][a-zA-Z0-9+.#-]*(?:\s+[A-Z][a-zA-Z0-9+.#-]*){1,3})\b/g;
+  let m: RegExpExecArray | null;
+  while ((m = phraseRe.exec(desc)) !== null) {
+    const phrase = m[1].trim();
+    if (phrase.length >= 4) out.add(phrase.toLowerCase());
+  }
+
+  // 3. Single high-signal tokens — be strict.
+  const tokenRe = /\b([A-Za-z][A-Za-z0-9+#.-]{2,})\b/g;
+  while ((m = tokenRe.exec(desc)) !== null) {
+    const raw = m[1];
+    if (raw.length < 4) continue;
+    const lower = raw.toLowerCase();
+    if (KEYWORD_STOP_WORDS.has(lower)) continue;
+    const looksTech =
+      /[A-Z].*[a-z].*[A-Z]/.test(raw) || // CamelCase (e.g. JavaScript)
+      /^[A-Z]{2,}$/.test(raw) ||         // ACRONYM (SQL, AWS, REST)
+      /[0-9+#.]/.test(raw);              // contains digit/+/#/. (C++, k8s, Node.js)
+    if (!looksTech) continue;
+    out.add(lower);
+  }
+
+  return [...out].slice(0, 60);
 }
 
 /** Sanitize a filename segment. */

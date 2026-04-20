@@ -48,7 +48,9 @@ export function RichTextEditor({
     content: value || "",
     editorProps: {
       attributes: {
-        class: "prose prose-sm max-w-none focus:outline-none text-foreground leading-snug",
+        // Solid black text — no `text-foreground` (which is theme-coloured), no
+        // `prose` (which adds muted greys). The canvas-wide CSS rule enforces #000.
+        class: "max-w-none focus:outline-none leading-snug",
       },
       handleClickOn: (view, pos, node, _nodePos, event) => {
         // Click a highlight to remove just that one — per requirements.
@@ -113,10 +115,11 @@ export function RichTextEditor({
     <EditorContent
       editor={editor}
       className={cn(
-        "rounded px-0.5 -mx-0.5 hover:bg-accent/5 focus-within:bg-accent/10 transition-colors",
+        "rounded px-0.5 -mx-0.5 transition-colors",
+        "hover:bg-[#e0faf5]/40 focus-within:bg-[#e0faf5]/60",
         className,
       )}
-      style={{ minHeight }}
+      style={{ minHeight, color: "#000" }}
     />
   );
 }
