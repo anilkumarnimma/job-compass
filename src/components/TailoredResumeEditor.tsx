@@ -23,6 +23,7 @@ import {
   AlertCircle,
   Info,
   Sparkles,
+  X,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useTailoredResume } from "@/hooks/useTailoredResume";
