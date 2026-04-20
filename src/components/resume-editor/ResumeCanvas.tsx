@@ -118,10 +118,12 @@ function ItemBlock({
   item,
   onItemChange,
   onRemoveItem,
+  keywords,
 }: {
   item: ResumeItem;
   onItemChange: (next: ResumeItem) => void;
   onRemoveItem: () => void;
+  keywords?: string[];
 }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
