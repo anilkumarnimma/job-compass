@@ -318,15 +318,6 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
             {saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
             {saved ? "Saved" : "Save"}
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => { e.stopPropagation(); if (!user) { navigate("/auth"); return; } setLinkedInOpen(true); }}
-            className="h-9 px-3 text-sm font-normal gap-1.5 rounded-full text-[#0A66C2] hover:bg-[#0A66C2]/10 transition-all duration-200 active:scale-95"
-          >
-            <Linkedin className="h-4 w-4" />
-            Connect
-          </Button>
         </div>
         <Button
           size="sm"
