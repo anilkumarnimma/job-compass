@@ -4,22 +4,18 @@ import {
   Packer,
   Paragraph,
   TextRun,
-  HeadingLevel,
   AlignmentType,
   BorderStyle,
 } from "docx";
 import { saveAs } from "file-saver";
 import {
   EditableResume,
-  ResumeSectionKey,
   buildResumeFilename,
   resumeToPlainText,
   stripHtml,
 } from "./resumeEditor";
 
-/* ────────────────────────────────────────────
- * Plain text export
- * ──────────────────────────────────────────── */
+/* Plain text export */
 export function exportResumeAsText(
   resume: EditableResume,
   jobTitle: string,
@@ -40,25 +36,12 @@ export async function copyResumeToClipboard(resume: EditableResume): Promise<boo
   }
 }
 
-/* ────────────────────────────────────────────
- * PDF export — strict black & white, US Letter
- * Drawn directly to jsPDF for clean text (no rasterized blobs).
- * ──────────────────────────────────────────── */
+/* PDF — strict B&W via jsPDF text methods only (no html2canvas, no print window). */
 const PT_PER_IN = 72;
 const PAGE_W = 8.5 * PT_PER_IN;
 const PAGE_H = 11 * PT_PER_IN;
-const MARGIN_X = 0.6 * PT_PER_IN;
-const MARGIN_Y = 0.55 * PT_PER_IN;
-
-function isHidden(resume: EditableResume, key: string, fallbackVisible = true) {
-  if (key === "summary" || key === "skills") {
-    return !resume.visibility[key as ResumeSectionKey];
-  }
-  if (key in resume.visibility) {
-    return !resume.visibility[key as ResumeSectionKey];
-  }
-  return !fallbackVisible;
-}
+const MARGIN_X = 0.5 * PT_PER_IN;
+const MARGIN_Y = 0.5 * PT_PER_IN;
 
 export function exportResumeAsPdf(
   resume: EditableResume,
@@ -66,7 +49,8 @@ export function exportResumeAsPdf(
   company: string,
 ) {
   const doc = new jsPDF({ unit: "pt", format: "letter" });
-  doc.setProperties({ title: `${resume.header.full_name} — Resume` });
+  // No title metadata — keeps the file clean.
+  doc.setProperties({ title: "" });
 
   let y = MARGIN_Y;
 
@@ -113,7 +97,7 @@ export function exportResumeAsPdf(
     y += 14;
   };
 
-  // Header — name centered, contact line centered
+  // Header
   doc.setTextColor(0, 0, 0);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(20);
@@ -130,21 +114,18 @@ export function exportResumeAsPdf(
   }
   y += 4;
 
-  // Summary
-  if (!isHidden(resume, "summary") && resume.summary?.trim()) {
+  if (resume.visibility.summary && resume.summary?.trim()) {
     sectionTitle("Summary");
     writeWrapped(stripHtml(resume.summary).trim(), { size: 10.5, gap: 6 });
   }
 
-  // Skills
-  if (!isHidden(resume, "skills") && resume.skills.length) {
+  if (resume.visibility.skills && resume.skills.length) {
     sectionTitle("Skills");
     writeWrapped(resume.skills.join(" • "), { size: 10.5, gap: 6 });
   }
 
-  // Other sections
   for (const section of resume.sections) {
-    if (isHidden(resume, section.key, section.visible)) continue;
+    if (!section.visible) continue;
     if (!section.items.length) continue;
     sectionTitle(section.title);
     for (const item of section.items) {
@@ -182,13 +163,11 @@ export function exportResumeAsPdf(
   doc.save(filename);
 }
 
-/* ────────────────────────────────────────────
- * DOCX export — strict black & white
- * ──────────────────────────────────────────── */
+/* DOCX — strict B&W */
 function p(opts: {
   text: string;
   bold?: boolean;
-  size?: number; // half-points
+  size?: number;
   alignment?: keyof typeof AlignmentType;
   spacingBefore?: number;
   spacingAfter?: number;
@@ -202,7 +181,7 @@ function p(opts: {
       new TextRun({
         text: opts.text,
         bold: opts.bold,
-        size: opts.size || 22, // 11pt default
+        size: opts.size || 22,
         font: "Calibri",
         color: "000000",
       }),
@@ -220,7 +199,7 @@ function sectionHeader(title: string): Paragraph {
       new TextRun({
         text: title.toUpperCase(),
         bold: true,
-        size: 22, // 11pt
+        size: 22,
         font: "Calibri",
         color: "000000",
         characterSpacing: 24,
@@ -236,7 +215,6 @@ export async function exportResumeAsDocx(
 ) {
   const children: Paragraph[] = [];
 
-  // Header
   children.push(
     new Paragraph({
       alignment: AlignmentType.CENTER,
@@ -245,7 +223,7 @@ export async function exportResumeAsDocx(
         new TextRun({
           text: resume.header.full_name || "",
           bold: true,
-          size: 40, // 20pt
+          size: 40,
           font: "Calibri",
           color: "000000",
         }),
@@ -269,18 +247,18 @@ export async function exportResumeAsDocx(
     );
   }
 
-  if (!isHidden(resume, "summary") && resume.summary?.trim()) {
+  if (resume.visibility.summary && resume.summary?.trim()) {
     children.push(sectionHeader("Summary"));
     children.push(p({ text: stripHtml(resume.summary).trim(), size: 21 }));
   }
 
-  if (!isHidden(resume, "skills") && resume.skills.length) {
+  if (resume.visibility.skills && resume.skills.length) {
     children.push(sectionHeader("Skills"));
     children.push(p({ text: resume.skills.join(" • "), size: 21 }));
   }
 
   for (const section of resume.sections) {
-    if (isHidden(resume, section.key, section.visible)) continue;
+    if (!section.visible) continue;
     if (!section.items.length) continue;
     children.push(sectionHeader(section.title));
     for (const item of section.items) {
@@ -321,7 +299,7 @@ export async function exportResumeAsDocx(
 
   const doc = new Document({
     creator: resume.header.full_name || "Resume",
-    title: `${resume.header.full_name || "Resume"}`,
+    title: "",
     styles: {
       default: { document: { run: { font: "Calibri", size: 22, color: "000000" } } },
     },
@@ -330,7 +308,7 @@ export async function exportResumeAsDocx(
         properties: {
           page: {
             size: { width: 12240, height: 15840 },
-            margin: { top: 1080, bottom: 1080, left: 1080, right: 1080 },
+            margin: { top: 720, bottom: 720, left: 720, right: 720 },
           },
         },
         children,

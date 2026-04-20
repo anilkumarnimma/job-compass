@@ -13,14 +13,14 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus, Minus, X, Eye, EyeOff } from "lucide-react";
+import { GripVertical, Plus, Minus, X, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   EditableResume,
+  ResumeBullet,
   ResumeItem,
   ResumeSection,
-  ResumeSectionKey,
   newId,
 } from "@/lib/resumeEditor";
 import { InlineEditable } from "./InlineEditable";
@@ -29,16 +29,8 @@ import { RichTextEditor } from "./RichTextEditor";
 interface ResumeCanvasProps {
   resume: EditableResume;
   onChange: (next: EditableResume) => void;
-  /** Lower-cased keywords to highlight in bullets / summary */
+  /** Lower-cased keywords highlighted inside TipTap editors (preview-only). */
   keywords: string[];
-}
-
-/* Wraps each segment so React can key them; uses <mark> for highlights */
-function HighlightOverlay({ html, keywords }: { html: string; keywords: string[] }) {
-  // Render is handled by TipTap; this overlay component is unused — kept here
-  // to make the highlighting hook explicit. Highlighting is achieved purely via
-  // CSS using a data-keywords attribute below. (See globals if added.)
-  return null;
 }
 
 /* ───────── Sortable bullet ───────── */
@@ -50,7 +42,7 @@ function SortableBullet({
   placeholder,
   keywords,
 }: {
-  bullet: { id: string; text: string };
+  bullet: ResumeBullet;
   onChange: (text: string) => void;
   onRemove: () => void;
   onAddBelow: () => void;
@@ -66,23 +58,36 @@ function SortableBullet({
     opacity: isDragging ? 0.6 : 1,
   };
 
+  // A bullet is "still changed" only if its current text matches the AI rewrite
+  // (not the original). When the user reverts to the original, drop the highlight.
+  const stillChanged =
+    !!bullet.changed &&
+    !!bullet.original &&
+    bullet.text.trim() !== bullet.original.trim();
+
   return (
     <li
       ref={setNodeRef}
       style={style}
-      className="group flex items-start gap-1.5 -ml-2 pl-2 rounded hover:bg-accent/5"
+      className="group flex items-start gap-1.5 -ml-2 pl-2 rounded hover:bg-black/[0.03]"
     >
       <button
         type="button"
         {...attributes}
         {...listeners}
         aria-label="Drag bullet"
-        className="opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing mt-1 text-muted-foreground/60 hover:text-foreground"
+        className="opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing mt-1 text-black/40 hover:text-black"
       >
         <GripVertical className="h-3.5 w-3.5" />
       </button>
-      <span className="mt-1.5 leading-none text-foreground">•</span>
-      <div className="flex-1 min-w-0">
+      <span className="mt-1.5 leading-none text-black">•</span>
+      <div
+        className={cn(
+          "flex-1 min-w-0 rounded px-1 -mx-1 transition-colors",
+          stillChanged && "resume-changed-bullet",
+        )}
+        title={stillChanged && bullet.original ? `Original: ${bullet.original}` : undefined}
+      >
         <RichTextEditor
           value={bullet.text}
           onChange={onChange}
@@ -96,7 +101,7 @@ function SortableBullet({
           type="button"
           aria-label="Remove bullet"
           onClick={onRemove}
-          className="mt-0.5 p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+          className="mt-0.5 p-0.5 rounded hover:bg-destructive/10 text-black/50 hover:text-destructive"
         >
           <Minus className="h-3.5 w-3.5" />
         </button>
@@ -104,7 +109,7 @@ function SortableBullet({
           type="button"
           aria-label="Add bullet below"
           onClick={onAddBelow}
-          className="mt-0.5 p-0.5 rounded hover:bg-accent/10 text-muted-foreground hover:text-accent"
+          className="mt-0.5 p-0.5 rounded hover:bg-black/5 text-black/50 hover:text-black"
         >
           <Plus className="h-3.5 w-3.5" />
         </button>
@@ -113,7 +118,7 @@ function SortableBullet({
   );
 }
 
-/* ───────── Item (work / education entry) ───────── */
+/* ───────── Item ───────── */
 function ItemBlock({
   item,
   onItemChange,
@@ -127,7 +132,7 @@ function ItemBlock({
 }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
-  const setBullets = (bullets: ResumeItem["bullets"]) => onItemChange({ ...item, bullets });
+  const setBullets = (bullets: ResumeBullet[]) => onItemChange({ ...item, bullets });
 
   const handleDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
@@ -142,22 +147,22 @@ function ItemBlock({
     <div className="group/item space-y-1 mb-3">
       <div className="flex items-baseline justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-1.5">
+          <div className="flex items-baseline gap-1.5 flex-wrap">
             <InlineEditable
               value={item.heading}
               onChange={(v) => onItemChange({ ...item, heading: v })}
               placeholder="Job title"
-              className="text-[13px] font-semibold text-foreground"
+              className="text-[13px] font-semibold text-black"
               ariaLabel="Heading"
             />
             {item.subheading !== undefined && (
               <>
-                <span className="text-muted-foreground text-xs">—</span>
+                <span className="text-black/60 text-xs">—</span>
                 <InlineEditable
                   value={item.subheading || ""}
                   onChange={(v) => onItemChange({ ...item, subheading: v })}
                   placeholder="Company"
-                  className="text-[13px] text-muted-foreground"
+                  className="text-[13px] text-black/70"
                   ariaLabel="Subheading"
                 />
               </>
@@ -168,14 +173,14 @@ function ItemBlock({
           value={item.date || ""}
           onChange={(v) => onItemChange({ ...item, date: v })}
           placeholder="Dates"
-          className="text-[11px] text-muted-foreground whitespace-nowrap"
+          className="text-[11px] text-black/60 whitespace-nowrap"
           ariaLabel="Dates"
         />
         <button
           type="button"
           aria-label="Remove entry"
           onClick={onRemoveItem}
-          className="opacity-0 group-hover/item:opacity-100 p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+          className="opacity-0 group-hover/item:opacity-100 p-0.5 rounded hover:bg-destructive/10 text-black/40 hover:text-destructive"
         >
           <X className="h-3.5 w-3.5" />
         </button>
@@ -209,7 +214,7 @@ function ItemBlock({
         variant="ghost"
         size="sm"
         onClick={() => setBullets([...item.bullets, { id: newId("bul"), text: "" }])}
-        className="h-6 px-1.5 text-[11px] text-muted-foreground hover:text-accent"
+        className="h-6 px-1.5 text-[11px] text-black/50 hover:text-black"
       >
         <Plus className="h-3 w-3 mr-1" />
         Add bullet
@@ -229,31 +234,26 @@ export function ResumeCanvas({ resume, onChange, keywords }: ResumeCanvasProps) 
   const removeSection = (sectionId: string) =>
     onChange({ ...resume, sections: resume.sections.filter((s) => s.id !== sectionId) });
 
-  const isVisible = (key: ResumeSectionKey) => resume.visibility[key] !== false;
+  // Highlight summary as "changed" only while it still matches the AI rewrite.
+  const summaryStillChanged =
+    !!resume.summary_changed &&
+    !!resume.summary_original &&
+    resume.summary.trim() !== (resume.summary_original || "").trim();
 
   return (
     <div
-      className={cn(
-        "bg-white text-black mx-auto shadow-lg rounded-sm",
-        "px-12 py-10",
-      )}
+      className={cn("bg-white text-black mx-auto shadow-lg rounded-sm", "px-12 py-10")}
       style={{
-        // Approximate US Letter at ~72dpi for the on-screen preview
         width: "min(100%, 8.5in)",
         minHeight: "11in",
         fontFamily: "'Calibri', 'Helvetica Neue', Arial, sans-serif",
         color: "#000",
-        // CSS variable used by .resume-keyword-highlight rules in index.css
-        ["--rk-keywords" as any]: keywords.join("|"),
       }}
       data-resume-canvas
     >
       {/* Header */}
       <div className="text-center pb-3 border-b border-black/80">
-        <div
-          className="text-[24pt] font-bold leading-tight"
-          style={{ color: "#000" }}
-        >
+        <div className="text-[24pt] font-bold leading-tight" style={{ color: "#000" }}>
           <InlineEditable
             value={resume.header.full_name}
             onChange={(v) => onChange({ ...resume, header: { ...resume.header, full_name: v } })}
@@ -274,18 +274,24 @@ export function ResumeCanvas({ resume, onChange, keywords }: ResumeCanvasProps) 
       </div>
 
       {/* Summary */}
-      {isVisible("summary") && (
+      {resume.visibility.summary && (
         <SectionWrap
           title="Summary"
           onHide={() =>
             onChange({ ...resume, visibility: { ...resume.visibility, summary: false } })
           }
         >
-          <div className="text-[10.5pt] leading-relaxed">
+          <div
+            className={cn(
+              "text-[10.5pt] leading-relaxed rounded px-1 -mx-1 transition-colors",
+              summaryStillChanged && "resume-changed-bullet",
+            )}
+            title={summaryStillChanged ? `Original: ${resume.summary_original}` : undefined}
+          >
             <RichTextEditor
               value={resume.summary}
               onChange={(html) => onChange({ ...resume, summary: html })}
-              placeholder="Write a tailored 3–5 sentence summary…"
+              placeholder="Tailored summary…"
               minHeight={48}
               keywords={keywords}
             />
@@ -294,7 +300,7 @@ export function ResumeCanvas({ resume, onChange, keywords }: ResumeCanvasProps) 
       )}
 
       {/* Skills */}
-      {isVisible("skills") && (
+      {resume.visibility.skills && (
         <SectionWrap
           title="Skills"
           onHide={() =>
@@ -308,23 +314,15 @@ export function ResumeCanvas({ resume, onChange, keywords }: ResumeCanvasProps) 
         </SectionWrap>
       )}
 
-      {/* Other sections */}
+      {/* Other sections — preserved in the user's original order */}
       {resume.sections.map((section) => {
-        const k = section.key as ResumeSectionKey;
-        if (k in resume.visibility && !resume.visibility[k]) return null;
         if (!section.visible) return null;
         return (
           <SectionWrap
             key={section.id}
             title={section.title}
             onTitleChange={(t) => setSection(section.id, (s) => ({ ...s, title: t }))}
-            onHide={() => {
-              if (k in resume.visibility) {
-                onChange({ ...resume, visibility: { ...resume.visibility, [k]: false } });
-              } else {
-                setSection(section.id, (s) => ({ ...s, visible: false }));
-              }
-            }}
+            onHide={() => setSection(section.id, (s) => ({ ...s, visible: false }))}
             onDelete={() => removeSection(section.id)}
           >
             {section.items.map((item) => (
