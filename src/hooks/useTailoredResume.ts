@@ -59,10 +59,14 @@ export function useTailoredResume() {
     async (params: GenerateParams) => {
       if (!user) return null;
 
-      const cached = cache.current.get(params.cache_key);
-      if (cached) {
-        setResult(cached);
-        return cached;
+      if (!params.force) {
+        const cached = cache.current.get(params.cache_key);
+        if (cached) {
+          setResult(cached);
+          return cached;
+        }
+      } else {
+        cache.current.delete(params.cache_key);
       }
 
       setIsGenerating(true);
