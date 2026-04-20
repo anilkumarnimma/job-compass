@@ -435,6 +435,24 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
           </span>
         </div>
       </DialogContent>
+
+      <AlertDialog open={confirmRegenerate} onOpenChange={setConfirmRegenerate}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Regenerate tailored resume?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will discard any manual edits you've made and ask the AI for a fresh
+              tailored version for this role. Your original resume on file is not affected.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRegenerate}>
+              Regenerate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
