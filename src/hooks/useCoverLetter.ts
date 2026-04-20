@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { scheduleFeedbackPrompt } from "@/hooks/useFeedbackPrompt";
+import { friendlyError } from "@/lib/friendlyError";
 
 interface GenerateParams {
   jobId: string;
@@ -63,7 +64,7 @@ export function useCoverLetter() {
     } catch (err: any) {
       toast({
         title: "Generation failed",
-        description: err.message || "Could not generate cover letter",
+        description: friendlyError(err, "We couldn't generate your cover letter. Please try again."),
         variant: "destructive",
       });
       return null;

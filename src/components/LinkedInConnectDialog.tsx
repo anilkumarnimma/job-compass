@@ -6,6 +6,7 @@ import { Job } from "@/types/job";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendlyError";
 import { Copy, Check, ExternalLink, Linkedin, Sparkles, RefreshCw, Crown } from "lucide-react";
 
 const FREE_DAILY_LIMIT = 3;
@@ -96,7 +97,7 @@ export function LinkedInConnectDialog({ open, onOpenChange, job }: LinkedInConne
       }
     } catch (err: any) {
       console.error("Failed to generate message:", err);
-      toast.error(err.message || "Failed to generate message");
+      toast.error(friendlyError(err, "We couldn't generate your message. Please try again."));
     } finally {
       setIsGenerating(false);
     }

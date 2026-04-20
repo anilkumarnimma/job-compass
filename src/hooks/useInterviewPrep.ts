@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
+import { friendlyError } from "@/lib/friendlyError";
 
 export interface InterviewPrepData {
   technicalQuestions: {
@@ -55,7 +56,7 @@ export function useInterviewPrep() {
       console.error("Interview prep error:", err);
       toast({
         title: "Couldn't generate interview prep",
-        description: err?.message || "Try again later.",
+        description: friendlyError(err, "Please try again in a moment."),
         variant: "destructive",
       });
     } finally {
