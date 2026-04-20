@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import type { ResumeStructure } from "@/hooks/useResumeStructure";
+import { friendlyError } from "@/lib/friendlyError";
 
 /**
  * The tailored output from the edge function. Same shape as ResumeStructure
@@ -96,7 +97,7 @@ export function useTailoredResume() {
       } catch (err: any) {
         toast({
           title: "Resume tailoring failed",
-          description: err.message || "Could not generate tailored resume",
+          description: friendlyError(err, "We couldn't generate your tailored resume. Please try again."),
           variant: "destructive",
         });
         return null;
