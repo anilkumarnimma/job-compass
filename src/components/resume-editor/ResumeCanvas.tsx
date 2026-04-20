@@ -405,18 +405,18 @@ function SectionWrap({
   return (
     <section
       className={cn(
-        "mt-5 group/section",
+        "mt-3 group/section",
         hidden && "resume-hidden-item",
       )}
       title={hidden ? "Hidden from PDF — click eye to show" : undefined}
     >
-      <div className="flex items-center justify-between border-b-2 border-black pb-1 mb-2">
+      <div className="flex items-center justify-between border-b border-black pb-0.5 mb-1">
         {onTitleChange ? (
           <InlineEditable
             value={title}
             onChange={onTitleChange}
             placeholder="Section title"
-            className="text-[11pt] font-bold uppercase tracking-[0.12em] text-black"
+            className="text-[11pt] font-bold uppercase tracking-[0.10em] text-black"
             ariaLabel="Section title"
           />
         ) : (
