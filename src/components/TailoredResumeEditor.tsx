@@ -83,6 +83,7 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
   const [resume, setResume] = useState<EditableResume | null>(null);
   const [matchScore, setMatchScore] = useState<number | null>(null);
   const [pageInfo, setPageInfo] = useState<{ current: number; total: number }>({ current: 1, total: 1 });
+  const [confirmRegenerate, setConfirmRegenerate] = useState(false);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
 
   const hasResume = !!(profile?.resume_url || profile?.resume_filename);
