@@ -420,7 +420,7 @@ function SectionWrap({
             ariaLabel="Section title"
           />
         ) : (
-          <h2 className="text-[11pt] font-bold uppercase tracking-[0.12em] text-black">
+          <h2 className="text-[11pt] font-bold uppercase tracking-[0.10em] text-black">
             {title}
           </h2>
         )}
