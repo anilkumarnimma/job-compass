@@ -38,6 +38,7 @@ import {
   extractKeywords,
   newId,
   ResumeSectionKey,
+  stripHtml,
 } from "@/lib/resumeEditor";
 import {
   exportResumeAsPdf,
