@@ -27,6 +27,8 @@ function parseJob(row: any): Job {
     created_at: new Date(row.created_at),
     updated_at: new Date(row.updated_at),
     is_archived: row.is_archived,
+    description_enriched: row.description_enriched ?? false,
+    description_source: row.description_source ?? null,
   };
 }
 
