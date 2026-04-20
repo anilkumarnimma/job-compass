@@ -443,6 +443,8 @@ export type Database = {
           created_by_user_id: string | null
           deleted_at: string | null
           description: string
+          description_enriched: boolean
+          description_source: string
           employer_id: string | null
           employment_type: string
           experience_years: string | null
@@ -467,6 +469,8 @@ export type Database = {
           created_by_user_id?: string | null
           deleted_at?: string | null
           description: string
+          description_enriched?: boolean
+          description_source?: string
           employer_id?: string | null
           employment_type?: string
           experience_years?: string | null
@@ -491,6 +495,8 @@ export type Database = {
           created_by_user_id?: string | null
           deleted_at?: string | null
           description?: string
+          description_enriched?: boolean
+          description_source?: string
           employer_id?: string | null
           employment_type?: string
           experience_years?: string | null
