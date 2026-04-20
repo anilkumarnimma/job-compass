@@ -207,6 +207,8 @@ export function enrichJobList(jobs: Job[], entryLevelOnly = false): Job[] {
   let filtered = jobs.filter(job => !shouldExcludeJob(job));
   // Remove jobs with empty/missing descriptions
   filtered = filtered.filter(job => job.description && job.description.trim().length >= 20);
+  // Remove jobs whose apply link points to LinkedIn
+  filtered = filtered.filter(job => !/linkedin\.com/i.test(job.external_apply_link || ''));
   if (entryLevelOnly) {
     filtered = filtered.filter(job => !isNonEntryLevelJob(job));
   }
