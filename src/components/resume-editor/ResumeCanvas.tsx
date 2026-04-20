@@ -287,6 +287,7 @@ export function ResumeCanvas({ resume, onChange, keywords }: ResumeCanvasProps) 
               onChange={(html) => onChange({ ...resume, summary: html })}
               placeholder="Write a tailored 3–5 sentence summary…"
               minHeight={48}
+              keywords={keywords}
             />
           </div>
         </SectionWrap>
@@ -330,6 +331,7 @@ export function ResumeCanvas({ resume, onChange, keywords }: ResumeCanvasProps) 
               <ItemBlock
                 key={item.id}
                 item={item}
+                keywords={keywords}
                 onItemChange={(next) =>
                   setSection(section.id, (s) => ({
                     ...s,
