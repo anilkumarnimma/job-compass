@@ -263,8 +263,11 @@ export default function Dashboard() {
   const personalizedJobs = useMemo(() => {
     if (!shouldTryPersonalizedFeed || !intelligence) return [];
 
-    // Profile-matched jobs sorted strictly by recency (newest first)
+    // Resume-priority: sort by match score (highest first), then by recency.
+    // Only kicks in when the user has a resume (intelligence is derived from it).
     return [...recommendedJobs].sort((a, b) => {
+      const scoreDiff = (b.matchScore ?? 0) - (a.matchScore ?? 0);
+      if (scoreDiff !== 0) return scoreDiff;
       return b.posted_date.getTime() - a.posted_date.getTime();
     });
   }, [shouldTryPersonalizedFeed, recommendedJobs, intelligence]);
