@@ -130,18 +130,10 @@ serve(async (req) => {
       },
     };
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          {
-            role: "system",
-            content: `You are an expert ATS (Applicant Tracking System) analyzer. Your job is to compare a candidate's profile against a job description and provide an accurate, honest compatibility assessment.
+    const messages = [
+      {
+        role: "system",
+        content: `You are an expert ATS (Applicant Tracking System) analyzer. Your job is to compare a candidate's profile against a job description and provide an accurate, honest compatibility assessment.
 
 Be precise and helpful:
 - Score fairly — don't inflate scores. A 70 means good but not perfect.
@@ -149,42 +141,101 @@ Be precise and helpful:
 - Provide ACTIONABLE improvement suggestions, not generic advice.
 - Consider both hard skills (technologies, tools) and soft skills.
 - Account for equivalent skills (e.g., "React" covers "React.js").
-- Weight required skills higher than nice-to-haves.`,
-          },
-          {
-            role: "user",
-            content: `Analyze ATS compatibility:\n\n--- CANDIDATE PROFILE ---\n${profileSummary || "No profile data provided"}\n\n--- JOB POSTING ---\n${jobSummary}`,
-          },
-        ],
-        tools: [extractionTool],
-        tool_choice: { type: "function", function: { name: "ats_check_result" } },
-      }),
-    });
+- Weight required skills higher than nice-to-haves.
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+You MUST call the ats_check_result function with your analysis. Do not respond with plain text.`,
+      },
+      {
+        role: "user",
+        content: `Analyze ATS compatibility:\n\n--- CANDIDATE PROFILE ---\n${profileSummary || "No profile data provided"}\n\n--- JOB POSTING ---\n${jobSummary}`,
+      },
+    ];
+
+    const callModel = async (model: string) => {
+      return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          tools: [extractionTool],
+          tool_choice: { type: "function", function: { name: "ats_check_result" } },
+        }),
+      });
+    };
+
+    const models = ["google/gemini-2.5-flash", "google/gemini-3-flash-preview", "google/gemini-2.5-flash-lite"];
+    let result: any = null;
+    let lastError = "";
+
+    for (const model of models) {
+      try {
+        const response = await callModel(model);
+
+        if (!response.ok) {
+          if (response.status === 429) {
+            return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
+              status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          if (response.status === 402) {
+            return new Response(JSON.stringify({ error: "AI credits exhausted. Please add credits." }), {
+              status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          const errorText = await response.text();
+          console.error(`AI gateway error (${model}):`, response.status, errorText);
+          lastError = `AI gateway error: ${response.status}`;
+          continue;
+        }
+
+        const data = await response.json();
+        const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+
+        if (toolCall?.function?.arguments) {
+          try {
+            result = JSON.parse(toolCall.function.arguments);
+            console.log(`[ATS-CHECK] Success with model=${model}`);
+            break;
+          } catch (parseErr) {
+            console.error(`[ATS-CHECK] JSON parse failed for ${model}:`, parseErr);
+            lastError = "Failed to parse AI response";
+            continue;
+          }
+        }
+
+        // Fallback: try to parse plain text content as JSON
+        const textContent = data.choices?.[0]?.message?.content;
+        if (textContent) {
+          const jsonMatch = textContent.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            try {
+              result = JSON.parse(jsonMatch[0]);
+              console.log(`[ATS-CHECK] Success via text fallback with model=${model}`);
+              break;
+            } catch {
+              // continue to next model
+            }
+          }
+        }
+
+        console.warn(`[ATS-CHECK] No tool call from ${model}, retrying with next model`);
+        lastError = "No structured result from AI";
+      } catch (err) {
+        console.error(`[ATS-CHECK] Exception with ${model}:`, err);
+        lastError = err instanceof Error ? err.message : "Unknown error";
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted. Please add credits." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      throw new Error(`AI gateway error: ${response.status}`);
     }
 
-    const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-
-    if (!toolCall?.function?.arguments) {
-      throw new Error("No ATS analysis result from AI");
+    if (!result) {
+      return new Response(JSON.stringify({ error: lastError || "ATS analysis temporarily unavailable. Please try again." }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
-
-    const result = JSON.parse(toolCall.function.arguments);
 
     return new Response(JSON.stringify({ result }), {
       status: 200,
@@ -194,7 +245,7 @@ Be precise and helpful:
     console.error("ats-check error:", e);
     const msg = e instanceof Error ? e.message : "Unknown error";
     return new Response(JSON.stringify({ error: msg }), {
-      status: 500,
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
