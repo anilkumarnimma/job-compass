@@ -317,21 +317,27 @@ export function resumeToPlainText(resume: EditableResume): string {
   if (resume.header.contact_line) lines.push(resume.header.contact_line);
   lines.push("");
 
-  if (resume.visibility.summary && resume.summary?.trim()) {
-    lines.push("SUMMARY");
-    lines.push(stripHtml(resume.summary).trim());
-    lines.push("");
-  }
+  const sectionsById = new Map(resume.sections.map((s) => [s.id, s]));
 
-  if (resume.visibility.skills && resume.skills.length) {
-    lines.push("SKILLS");
-    lines.push(resume.skills.join(" • "));
-    lines.push("");
-  }
-
-  for (const section of resume.sections) {
-    if (!section.visible) continue;
-    if (!section.items.length) continue;
+  for (const tok of resume.order || []) {
+    if (tok === "summary") {
+      if (resume.visibility.summary && resume.summary?.trim()) {
+        lines.push("SUMMARY");
+        lines.push(stripHtml(resume.summary).trim());
+        lines.push("");
+      }
+      continue;
+    }
+    if (tok === "skills") {
+      if (resume.visibility.skills && resume.skills.length) {
+        lines.push("SKILLS");
+        lines.push(resume.skills.join(" • "));
+        lines.push("");
+      }
+      continue;
+    }
+    const section = sectionsById.get(tok.sectionId);
+    if (!section || !section.visible || !section.items.length) continue;
     lines.push(section.title.toUpperCase());
     for (const item of section.items) {
       const headerLine = [item.heading, item.subheading].filter(Boolean).join(" — ");
