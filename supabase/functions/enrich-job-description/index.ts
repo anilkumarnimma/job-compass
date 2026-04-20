@@ -1,7 +1,8 @@
 // Background job-description enricher.
-// Strategy: plain fetch + HTML extraction first; if that yields < 200 chars,
-// fall back to Firecrawl scrape (when FIRECRAWL_API_KEY is configured).
-// Marks jobs.description_enriched = true on success, false on failure.
+// Strategy: plain fetch + HTML extraction only. If extraction yields < 200 chars
+// or the fetch fails, mark the job with description_enriched = false so the UI
+// hides AI feature buttons (ATS, Cover Letter, Tailor Resume) for that job.
+// No external scraping API is used — keeps this cost-free.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -14,7 +15,6 @@ const MIN_DESC_LENGTH = 200;
 const MAX_DESC_LENGTH = 8000;
 const PER_FETCH_TIMEOUT_MS = 12_000;
 const MAX_JOBS_PER_RUN = 50;
-const FIRECRAWL_GATEWAY = "https://api.firecrawl.dev/v2";
 
 // ──────────────────────────────────── HTML extraction ────────────────────────────────────
 function stripHtml(html: string): string {
@@ -83,35 +83,7 @@ async function plainFetch(url: string): Promise<string | null> {
   }
 }
 
-async function firecrawlScrape(url: string, apiKey: string): Promise<string | null> {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), PER_FETCH_TIMEOUT_MS + 8_000);
-  try {
-    const res = await fetch(`${FIRECRAWL_GATEWAY}/scrape`, {
-      method: "POST",
-      signal: ctrl.signal,
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        url,
-        formats: ["markdown"],
-        onlyMainContent: true,
-      }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const md: string | undefined = data?.data?.markdown ?? data?.markdown;
-    if (!md) return null;
-    const cleaned = md.replace(/\s+/g, " ").trim();
-    return cleaned.length >= MIN_DESC_LENGTH ? cleaned.slice(0, MAX_DESC_LENGTH) : null;
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(t);
-  }
-}
+// Firecrawl fallback removed — plain fetch only.
 
 // ──────────────────────────────────── Handler ────────────────────────────────────
 Deno.serve(async (req) => {
@@ -126,7 +98,6 @@ Deno.serve(async (req) => {
     });
   }
   const admin = createClient(supabaseUrl, serviceKey);
-  const firecrawlKey = Deno.env.get("FIRECRAWL_API_KEY") || null;
 
   // Optional: caller may pass specific job_ids; otherwise scan for jobs needing enrichment
   let jobIds: string[] = [];
@@ -168,7 +139,7 @@ Deno.serve(async (req) => {
     candidates = data ?? [];
   }
 
-  const stats = { processed: 0, scraped: 0, firecrawled: 0, marked_already_ok: 0, failed: 0 };
+  const stats = { processed: 0, scraped: 0, marked_already_ok: 0, failed: 0 };
 
   const work = async () => {
     for (const job of candidates) {
@@ -193,27 +164,19 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // 1) Plain fetch
-      let extracted = await plainFetch(job.external_apply_link);
-      let source: "scraped" | "firecrawl" | null = extracted ? "scraped" : null;
+      // Plain fetch only — no fallback.
+      const extracted = await plainFetch(job.external_apply_link);
 
-      // 2) Firecrawl fallback
-      if (!extracted && firecrawlKey) {
-        extracted = await firecrawlScrape(job.external_apply_link, firecrawlKey);
-        if (extracted) source = "firecrawl";
-      }
-
-      if (extracted && source) {
+      if (extracted) {
         await admin
           .from("jobs")
           .update({
             description: extracted,
             description_enriched: true,
-            description_source: source,
+            description_source: "scraped",
           })
           .eq("id", job.id);
-        if (source === "scraped") stats.scraped++;
-        else stats.firecrawled++;
+        stats.scraped++;
       } else {
         // Mark as attempted so we don't keep retrying — also keeps AI buttons hidden
         await admin
@@ -231,7 +194,7 @@ Deno.serve(async (req) => {
   EdgeRuntime.waitUntil(work());
 
   return new Response(
-    JSON.stringify({ success: true, queued: candidates.length, firecrawl_available: !!firecrawlKey }),
+    JSON.stringify({ success: true, queued: candidates.length }),
     { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 });
