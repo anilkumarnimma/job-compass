@@ -44,6 +44,12 @@ export interface ResumeHeader {
   contact_line: string;
 }
 
+/** Tokens used in `order` to position summary/skills inline among custom sections. */
+export type SectionOrderToken =
+  | "summary"
+  | "skills"
+  | { kind: "custom"; sectionId: string };
+
 export interface EditableResume {
   header: ResumeHeader;
   summary: string;
@@ -54,6 +60,8 @@ export interface EditableResume {
   skills: string[];
   /** Sections IN THE EXACT ORDER they appeared in the user's uploaded resume. */
   sections: ResumeSection[];
+  /** Top-to-bottom render order including summary / skills / custom sections. */
+  order: SectionOrderToken[];
   /** True if the section/value should be visible. Persistent across renders. */
   visibility: { summary: boolean; skills: boolean };
 }

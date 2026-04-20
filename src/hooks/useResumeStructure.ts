@@ -20,6 +20,8 @@ export interface ResumeStructure {
   summary?: string;
   skills: string[];
   sections: ResumeStructureSection[];
+  /** Top-to-bottom order using section titles plus literals "summary" / "skills". */
+  section_order?: string[];
 }
 
 /**
