@@ -37,6 +37,10 @@ interface UploadSummary {
   oldDuplicatesRemoved: number;
 }
 
+// Critical fields: row is rejected only if these are missing.
+// Other fields (company, location, description) get sensible defaults.
+const CRITICAL_FIELDS = ["title", "external_apply_link"];
+// Required for header mapping (so we know which columns to look for) — but rows missing the non-critical ones are still allowed.
 const REQUIRED_FIELDS = ["title", "company", "location", "description", "external_apply_link"];
 
 // Smart header mapping: maps common CSV column name variations to our internal field names
