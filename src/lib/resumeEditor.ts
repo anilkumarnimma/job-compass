@@ -44,6 +44,12 @@ export interface ResumeHeader {
   contact_line: string;
 }
 
+/** Tokens used in `order` to position summary/skills inline among custom sections. */
+export type SectionOrderToken =
+  | "summary"
+  | "skills"
+  | { kind: "custom"; sectionId: string };
+
 export interface EditableResume {
   header: ResumeHeader;
   summary: string;
@@ -54,6 +60,8 @@ export interface EditableResume {
   skills: string[];
   /** Sections IN THE EXACT ORDER they appeared in the user's uploaded resume. */
   sections: ResumeSection[];
+  /** Top-to-bottom render order including summary / skills / custom sections. */
+  order: SectionOrderToken[];
   /** True if the section/value should be visible. Persistent across renders. */
   visibility: { summary: boolean; skills: boolean };
 }
@@ -152,6 +160,45 @@ export function buildEditableResume(
     },
   );
 
+  // Build render order using extracted section_order. Tokens reference custom
+  // sections by id so renames don't break ordering. Unknown tokens are skipped;
+  // any sections/specials missing from the order are appended at the end.
+  const order: SectionOrderToken[] = [];
+  const used = { summary: false, skills: false, sectionIds: new Set<string>() };
+  const titleToSection = new Map<string, ResumeSection>();
+  for (const s of sections) titleToSection.set((s.title || "").toLowerCase().trim(), s);
+
+  const rawOrder = structure.section_order || [];
+  for (const token of rawOrder) {
+    const t = String(token || "").toLowerCase().trim();
+    if (!t) continue;
+    if (t === "summary" && !used.summary) {
+      order.push("summary");
+      used.summary = true;
+      continue;
+    }
+    if (t === "skills" && !used.skills) {
+      order.push("skills");
+      used.skills = true;
+      continue;
+    }
+    const sec = titleToSection.get(t);
+    if (sec && !used.sectionIds.has(sec.id)) {
+      order.push({ kind: "custom", sectionId: sec.id });
+      used.sectionIds.add(sec.id);
+    }
+  }
+  // Append anything missing (defensive — keeps Summary/Skills first if order absent).
+  if (!used.summary) order.unshift("summary");
+  if (!used.skills) {
+    // place skills right after summary if summary was prepended
+    const idx = order.indexOf("summary");
+    order.splice(idx + 1, 0, "skills");
+  }
+  for (const s of sections) {
+    if (!used.sectionIds.has(s.id)) order.push({ kind: "custom", sectionId: s.id });
+  }
+
   return {
     header: { full_name: fullName, contact_line },
     summary,
@@ -159,6 +206,7 @@ export function buildEditableResume(
     summary_changed,
     skills,
     sections,
+    order,
     visibility: {
       summary: !!(summary && summary.trim()),
       skills: skills.length > 0,
@@ -269,21 +317,27 @@ export function resumeToPlainText(resume: EditableResume): string {
   if (resume.header.contact_line) lines.push(resume.header.contact_line);
   lines.push("");
 
-  if (resume.visibility.summary && resume.summary?.trim()) {
-    lines.push("SUMMARY");
-    lines.push(stripHtml(resume.summary).trim());
-    lines.push("");
-  }
+  const sectionsById = new Map(resume.sections.map((s) => [s.id, s]));
 
-  if (resume.visibility.skills && resume.skills.length) {
-    lines.push("SKILLS");
-    lines.push(resume.skills.join(" • "));
-    lines.push("");
-  }
-
-  for (const section of resume.sections) {
-    if (!section.visible) continue;
-    if (!section.items.length) continue;
+  for (const tok of resume.order || []) {
+    if (tok === "summary") {
+      if (resume.visibility.summary && resume.summary?.trim()) {
+        lines.push("SUMMARY");
+        lines.push(stripHtml(resume.summary).trim());
+        lines.push("");
+      }
+      continue;
+    }
+    if (tok === "skills") {
+      if (resume.visibility.skills && resume.skills.length) {
+        lines.push("SKILLS");
+        lines.push(resume.skills.join(" • "));
+        lines.push("");
+      }
+      continue;
+    }
+    const section = sectionsById.get(tok.sectionId);
+    if (!section || !section.visible || !section.items.length) continue;
     lines.push(section.title.toUpperCase());
     for (const item of section.items) {
       const headerLine = [item.heading, item.subheading].filter(Boolean).join(" — ");

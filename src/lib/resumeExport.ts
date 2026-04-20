@@ -114,19 +114,23 @@ export function exportResumeAsPdf(
   }
   y += 4;
 
-  if (resume.visibility.summary && resume.summary?.trim()) {
+  const sectionsById = new Map(resume.sections.map((s) => [s.id, s]));
+
+  const renderSummary = () => {
+    if (!resume.visibility.summary || !resume.summary?.trim()) return;
     sectionTitle("Summary");
-    writeWrapped(stripHtml(resume.summary).trim(), { size: 10.5, gap: 6 });
-  }
+    writeWrapped(stripHtml(resume.summary).trim(), { size: 10.5, gap: 4 });
+  };
 
-  if (resume.visibility.skills && resume.skills.length) {
+  const renderSkills = () => {
+    if (!resume.visibility.skills || !resume.skills.length) return;
     sectionTitle("Skills");
-    writeWrapped(resume.skills.join(" • "), { size: 10.5, gap: 6 });
-  }
+    writeWrapped(resume.skills.join(" • "), { size: 10.5, gap: 4 });
+  };
 
-  for (const section of resume.sections) {
-    if (!section.visible) continue;
-    if (!section.items.length) continue;
+  const renderCustom = (sectionId: string) => {
+    const section = sectionsById.get(sectionId);
+    if (!section || !section.visible || !section.items.length) return;
     sectionTitle(section.title);
     for (const item of section.items) {
       ensureRoom(28);
@@ -140,23 +144,29 @@ export function exportResumeAsPdf(
         const dW = doc.getTextWidth(item.date);
         doc.text(item.date, PAGE_W - MARGIN_X - dW, y);
       }
-      y += 13;
+      y += 12;
       for (const b of item.bullets) {
         const text = stripHtml(b.text).trim();
         if (!text) continue;
-        ensureRoom(14);
+        ensureRoom(13);
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
         doc.text("•", MARGIN_X + 6, y);
         const lines = doc.splitTextToSize(text, PAGE_W - MARGIN_X * 2 - 18);
         for (let i = 0; i < lines.length; i++) {
-          if (i > 0) ensureRoom(12);
+          if (i > 0) ensureRoom(11);
           doc.text(lines[i], MARGIN_X + 18, y);
-          y += 12;
+          y += 11;
         }
       }
-      y += 4;
+      y += 3;
     }
+  };
+
+  for (const tok of resume.order || []) {
+    if (tok === "summary") renderSummary();
+    else if (tok === "skills") renderSkills();
+    else renderCustom(tok.sectionId);
   }
 
   const filename = buildResumeFilename(resume.header.full_name, jobTitle, company, "pdf");
@@ -247,26 +257,30 @@ export async function exportResumeAsDocx(
     );
   }
 
-  if (resume.visibility.summary && resume.summary?.trim()) {
+  const sectionsById = new Map(resume.sections.map((s) => [s.id, s]));
+
+  const renderSummary = () => {
+    if (!resume.visibility.summary || !resume.summary?.trim()) return;
     children.push(sectionHeader("Summary"));
     children.push(p({ text: stripHtml(resume.summary).trim(), size: 21 }));
-  }
+  };
 
-  if (resume.visibility.skills && resume.skills.length) {
+  const renderSkills = () => {
+    if (!resume.visibility.skills || !resume.skills.length) return;
     children.push(sectionHeader("Skills"));
     children.push(p({ text: resume.skills.join(" • "), size: 21 }));
-  }
+  };
 
-  for (const section of resume.sections) {
-    if (!section.visible) continue;
-    if (!section.items.length) continue;
+  const renderCustom = (sectionId: string) => {
+    const section = sectionsById.get(sectionId);
+    if (!section || !section.visible || !section.items.length) return;
     children.push(sectionHeader(section.title));
     for (const item of section.items) {
       const headerLeft = [item.heading, item.subheading].filter(Boolean).join(" — ");
       const headerRight = item.date || "";
       children.push(
         new Paragraph({
-          spacing: { before: 80, after: 40 },
+          spacing: { before: 60, after: 30 },
           tabStops: [{ type: "right" as any, position: 9000 }],
           children: [
             new TextRun({
@@ -295,6 +309,12 @@ export async function exportResumeAsDocx(
         children.push(p({ text: t, size: 21, bullet: true }));
       }
     }
+  };
+
+  for (const tok of resume.order || []) {
+    if (tok === "summary") renderSummary();
+    else if (tok === "skills") renderSkills();
+    else renderCustom(tok.sectionId);
   }
 
   const doc = new Document({

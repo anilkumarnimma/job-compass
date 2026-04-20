@@ -144,8 +144,8 @@ function ItemBlock({
   };
 
   return (
-    <div className="group/item space-y-1 mb-3">
-      <div className="flex items-baseline justify-between gap-2">
+    <div className="group/item space-y-0.5 mb-2">
+      <div className="flex items-baseline justify-between gap-3 w-full">
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-1.5 flex-wrap">
             <InlineEditable
@@ -169,26 +169,28 @@ function ItemBlock({
             )}
           </div>
         </div>
-        <InlineEditable
-          value={item.date || ""}
-          onChange={(v) => onItemChange({ ...item, date: v })}
-          placeholder="Dates"
-          className="text-[11px] text-black whitespace-nowrap"
-          ariaLabel="Dates"
-        />
-        <button
-          type="button"
-          aria-label="Remove entry"
-          onClick={onRemoveItem}
-          className="opacity-0 group-hover/item:opacity-100 p-0.5 rounded text-black hover:text-destructive hover:bg-destructive/10"
-        >
-          <X className="h-3.5 w-3.5" />
-        </button>
+        <div className="flex items-baseline gap-1 shrink-0">
+          <InlineEditable
+            value={item.date || ""}
+            onChange={(v) => onItemChange({ ...item, date: v })}
+            placeholder="Dates"
+            className="text-[11px] text-black whitespace-nowrap text-right"
+            ariaLabel="Dates"
+          />
+          <button
+            type="button"
+            aria-label="Remove entry"
+            onClick={onRemoveItem}
+            className="opacity-0 group-hover/item:opacity-100 p-0.5 rounded text-black hover:text-destructive hover:bg-destructive/10"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={item.bullets.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-          <ul className="space-y-0.5 ml-4 mt-1 text-[12.5px] text-black">
+          <ul className="space-y-0 ml-4 mt-0.5 text-[12.5px] text-black">
             {item.bullets.map((b, i) => (
               <SortableBullet
                 key={b.id}
@@ -212,7 +214,7 @@ function ItemBlock({
       <button
         type="button"
         onClick={() => setBullets([...item.bullets, { id: newId("bul"), text: "" }])}
-        className="resume-add-btn inline-flex items-center gap-1 mt-1 ml-4 px-1.5 py-0.5 rounded text-[11px] font-medium"
+        className="resume-add-btn inline-flex items-center gap-1 mt-0.5 ml-4 px-1.5 py-0.5 rounded text-[11px] font-medium opacity-0 group-hover/item:opacity-100"
       >
         <Plus className="h-3 w-3" />
         Add bullet
@@ -235,9 +237,121 @@ export function ResumeCanvas({ resume, onChange, keywords }: ResumeCanvasProps) 
     !!resume.summary_original &&
     resume.summary.trim() !== (resume.summary_original || "").trim();
 
+  const renderSummary = () => (
+    <SectionWrap
+      key="__summary"
+      title="Summary"
+      hidden={!resume.visibility.summary}
+      onToggleHidden={() =>
+        onChange({
+          ...resume,
+          visibility: { ...resume.visibility, summary: !resume.visibility.summary },
+        })
+      }
+    >
+      <div
+        className={cn(
+          "text-[10.5pt] leading-snug rounded px-1 -mx-1 transition-colors text-black",
+          summaryStillChanged && "resume-changed-bullet",
+        )}
+        title={summaryStillChanged ? `Original: ${resume.summary_original}` : undefined}
+      >
+        <RichTextEditor
+          value={resume.summary}
+          onChange={(html) => onChange({ ...resume, summary: html })}
+          placeholder="Tailored summary…"
+          minHeight={36}
+          keywords={keywords}
+        />
+      </div>
+    </SectionWrap>
+  );
+
+  const renderSkills = () => (
+    <SectionWrap
+      key="__skills"
+      title="Skills"
+      hidden={!resume.visibility.skills}
+      onToggleHidden={() =>
+        onChange({
+          ...resume,
+          visibility: { ...resume.visibility, skills: !resume.visibility.skills },
+        })
+      }
+    >
+      <SkillsEditor
+        skills={resume.skills}
+        onChange={(skills) => onChange({ ...resume, skills })}
+      />
+    </SectionWrap>
+  );
+
+  const renderCustom = (section: ResumeSection) => (
+    <SectionWrap
+      key={section.id}
+      title={section.title}
+      hidden={!section.visible}
+      onTitleChange={(t) => setSection(section.id, (s) => ({ ...s, title: t }))}
+      onToggleHidden={() =>
+        setSection(section.id, (s) => ({ ...s, visible: !s.visible }))
+      }
+    >
+      {section.items.map((item) => (
+        <ItemBlock
+          key={item.id}
+          item={item}
+          keywords={keywords}
+          onItemChange={(next) =>
+            setSection(section.id, (s) => ({
+              ...s,
+              items: s.items.map((x) => (x.id === next.id ? next : x)),
+            }))
+          }
+          onRemoveItem={() =>
+            setSection(section.id, (s) => ({
+              ...s,
+              items: s.items.filter((x) => x.id !== item.id),
+            }))
+          }
+        />
+      ))}
+      <button
+        type="button"
+        onClick={() =>
+          setSection(section.id, (s) => ({
+            ...s,
+            items: [
+              ...s.items,
+              {
+                id: newId("item"),
+                heading: "",
+                subheading: "",
+                date: "",
+                bullets: [{ id: newId("bul"), text: "" }],
+              },
+            ],
+          }))
+        }
+        className="resume-add-btn inline-flex items-center gap-1 mt-1 px-2 py-1 rounded text-[11px] font-medium opacity-0 group-hover/section:opacity-100"
+      >
+        <Plus className="h-3 w-3" />
+        Add entry
+      </button>
+    </SectionWrap>
+  );
+
+  // Render strictly in the order extracted from the uploaded resume.
+  const sectionsById = new Map(resume.sections.map((s) => [s.id, s]));
+  const orderedNodes = (resume.order || []).map((tok) => {
+    if (tok === "summary") return renderSummary();
+    if (tok === "skills") return renderSkills();
+    const sec = sectionsById.get(tok.sectionId);
+    return sec ? renderCustom(sec) : null;
+  });
+
   return (
     <div
-      className="bg-white mx-auto rounded-sm px-12 py-10"
+      className="bg-white mx-auto rounded-sm px-12 py-8"
       style={{
         width: "min(100%, 8.5in)",
         minHeight: "11in",
@@ -248,7 +362,7 @@ export function ResumeCanvas({ resume, onChange, keywords }: ResumeCanvasProps) 
       data-resume-canvas
     >
       {/* Header */}
-      <div className="text-center pb-3 border-b-2 border-black">
+      <div className="text-center pb-2 border-b-2 border-black">
         <div className="text-[24pt] font-bold leading-tight text-black">
           <InlineEditable
             value={resume.header.full_name}
@@ -258,7 +372,7 @@ export function ResumeCanvas({ resume, onChange, keywords }: ResumeCanvasProps) 
             className="text-center text-black"
           />
         </div>
-        <div className="text-[10pt] mt-1 text-black">
+        <div className="text-[10pt] mt-0.5 text-black">
           <InlineEditable
             value={resume.header.contact_line}
             onChange={(v) => onChange({ ...resume, header: { ...resume.header, contact_line: v } })}
@@ -270,105 +384,7 @@ export function ResumeCanvas({ resume, onChange, keywords }: ResumeCanvasProps) 
         </div>
       </div>
 
-      {/* Summary — always rendered; dimmed/struck when hidden */}
-      <SectionWrap
-        title="Summary"
-        hidden={!resume.visibility.summary}
-        onToggleHidden={() =>
-          onChange({
-            ...resume,
-            visibility: { ...resume.visibility, summary: !resume.visibility.summary },
-          })
-        }
-      >
-        <div
-          className={cn(
-            "text-[10.5pt] leading-relaxed rounded px-1 -mx-1 transition-colors text-black",
-            summaryStillChanged && "resume-changed-bullet",
-          )}
-          title={summaryStillChanged ? `Original: ${resume.summary_original}` : undefined}
-        >
-          <RichTextEditor
-            value={resume.summary}
-            onChange={(html) => onChange({ ...resume, summary: html })}
-            placeholder="Tailored summary…"
-            minHeight={48}
-            keywords={keywords}
-          />
-        </div>
-      </SectionWrap>
-
-      {/* Skills — always rendered; dimmed/struck when hidden */}
-      <SectionWrap
-        title="Skills"
-        hidden={!resume.visibility.skills}
-        onToggleHidden={() =>
-          onChange({
-            ...resume,
-            visibility: { ...resume.visibility, skills: !resume.visibility.skills },
-          })
-        }
-      >
-        <SkillsEditor
-          skills={resume.skills}
-          onChange={(skills) => onChange({ ...resume, skills })}
-        />
-      </SectionWrap>
-
-      {/* Other sections — preserved in the user's original order */}
-      {resume.sections.map((section) => (
-        <SectionWrap
-          key={section.id}
-          title={section.title}
-          hidden={!section.visible}
-          onTitleChange={(t) => setSection(section.id, (s) => ({ ...s, title: t }))}
-          onToggleHidden={() =>
-            setSection(section.id, (s) => ({ ...s, visible: !s.visible }))
-          }
-        >
-          {section.items.map((item) => (
-            <ItemBlock
-              key={item.id}
-              item={item}
-              keywords={keywords}
-              onItemChange={(next) =>
-                setSection(section.id, (s) => ({
-                  ...s,
-                  items: s.items.map((x) => (x.id === next.id ? next : x)),
-                }))
-              }
-              onRemoveItem={() =>
-                setSection(section.id, (s) => ({
-                  ...s,
-                  items: s.items.filter((x) => x.id !== item.id),
-                }))
-              }
-            />
-          ))}
-          <button
-            type="button"
-            onClick={() =>
-              setSection(section.id, (s) => ({
-                ...s,
-                items: [
-                  ...s.items,
-                  {
-                    id: newId("item"),
-                    heading: "",
-                    subheading: "",
-                    date: "",
-                    bullets: [{ id: newId("bul"), text: "" }],
-                  },
-                ],
-              }))
-            }
-            className="resume-add-btn inline-flex items-center gap-1 mt-1 px-2 py-1 rounded text-[11px] font-medium"
-          >
-            <Plus className="h-3 w-3" />
-            Add entry
-          </button>
-        </SectionWrap>
-      ))}
+      {orderedNodes}
     </div>
   );
 }
@@ -389,22 +405,22 @@ function SectionWrap({
   return (
     <section
       className={cn(
-        "mt-5 group/section",
+        "mt-3 group/section",
         hidden && "resume-hidden-item",
       )}
       title={hidden ? "Hidden from PDF — click eye to show" : undefined}
     >
-      <div className="flex items-center justify-between border-b-2 border-black pb-1 mb-2">
+      <div className="flex items-center justify-between border-b border-black pb-0.5 mb-1">
         {onTitleChange ? (
           <InlineEditable
             value={title}
             onChange={onTitleChange}
             placeholder="Section title"
-            className="text-[11pt] font-bold uppercase tracking-[0.12em] text-black"
+            className="text-[11pt] font-bold uppercase tracking-[0.10em] text-black"
             ariaLabel="Section title"
           />
         ) : (
-          <h2 className="text-[11pt] font-bold uppercase tracking-[0.12em] text-black">
+          <h2 className="text-[11pt] font-bold uppercase tracking-[0.10em] text-black">
             {title}
           </h2>
         )}

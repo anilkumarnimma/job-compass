@@ -235,6 +235,11 @@ serve(async (req) => {
             },
             summary: { type: "string", description: "Original summary / objective if present, else empty string" },
             skills: { type: "array", items: { type: "string" } },
+            section_order: {
+              type: "array",
+              description: "The ORDER in which 'summary', 'skills', and each custom section title appear in the resume — top to bottom. Use exactly the section titles you put in `sections` (verbatim), plus the literal strings 'summary' and 'skills' if those exist in the resume.",
+              items: { type: "string" },
+            },
             sections: {
               type: "array",
               description: "Sections in the EXACT order they appear in the resume (e.g. Experience, Projects, Education, etc.). Do NOT include Summary or Skills here — those go in the dedicated fields.",
@@ -329,6 +334,16 @@ serve(async (req) => {
     structure.header.contact_details = Array.isArray(structure.header.contact_details)
       ? structure.header.contact_details
       : [];
+    // Default section_order: summary → skills → other sections (legacy fallback)
+    if (!Array.isArray(structure.section_order) || structure.section_order.length === 0) {
+      const order: string[] = [];
+      if (structure.summary && String(structure.summary).trim()) order.push("summary");
+      if (Array.isArray(structure.skills) && structure.skills.length) order.push("skills");
+      for (const s of structure.sections) {
+        if (s?.title) order.push(s.title);
+      }
+      structure.section_order = order;
+    }
 
     console.log(
       "[EXTRACT] OK — sections:",
