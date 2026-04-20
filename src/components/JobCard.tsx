@@ -31,8 +31,8 @@ const CoverLetterDialog = lazy(async () => {
 });
 
 const TailoredResumeDialog = lazy(async () => {
-  const module = await import("@/components/TailoredResumeDialog");
-  return { default: module.TailoredResumeDialog };
+  const module = await import("@/components/TailoredResumeEditor");
+  return { default: module.TailoredResumeEditor };
 });
 
 interface JobCardProps {

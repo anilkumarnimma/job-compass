@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,23 +19,21 @@ import {
   FileDown,
   FileType,
   ClipboardCopy,
-  RefreshCw,
   Target,
-  Plus,
   AlertCircle,
   Info,
-  Settings2,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useTailoredResume } from "@/hooks/useTailoredResume";
+import { useResumeStructure } from "@/hooks/useResumeStructure";
 import { useAtsCheck } from "@/hooks/useAtsCheck";
 import { useProfile } from "@/hooks/useProfile";
 import {
   EditableResume,
   buildEditableResume,
+  countActiveChanges,
   extractKeywords,
-  newId,
-  ResumeSectionKey,
   stripHtml,
 } from "@/lib/resumeEditor";
 import {
@@ -60,19 +56,17 @@ interface TailoredResumeEditorProps {
   } | null;
 }
 
-const SECTION_OPTIONS: { key: ResumeSectionKey; label: string }[] = [
-  { key: "summary", label: "Summary" },
-  { key: "skills", label: "Skills" },
-  { key: "experience", label: "Experience" },
-  { key: "education", label: "Education" },
-  { key: "projects", label: "Projects" },
-  { key: "certifications", label: "Certifications" },
-];
-
 export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResumeEditorProps) {
   const { profile } = useProfile();
   const { generate, isGenerating, result, clearResult } = useTailoredResume();
   const { runCheck, isChecking } = useAtsCheck();
+  const {
+    structure,
+    isLoading: isLoadingStructure,
+    error: structureError,
+    load: loadStructure,
+    reset: resetStructure,
+  } = useResumeStructure();
 
   const [resume, setResume] = useState<EditableResume | null>(null);
   const [matchScore, setMatchScore] = useState<number | null>(null);
@@ -80,79 +74,39 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
   const canvasContainerRef = useRef<HTMLDivElement>(null);
 
   const hasResume = !!(profile?.resume_url || profile?.resume_filename);
-  const intelligence = profile?.resume_intelligence as any;
+  const resumeVersion = `${profile?.updated_at || ""}::${profile?.resume_filename || ""}`;
 
-  const baseResume = useMemo(() => {
-    if (!profile) return null;
-    // Build the simplified base structure that the existing tailor-resume edge fn expects
-    const compact = (vals: Array<string | null | undefined>) =>
-      vals.map((v) => v?.trim()).filter(Boolean) as string[];
-    const fullName =
-      profile.full_name?.trim() ||
-      compact([profile.first_name, profile.last_name]).join(" ") ||
-      profile.contact_email ||
-      profile.email ||
-      "Your Resume";
-    const contact = compact([
-      profile.contact_email || profile.email,
-      profile.phone,
-      profile.location || compact([profile.city, profile.state]).join(", "),
-      profile.linkedin_url,
-      profile.github_url,
-      profile.portfolio_url,
-    ]);
-    const exp = (Array.isArray(profile.work_experience) ? profile.work_experience : []).map((w: any) => ({
-      heading: w.title,
-      subheading: w.company,
-      date: compact([w.start_date, w.end_date || (w.is_current ? "Present" : "")]).join(" - "),
-      bullets: [],
-    }));
-    const edu = (Array.isArray(profile.education) ? profile.education : []).map((e: any) => ({
-      heading: e.degree || e.school,
-      subheading: e.school,
-      date: e.graduation_year || undefined,
-      bullets: e.major ? [`Field of Study: ${e.major}`] : [],
-    }));
-    const cert = (Array.isArray(profile.certifications) ? profile.certifications : []).map((c: any) => ({
-      heading: c.name,
-      subheading: c.issuer,
-      date: c.date_obtained,
-      bullets: [],
-    }));
-    return {
-      header: { full_name: fullName, headline: profile.current_title || "", contact_details: contact },
-      sections: [
-        exp.length ? { title: "Experience", items: exp } : null,
-        edu.length ? { title: "Education", items: edu } : null,
-        cert.length ? { title: "Certifications", items: cert } : null,
-      ].filter(Boolean),
-      skills_section: profile.skills || [],
-      source_signature: `${profile.updated_at}::${profile.resume_filename || ""}`,
-    };
-  }, [profile]);
-
-  // When dialog opens with a job + resume, kick off tailoring
+  /* 1) Load the structured resume from the user's uploaded file */
   useEffect(() => {
-    if (!open || !job || !hasResume || !baseResume) return;
+    if (!open || !hasResume || !profile?.resume_url) return;
+    if (structure || isLoadingStructure) return;
+    loadStructure({
+      resume_path: profile.resume_url,
+      filename: profile.resume_filename || undefined,
+      cache_key: `${profile.user_id || "u"}::${resumeVersion}`,
+    });
+  }, [open, hasResume, profile?.resume_url, profile?.resume_filename, structure, isLoadingStructure, loadStructure, resumeVersion, profile?.user_id]);
+
+  /* 2) Once we have the structure + a job, kick off tailoring */
+  useEffect(() => {
+    if (!open || !job || !structure) return;
     if (result || isGenerating) return;
     generate({
       job_title: job.title,
       job_description: job.description || "",
       job_skills: job.skills || [],
-      resume_intelligence: intelligence,
-      base_resume: baseResume as any,
-      resume_version: baseResume.source_signature,
-      regeneration_round: 1,
+      resume_structure: structure,
+      cache_key: `${job.id}::${resumeVersion}`,
     });
-  }, [open, job?.id, hasResume, baseResume, result, isGenerating, generate, intelligence]);
+  }, [open, job, structure, result, isGenerating, generate, resumeVersion]);
 
-  // Hydrate the editable resume once tailoring returns
+  /* 3) Hydrate the editable resume */
   useEffect(() => {
-    if (!result) return;
-    setResume(buildEditableResume(result, profile));
-  }, [result, profile]);
+    if (!structure) return;
+    setResume(buildEditableResume(structure, result, profile));
+  }, [structure, result, profile]);
 
-  // Initial ATS match score when the dialog opens / job changes
+  /* 4) Initial ATS match score */
   useEffect(() => {
     if (!open || !job || matchScore != null || isChecking || !profile) return;
     runCheck({
@@ -171,27 +125,19 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
     }).then((res) => {
       if (res) setMatchScore(res.overall_score);
     });
-  }, [open, job?.id, matchScore, isChecking, profile, runCheck]);
+  }, [open, job, matchScore, isChecking, profile, runCheck]);
 
-  // Live debounced match-score recompute as the user edits the resume.
-  // Debounced at 1s so it does not fire on every keystroke.
+  /* 5) Live debounced match-score recompute */
   const isFirstResumeRef = useRef(true);
   useEffect(() => {
     if (!open || !job || !resume || !profile) return;
-    // Skip the very first hydration — initial score comes from the effect above.
     if (isFirstResumeRef.current) {
       isFirstResumeRef.current = false;
       return;
     }
     const timer = setTimeout(() => {
-      // Build a synthetic profile snapshot from the live edits so the score
-      // reflects what's actually on the canvas.
-      const flatBullets = (resume.sections || [])
-        .filter((s) => {
-          const k = s.key as ResumeSectionKey;
-          if (k in resume.visibility && !resume.visibility[k]) return false;
-          return s.visible !== false;
-        })
+      const flatBullets = resume.sections
+        .filter((s) => s.visible)
         .flatMap((s) =>
           s.items.map((it) => ({
             title: it.heading,
@@ -217,19 +163,21 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
       });
     }, 1000);
     return () => clearTimeout(timer);
-  }, [resume, open, job?.id, profile, runCheck]);
+  }, [resume, open, job, profile, runCheck]);
 
-  // Reset on close / job change
+  /* 6) Reset on close / job change */
   useEffect(() => {
     if (!open) {
-      setTimeout(() => {
+      const t = setTimeout(() => {
         clearResult();
+        resetStructure();
         setResume(null);
         setMatchScore(null);
         isFirstResumeRef.current = true;
       }, 300);
+      return () => clearTimeout(t);
     }
-  }, [open, clearResult]);
+  }, [open, clearResult, resetStructure]);
 
   useEffect(() => {
     setMatchScore(null);
@@ -238,15 +186,13 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
     isFirstResumeRef.current = true;
   }, [job?.id, clearResult]);
 
-  // Measure pages by checking the rendered canvas height vs 11in.
+  /* 7) Page count by canvas height */
   useEffect(() => {
     if (!resume) return;
     const el = canvasContainerRef.current?.querySelector("[data-resume-canvas]") as HTMLElement | null;
     if (!el) return;
     const measure = () => {
       const heightPx = el.scrollHeight;
-      // 11 inches at on-screen size — the canvas width is set to min(100%, 8.5in)
-      // so 1in ≈ canvasWidth/8.5
       const widthPx = el.getBoundingClientRect().width;
       const pxPerIn = widthPx / 8.5;
       const pages = Math.max(1, Math.ceil(heightPx / (pxPerIn * 11)));
@@ -263,27 +209,15 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
     [job?.description, job?.skills],
   );
 
-  const handleRegenerate = () => {
-    if (!job || !baseResume) return;
-    clearResult();
-    setResume(null);
-    generate({
-      job_title: job.title,
-      job_description: job.description || "",
-      job_skills: job.skills || [],
-      resume_intelligence: intelligence,
-      base_resume: baseResume as any,
-      resume_version: `${baseResume.source_signature}::${Date.now()}`,
-      regeneration_round: 2,
-    });
-  };
+  const changesCount = useMemo(() => countActiveChanges(resume), [resume]);
 
   const handleDownload = (format: "pdf" | "docx" | "txt") => {
     if (!resume || !job) return;
     if (format === "pdf") exportResumeAsPdf(resume, job.title, job.company);
-    else if (format === "docx") exportResumeAsDocx(resume, job.title, job.company).catch(() =>
-      toast({ title: "Download failed", description: "Could not generate Word file.", variant: "destructive" }),
-    );
+    else if (format === "docx")
+      exportResumeAsDocx(resume, job.title, job.company).catch(() =>
+        toast({ title: "Download failed", description: "Could not generate Word file.", variant: "destructive" }),
+      );
     else exportResumeAsText(resume, job.title, job.company);
   };
 
@@ -298,6 +232,8 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
   };
 
   if (!job) return null;
+
+  const isWorking = isLoadingStructure || isGenerating;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -319,7 +255,7 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
             <div className="flex items-center gap-2">
               {matchScore != null && (
                 <span
-                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium border transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium border"
                   style={{
                     backgroundColor: "hsl(174 72% 56% / 0.12)",
                     color: "hsl(174 72% 28%)",
@@ -327,26 +263,11 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
                   }}
                   title="Live ATS match score — updates as you edit"
                 >
-                  {isChecking && (
-                    <Loader2 className="h-3 w-3 animate-spin opacity-70" />
-                  )}
+                  {isChecking && <Loader2 className="h-3 w-3 animate-spin opacity-70" />}
                   <span>Match score:</span>
                   <span className="font-bold tabular-nums">{matchScore}%</span>
                 </span>
               )}
-              {resume && (
-                <SectionVisibilityMenu resume={resume} setResume={setResume} />
-              )}
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleRegenerate}
-                disabled={isGenerating || !hasResume}
-                className="h-8 rounded-lg"
-              >
-                {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <RefreshCw className="h-3.5 w-3.5 mr-1.5" />}
-                Re-tailor
-              </Button>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -369,23 +290,44 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
               </DropdownMenu>
             </div>
           </div>
+
+          {/* Changes banner */}
+          {resume && changesCount > 0 && (
+            <div
+              className="mt-2 inline-flex items-center gap-1.5 self-start rounded-md px-2.5 py-1 text-[11px] font-medium"
+              style={{
+                backgroundColor: "hsl(174 72% 56% / 0.10)",
+                color: "hsl(174 72% 28%)",
+              }}
+            >
+              <Sparkles className="h-3 w-3" />
+              {changesCount} change{changesCount === 1 ? "" : "s"} made to match this role
+            </div>
+          )}
         </DialogHeader>
 
-        <div
-          ref={canvasContainerRef}
-          className="flex-1 min-h-0 overflow-y-auto bg-muted/30 p-6"
-        >
+        <div ref={canvasContainerRef} className="flex-1 min-h-0 overflow-y-auto bg-muted/30 p-6">
           {!hasResume ? (
             <EmptyState
               icon={<AlertCircle className="h-10 w-10 text-muted-foreground/60" />}
               title="No resume on file"
               body="Upload your resume in Profile Settings to get started."
             />
-          ) : isGenerating && !resume ? (
+          ) : structureError ? (
+            <EmptyState
+              icon={<AlertCircle className="h-10 w-10 text-destructive/70" />}
+              title="Could not load your resume"
+              body={structureError}
+            />
+          ) : isWorking && !resume ? (
             <EmptyState
               icon={<Loader2 className="h-10 w-10 text-accent animate-spin" />}
-              title="Tailoring your resume…"
-              body="Aligning keywords and matching this role's requirements."
+              title={isLoadingStructure ? "Reading your resume…" : "Tailoring for this role…"}
+              body={
+                isLoadingStructure
+                  ? "Preserving your sections, structure, and bullet points exactly."
+                  : "Only the wording is being adjusted — your structure stays the same."
+              }
             />
           ) : !resume ? (
             <EmptyState
@@ -394,11 +336,7 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
               body=""
             />
           ) : (
-            <ResumeCanvas
-              resume={resume}
-              onChange={setResume}
-              keywords={keywords}
-            />
+            <ResumeCanvas resume={resume} onChange={setResume} keywords={keywords} />
           )}
         </div>
 
@@ -425,7 +363,7 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
             )}
           </div>
           <span className="text-muted-foreground/70">
-            Click any text to edit. Drag bullets to reorder. Black & white only.
+            Edits in teal show what the AI changed. Click any text to edit.
           </span>
         </div>
       </DialogContent>
@@ -448,89 +386,5 @@ function EmptyState({
       <p className="text-sm font-medium text-foreground">{title}</p>
       {body && <p className="text-xs text-muted-foreground max-w-sm">{body}</p>}
     </div>
-  );
-}
-
-function SectionVisibilityMenu({
-  resume,
-  setResume,
-}: {
-  resume: EditableResume;
-  setResume: (r: EditableResume) => void;
-}) {
-  const sectionExists = (key: ResumeSectionKey) => {
-    if (key === "summary" || key === "skills") return true;
-    return resume.sections.some((s) => s.key === key);
-  };
-
-  const addSection = (key: ResumeSectionKey, label: string) => {
-    if (sectionExists(key)) {
-      setResume({ ...resume, visibility: { ...resume.visibility, [key]: true } });
-      return;
-    }
-    setResume({
-      ...resume,
-      sections: [
-        ...resume.sections,
-        {
-          id: newId("sec"),
-          key,
-          title: label,
-          visible: true,
-          items: [
-            {
-              id: newId("item"),
-              heading: "",
-              subheading: "",
-              date: "",
-              bullets: [{ id: newId("bul"), text: "" }],
-            },
-          ],
-        },
-      ],
-      visibility: { ...resume.visibility, [key]: true },
-    });
-  };
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button size="sm" variant="ghost" className="h-8 rounded-lg">
-          <Settings2 className="h-3.5 w-3.5 mr-1.5" />
-          Sections
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-60 p-2">
-        <p className="text-[11px] font-medium text-muted-foreground px-2 pb-1.5">Show / hide sections</p>
-        {SECTION_OPTIONS.map((opt) => {
-          const visible = resume.visibility[opt.key] !== false;
-          const exists = sectionExists(opt.key);
-          return (
-            <div
-              key={opt.key}
-              className="flex items-center justify-between py-1.5 px-2 hover:bg-accent/5 rounded text-sm"
-            >
-              <span className="text-foreground">{opt.label}</span>
-              {exists ? (
-                <Switch
-                  checked={visible}
-                  onCheckedChange={(v) =>
-                    setResume({ ...resume, visibility: { ...resume.visibility, [opt.key]: v } })
-                  }
-                />
-              ) : (
-                <button
-                  type="button"
-                  className="text-[11px] text-accent hover:underline inline-flex items-center gap-0.5"
-                  onClick={() => addSection(opt.key, opt.label)}
-                >
-                  <Plus className="h-3 w-3" /> Add
-                </button>
-              )}
-            </div>
-          );
-        })}
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }

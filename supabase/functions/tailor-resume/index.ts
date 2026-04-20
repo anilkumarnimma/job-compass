@@ -7,48 +7,82 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+/**
+ * NEW CONTRACT (preserve original structure):
+ *
+ * Request body:
+ * {
+ *   job_title: string,
+ *   job_description: string,
+ *   job_skills: string[],
+ *   resume_structure: {
+ *     header: { full_name: string, contact_details: string[] },
+ *     summary?: string,
+ *     skills: string[],
+ *     sections: Array<{
+ *       title: string,
+ *       items: Array<{
+ *         heading: string,
+ *         subheading?: string,
+ *         date?: string,
+ *         bullets: string[],
+ *       }>,
+ *     }>,
+ *   }
+ * }
+ *
+ * Response: same shape, but:
+ *  - summary may be rewritten (return both `summary` and `summary_original`)
+ *  - skills array reordered (matching ones first); same skills, no additions
+ *  - sections preserved in same order, same titles
+ *  - items preserved in same order, with EXACT same heading / subheading / date
+ *  - bullets preserved in same order and same count, each as
+ *      { text: string, original: string, changed: boolean }
+ *  - keywords_added: string[]  (just for stats)
+ *  - changes_count: number     (number of bullets/summary modified)
+ */
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    console.log("[TAILOR] Function started");
-
-    // Auth guard
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      console.log("[TAILOR] No auth header");
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const supabaseAuth = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
-    });
+    const supabaseAuth = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
     const { data: { user: authUser }, error: authError } = await supabaseAuth.auth.getUser();
     if (authError || !authUser) {
-      console.log("[TAILOR] Auth failed:", authError?.message);
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    console.log("[TAILOR] User authenticated:", authUser.id);
 
     let body: any;
     try {
       body = await req.json();
-    } catch (parseErr) {
-      console.error("[TAILOR] Failed to parse request body:", parseErr);
+    } catch {
       return new Response(JSON.stringify({ error: "Invalid request body" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const { job_title, job_description, job_skills, resume_intelligence, resume_text, base_resume, regeneration_round } = body;
-    const round = typeof regeneration_round === "number" ? regeneration_round : 1;
+    const { job_title, job_description, job_skills, resume_structure } = body;
 
     if (!job_title) {
-      console.log("[TAILOR] Missing job_title");
       return new Response(JSON.stringify({ error: "job_title is required" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!resume_structure || !resume_structure.sections) {
+      return new Response(JSON.stringify({ error: "Please upload your resume in Profile Settings to get started." }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -56,126 +90,69 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
-    // Check if we have enough resume data to work with
-    const hasResumeData = resume_text || resume_intelligence || (base_resume?.sections?.length > 0);
-    if (!hasResumeData) {
-      console.log("[TAILOR] Insufficient resume data");
-      return new Response(JSON.stringify({ error: "Please upload your resume first or complete your profile to generate a tailored resume." }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    console.log("[TAILOR] Job:", job_title, "| sections:", resume_structure.sections?.length);
 
-    console.log("[TAILOR] Generating for job:", job_title, "| has base_resume:", !!base_resume, "| has resume_text:", !!resume_text, "| has intelligence:", !!resume_intelligence);
+    const systemPrompt = `You are an expert ATS resume editor. You receive the candidate's actual uploaded resume in a STRUCTURED form. Your job is to MINIMALLY rewrite ONLY the wording of bullet points, the summary, and the order of skills — to better match a target job — WITHOUT changing the structure.
 
-    // Round-specific deepening instructions
-    const roundInstructions = round <= 1
-      ? `OPTIMIZATION FOCUS (Round 1 — Keyword Alignment):
-- Match keywords and skills from the job description into the resume
-- Add missing relevant skills to the skills section
-- Strengthen action verbs in bullet points
-- Add a tailored professional summary`
-      : round === 2
-      ? `OPTIMIZATION FOCUS (Round 2 — Deep Rewrite):
-- This resume was ALREADY tailored once. You must improve upon it further.
-- Rewrite bullet points to more closely mirror the exact language used in the job description
-- Use the same terminology, phrases, and technical terms as the job posting
-- Quantify more achievements with realistic metrics
-- Ensure every bullet starts with a powerful, job-relevant action verb`
-      : `OPTIMIZATION FOCUS (Round ${round} — Maximum ATS Optimization):
-- This resume has been through ${round - 1} rounds of optimization already. Push it further.
-- Tighten keyword density — ensure every important keyword from the job description appears at least once
-- Add any still-missing skills that the candidate plausibly has
-- Reorder sections and bullet points to put the most ATS-relevant content first
-- Remove or condense any content not relevant to this specific job
-- Ensure the summary perfectly mirrors the job requirements
-- Maximize keyword overlap without sounding unnatural`;
+ABSOLUTE RULES — VIOLATIONS ARE STRICTLY FORBIDDEN:
+1. NEVER change the candidate's name or contact details — return them EXACTLY as given.
+2. NEVER add or remove sections. Same sections, same titles, in the same order.
+3. NEVER add or remove items (jobs/projects/education entries). Keep them all, in original order.
+4. For each item, NEVER change the heading (job title), subheading (company / school), or date — copy them character-for-character.
+5. NEVER change the number of bullets per item. If an item has 5 bullets, return 5 bullets — same count, same order.
+6. NEVER change Education entries at all (degrees, schools, dates). Pass them through verbatim.
+7. NEVER fabricate companies, roles, dates, or qualifications.
 
-    const systemPrompt = `You are an expert ATS resume optimizer. You tailor a candidate's existing resume for a specific job posting.
-${round > 1 ? `\nIMPORTANT: This is regeneration round ${round}. The base resume provided is the OUTPUT of the previous round. You MUST improve upon it — produce a BETTER ATS-optimized version, not the same one.\n` : ""}
-${roundInstructions}
+ALLOWED EDITS (do these aggressively where useful):
+- Rewrite each bullet's wording to naturally include keywords from the job description. The bullet's MEANING and FACTS must stay the same — only the phrasing changes.
+- Strengthen weak verbs (e.g. "helped" → "spearheaded").
+- Rewrite the summary to mention the target role / company naturally and include relevant keywords. Keep it to 3–5 sentences.
+- Reorder the skills array so skills that match the job description appear first. DO NOT add new skills. DO NOT remove skills.
 
-ABSOLUTE MANDATORY RULES — NEVER EVER CHANGE THESE:
-0. The uploaded/base resume structure is the source of truth. Preserve the same header identity, section order, section titles, core entries, company names, job titles, education entries, and dates exactly.
-1. Company names — copy them EXACTLY character-for-character from the candidate's resume. Do NOT rename, abbreviate, expand, normalize, or replace any company name.
-2. Job titles / role names — keep EXACTLY as written in the resume
-3. Employment dates / years — keep EXACTLY as written in the resume
-4. Education institution names — keep EXACTLY as written in the resume
-5. Education degrees — keep EXACTLY as written in the resume
-6. Education dates / years — keep EXACTLY as written in the resume
-7. Project names — keep EXACTLY as written in the resume
-8. Header / top contact details — keep the candidate name and contact details from the base resume exactly as provided
-9. Do NOT remove sections that exist in the base resume. Keep the resume complete from top to bottom.
+OUTPUT FORMAT — call the tool exactly. For each bullet you MUST return:
+  { "text": <new wording>, "changed": <true if you changed it from the original, else false> }
+If you did not edit a bullet, return text === the original bullet and changed=false.
 
-VIOLATION OF THE ABOVE RULES IS STRICTLY FORBIDDEN. These are the candidate's real career facts.
+The summary should be returned in "summary" (new wording). Set "summary_changed" to true if you changed it.
 
-ALLOWED OPTIMIZATIONS — DO these aggressively:
-- Add missing relevant keywords from the job description into existing bullet points naturally
-- Strengthen action verbs (e.g. "helped" → "spearheaded", "did" → "engineered")
-- Add new realistic bullet points that align with the candidate's actual skills/experience
-- Quantify achievements where plausible (e.g. "improved performance" → "improved performance by 40%")
-- Reorder bullet points to prioritize the most relevant ones for this job first
-- Add missing skills to the skills section IF the candidate plausibly has them based on their experience
-- Preserve the same overall resume structure and section ordering from the base resume
+Be aggressive but truthful — aim to modify ~60% of bullets to better match the role.`;
 
-PROFESSIONAL SUMMARY REQUIREMENT (CRITICAL):
-- The summary field MUST be a strong, detailed professional summary of exactly 5-6 sentences (NOT a one-liner).
-- It must read as a single cohesive paragraph placed at the top of the resume.
-- Use ATS-optimized keywords from the job description naturally throughout the summary.
-- Tone must be professional, confident, and impactful.
-- The summary must truthfully reflect the candidate's actual experience from the resume — do NOT fabricate claims.
-
-BULLET POINT DEPTH REQUIREMENT (CRITICAL):
-- Every experience/work role MUST have exactly 9-10 bullet points. No fewer than 9.
-- Each bullet must start with a strong action verb.
-- Each bullet must be technically detailed, mentioning specific technologies, tools, frameworks, or methodologies relevant to the target job.
-- Each bullet must demonstrate impact, scale, or measurable contribution.
-- Prioritize bullets that align with the target job description's requirements and keywords.
-
-NEVER fabricate fake companies, fake roles, fake projects, or fake dates.
-
-TARGET: 95%+ ATS match score through keyword alignment and bullet optimization, NOT through fabrication.
-
-Return JSON using the tool provided.`;
-
-    const desc = (job_description || "").slice(0, 1200);
-    const skills = (job_skills || []).join(", ");
-    const resumeContent = resume_text || (resume_intelligence ? JSON.stringify(resume_intelligence) : "No resume provided");
-    const baseResumeStr = base_resume ? JSON.stringify(base_resume).slice(0, 5000) : "No structured base resume provided";
-
-    const userPrompt = `TARGET JOB: ${job_title}
-REQUIRED SKILLS: ${skills}
-JOB DESCRIPTION: ${desc}
-
-BASE RESUME STRUCTURE TO PRESERVE EXACTLY:
-${baseResumeStr}
-
-CANDIDATE'S CURRENT RESUME (preserve ALL company names, titles, dates, education EXACTLY):
-${typeof resumeContent === 'string' ? resumeContent.slice(0, 2500) : JSON.stringify(resumeContent).slice(0, 2500)}
-
-IMPORTANT REMINDER: Copy every company name, job title, date, education detail, header detail, and section order EXACTLY from the base resume above. Do NOT change them. Only optimize bullet points, skills, summary, and keyword alignment.`;
+    // Send a compact JSON of the structure so the AI can faithfully echo it back.
+    const userPayload = {
+      target_job_title: job_title,
+      target_job_skills: (job_skills || []).slice(0, 30),
+      target_job_description: (job_description || "").slice(0, 2500),
+      resume: {
+        header: resume_structure.header,
+        summary: resume_structure.summary || "",
+        skills: (resume_structure.skills || []).slice(0, 80),
+        sections: (resume_structure.sections || []).map((s: any) => ({
+          title: s.title,
+          items: (s.items || []).map((it: any) => ({
+            heading: it.heading || "",
+            subheading: it.subheading || "",
+            date: it.date || "",
+            bullets: (it.bullets || []).map((b: any) =>
+              typeof b === "string" ? b : (b?.text || ""),
+            ),
+          })),
+        })),
+      },
+    };
 
     const toolDef = {
       type: "function",
       function: {
         name: "return_tailored_resume",
-        description: "Return the tailored resume content",
+        description: "Return the same resume structure with minimal wording rewrites.",
         parameters: {
           type: "object",
           properties: {
-            header: {
-              type: "object",
-              description: "Resume header copied from the base resume exactly",
-              properties: {
-                full_name: { type: "string" },
-                headline: { type: "string" },
-                contact_details: { type: "array", items: { type: "string" } },
-              },
-              required: ["full_name", "contact_details"],
-            },
-            summary: { type: "string", description: "5-6 sentence professional summary paragraph tailored to this job." },
+            summary: { type: "string" },
+            summary_changed: { type: "boolean" },
+            skills: { type: "array", items: { type: "string" } },
             sections: {
               type: "array",
-              description: "Resume sections preserving original order, titles, headings, dates exactly",
               items: {
                 type: "object",
                 properties: {
@@ -188,20 +165,28 @@ IMPORTANT REMINDER: Copy every company name, job title, date, education detail, 
                         heading: { type: "string" },
                         subheading: { type: "string" },
                         date: { type: "string" },
-                        bullets: { type: "array", items: { type: "string" } },
+                        bullets: {
+                          type: "array",
+                          items: {
+                            type: "object",
+                            properties: {
+                              text: { type: "string" },
+                              changed: { type: "boolean" },
+                            },
+                            required: ["text", "changed"],
+                          },
+                        },
                       },
-                      required: ["heading"],
+                      required: ["heading", "bullets"],
                     },
                   },
                 },
                 required: ["title", "items"],
               },
             },
-            skills_section: { type: "array", items: { type: "string" } },
             keywords_added: { type: "array", items: { type: "string" } },
-            optimization_notes: { type: "string" },
           },
-          required: ["header", "summary", "sections", "skills_section", "keywords_added", "optimization_notes"],
+          required: ["summary", "summary_changed", "skills", "sections", "keywords_added"],
         },
       },
     };
@@ -213,10 +198,10 @@ IMPORTANT REMINDER: Copy every company name, job title, date, education detail, 
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       const model = models[Math.min(attempt, models.length - 1)];
-      console.log(`[TAILOR] Attempt ${attempt + 1}/${maxRetries + 1} with model: ${model}`);
+      console.log(`[TAILOR] Attempt ${attempt + 1} model=${model}`);
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 55000); // 55s timeout to stay within edge function limits
+        const timeout = setTimeout(() => controller.abort(), 55000);
 
         response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
@@ -229,7 +214,7 @@ IMPORTANT REMINDER: Copy every company name, job title, date, education detail, 
             model,
             messages: [
               { role: "system", content: systemPrompt },
-              { role: "user", content: userPrompt },
+              { role: "user", content: JSON.stringify(userPayload) },
             ],
             tools: [toolDef],
             tool_choice: { type: "function", function: { name: "return_tailored_resume" } },
@@ -239,28 +224,25 @@ IMPORTANT REMINDER: Copy every company name, job title, date, education detail, 
         clearTimeout(timeout);
 
         if (response.status === 429) {
-          console.log("[TAILOR] Rate limited");
-          return new Response(JSON.stringify({ error: "AI service is busy. Please try again in a moment." }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          return new Response(JSON.stringify({ error: "AI service is busy. Please try again in a moment." }), {
+            status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
         }
         if (response.status === 402) {
-          console.log("[TAILOR] Credits exhausted");
-          return new Response(JSON.stringify({ error: "AI service is temporarily unavailable. Please try again later." }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          return new Response(JSON.stringify({ error: "AI service is temporarily unavailable. Please try again later." }), {
+            status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
         }
-
-        if (response.ok) {
-          console.log(`[TAILOR] AI response OK on attempt ${attempt + 1}`);
-          break;
-        }
+        if (response.ok) break;
 
         lastError = await response.text();
-        console.error(`[TAILOR] AI attempt ${attempt + 1} failed (model: ${model}, status: ${response.status}):`, lastError.slice(0, 300));
+        console.error(`[TAILOR] Attempt ${attempt + 1} failed (status ${response.status}):`, lastError.slice(0, 300));
         response = null;
-
         if (attempt < maxRetries) await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
       } catch (fetchErr: any) {
         const isAbort = fetchErr?.name === "AbortError";
-        console.error(`[TAILOR] Attempt ${attempt + 1} ${isAbort ? "timed out" : "error"}:`, fetchErr?.message || fetchErr);
         lastError = isAbort ? "AI request timed out" : (fetchErr?.message || "Network error");
+        console.error(`[TAILOR] Attempt ${attempt + 1} ${isAbort ? "timeout" : "error"}:`, lastError);
         response = null;
         if (attempt < maxRetries) await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
       }
@@ -276,8 +258,7 @@ IMPORTANT REMINDER: Copy every company name, job title, date, education detail, 
     let result: any;
     try {
       result = await response.json();
-    } catch (jsonErr) {
-      console.error("[TAILOR] Failed to parse AI response JSON:", jsonErr);
+    } catch {
       return new Response(JSON.stringify({ error: "Failed to process AI response. Please try again." }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -285,39 +266,114 @@ IMPORTANT REMINDER: Copy every company name, job title, date, education detail, 
 
     const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall?.function?.arguments) {
-      console.error("[TAILOR] No tool call in AI response. Keys:", Object.keys(result || {}));
       return new Response(JSON.stringify({ error: "AI did not return a valid resume. Please try again." }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    let tailoredResume: any;
+    let aiOutput: any;
     try {
-      tailoredResume = JSON.parse(toolCall.function.arguments);
-    } catch (parseErr) {
-      console.error("[TAILOR] Failed to parse tool call arguments:", parseErr);
+      aiOutput = JSON.parse(toolCall.function.arguments);
+    } catch {
       return new Response(JSON.stringify({ error: "AI returned invalid resume data. Please try again." }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Validate essential fields
-    if (!tailoredResume.header || !tailoredResume.sections) {
-      console.error("[TAILOR] Missing essential fields in tailored resume");
-      return new Response(JSON.stringify({ error: "AI returned incomplete resume. Please try again." }), {
-        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // ───── ENFORCE STRUCTURE INTEGRITY ─────
+    // Even if the model strays, we forcibly reconcile the AI output with the
+    // original structure so headings / dates / counts can never drift.
+    const original = resume_structure;
+    const aiSections: any[] = Array.isArray(aiOutput.sections) ? aiOutput.sections : [];
+
+    let changesCount = 0;
+    const safeSections = (original.sections || []).map((origSec: any, sIdx: number) => {
+      const aiSec = aiSections[sIdx] || {};
+      const aiItems: any[] = Array.isArray(aiSec.items) ? aiSec.items : [];
+      const isEducation = /education/i.test(origSec.title || "");
+
+      return {
+        title: origSec.title, // never let AI rename sections
+        items: (origSec.items || []).map((origItem: any, iIdx: number) => {
+          const aiItem = aiItems[iIdx] || {};
+          const origBullets: string[] = (origItem.bullets || []).map((b: any) =>
+            typeof b === "string" ? b : (b?.text || ""),
+          );
+          const aiBullets: any[] = Array.isArray(aiItem.bullets) ? aiItem.bullets : [];
+
+          const bullets = origBullets.map((origText, bIdx) => {
+            // Education or contact-ish sections: pass through verbatim, never count as changed
+            if (isEducation) {
+              return { text: origText, original: origText, changed: false };
+            }
+            const aiB = aiBullets[bIdx];
+            const newText = (aiB && typeof aiB.text === "string" && aiB.text.trim())
+              ? aiB.text
+              : origText;
+            const changed = newText.trim() !== origText.trim();
+            if (changed) changesCount++;
+            return { text: newText, original: origText, changed };
+          });
+
+          return {
+            heading: origItem.heading || "",   // preserved verbatim
+            subheading: origItem.subheading || "",
+            date: origItem.date || "",
+            bullets,
+          };
+        }),
+      };
+    });
+
+    // Skills: only allow REORDERING of the original skills set. Never add/remove.
+    const origSkills: string[] = (original.skills || []).map((s: string) => String(s));
+    const lowerOrig = new Set(origSkills.map((s) => s.toLowerCase().trim()));
+    let safeSkills = origSkills;
+    if (Array.isArray(aiOutput.skills)) {
+      const seen = new Set<string>();
+      const reordered: string[] = [];
+      for (const s of aiOutput.skills) {
+        const key = String(s || "").toLowerCase().trim();
+        if (lowerOrig.has(key) && !seen.has(key)) {
+          seen.add(key);
+          // find original casing
+          const match = origSkills.find((o) => o.toLowerCase().trim() === key);
+          if (match) reordered.push(match);
+        }
+      }
+      // Append any originals the AI dropped — to preserve completeness
+      for (const s of origSkills) {
+        const key = s.toLowerCase().trim();
+        if (!seen.has(key)) {
+          seen.add(key);
+          reordered.push(s);
+        }
+      }
+      safeSkills = reordered;
     }
 
-    // Ensure arrays exist
-    tailoredResume.skills_section = tailoredResume.skills_section || [];
-    tailoredResume.keywords_added = tailoredResume.keywords_added || [];
-    tailoredResume.optimization_notes = tailoredResume.optimization_notes || "";
-    tailoredResume.header.contact_details = tailoredResume.header.contact_details || [];
+    // Summary: keep the AI rewrite (only rewording is allowed)
+    const origSummary = String(original.summary || "");
+    const newSummary = typeof aiOutput.summary === "string" && aiOutput.summary.trim()
+      ? aiOutput.summary
+      : origSummary;
+    const summaryChanged = !!origSummary && newSummary.trim() !== origSummary.trim();
+    if (summaryChanged) changesCount++;
 
-    console.log("[TAILOR] Success - sections:", tailoredResume.sections?.length, "skills:", tailoredResume.skills_section?.length);
+    const tailored = {
+      header: original.header, // never let AI touch this
+      summary: newSummary,
+      summary_original: origSummary,
+      summary_changed: summaryChanged,
+      skills: safeSkills,
+      sections: safeSections,
+      keywords_added: Array.isArray(aiOutput.keywords_added) ? aiOutput.keywords_added.slice(0, 25) : [],
+      changes_count: changesCount,
+    };
 
-    return new Response(JSON.stringify(tailoredResume), {
+    console.log("[TAILOR] Done. Changes:", changesCount, "| sections:", safeSections.length);
+
+    return new Response(JSON.stringify(tailored), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

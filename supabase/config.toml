@@ -32,3 +32,9 @@ verify_jwt = false
 
 [functions.admin-payments]
 verify_jwt = false
+
+[functions.tailor-resume]
+verify_jwt = false
+
+[functions.extract-resume-structure]
+verify_jwt = false

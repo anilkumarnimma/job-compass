@@ -1,11 +1,23 @@
 /**
  * Shared types + helpers for the editable tailored resume.
- * Kept in /lib so both the editor UI and the export utilities can use them.
+ *
+ * The editor now operates STRICTLY on the user's uploaded resume structure —
+ * the AI tailor only rewords bullets/summary and reorders skills. Every
+ * bullet carries its `original` text and a `changed` flag so the editor can
+ * highlight what was modified in teal.
  */
+
+import type {
+  ResumeStructure,
+  ResumeStructureItem,
+} from "@/hooks/useResumeStructure";
+import type { TailoredResumeData } from "@/hooks/useTailoredResume";
 
 export interface ResumeBullet {
   id: string;
   text: string;
+  original?: string;
+  changed?: boolean;
 }
 
 export interface ResumeItem {
@@ -16,44 +28,35 @@ export interface ResumeItem {
   bullets: ResumeBullet[];
 }
 
-export type ResumeSectionKey =
-  | "summary"
-  | "skills"
-  | "experience"
-  | "education"
-  | "projects"
-  | "certifications";
-
 export interface ResumeSection {
   id: string;
-  key: ResumeSectionKey | "custom";
+  /** "summary" / "skills" are surfaced separately. Other sections preserve their original title. */
+  key: "summary" | "skills" | "custom";
   title: string;
   visible: boolean;
   items: ResumeItem[];
+  /** True if this section came from the resume itself (so we don't reorder it). */
+  fromResume?: boolean;
 }
 
 export interface ResumeHeader {
   full_name: string;
-  contact_line: string; // single contact line shown right under the name
+  contact_line: string;
 }
 
 export interface EditableResume {
   header: ResumeHeader;
-  summary: string; // plain text/HTML for the summary section
+  summary: string;
+  /** True when the AI rewrote the summary (drives teal highlight on summary box). */
+  summary_changed?: boolean;
+  /** Original summary before tailoring. */
+  summary_original?: string;
   skills: string[];
-  sections: ResumeSection[]; // experience, education, projects, certifications
-  /** sectionKey -> visible */
-  visibility: Record<ResumeSectionKey, boolean>;
+  /** Sections IN THE EXACT ORDER they appeared in the user's uploaded resume. */
+  sections: ResumeSection[];
+  /** True if the section/value should be visible. Persistent across renders. */
+  visibility: { summary: boolean; skills: boolean };
 }
-
-export const DEFAULT_VISIBILITY: Record<ResumeSectionKey, boolean> = {
-  summary: true,
-  skills: true,
-  experience: true,
-  education: true,
-  projects: true,
-  certifications: true,
-};
 
 let __idCounter = 0;
 export const newId = (prefix = "id") => {
@@ -62,72 +65,104 @@ export const newId = (prefix = "id") => {
 };
 
 const compact = (values: Array<string | null | undefined>) =>
-  values.map((v) => (typeof v === "string" ? v.trim() : "")).filter(Boolean) as string[];
+  values
+    .map((v) => (typeof v === "string" ? v.trim() : ""))
+    .filter(Boolean) as string[];
 
 /**
- * Build an editable resume from the AI-tailored response combined with the user's profile.
- * The profile is the source of truth for the header (name + contact line).
+ * Build the editable resume from:
+ *  - the original ResumeStructure (source of truth for header / order)
+ *  - the AI tailored output (only updates summary text + bullet wording + skill order)
+ *  - the user's profile (used ONLY as a fallback if the parsed header is missing fields)
  */
 export function buildEditableResume(
-  tailored: any,
+  structure: ResumeStructure,
+  tailored: TailoredResumeData | null,
   profile: any | null | undefined,
 ): EditableResume {
+  // Header — always from the parsed resume; fall back to the profile.
   const fullName =
+    structure.header?.full_name?.trim() ||
     profile?.full_name?.trim() ||
     compact([profile?.first_name, profile?.last_name]).join(" ") ||
-    tailored?.header?.full_name ||
     "Your Name";
 
-  const contactParts = compact([
-    profile?.contact_email || profile?.email,
-    profile?.phone,
-    profile?.location || compact([profile?.city, profile?.state]).join(", "),
-    profile?.linkedin_url,
-    profile?.github_url,
-    profile?.portfolio_url,
-  ]);
-  const contact_line = contactParts.length
-    ? contactParts.join(" • ")
-    : (tailored?.header?.contact_details || []).filter(Boolean).join(" • ");
+  const contactParts =
+    structure.header?.contact_details?.length
+      ? structure.header.contact_details
+      : compact([
+          profile?.contact_email || profile?.email,
+          profile?.phone,
+          profile?.location || compact([profile?.city, profile?.state]).join(", "),
+          profile?.linkedin_url,
+          profile?.github_url,
+          profile?.portfolio_url,
+        ]);
 
-  const summary: string = typeof tailored?.summary === "string" ? tailored.summary : "";
-  const skills: string[] = Array.isArray(tailored?.skills_section) ? tailored.skills_section : [];
+  const contact_line = contactParts.filter(Boolean).join(" • ");
 
-  // Map AI sections into editable sections, classifying by title.
-  const sections: ResumeSection[] = (tailored?.sections || []).map((s: any) => {
-    const lowerTitle = String(s?.title || "").toLowerCase();
-    let key: ResumeSection["key"] = "custom";
-    if (lowerTitle.includes("experience") || lowerTitle.includes("work")) key = "experience";
-    else if (lowerTitle.includes("education")) key = "education";
-    else if (lowerTitle.includes("project")) key = "projects";
-    else if (lowerTitle.includes("certif")) key = "certifications";
+  // Summary — tailored text if present, else the original.
+  const summary = tailored?.summary ?? structure.summary ?? "";
+  const summary_original = tailored?.summary_original ?? structure.summary ?? "";
+  const summary_changed = !!tailored?.summary_changed;
 
-    const items: ResumeItem[] = (s?.items || []).map((it: any) => ({
-      id: newId("item"),
-      heading: String(it?.heading || ""),
-      subheading: it?.subheading ? String(it.subheading) : "",
-      date: it?.date ? String(it.date) : "",
-      bullets: (it?.bullets || []).map((b: any) => ({
-        id: newId("bul"),
-        text: String(b || ""),
-      })),
-    }));
+  // Skills — tailored order if present, else original.
+  const skills = (tailored?.skills?.length ? tailored.skills : structure.skills) || [];
 
-    return {
-      id: newId("sec"),
-      key,
-      title: String(s?.title || "Section"),
-      visible: true,
-      items,
-    };
-  });
+  // Sections — preserve the EXACT order from the original structure.
+  const tailoredSections = tailored?.sections || [];
+
+  const sections: ResumeSection[] = (structure.sections || []).map(
+    (origSec, sIdx): ResumeSection => {
+      const tailoredSec = tailoredSections[sIdx];
+      const items: ResumeItem[] = (origSec.items || []).map((origItem: ResumeStructureItem, iIdx) => {
+        const tailoredItem = tailoredSec?.items?.[iIdx];
+        const origBullets = origItem.bullets || [];
+
+        const bullets: ResumeBullet[] = origBullets.map((origText, bIdx) => {
+          const tb = tailoredItem?.bullets?.[bIdx];
+          if (tb) {
+            return {
+              id: newId("bul"),
+              text: tb.text || origText,
+              original: tb.original ?? origText,
+              changed: !!tb.changed,
+            };
+          }
+          return { id: newId("bul"), text: origText, original: origText, changed: false };
+        });
+
+        return {
+          id: newId("item"),
+          heading: origItem.heading || "",
+          subheading: origItem.subheading || "",
+          date: origItem.date || "",
+          bullets,
+        };
+      });
+
+      return {
+        id: newId("sec"),
+        key: "custom",
+        title: origSec.title || "Section",
+        visible: true,
+        items,
+        fromResume: true,
+      };
+    },
+  );
 
   return {
     header: { full_name: fullName, contact_line },
     summary,
+    summary_original,
+    summary_changed,
     skills,
     sections,
-    visibility: { ...DEFAULT_VISIBILITY },
+    visibility: {
+      summary: !!(summary && summary.trim()),
+      skills: skills.length > 0,
+    },
   };
 }
 
@@ -151,7 +186,10 @@ export function sanitizeFilenamePart(value: string) {
     .slice(0, 40) || "Untitled";
 }
 
-/** FirstName_LastName_RoleName_CompanyName.ext */
+/**
+ * FirstName_LastName_CompanyName_RoleName.ext
+ * (Per spec: company before role, no dates / no version numbers / no AI labels.)
+ */
 export function buildResumeFilename(
   fullName: string,
   jobTitle: string,
@@ -161,9 +199,9 @@ export function buildResumeFilename(
   const parts = (fullName || "").trim().split(/\s+/);
   const first = sanitizeFilenamePart(parts[0] || "Resume");
   const last = sanitizeFilenamePart(parts.slice(1).join(" ") || "");
-  const role = sanitizeFilenamePart(jobTitle || "Role");
   const co = sanitizeFilenamePart(company || "Company");
-  const name = [first, last, role, co].filter(Boolean).join("_");
+  const role = sanitizeFilenamePart(jobTitle || "Role");
+  const name = [first, last, co, role].filter(Boolean).join("_");
   return `${name}.${ext}`;
 }
 
@@ -187,8 +225,6 @@ export function resumeToPlainText(resume: EditableResume): string {
   }
 
   for (const section of resume.sections) {
-    const visKey = section.key as ResumeSectionKey;
-    if (visKey in resume.visibility && !resume.visibility[visKey]) continue;
     if (!section.visible) continue;
     if (!section.items.length) continue;
     lines.push(section.title.toUpperCase());
@@ -210,8 +246,8 @@ export function resumeToPlainText(resume: EditableResume): string {
 export function stripHtml(html: string): string {
   if (!html) return "";
   return html
-    // Strip our preview-only keyword highlight wrappers first (keep inner text).
-    .replace(/<mark\b[^>]*data-kw[^>]*>([\s\S]*?)<\/mark>/gi, "$1")
+    // Strip preview-only highlight wrappers (keyword + change) keeping inner text.
+    .replace(/<mark\b[^>]*data-(?:kw|chg)[^>]*>([\s\S]*?)<\/mark>/gi, "$1")
     .replace(/<\/(p|div|li|h[1-6])>/gi, "\n")
     .replace(/<br\s*\/?>(?!\n)/gi, "\n")
     .replace(/<[^>]+>/g, "")
@@ -223,9 +259,18 @@ export function stripHtml(html: string): string {
     .replace(/&#39;/g, "'");
 }
 
-export function isSectionVisible(resume: EditableResume, section: ResumeSection): boolean {
-  if (!section.visible) return false;
-  const k = section.key as ResumeSectionKey;
-  if (k in resume.visibility) return resume.visibility[k];
-  return true;
+/** Convenience: count tailoring changes still present in the editable resume. */
+export function countActiveChanges(resume: EditableResume | null): number {
+  if (!resume) return 0;
+  let n = resume.summary_changed && resume.summary?.trim() === (resume.summary_original ?? "").trim()
+    ? 0 // user reverted summary
+    : (resume.summary_changed ? 1 : 0);
+  for (const s of resume.sections) {
+    for (const it of s.items) {
+      for (const b of it.bullets) {
+        if (b.changed) n += 1;
+      }
+    }
+  }
+  return n;
 }
