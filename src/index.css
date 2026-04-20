@@ -468,3 +468,15 @@
   0%, 100% { background-position: 200% 50%; }
   50% { background-position: -100% 50%; }
 }
+
+/* Tailored Resume — keyword highlight (preview only, never exported) */
+.resume-kw-highlight {
+  background-color: hsl(174 72% 56% / 0.28);
+  border-radius: 2px;
+  padding: 0 1px;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+.resume-kw-highlight:hover {
+  background-color: hsl(174 72% 56% / 0.45);
+}

@@ -38,6 +38,7 @@ import {
   extractKeywords,
   newId,
   ResumeSectionKey,
+  stripHtml,
 } from "@/lib/resumeEditor";
 import {
   exportResumeAsPdf,
@@ -151,7 +152,7 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
     setResume(buildEditableResume(result, profile));
   }, [result, profile]);
 
-  // Compute ATS match score whenever the dialog opens / job changes
+  // Initial ATS match score when the dialog opens / job changes
   useEffect(() => {
     if (!open || !job || matchScore != null || isChecking || !profile) return;
     runCheck({
@@ -172,6 +173,52 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
     });
   }, [open, job?.id, matchScore, isChecking, profile, runCheck]);
 
+  // Live debounced match-score recompute as the user edits the resume.
+  // Debounced at 1s so it does not fire on every keystroke.
+  const isFirstResumeRef = useRef(true);
+  useEffect(() => {
+    if (!open || !job || !resume || !profile) return;
+    // Skip the very first hydration — initial score comes from the effect above.
+    if (isFirstResumeRef.current) {
+      isFirstResumeRef.current = false;
+      return;
+    }
+    const timer = setTimeout(() => {
+      // Build a synthetic profile snapshot from the live edits so the score
+      // reflects what's actually on the canvas.
+      const flatBullets = (resume.sections || [])
+        .filter((s) => {
+          const k = s.key as ResumeSectionKey;
+          if (k in resume.visibility && !resume.visibility[k]) return false;
+          return s.visible !== false;
+        })
+        .flatMap((s) =>
+          s.items.map((it) => ({
+            title: it.heading,
+            company: it.subheading,
+            description: it.bullets.map((b) => stripHtml(b.text).trim()).filter(Boolean).join("\n"),
+          })),
+        );
+      runCheck({
+        job_title: job.title,
+        job_description: job.description || "",
+        job_skills: job.skills || [],
+        formProfile: {
+          skills: resume.visibility.skills ? resume.skills : [],
+          current_title: profile.current_title,
+          current_company: profile.current_company,
+          experience_years: profile.experience_years,
+          work_experience: flatBullets,
+          education: profile.education as any,
+          certifications: profile.certifications as any,
+        },
+      }).then((res) => {
+        if (res) setMatchScore(res.overall_score);
+      });
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [resume, open, job?.id, profile, runCheck]);
+
   // Reset on close / job change
   useEffect(() => {
     if (!open) {
@@ -179,6 +226,7 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
         clearResult();
         setResume(null);
         setMatchScore(null);
+        isFirstResumeRef.current = true;
       }, 300);
     }
   }, [open, clearResult]);
@@ -187,6 +235,7 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
     setMatchScore(null);
     setResume(null);
     clearResult();
+    isFirstResumeRef.current = true;
   }, [job?.id, clearResult]);
 
   // Measure pages by checking the rendered canvas height vs 11in.
@@ -269,10 +318,21 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
 
             <div className="flex items-center gap-2">
               {matchScore != null && (
-                <Badge variant="secondary" className="rounded-full px-2.5 py-1 text-[11px]">
-                  <span className="font-bold">{matchScore}%</span>
-                  <span className="ml-1 text-muted-foreground">match with this job</span>
-                </Badge>
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium border transition-colors"
+                  style={{
+                    backgroundColor: "hsl(174 72% 56% / 0.12)",
+                    color: "hsl(174 72% 28%)",
+                    borderColor: "hsl(174 72% 56% / 0.35)",
+                  }}
+                  title="Live ATS match score — updates as you edit"
+                >
+                  {isChecking && (
+                    <Loader2 className="h-3 w-3 animate-spin opacity-70" />
+                  )}
+                  <span>Match score:</span>
+                  <span className="font-bold tabular-nums">{matchScore}%</span>
+                </span>
               )}
               {resume && (
                 <SectionVisibilityMenu resume={resume} setResume={setResume} />

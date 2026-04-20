@@ -210,6 +210,8 @@ export function resumeToPlainText(resume: EditableResume): string {
 export function stripHtml(html: string): string {
   if (!html) return "";
   return html
+    // Strip our preview-only keyword highlight wrappers first (keep inner text).
+    .replace(/<mark\b[^>]*data-kw[^>]*>([\s\S]*?)<\/mark>/gi, "$1")
     .replace(/<\/(p|div|li|h[1-6])>/gi, "\n")
     .replace(/<br\s*\/?>(?!\n)/gi, "\n")
     .replace(/<[^>]+>/g, "")

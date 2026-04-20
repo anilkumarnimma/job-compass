@@ -48,12 +48,14 @@ function SortableBullet({
   onRemove,
   onAddBelow,
   placeholder,
+  keywords,
 }: {
   bullet: { id: string; text: string };
   onChange: (text: string) => void;
   onRemove: () => void;
   onAddBelow: () => void;
   placeholder?: string;
+  keywords?: string[];
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: bullet.id });
@@ -86,6 +88,7 @@ function SortableBullet({
           onChange={onChange}
           placeholder={placeholder || "Bullet point…"}
           minHeight={20}
+          keywords={keywords}
         />
       </div>
       <div className="flex items-start gap-0.5 opacity-0 group-hover:opacity-100">
@@ -115,10 +118,12 @@ function ItemBlock({
   item,
   onItemChange,
   onRemoveItem,
+  keywords,
 }: {
   item: ResumeItem;
   onItemChange: (next: ResumeItem) => void;
   onRemoveItem: () => void;
+  keywords?: string[];
 }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
@@ -183,6 +188,7 @@ function ItemBlock({
               <SortableBullet
                 key={b.id}
                 bullet={b}
+                keywords={keywords}
                 onChange={(text) =>
                   setBullets(item.bullets.map((x) => (x.id === b.id ? { ...x, text } : x)))
                 }
@@ -281,6 +287,7 @@ export function ResumeCanvas({ resume, onChange, keywords }: ResumeCanvasProps) 
               onChange={(html) => onChange({ ...resume, summary: html })}
               placeholder="Write a tailored 3–5 sentence summary…"
               minHeight={48}
+              keywords={keywords}
             />
           </div>
         </SectionWrap>
@@ -324,6 +331,7 @@ export function ResumeCanvas({ resume, onChange, keywords }: ResumeCanvasProps) 
               <ItemBlock
                 key={item.id}
                 item={item}
+                keywords={keywords}
                 onItemChange={(next) =>
                   setSection(section.id, (s) => ({
                     ...s,
