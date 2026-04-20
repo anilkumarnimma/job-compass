@@ -535,6 +535,20 @@ Deno.serve(async (req) => {
     }).eq("id", runId);
 
     console.log(`[ingest-muse] Run ${runId} done: ${stats.total_imported} imported, ${stats.total_filtered} filtered`);
+
+    // Trigger silent description enrichment
+    try {
+      await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/enrich-job-description`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        },
+        body: JSON.stringify({}),
+      });
+    } catch (e) {
+      console.error("[ingest-muse] enrich trigger failed:", e);
+    }
   };
 
   // @ts-ignore - EdgeRuntime is available in Supabase Edge Functions
