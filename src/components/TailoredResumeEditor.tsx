@@ -244,6 +244,23 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
     });
   };
 
+  const handleRegenerate = async () => {
+    if (!job || !structure) return;
+    setConfirmRegenerate(false);
+    setResume(null);
+    clearResult();
+    setMatchScore(null);
+    isFirstResumeRef.current = true;
+    await generate({
+      job_title: job.title,
+      job_description: job.description || "",
+      job_skills: job.skills || [],
+      resume_structure: structure,
+      cache_key: `${job.id}::${resumeVersion}`,
+      force: true,
+    });
+  };
+
   if (!job) return null;
 
   const isWorking = isLoadingStructure || isGenerating;
