@@ -83,9 +83,9 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
     loadStructure({
       resume_path: profile.resume_url,
       filename: profile.resume_filename || undefined,
-      cache_key: `${profile.user_id || "u"}::${resumeVersion}`,
+      cache_key: `${resumeVersion}`,
     });
-  }, [open, hasResume, profile?.resume_url, profile?.resume_filename, structure, isLoadingStructure, loadStructure, resumeVersion, profile?.user_id]);
+  }, [open, hasResume, profile?.resume_url, profile?.resume_filename, structure, isLoadingStructure, loadStructure, resumeVersion]);
 
   /* 2) Once we have the structure + a job, kick off tailoring */
   useEffect(() => {
