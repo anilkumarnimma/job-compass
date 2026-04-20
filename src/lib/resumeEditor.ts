@@ -160,6 +160,45 @@ export function buildEditableResume(
     },
   );
 
+  // Build render order using extracted section_order. Tokens reference custom
+  // sections by id so renames don't break ordering. Unknown tokens are skipped;
+  // any sections/specials missing from the order are appended at the end.
+  const order: SectionOrderToken[] = [];
+  const used = { summary: false, skills: false, sectionIds: new Set<string>() };
+  const titleToSection = new Map<string, ResumeSection>();
+  for (const s of sections) titleToSection.set((s.title || "").toLowerCase().trim(), s);
+
+  const rawOrder = structure.section_order || [];
+  for (const token of rawOrder) {
+    const t = String(token || "").toLowerCase().trim();
+    if (!t) continue;
+    if (t === "summary" && !used.summary) {
+      order.push("summary");
+      used.summary = true;
+      continue;
+    }
+    if (t === "skills" && !used.skills) {
+      order.push("skills");
+      used.skills = true;
+      continue;
+    }
+    const sec = titleToSection.get(t);
+    if (sec && !used.sectionIds.has(sec.id)) {
+      order.push({ kind: "custom", sectionId: sec.id });
+      used.sectionIds.add(sec.id);
+    }
+  }
+  // Append anything missing (defensive — keeps Summary/Skills first if order absent).
+  if (!used.summary) order.unshift("summary");
+  if (!used.skills) {
+    // place skills right after summary if summary was prepended
+    const idx = order.indexOf("summary");
+    order.splice(idx + 1, 0, "skills");
+  }
+  for (const s of sections) {
+    if (!used.sectionIds.has(s.id)) order.push({ kind: "custom", sectionId: s.id });
+  }
+
   return {
     header: { full_name: fullName, contact_line },
     summary,
@@ -167,6 +206,7 @@ export function buildEditableResume(
     summary_changed,
     skills,
     sections,
+    order,
     visibility: {
       summary: !!(summary && summary.trim()),
       skills: skills.length > 0,
