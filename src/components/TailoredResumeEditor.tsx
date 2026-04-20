@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -24,6 +34,7 @@ import {
   Info,
   Sparkles,
   X,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useTailoredResume } from "@/hooks/useTailoredResume";
@@ -72,6 +83,7 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
   const [resume, setResume] = useState<EditableResume | null>(null);
   const [matchScore, setMatchScore] = useState<number | null>(null);
   const [pageInfo, setPageInfo] = useState<{ current: number; total: number }>({ current: 1, total: 1 });
+  const [confirmRegenerate, setConfirmRegenerate] = useState(false);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
 
   const hasResume = !!(profile?.resume_url || profile?.resume_filename);
@@ -232,6 +244,23 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
     });
   };
 
+  const handleRegenerate = async () => {
+    if (!job || !structure) return;
+    setConfirmRegenerate(false);
+    setResume(null);
+    clearResult();
+    setMatchScore(null);
+    isFirstResumeRef.current = true;
+    await generate({
+      job_title: job.title,
+      job_description: job.description || "",
+      job_skills: job.skills || [],
+      resume_structure: structure,
+      cache_key: `${job.id}::${resumeVersion}`,
+      force: true,
+    });
+  };
+
   if (!job) return null;
 
   const isWorking = isLoadingStructure || isGenerating;
@@ -269,6 +298,30 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
                   <span className="font-bold tabular-nums">{matchScore}%</span>
                 </span>
               )}
+
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={!resume || isGenerating || isLoadingStructure}
+                      onClick={() => setConfirmRegenerate(true)}
+                      className="h-8 rounded-lg"
+                    >
+                      {isGenerating ? (
+                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                      )}
+                      Regenerate
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    Ask the AI for a fresh tailored version
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -382,6 +435,24 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
           </span>
         </div>
       </DialogContent>
+
+      <AlertDialog open={confirmRegenerate} onOpenChange={setConfirmRegenerate}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Regenerate tailored resume?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will discard any manual edits you've made and ask the AI for a fresh
+              tailored version for this role. Your original resume on file is not affected.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRegenerate}>
+              Regenerate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

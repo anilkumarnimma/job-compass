@@ -44,6 +44,8 @@ interface GenerateParams {
   resume_structure: ResumeStructure;
   /** stable key for caching this combination (job + resume version) */
   cache_key: string;
+  /** when true, ignore any cached result and force a fresh AI call */
+  force?: boolean;
 }
 
 export function useTailoredResume() {
@@ -57,10 +59,14 @@ export function useTailoredResume() {
     async (params: GenerateParams) => {
       if (!user) return null;
 
-      const cached = cache.current.get(params.cache_key);
-      if (cached) {
-        setResult(cached);
-        return cached;
+      if (!params.force) {
+        const cached = cache.current.get(params.cache_key);
+        if (cached) {
+          setResult(cached);
+          return cached;
+        }
+      } else {
+        cache.current.delete(params.cache_key);
       }
 
       setIsGenerating(true);
