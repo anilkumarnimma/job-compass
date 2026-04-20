@@ -144,8 +144,8 @@ function ItemBlock({
   };
 
   return (
-    <div className="group/item space-y-1 mb-3">
-      <div className="flex items-baseline justify-between gap-2">
+    <div className="group/item space-y-0.5 mb-2">
+      <div className="flex items-baseline justify-between gap-3 w-full">
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-1.5 flex-wrap">
             <InlineEditable
@@ -169,26 +169,28 @@ function ItemBlock({
             )}
           </div>
         </div>
-        <InlineEditable
-          value={item.date || ""}
-          onChange={(v) => onItemChange({ ...item, date: v })}
-          placeholder="Dates"
-          className="text-[11px] text-black whitespace-nowrap"
-          ariaLabel="Dates"
-        />
-        <button
-          type="button"
-          aria-label="Remove entry"
-          onClick={onRemoveItem}
-          className="opacity-0 group-hover/item:opacity-100 p-0.5 rounded text-black hover:text-destructive hover:bg-destructive/10"
-        >
-          <X className="h-3.5 w-3.5" />
-        </button>
+        <div className="flex items-baseline gap-1 shrink-0">
+          <InlineEditable
+            value={item.date || ""}
+            onChange={(v) => onItemChange({ ...item, date: v })}
+            placeholder="Dates"
+            className="text-[11px] text-black whitespace-nowrap text-right"
+            ariaLabel="Dates"
+          />
+          <button
+            type="button"
+            aria-label="Remove entry"
+            onClick={onRemoveItem}
+            className="opacity-0 group-hover/item:opacity-100 p-0.5 rounded text-black hover:text-destructive hover:bg-destructive/10"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={item.bullets.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-          <ul className="space-y-0.5 ml-4 mt-1 text-[12.5px] text-black">
+          <ul className="space-y-0 ml-4 mt-0.5 text-[12.5px] text-black">
             {item.bullets.map((b, i) => (
               <SortableBullet
                 key={b.id}
@@ -212,7 +214,7 @@ function ItemBlock({
       <button
         type="button"
         onClick={() => setBullets([...item.bullets, { id: newId("bul"), text: "" }])}
-        className="resume-add-btn inline-flex items-center gap-1 mt-1 ml-4 px-1.5 py-0.5 rounded text-[11px] font-medium"
+        className="resume-add-btn inline-flex items-center gap-1 mt-0.5 ml-4 px-1.5 py-0.5 rounded text-[11px] font-medium opacity-0 group-hover/item:opacity-100"
       >
         <Plus className="h-3 w-3" />
         Add bullet
