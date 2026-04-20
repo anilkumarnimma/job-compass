@@ -5,6 +5,7 @@ import { Job, Application, SavedJob } from "@/types/job";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { enrichJobList } from "@/lib/jobEnrichment";
+import { friendlyError } from "@/lib/friendlyError";
 
 // Helper to parse job from DB
 function parseJob(row: any): Job {
@@ -163,7 +164,7 @@ export function useJobActions() {
       toast.success("Application tracked!");
     },
     onError: (error) => {
-      toast.error("Failed to track application: " + error.message);
+      toast.error(friendlyError(error, "Couldn't track that application. Please try again."));
     },
   });
 
@@ -184,7 +185,7 @@ export function useJobActions() {
       toast.success("Job saved!");
     },
     onError: (error) => {
-      toast.error("Failed to save job: " + error.message);
+      toast.error(friendlyError(error, "Couldn't save that job. Please try again."));
     },
   });
 
@@ -242,7 +243,7 @@ export function useJobActions() {
       queryClient.invalidateQueries({ queryKey: ["applications"] });
     },
     onError: (error) => {
-      toast.error("Failed to update status: " + error.message);
+      toast.error(friendlyError(error, "Couldn't update status. Please try again."));
     },
   });
 

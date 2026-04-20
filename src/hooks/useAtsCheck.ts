@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
 import { scheduleFeedbackPrompt } from "@/hooks/useFeedbackPrompt";
+import { friendlyError } from "@/lib/friendlyError";
 
 export interface AtsCheckResult {
   overall_score: number;
@@ -94,7 +95,7 @@ export function useAtsCheck() {
       if (!isTransient) {
         toast({
           title: "ATS Check failed",
-          description: msg || "Could not complete the analysis",
+          description: friendlyError(err, "We couldn't complete the analysis. Please try again."),
           variant: "destructive",
         });
       }

@@ -10,8 +10,11 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { hasEntryLevelIntent, stripEntryLevelKeywords } from "@/lib/jobFilters";
 
 const PAGE_SIZE = 20;
-const ENTRY_LEVEL_BATCH_SIZE = 100;
-const VISA_BATCH_SIZE = 200;
+// Bumped batches so client-filtered pagination has enough rows to fill multiple pages.
+// Visa filter typically keeps ~30-40% of jobs → 400 raw ≈ ~7-8 pages.
+// Entry-level filter typically keeps ~50% → 300 raw ≈ ~7 pages.
+const ENTRY_LEVEL_BATCH_SIZE = 300;
+const VISA_BATCH_SIZE = 400;
 const STALE_TIME = 5 * 60 * 1000; // 5 minutes
 
 function parseJob(row: any): Job {
@@ -228,9 +231,15 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
   });
 
   const clientFilteredCount = (jobsQuery.data as any)?.visaFilteredCount;
-  const totalCount = needsClientFilter
+  const rawTotalCount = needsClientFilter
     ? (clientFilteredCount ?? 0)
     : (countQuery.data ?? 0);
+
+  // PERMANENT FIX: when client-side filtering is active, the count above is
+  // bounded by what we actually fetched (ENTRY_LEVEL_BATCH_SIZE / VISA_BATCH_SIZE).
+  // Before, server count_search_jobs returned the un-enriched total → users
+  // could click page 6+ and see an empty list. Now totalCount === reachable rows.
+  const totalCount = rawTotalCount;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   return {

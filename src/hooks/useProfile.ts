@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { friendlyError } from "@/lib/friendlyError";
 
 export interface WorkExperience {
   title: string;
@@ -143,8 +144,8 @@ export function useProfile() {
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: error.message,
+        title: "Couldn't save your changes",
+        description: friendlyError(error, "Please try again in a moment."),
         variant: "destructive",
       });
     },
@@ -210,7 +211,7 @@ export function useProfile() {
       queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
       toast({
         title: "Upload failed",
-        description: error.message,
+        description: friendlyError(error, "We couldn't upload your resume. Please try again."),
         variant: "destructive",
       });
     } finally {
@@ -239,7 +240,7 @@ export function useProfile() {
     } catch (error: any) {
       toast({
         title: "Download failed",
-        description: error.message,
+        description: friendlyError(error, "We couldn't download your resume. Please try again."),
         variant: "destructive",
       });
     }
@@ -267,7 +268,7 @@ export function useProfile() {
     } catch (error: any) {
       toast({
         title: "Delete failed",
-        description: error.message,
+        description: friendlyError(error, "We couldn't delete your resume. Please try again."),
         variant: "destructive",
       });
     }
