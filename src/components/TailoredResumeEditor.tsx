@@ -378,7 +378,7 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
             )}
           </div>
           <span className="text-muted-foreground/70">
-            Edits in teal show what the AI changed. Click any text to edit.
+            Read-only preview. Use Download to get PDF or Word.
           </span>
         </div>
       </DialogContent>
