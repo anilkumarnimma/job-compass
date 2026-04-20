@@ -48,12 +48,14 @@ function SortableBullet({
   onRemove,
   onAddBelow,
   placeholder,
+  keywords,
 }: {
   bullet: { id: string; text: string };
   onChange: (text: string) => void;
   onRemove: () => void;
   onAddBelow: () => void;
   placeholder?: string;
+  keywords?: string[];
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: bullet.id });
@@ -86,6 +88,7 @@ function SortableBullet({
           onChange={onChange}
           placeholder={placeholder || "Bullet point…"}
           minHeight={20}
+          keywords={keywords}
         />
       </div>
       <div className="flex items-start gap-0.5 opacity-0 group-hover:opacity-100">
