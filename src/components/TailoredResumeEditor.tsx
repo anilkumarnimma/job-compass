@@ -23,6 +23,7 @@ import {
   AlertCircle,
   Info,
   Sparkles,
+  X,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useTailoredResume } from "@/hooks/useTailoredResume";
@@ -288,6 +289,16 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onOpenChange(false)}
+                className="h-8 w-8 rounded-lg"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
           </div>
 
