@@ -188,6 +188,7 @@ function ItemBlock({
               <SortableBullet
                 key={b.id}
                 bullet={b}
+                keywords={keywords}
                 onChange={(text) =>
                   setBullets(item.bullets.map((x) => (x.id === b.id ? { ...x, text } : x)))
                 }
