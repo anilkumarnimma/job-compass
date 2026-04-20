@@ -299,6 +299,30 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
                 </span>
               )}
 
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={!resume || isGenerating || isLoadingStructure}
+                      onClick={() => setConfirmRegenerate(true)}
+                      className="h-8 rounded-lg"
+                    >
+                      {isGenerating ? (
+                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                      )}
+                      Regenerate
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    Ask the AI for a fresh tailored version
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" disabled={!resume} className="h-8 rounded-lg">
