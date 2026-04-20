@@ -106,7 +106,9 @@ export function useProfile() {
         .single();
       
       if (error) throw error;
-      return data as unknown as ProfileData;
+      // PROMO: everything is free for everyone — force is_premium=true app-wide.
+      // Silences all upgrade banners, popups, and gates without touching individual components.
+      return { ...(data as any), is_premium: true } as unknown as ProfileData;
     },
     enabled: !!user,
     staleTime: 1000 * 60 * 2, // Cache for 2 minutes
