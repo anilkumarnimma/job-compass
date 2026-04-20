@@ -52,8 +52,23 @@ Deno.serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    const charges = await stripe.charges.list({ limit: 100 });
-    logStep("Fetched charges", { count: charges.data.length });
+    // Paginate ALL charges so total revenue reflects lifetime totals (was capped at 100).
+    // We hard-cap at 5000 to keep the function within edge runtime limits.
+    const allCharges: Stripe.Charge[] = [];
+    let startingAfter: string | undefined = undefined;
+    const HARD_CAP = 5000;
+    for (let pageIdx = 0; pageIdx < 50; pageIdx++) {
+      const page: Stripe.ApiList<Stripe.Charge> = await stripe.charges.list({
+        limit: 100,
+        ...(startingAfter ? { starting_after: startingAfter } : {}),
+      });
+      allCharges.push(...page.data);
+      if (!page.has_more || allCharges.length >= HARD_CAP) break;
+      startingAfter = page.data[page.data.length - 1]?.id;
+      if (!startingAfter) break;
+    }
+    const charges = { data: allCharges };
+    logStep("Fetched charges (paginated)", { count: charges.data.length });
 
     const [activeSubs, canceledSubs, pastDueSubs] = await Promise.all([
       stripe.subscriptions.list({ status: "active", limit: 100 }),
