@@ -205,6 +205,8 @@ import { isUSALocation } from "@/lib/usaLocationFilter";
 /** Enrich a list of jobs: skills, salary, location, USA filter, and ordering */
 export function enrichJobList(jobs: Job[], entryLevelOnly = false): Job[] {
   let filtered = jobs.filter(job => !shouldExcludeJob(job));
+  // Remove jobs with empty/missing descriptions
+  filtered = filtered.filter(job => job.description && job.description.trim().length >= 20);
   if (entryLevelOnly) {
     filtered = filtered.filter(job => !isNonEntryLevelJob(job));
   }
