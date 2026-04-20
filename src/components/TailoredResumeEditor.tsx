@@ -318,10 +318,21 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
 
             <div className="flex items-center gap-2">
               {matchScore != null && (
-                <Badge variant="secondary" className="rounded-full px-2.5 py-1 text-[11px]">
-                  <span className="font-bold">{matchScore}%</span>
-                  <span className="ml-1 text-muted-foreground">match with this job</span>
-                </Badge>
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium border transition-colors"
+                  style={{
+                    backgroundColor: "hsl(174 72% 56% / 0.12)",
+                    color: "hsl(174 72% 28%)",
+                    borderColor: "hsl(174 72% 56% / 0.35)",
+                  }}
+                  title="Live ATS match score — updates as you edit"
+                >
+                  {isChecking && (
+                    <Loader2 className="h-3 w-3 animate-spin opacity-70" />
+                  )}
+                  <span>Match score:</span>
+                  <span className="font-bold tabular-nums">{matchScore}%</span>
+                </span>
               )}
               {resume && (
                 <SectionVisibilityMenu resume={resume} setResume={setResume} />
