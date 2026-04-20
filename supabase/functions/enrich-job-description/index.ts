@@ -98,7 +98,6 @@ Deno.serve(async (req) => {
     });
   }
   const admin = createClient(supabaseUrl, serviceKey);
-  const firecrawlKey = Deno.env.get("FIRECRAWL_API_KEY") || null;
 
   // Optional: caller may pass specific job_ids; otherwise scan for jobs needing enrichment
   let jobIds: string[] = [];
@@ -140,7 +139,7 @@ Deno.serve(async (req) => {
     candidates = data ?? [];
   }
 
-  const stats = { processed: 0, scraped: 0, firecrawled: 0, marked_already_ok: 0, failed: 0 };
+  const stats = { processed: 0, scraped: 0, marked_already_ok: 0, failed: 0 };
 
   const work = async () => {
     for (const job of candidates) {
@@ -165,27 +164,19 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // 1) Plain fetch
-      let extracted = await plainFetch(job.external_apply_link);
-      let source: "scraped" | "firecrawl" | null = extracted ? "scraped" : null;
+      // Plain fetch only — no fallback.
+      const extracted = await plainFetch(job.external_apply_link);
 
-      // 2) Firecrawl fallback
-      if (!extracted && firecrawlKey) {
-        extracted = await firecrawlScrape(job.external_apply_link, firecrawlKey);
-        if (extracted) source = "firecrawl";
-      }
-
-      if (extracted && source) {
+      if (extracted) {
         await admin
           .from("jobs")
           .update({
             description: extracted,
             description_enriched: true,
-            description_source: source,
+            description_source: "scraped",
           })
           .eq("id", job.id);
-        if (source === "scraped") stats.scraped++;
-        else stats.firecrawled++;
+        stats.scraped++;
       } else {
         // Mark as attempted so we don't keep retrying — also keeps AI buttons hidden
         await admin
@@ -203,7 +194,7 @@ Deno.serve(async (req) => {
   EdgeRuntime.waitUntil(work());
 
   return new Response(
-    JSON.stringify({ success: true, queued: candidates.length, firecrawl_available: !!firecrawlKey }),
+    JSON.stringify({ success: true, queued: candidates.length }),
     { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 });
