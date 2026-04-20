@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
@@ -24,6 +24,9 @@ export function useAtsCheck() {
   const { profile } = useProfile();
   const { toast } = useToast();
 
+  // Track the latest in-flight request so we can ignore stale responses.
+  const requestIdRef = useRef(0);
+
   const runCheck = async (params: {
     job_description?: string;
     job_title?: string;
@@ -44,8 +47,8 @@ export function useAtsCheck() {
       return null;
     }
 
-    // Use form data if provided (unsaved edits), otherwise fall back to saved DB profile
     const profileSource = params.formProfile || profile;
+    const myRequestId = ++requestIdRef.current;
 
     setIsChecking(true);
     try {
@@ -66,23 +69,38 @@ export function useAtsCheck() {
         },
       });
 
+      // A newer request superseded this one — silently discard.
+      if (myRequestId !== requestIdRef.current) return null;
+
       if (error) throw new Error(error.message || "ATS check failed");
       if (data?.error) throw new Error(data.error);
 
       const atsResult = data.result as AtsCheckResult;
       setResult(atsResult);
-      // Schedule feedback prompt 5s after result appears
       scheduleFeedbackPrompt("ats", 5000);
       return atsResult;
     } catch (err: any) {
-      toast({
-        title: "ATS Check failed",
-        description: err.message || "Could not complete the analysis",
-        variant: "destructive",
-      });
+      // Only surface errors for the most recent request to avoid noisy toasts
+      // from superseded calls or transient network blips.
+      if (myRequestId !== requestIdRef.current) return null;
+
+      const msg = String(err?.message || "");
+      const isTransient =
+        msg.includes("Failed to send a request") ||
+        msg.includes("Failed to fetch") ||
+        msg.includes("NetworkError") ||
+        msg.includes("aborted");
+
+      if (!isTransient) {
+        toast({
+          title: "ATS Check failed",
+          description: msg || "Could not complete the analysis",
+          variant: "destructive",
+        });
+      }
       return null;
     } finally {
-      setIsChecking(false);
+      if (myRequestId === requestIdRef.current) setIsChecking(false);
     }
   };
 
