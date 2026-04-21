@@ -110,9 +110,9 @@ Deno.serve(async (req) => {
         salary: j.salary_range,
         skills: j.skills || [],
         posted_date: j.posted_date ? new Date(j.posted_date).toISOString().split("T")[0] : null,
-        apply_url: j.external_apply_link,
+        apply_url: `https://sociax.tech/jobs/${j.id}`,
         description_preview: (j.description || "").slice(0, 300),
-        job_url: `https://sociax.tech/?job=${j.id}`,
+        job_url: `https://sociax.tech/jobs/${j.id}`,
         source: "sociax.tech",
       }));
 
