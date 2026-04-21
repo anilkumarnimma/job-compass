@@ -305,7 +305,7 @@ export function ManualPremiumManager() {
           <p className="text-sm text-muted-foreground text-center py-6">No active manual premium grants</p>
         ) : (
           <div className="space-y-2">
-            {grants.map((grant: any) => (
+            {paginatedGrants.map((grant: any) => (
               <div
                 key={grant.id}
                 className="flex items-center justify-between p-3 rounded-lg border border-border bg-background"
@@ -346,6 +346,47 @@ export function ManualPremiumManager() {
                 </Button>
               </div>
             ))}
+
+            {totalPages > 1 && (
+              <div className="pt-4">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
+                        className={currentPage <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                    {getPageNumbers().map((page, idx) =>
+                      page === "ellipsis" ? (
+                        <PaginationItem key={`ellipsis-${idx}`}>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      ) : (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            isActive={currentPage === page}
+                            onClick={() => setCurrentPage(page as number)}
+                            className="cursor-pointer"
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      )
+                    )}
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
+                        className={currentPage >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+                <p className="text-xs text-muted-foreground text-center mt-2">
+                  Showing {(currentPage - 1) * GRANTS_PER_PAGE + 1}–{Math.min(currentPage * GRANTS_PER_PAGE, grants.length)} of {grants.length} grants
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
