@@ -7,7 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SOURCES = ["ingest-jsearch", "ingest-muse", "ingest-remotive", "ingest-adzuna"] as const;
+const SOURCES = ["ingest-jsearch", "ingest-muse", "ingest-arbeitnow", "ingest-adzuna"] as const;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
