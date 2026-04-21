@@ -23,66 +23,28 @@ export function AdzunaIngestPanel() {
 
   return (
     <div className="space-y-6">
-      <Card className="p-6 border-border/60">
+      <Card className="p-6 border-border/60 bg-destructive/5">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-start gap-3">
-            <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-              <Briefcase className="h-5 w-5 text-primary" />
+            <div className="h-10 w-10 rounded-lg bg-destructive/15 flex items-center justify-center">
+              <AlertCircle className="h-5 w-5 text-destructive" />
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-foreground">Adzuna Auto-Ingest</h2>
+            <div className="max-w-2xl">
+              <h2 className="text-xl font-bold text-foreground">Adzuna Auto-Ingest — Disabled</h2>
               <p className="text-sm text-muted-foreground">
-                Reuses {activeCount} active JSearch queries • US full-time roles • Excludes senior
-                titles
+                The free Adzuna API only returns <code className="text-xs px-1 rounded bg-muted">adzuna.com</code> redirect URLs
+                instead of direct employer apply links, so users would land on a middleman page.
+                Ingest is paused and the {/* */}
+                {/* keep the activeCount visible for context */}
+                {activeCount} JSearch seed queries are reused only by the other sources.
               </p>
             </div>
           </div>
-          <Button
-            onClick={() => runIngest.mutate(undefined)}
-            disabled={runIngest.isPending || activeCount === 0}
-            className="gap-2"
-          >
-            {runIngest.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Play className="h-4 w-4" />
-            )}
-            Run All Active Now
+          <Button disabled variant="outline" className="gap-2">
+            <Play className="h-4 w-4" />
+            Disabled
           </Button>
         </div>
-
-        {lastRun && (
-          <div className="mt-4 grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
-            <div className="p-3 rounded-lg bg-muted/40">
-              <div className="text-xs text-muted-foreground">Last fetched</div>
-              <div className="font-bold text-foreground">{lastRun.total_fetched}</div>
-            </div>
-            <div className="p-3 rounded-lg bg-green-500/10">
-              <div className="text-xs text-muted-foreground">Imported</div>
-              <div className="font-bold text-green-600 dark:text-green-400">
-                {lastRun.total_imported}
-              </div>
-            </div>
-            <div className="p-3 rounded-lg bg-yellow-500/10">
-              <div className="text-xs text-muted-foreground">Filtered out</div>
-              <div className="font-bold text-yellow-600 dark:text-yellow-400">
-                {lastRun.total_filtered}
-              </div>
-            </div>
-            <div className="p-3 rounded-lg bg-blue-500/10">
-              <div className="text-xs text-muted-foreground">Duplicates</div>
-              <div className="font-bold text-blue-600 dark:text-blue-400">
-                {lastRun.total_skipped + lastRun.duplicates_removed}
-              </div>
-            </div>
-            <div className="p-3 rounded-lg bg-muted/40">
-              <div className="text-xs text-muted-foreground">When</div>
-              <div className="font-medium text-foreground text-xs">
-                {formatDistanceToNow(new Date(lastRun.started_at), { addSuffix: true })}
-              </div>
-            </div>
-          </div>
-        )}
       </Card>
 
       <Card className="p-6 border-border/60">
