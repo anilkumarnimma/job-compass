@@ -49,6 +49,7 @@ import { LinkedInFeatureBanner } from "@/components/LinkedInFeatureBanner";
 import { AutoApplyBanner } from "@/components/AutoApplyBanner";
 import { RoleCategoryPills } from "@/components/RoleCategoryPills";
 import { getCategoryById, titleMatchesCategory } from "@/lib/roleCategories";
+import { RelatedSearches } from "@/components/RelatedSearches";
 
 
 
@@ -85,6 +86,7 @@ export default function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialSearch = searchParams.get("search") || "";
   const [searchInput, setSearchInput] = useState(initialSearch);
+  const [committedQuery, setCommittedQuery] = useState(initialSearch);
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [mobilePreviewJob, setMobilePreviewJob] = useState<Job | null>(null);
@@ -110,6 +112,7 @@ export default function Dashboard() {
   const performDashboardReset = useCallback(() => {
     sessionStorage.removeItem("pending_search");
     setSearchInput("");
+    setCommittedQuery("");
     setCurrentPage(1);
     setDateFilter("all");
     setMobilePreviewJob(null);
@@ -140,6 +143,7 @@ export default function Dashboard() {
     if (pendingSearch) {
       sessionStorage.removeItem("pending_search");
       setSearchInput(pendingSearch);
+      setCommittedQuery(pendingSearch);
       setSearchParams({ search: pendingSearch }, { replace: true });
     }
   }, []);
@@ -163,6 +167,7 @@ export default function Dashboard() {
     const urlSearch = searchParams.get("search") || "";
     if (!urlSearch) {
       setSearchInput("");
+      setCommittedQuery("");
       setRoleFilter(null);
       setCategoryId(null);
       setCompanyFilter(null);
@@ -180,6 +185,14 @@ export default function Dashboard() {
   }, []);
 
   const handleSearchCommit = useCallback(() => {
+    setCurrentPage(1);
+    setFallbackActive(false);
+    setCommittedQuery((prev) => (prev === searchInput ? prev : searchInput));
+  }, [searchInput]);
+
+  const handleRelatedSelect = useCallback((term: string) => {
+    setSearchInput(term);
+    setCommittedQuery(term);
     setCurrentPage(1);
     setFallbackActive(false);
   }, []);
