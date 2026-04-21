@@ -55,6 +55,7 @@ export function ManualPremiumManager() {
   const [selectedDuration, setSelectedDuration] = useState<DurationType>("lifetime");
   const [notes, setNotes] = useState("");
   const [granting, setGranting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Fetch active grants
   const { data: grants = [], isLoading: grantsLoading } = useQuery({
