@@ -18,12 +18,12 @@ export interface IngestRun {
   details: { per_query?: Array<{ query: string; fetched: number; imported: number }> } | null;
 }
 
-export function useRemotiveRuns() {
+export function useArbeitnowRuns() {
   return useQuery({
-    queryKey: ["remotive-runs"],
+    queryKey: ["arbeitnow-runs"],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
-        .from("remotive_ingest_runs")
+        .from("arbeitnow_ingest_runs")
         .select("*")
         .order("started_at", { ascending: false })
         .limit(20);
@@ -34,24 +34,24 @@ export function useRemotiveRuns() {
   });
 }
 
-export function useRunRemotiveIngest() {
+export function useRunArbeitnowIngest() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (seedId?: string) => {
-      const { data, error } = await supabase.functions.invoke("ingest-remotive", {
+      const { data, error } = await supabase.functions.invoke("ingest-arbeitnow", {
         body: seedId ? { seed_id: seedId } : {},
       });
       if (error) throw error;
       return data as { success: boolean; run_id: string; seeds_count: number };
     },
     onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ["remotive-runs"] });
+      qc.invalidateQueries({ queryKey: ["arbeitnow-runs"] });
       toast.success(
-        `Remotive ingest started for ${data.seeds_count} queries — watch progress below`
+        `Arbeitnow ingest started for ${data.seeds_count} queries — watch progress below`
       );
     },
     onError: (e: Error) => {
-      toast.error(e.message || "Remotive ingest failed");
+      toast.error(e.message || "Arbeitnow ingest failed");
     },
   });
 }

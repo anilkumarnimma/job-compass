@@ -7,16 +7,16 @@ import {
   CheckCircle2,
   AlertCircle,
   Clock,
-  Globe2,
+  Briefcase,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { useRemotiveRuns, useRunRemotiveIngest } from "@/hooks/useRemotiveIngest";
+import { useArbeitnowRuns, useRunArbeitnowIngest } from "@/hooks/useArbeitnowIngest";
 import { useJSearchSeeds } from "@/hooks/useJSearchIngest";
 
-export function RemotiveIngestPanel() {
+export function ArbeitnowIngestPanel() {
   const { data: seeds = [] } = useJSearchSeeds();
-  const { data: runs = [] } = useRemotiveRuns();
-  const runIngest = useRunRemotiveIngest();
+  const { data: runs = [] } = useArbeitnowRuns();
+  const runIngest = useRunArbeitnowIngest();
 
   const activeCount = seeds.filter((s) => s.is_active).length;
   const lastRun = runs[0];
@@ -27,12 +27,12 @@ export function RemotiveIngestPanel() {
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-start gap-3">
             <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-              <Globe2 className="h-5 w-5 text-primary" />
+              <Briefcase className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-foreground">Remotive Auto-Ingest</h2>
+              <h2 className="text-xl font-bold text-foreground">Arbeitnow Auto-Ingest</h2>
               <p className="text-sm text-muted-foreground">
-                Reuses {activeCount} active JSearch queries • Free remote-first job board • No API key needed
+                Reuses {activeCount} active JSearch queries • High-quality EU/global tech jobs • Free, no API key
               </p>
             </div>
           </div>

@@ -1,6 +1,7 @@
-// Remotive auto-ingestion edge function
-// Fetches jobs from Remotive's free public API (no key needed),
-// reuses JSearch seed keywords, applies the same filters/skill enrichment,
+// Arbeitnow auto-ingestion edge function.
+// Fetches jobs from Arbeitnow's free public API (no key needed),
+// reuses JSearch seed keywords (filters client-side per query),
+// applies the same filters/skill enrichment used by other sources,
 // dedupes by external link + (title+company+location), and inserts into jobs table.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -142,59 +143,79 @@ function isExcludedJob(title: string, description: string): boolean {
   return false;
 }
 
-// ───────────────────────── Remotive API ─────────────────────────
-interface RemotiveJob {
-  id: number;
-  url: string;
-  title: string;
+// ───────────────────────── Arbeitnow API ─────────────────────────
+// Public free API, no key required. Returns ~100 most-recent jobs per page.
+// Docs: https://documenter.getpostman.com/view/18545278/UVJbJdKh
+interface ArbeitnowJob {
+  slug: string;
   company_name: string;
-  company_logo?: string;
-  category?: string;
+  title: string;
+  description: string;
+  remote?: boolean;
+  url: string;
   tags?: string[];
-  job_type?: string;
-  publication_date?: string;
-  candidate_required_location?: string;
-  salary?: string;
-  description?: string;
+  job_types?: string[];
+  location?: string;
+  created_at?: number; // unix seconds
 }
 
-async function fetchRemotive(
-  query: string,
-  limit: number
-): Promise<RemotiveJob[]> {
-  const params = new URLSearchParams({
-    search: query,
-    limit: String(limit),
-  });
-  const res = await fetch(
-    `https://remotive.com/api/remote-jobs?${params}`,
-    {
-      headers: {
-        "User-Agent": "Sociax-Job-Ingest/1.0 (admin@sociax.tech)",
-        Accept: "application/json",
-      },
+interface ArbeitnowResponse {
+  data: ArbeitnowJob[];
+  links?: { next?: string | null };
+}
+
+async function fetchArbeitnow(maxPages = 4): Promise<ArbeitnowJob[]> {
+  const all: ArbeitnowJob[] = [];
+  let page = 1;
+  while (page <= maxPages) {
+    const res = await fetch(
+      `https://www.arbeitnow.com/api/job-board-api?page=${page}`,
+      {
+        headers: {
+          "User-Agent": "Sociax-Job-Ingest/1.0 (admin@sociax.tech)",
+          Accept: "application/json",
+        },
+      }
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Arbeitnow API ${res.status}: ${text.slice(0, 200)}`);
     }
-  );
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Remotive API ${res.status}: ${text.slice(0, 200)}`);
+    const json = (await res.json()) as ArbeitnowResponse;
+    const jobs = Array.isArray(json.data) ? json.data : [];
+    if (!jobs.length) break;
+    all.push(...jobs);
+    if (!json.links?.next) break;
+    page++;
   }
-  const json = await res.json();
-  return (json.jobs || []) as RemotiveJob[];
+  return all;
 }
 
-function normalizeEmploymentType(jt?: string): string {
-  if (!jt) return "Full Time";
-  const t = jt.toLowerCase();
-  if (t.includes("intern")) return "Internship";
-  if (t.includes("part")) return "Part Time";
-  if (t.includes("contract")) return "Contract";
+function matchesQuery(job: ArbeitnowJob, query: string): boolean {
+  const q = query.toLowerCase().trim();
+  if (!q) return true;
+  // Tokenize the query so multi-word seeds match loosely on title/tags
+  const tokens = q.split(/\s+/).filter((t) => t.length > 2);
+  if (tokens.length === 0) return true;
+  const hay =
+    `${job.title || ""} ${(job.tags || []).join(" ")} ${(job.job_types || []).join(" ")}`.toLowerCase();
+  // Require every meaningful token to appear in title/tags/types
+  return tokens.every((t) => hay.includes(t));
+}
+
+function normalizeEmploymentType(types?: string[]): string {
+  if (!types?.length) return "Full Time";
+  const joined = types.join(",").toLowerCase();
+  if (joined.includes("intern")) return "Internship";
+  if (joined.includes("part")) return "Part Time";
+  if (joined.includes("contract") || joined.includes("freelance")) return "Contract";
   return "Full Time";
 }
 
 interface ProcessSeedArgs {
   admin: ReturnType<typeof createClient>;
   seed: { id: string; query: string };
+  pool: ArbeitnowJob[];
   stats: {
     total_fetched: number;
     total_imported: number;
@@ -204,16 +225,23 @@ interface ProcessSeedArgs {
     errors: { query: string; error: string }[];
     per_query: { query: string; fetched: number; imported: number }[];
   };
+  // Track URLs already inserted within the same run to avoid duplicate work
+  seenUrls: Set<string>;
 }
 
-async function processSeed({ admin, seed, stats }: ProcessSeedArgs): Promise<void> {
+async function processSeed({ admin, seed, pool, stats, seenUrls }: ProcessSeedArgs): Promise<void> {
   try {
-    const jobs = await fetchRemotive(seed.query, 100);
-    stats.total_fetched += jobs.length;
+    const matched = pool.filter((j) => matchesQuery(j, seed.query));
+    stats.total_fetched += matched.length;
     let importedThisSeed = 0;
 
-    for (const j of jobs) {
+    for (const j of matched) {
       if (!j.title || !j.company_name || !j.url) {
+        stats.total_skipped++;
+        continue;
+      }
+
+      if (seenUrls.has(j.url)) {
         stats.total_skipped++;
         continue;
       }
@@ -230,7 +258,7 @@ async function processSeed({ admin, seed, stats }: ProcessSeedArgs): Promise<voi
         continue;
       }
 
-      const location = (j.candidate_required_location || "Remote").trim();
+      const location = (j.location || (j.remote ? "Remote" : "")).trim() || "Remote";
 
       // Dedup #1: exact URL
       const { data: existingByUrl } = await admin
@@ -240,6 +268,7 @@ async function processSeed({ admin, seed, stats }: ProcessSeedArgs): Promise<voi
         .maybeSingle();
       if (existingByUrl) {
         stats.total_skipped++;
+        seenUrls.add(j.url);
         continue;
       }
 
@@ -254,6 +283,7 @@ async function processSeed({ admin, seed, stats }: ProcessSeedArgs): Promise<voi
         .maybeSingle();
       if (existingByCombo) {
         stats.total_skipped++;
+        seenUrls.add(j.url);
         continue;
       }
 
@@ -263,29 +293,28 @@ async function processSeed({ admin, seed, stats }: ProcessSeedArgs): Promise<voi
         Array.isArray(j.tags) ? j.tags.slice(0, 12) : []
       );
 
-      const postedDate = j.publication_date
-        ? new Date(j.publication_date).toISOString()
+      const postedDate = j.created_at
+        ? new Date(j.created_at * 1000).toISOString()
         : new Date().toISOString();
 
       const { error: insertErr } = await admin.from("jobs").insert({
         title: j.title.trim(),
         company: j.company_name.trim(),
-        company_logo: j.company_logo || null,
+        company_logo: null,
         location,
         description,
         skills: enrichedSkills,
         external_apply_link: j.url,
-        employment_type: normalizeEmploymentType(j.job_type),
-        salary_range: j.salary || null,
+        employment_type: normalizeEmploymentType(j.job_types),
+        salary_range: null,
         posted_date: postedDate,
         is_published: true,
         is_archived: false,
         is_direct_apply: true,
-        description_source: "remotive",
+        description_source: "arbeitnow",
       });
 
       if (insertErr) {
-        // Treat unique-constraint collisions as duplicates (race from parallel batch)
         const msg = insertErr.message || "";
         const isDuplicate =
           (insertErr as { code?: string }).code === "23505" ||
@@ -299,17 +328,18 @@ async function processSeed({ admin, seed, stats }: ProcessSeedArgs): Promise<voi
       } else {
         stats.total_imported++;
         importedThisSeed++;
+        seenUrls.add(j.url);
       }
     }
 
     stats.per_query.push({
       query: seed.query,
-      fetched: jobs.length,
+      fetched: matched.length,
       imported: importedThisSeed,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    console.error(`[ingest-remotive] Error on "${seed.query}":`, msg);
+    console.error(`[ingest-arbeitnow] Error on "${seed.query}":`, msg);
     stats.errors.push({ query: seed.query, error: msg });
   }
 }
@@ -359,7 +389,7 @@ Deno.serve(async (req) => {
   } catch { /* no body */ }
 
   const { data: runRow } = await admin
-    .from("remotive_ingest_runs")
+    .from("arbeitnow_ingest_runs")
     .insert({ triggered_by: triggeredBy, trigger_type: triggerType, status: "running" })
     .select("id")
     .single();
@@ -388,7 +418,7 @@ Deno.serve(async (req) => {
 
   const { data: seeds, error: seedErr } = await seedQuery;
   if (seedErr || !seeds?.length) {
-    await admin.from("remotive_ingest_runs").update({
+    await admin.from("arbeitnow_ingest_runs").update({
       status: "failed",
       completed_at: new Date().toISOString(),
       duration_ms: Date.now() - startedAt,
@@ -401,7 +431,27 @@ Deno.serve(async (req) => {
   }
 
   const backgroundWork = async () => {
-    console.log(`[ingest-remotive] Starting ${seeds.length} seeds (run ${runId})`);
+    console.log(`[ingest-arbeitnow] Starting ${seeds.length} seeds (run ${runId})`);
+
+    // Fetch the Arbeitnow pool ONCE per run, then filter per seed (API doesn't support search params).
+    let pool: ArbeitnowJob[] = [];
+    try {
+      pool = await fetchArbeitnow(4); // ~400 most-recent jobs
+      console.log(`[ingest-arbeitnow] Fetched ${pool.length} jobs from Arbeitnow`);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("[ingest-arbeitnow] Fetch failed:", msg);
+      stats.errors.push({ query: "_fetch", error: msg });
+      await admin.from("arbeitnow_ingest_runs").update({
+        status: "failed",
+        completed_at: new Date().toISOString(),
+        duration_ms: Date.now() - startedAt,
+        errors: stats.errors,
+      }).eq("id", runId);
+      return;
+    }
+
+    const seenUrls = new Set<string>();
 
     // Process in parallel batches of 4 with 2-second pause between batches
     const BATCH_SIZE = 4;
@@ -413,13 +463,15 @@ Deno.serve(async (req) => {
           processSeed({
             admin,
             seed: { id: seed.id as string, query: seed.query as string },
+            pool,
             stats,
+            seenUrls,
           })
         )
       );
 
       // Persist progress after each batch
-      await admin.from("remotive_ingest_runs").update({
+      await admin.from("arbeitnow_ingest_runs").update({
         total_fetched: stats.total_fetched,
         total_imported: stats.total_imported,
         total_skipped: stats.total_skipped,
@@ -438,10 +490,10 @@ Deno.serve(async (req) => {
       stats.duplicates_removed +=
         (dedupRes as { removed?: number })?.removed || 0;
     } catch (e) {
-      console.error("[ingest-remotive] Dedup error:", e);
+      console.error("[ingest-arbeitnow] Dedup error:", e);
     }
 
-    await admin.from("remotive_ingest_runs").update({
+    await admin.from("arbeitnow_ingest_runs").update({
       status: stats.errors.length > 0 ? "completed_with_errors" : "completed",
       completed_at: new Date().toISOString(),
       duration_ms: Date.now() - startedAt,
@@ -454,7 +506,7 @@ Deno.serve(async (req) => {
       details: { per_query: stats.per_query },
     }).eq("id", runId);
 
-    console.log(`[ingest-remotive] Run ${runId} done: ${stats.total_imported} imported, ${stats.total_filtered} filtered`);
+    console.log(`[ingest-arbeitnow] Run ${runId} done: ${stats.total_imported} imported, ${stats.total_filtered} filtered`);
   };
 
   // @ts-ignore - EdgeRuntime is available in Supabase Edge Functions
@@ -464,7 +516,7 @@ Deno.serve(async (req) => {
     JSON.stringify({
       success: true,
       run_id: runId,
-      message: "Remotive ingest started in background — check /admin/import for progress",
+      message: "Arbeitnow ingest started in background — check /admin/import for progress",
       seeds_count: seeds.length,
     }),
     {
