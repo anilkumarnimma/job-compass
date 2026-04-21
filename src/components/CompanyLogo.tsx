@@ -9,10 +9,22 @@ interface CompanyLogoProps {
   className?: string;
 }
 
-// Filter out ATS platform logos (Greenhouse, Lever, etc.)
+// Filter out ATS platform logos (Greenhouse, Lever, etc.) and LinkedIn logos
 function isAtsLogo(url: string): boolean {
   const l = url.toLowerCase();
-  return l.includes('greenhouse') || l.includes('lever.co') || l.includes('workday') || l.includes('icims') || l.includes('taleo') || l.includes('smartrecruiters') || l.includes('jobvite');
+  return (
+    l.includes('greenhouse') ||
+    l.includes('lever.co') ||
+    l.includes('workday') ||
+    l.includes('icims') ||
+    l.includes('taleo') ||
+    l.includes('smartrecruiters') ||
+    l.includes('jobvite') ||
+    l.includes('linkedin') ||
+    l.includes('licdn') ||
+    l.includes('media.licdn') ||
+    l.includes('static.licdn')
+  );
 }
 
 export function CompanyLogo({ logoUrl, companyName, size = "md", className }: CompanyLogoProps) {
