@@ -182,11 +182,17 @@ export default function Dashboard() {
     startSearchTransition(() => {
       setSearchInput((prev) => (prev === value ? prev : value));
     });
+    setSelectedJob(null);
+    setMobilePreviewJob(null);
+    setMobileSheetOpen(false);
   }, []);
 
   const handleSearchCommit = useCallback((committedValue?: string) => {
     setCurrentPage(1);
     setFallbackActive(false);
+    setSelectedJob(null);
+    setMobilePreviewJob(null);
+    setMobileSheetOpen(false);
     const next = (committedValue ?? searchInput).trim();
     setCommittedQuery((prev) => (prev === next ? prev : next));
   }, [searchInput]);
@@ -196,6 +202,9 @@ export default function Dashboard() {
     setCommittedQuery(term);
     setCurrentPage(1);
     setFallbackActive(false);
+    setSelectedJob(null);
+    setMobilePreviewJob(null);
+    setMobileSheetOpen(false);
   }, []);
 
   const selectedCategory = useMemo(
@@ -219,6 +228,9 @@ export default function Dashboard() {
   useEffect(() => {
     setCurrentPage(1);
     setFallbackActive(false);
+    setSelectedJob(null);
+    setMobilePreviewJob(null);
+    setMobileSheetOpen(false);
   }, [combinedSearchQuery, dateFilter, customDate, visaFilter]);
 
   const { data: searchData, isLoading: searchLoading, isFetching: searchFetching } = useJobSearchPaginated({
