@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { forwardRef, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -7,7 +7,7 @@ interface RelatedSearchesProps {
   onSelect: (term: string) => void;
 }
 
-export function RelatedSearches({ query, onSelect }: RelatedSearchesProps) {
+export const RelatedSearches = forwardRef<HTMLDivElement, RelatedSearchesProps>(function RelatedSearches({ query, onSelect }, ref) {
   const [items, setItems] = useState<string[]>([]);
 
   useEffect(() => {
@@ -41,6 +41,7 @@ export function RelatedSearches({ query, onSelect }: RelatedSearchesProps) {
   return (
     <AnimatePresence>
       <motion.div
+        ref={ref}
         initial={{ opacity: 0, y: -4 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0 }}
@@ -60,4 +61,4 @@ export function RelatedSearches({ query, onSelect }: RelatedSearchesProps) {
       </motion.div>
     </AnimatePresence>
   );
-}
+});
