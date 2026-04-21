@@ -10,6 +10,7 @@ import { FeaturedJobCard } from "@/components/FeaturedJobCard";
 import { FloatingHeroTags } from "@/components/FloatingHeroTags";
 import { AboutSection } from "@/components/AboutSection";
 import { PricingSection } from "@/components/PricingSection";
+import { InsightsSection } from "@/components/InsightsSection";
 import {
   Briefcase,
   Search,
@@ -314,6 +315,9 @@ export default function Index() {
 
       {/* About Section */}
       <AboutSection />
+
+      {/* Insights / Blog Section */}
+      <InsightsSection />
 
       {/* Pricing Section */}
       <PricingSection />
