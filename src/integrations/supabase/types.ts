@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      adzuna_ingest_runs: {
+        Row: {
+          completed_at: string | null
+          details: Json | null
+          duplicates_removed: number
+          duration_ms: number | null
+          errors: Json | null
+          id: string
+          started_at: string
+          status: string
+          total_fetched: number
+          total_filtered: number
+          total_imported: number
+          total_skipped: number
+          trigger_type: string
+          triggered_by: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          details?: Json | null
+          duplicates_removed?: number
+          duration_ms?: number | null
+          errors?: Json | null
+          id?: string
+          started_at?: string
+          status?: string
+          total_fetched?: number
+          total_filtered?: number
+          total_imported?: number
+          total_skipped?: number
+          trigger_type?: string
+          triggered_by?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          details?: Json | null
+          duplicates_removed?: number
+          duration_ms?: number | null
+          errors?: Json | null
+          id?: string
+          started_at?: string
+          status?: string
+          total_fetched?: number
+          total_filtered?: number
+          total_imported?: number
+          total_skipped?: number
+          trigger_type?: string
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
       applications: {
         Row: {
           applied_at: string
@@ -945,6 +996,57 @@ export type Database = {
           work_authorization?: string | null
           work_experience?: Json | null
           zip?: string | null
+        }
+        Relationships: []
+      }
+      remotive_ingest_runs: {
+        Row: {
+          completed_at: string | null
+          details: Json | null
+          duplicates_removed: number
+          duration_ms: number | null
+          errors: Json | null
+          id: string
+          started_at: string
+          status: string
+          total_fetched: number
+          total_filtered: number
+          total_imported: number
+          total_skipped: number
+          trigger_type: string
+          triggered_by: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          details?: Json | null
+          duplicates_removed?: number
+          duration_ms?: number | null
+          errors?: Json | null
+          id?: string
+          started_at?: string
+          status?: string
+          total_fetched?: number
+          total_filtered?: number
+          total_imported?: number
+          total_skipped?: number
+          trigger_type?: string
+          triggered_by?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          details?: Json | null
+          duplicates_removed?: number
+          duration_ms?: number | null
+          errors?: Json | null
+          id?: string
+          started_at?: string
+          status?: string
+          total_fetched?: number
+          total_filtered?: number
+          total_imported?: number
+          total_skipped?: number
+          trigger_type?: string
+          triggered_by?: string | null
         }
         Relationships: []
       }
