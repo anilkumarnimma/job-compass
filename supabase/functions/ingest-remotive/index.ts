@@ -285,7 +285,16 @@ async function processSeed({ admin, seed, stats }: ProcessSeedArgs): Promise<voi
       });
 
       if (insertErr) {
-        stats.errors.push({ query: seed.query, error: insertErr.message });
+        // Treat unique-constraint collisions as duplicates (race from parallel batch)
+        const msg = insertErr.message || "";
+        const isDuplicate =
+          (insertErr as { code?: string }).code === "23505" ||
+          /duplicate key|unique constraint/i.test(msg);
+        if (isDuplicate) {
+          stats.duplicates_removed++;
+        } else {
+          stats.errors.push({ query: seed.query, error: msg });
+        }
         stats.total_skipped++;
       } else {
         stats.total_imported++;
@@ -423,10 +432,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Dedup sweep
+    // Dedup sweep (add to the in-insert duplicate count)
     try {
       const { data: dedupRes } = await admin.rpc("remove_duplicate_jobs");
-      stats.duplicates_removed =
+      stats.duplicates_removed +=
         (dedupRes as { removed?: number })?.removed || 0;
     } catch (e) {
       console.error("[ingest-remotive] Dedup error:", e);
