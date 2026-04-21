@@ -195,6 +195,32 @@ export function ManualPremiumManager() {
     return new Date(expiresAt) < new Date();
   };
 
+  const totalPages = Math.max(1, Math.ceil(grants.length / GRANTS_PER_PAGE));
+  const paginatedGrants = useMemo(() => {
+    const start = (currentPage - 1) * GRANTS_PER_PAGE;
+    return grants.slice(start, start + GRANTS_PER_PAGE);
+  }, [grants, currentPage]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(1);
+  }, [totalPages, currentPage]);
+
+  const getPageNumbers = () => {
+    const pages: (number | "ellipsis")[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push("ellipsis");
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (currentPage < totalPages - 2) pages.push("ellipsis");
+      pages.push(totalPages);
+    }
+    return pages;
+  };
+
   return (
     <Card className="p-6">
       <div className="flex items-center gap-3 mb-6">
