@@ -8,7 +8,7 @@ interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  onSearch?: () => void;
+  onSearch?: (committedValue?: string) => void;
   onSuggestionSelect?: (suggestion: string) => void;
 }
 
