@@ -41,6 +41,7 @@ export const RelatedSearches = forwardRef<HTMLDivElement, RelatedSearchesProps>(
   return (
     <AnimatePresence>
       <motion.div
+        ref={ref}
         initial={{ opacity: 0, y: -4 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0 }}
@@ -60,4 +61,4 @@ export const RelatedSearches = forwardRef<HTMLDivElement, RelatedSearchesProps>(
       </motion.div>
     </AnimatePresence>
   );
-}
+});
