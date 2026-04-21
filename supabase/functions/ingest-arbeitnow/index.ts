@@ -329,7 +329,15 @@ async function processSeed({ admin, seed, pool, stats, seenUrls }: ProcessSeedAr
         continue;
       }
 
-      const location = (j.location || (j.remote ? "Remote" : "")).trim() || "Remote";
+      const rawLocation = (j.location || (j.remote ? "Remote" : "")).trim();
+
+      // US-only filter — Sociax targets US-based job seekers
+      if (!isUSLocation(rawLocation, !!j.remote)) {
+        stats.total_filtered++;
+        continue;
+      }
+
+      const location = rawLocation || "Remote - US";
 
       // Dedup #1: exact URL
       const { data: existingByUrl } = await admin
