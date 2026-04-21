@@ -184,10 +184,11 @@ export default function Dashboard() {
     });
   }, []);
 
-  const handleSearchCommit = useCallback(() => {
+  const handleSearchCommit = useCallback((committedValue?: string) => {
     setCurrentPage(1);
     setFallbackActive(false);
-    setCommittedQuery((prev) => (prev === searchInput ? prev : searchInput));
+    const next = (committedValue ?? searchInput).trim();
+    setCommittedQuery((prev) => (prev === next ? prev : next));
   }, [searchInput]);
 
   const handleRelatedSelect = useCallback((term: string) => {
