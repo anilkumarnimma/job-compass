@@ -182,6 +182,9 @@ export default function Dashboard() {
     startSearchTransition(() => {
       setSearchInput((prev) => (prev === value ? prev : value));
     });
+    setRoleFilter(null);
+    setCategoryId(null);
+    setCompanyFilter(null);
     setSelectedJob(null);
     setMobilePreviewJob(null);
     setMobileSheetOpen(false);
@@ -190,6 +193,9 @@ export default function Dashboard() {
   const handleSearchCommit = useCallback((committedValue?: string) => {
     setCurrentPage(1);
     setFallbackActive(false);
+    setRoleFilter(null);
+    setCategoryId(null);
+    setCompanyFilter(null);
     setSelectedJob(null);
     setMobilePreviewJob(null);
     setMobileSheetOpen(false);
@@ -202,6 +208,9 @@ export default function Dashboard() {
     setCommittedQuery(term);
     setCurrentPage(1);
     setFallbackActive(false);
+    setRoleFilter(null);
+    setCategoryId(null);
+    setCompanyFilter(null);
     setSelectedJob(null);
     setMobilePreviewJob(null);
     setMobileSheetOpen(false);
@@ -217,6 +226,7 @@ export default function Dashboard() {
     const search = searchInput.trim();
     // Skip very short partial queries to avoid broad/slow DB searches
     if (search.length >= 2) parts.push(search);
+    if (search.length >= 2) return parts.join(" ");
     if (selectedCategory) parts.push(selectedCategory.searchTerm);
     if (roleFilter) parts.push(roleFilter);
     if (companyFilter) parts.push(companyFilter);
@@ -311,7 +321,7 @@ export default function Dashboard() {
       ? rawJobs
       : (prioritizedPageQuery.data ?? rawJobs);
 
-    if (!categoryId) return base;
+    if (!categoryId || searchInput.trim().length >= 2) return base;
 
     // Strict title-only enforcement: the search RPC may match a category term
     // in company/skills, so we re-check the title here. Also sort by recency.
@@ -319,7 +329,7 @@ export default function Dashboard() {
     return [...filtered].sort(
       (a, b) => b.posted_date.getTime() - a.posted_date.getTime()
     );
-  }, [usePriorityOrdering, prioritizedPageQuery.data, rawJobs, categoryId]);
+  }, [usePriorityOrdering, prioritizedPageQuery.data, rawJobs, categoryId, searchInput]);
 
   const isLoading = usePriorityOrdering
     ? recommendedLoading || searchLoading || prioritizedPageQuery.isLoading
