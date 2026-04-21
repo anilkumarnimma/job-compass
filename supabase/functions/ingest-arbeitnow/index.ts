@@ -143,6 +143,77 @@ function isExcludedJob(title: string, description: string): boolean {
   return false;
 }
 
+// ───────────────────────── US-only location filter ─────────────────────────
+// Arbeitnow is EU-focused. Sociax targets US-based seekers, so we drop non-US jobs.
+const US_STATE_CODES = new Set([
+  "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS",
+  "KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY",
+  "NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV",
+  "WI","WY","DC",
+]);
+const US_STATE_NAMES = [
+  "alabama","alaska","arizona","arkansas","california","colorado","connecticut","delaware",
+  "florida","georgia","hawaii","idaho","illinois","indiana","iowa","kansas","kentucky",
+  "louisiana","maine","maryland","massachusetts","michigan","minnesota","mississippi",
+  "missouri","montana","nebraska","nevada","new hampshire","new jersey","new mexico",
+  "new york","north carolina","north dakota","ohio","oklahoma","oregon","pennsylvania",
+  "rhode island","south carolina","south dakota","tennessee","texas","utah","vermont",
+  "virginia","washington","west virginia","wisconsin","wyoming","district of columbia",
+];
+const US_CITY_HINTS = [
+  "new york","los angeles","san francisco","chicago","houston","phoenix","philadelphia",
+  "san diego","dallas","san jose","austin","seattle","denver","nashville","las vegas",
+  "portland","atlanta","boston","detroit","miami","minneapolis","tampa","orlando",
+  "raleigh","charlotte","san antonio","sacramento","indianapolis","columbus","baltimore",
+  "milwaukee","kansas city","salt lake city","st. louis","st louis","pittsburgh",
+  "cincinnati","mclean","palo alto","mountain view","sunnyvale","cupertino","redmond",
+];
+const NON_US_COUNTRY_HINTS = [
+  "germany","deutschland","austria","österreich","switzerland","schweiz","france",
+  "spain","españa","portugal","italy","italia","netherlands","nederland","belgium",
+  "denmark","sweden","norway","finland","poland","czech","hungary","romania","greece",
+  "ireland","united kingdom","england","scotland","wales","london","paris","berlin",
+  "munich","münchen","hamburg","frankfurt","cologne","köln","stuttgart","düsseldorf",
+  "vienna","wien","zurich","zürich","amsterdam","barcelona","madrid","milan","milano",
+  "rome","roma","lisbon","lisboa","brussels","copenhagen","stockholm","oslo","helsinki",
+  "warsaw","prague","budapest","dublin","india","bangalore","bengaluru","hyderabad",
+  "mumbai","delhi","pune","chennai","singapore","hong kong","tokyo","japan","china",
+  "australia","sydney","melbourne","canada","toronto","vancouver","montreal","brazil",
+  "mexico","argentina","remote - eu","remote eu","remote (eu)","emea","eu only",
+];
+
+function isUSLocation(location: string, remote: boolean): boolean {
+  const loc = (location || "").trim().toLowerCase();
+  if (!loc) return false;
+
+  // Hard reject: any non-US country/city marker present
+  if (NON_US_COUNTRY_HINTS.some((h) => loc.includes(h))) return false;
+
+  // "Remote" alone — only accept if it mentions US/USA/America/anywhere-in-US
+  const isRemoteOnly = /^remote\b|\bworldwide\b|\banywhere\b/.test(loc);
+  if (isRemoteOnly) {
+    return /\b(us|usa|u\.s\.|u\.s\.a\.|united states|america|north america|americas)\b/.test(loc);
+  }
+
+  // "City, ST" pattern
+  const stateMatch = loc.match(/,\s*([a-z]{2})\b/);
+  if (stateMatch && US_STATE_CODES.has(stateMatch[1].toUpperCase())) return true;
+
+  // Full state name present
+  if (US_STATE_NAMES.some((s) => loc.includes(s))) return true;
+
+  // Known US city
+  if (US_CITY_HINTS.some((c) => loc.includes(c))) return true;
+
+  // Explicit US/USA/United States markers
+  if (/\b(usa|u\.s\.a\.|united states|u\.s\.|america)\b/.test(loc)) return true;
+
+  // If remote flag is true and location string had no country markers, allow only when "us" appears
+  if (remote && /\bus\b/.test(loc)) return true;
+
+  return false;
+}
+
 // ───────────────────────── Arbeitnow API ─────────────────────────
 // Public free API, no key required. Returns ~100 most-recent jobs per page.
 // Docs: https://documenter.getpostman.com/view/18545278/UVJbJdKh
