@@ -38,3 +38,9 @@ verify_jwt = false
 
 [functions.extract-resume-structure]
 verify_jwt = false
+
+[functions.api-jobs-search]
+verify_jwt = false
+
+[functions.api-jobs-detail]
+verify_jwt = false
