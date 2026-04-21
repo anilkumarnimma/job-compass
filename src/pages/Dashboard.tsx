@@ -645,7 +645,8 @@ export default function Dashboard() {
 
             {/* RIGHT — Sidebar (always visible) */}
             <div className="self-start sticky top-[88px] space-y-4">
-              <PremiumUpgradeBanner />
+              {/* PROMO: app is free for everyone — re-enable PremiumUpgradeBanner when premium returns */}
+              {/* <PremiumUpgradeBanner /> */}
               <RightSidebar onFilterByRole={handleFilterByRole} />
             </div>
           </div>
