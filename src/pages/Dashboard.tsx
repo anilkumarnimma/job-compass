@@ -49,6 +49,7 @@ import { LinkedInFeatureBanner } from "@/components/LinkedInFeatureBanner";
 import { AutoApplyBanner } from "@/components/AutoApplyBanner";
 import { RoleCategoryPills } from "@/components/RoleCategoryPills";
 import { getCategoryById, titleMatchesCategory } from "@/lib/roleCategories";
+import { RelatedSearches } from "@/components/RelatedSearches";
 
 
 
@@ -85,6 +86,7 @@ export default function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialSearch = searchParams.get("search") || "";
   const [searchInput, setSearchInput] = useState(initialSearch);
+  const [committedQuery, setCommittedQuery] = useState(initialSearch);
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [mobilePreviewJob, setMobilePreviewJob] = useState<Job | null>(null);
@@ -110,6 +112,7 @@ export default function Dashboard() {
   const performDashboardReset = useCallback(() => {
     sessionStorage.removeItem("pending_search");
     setSearchInput("");
+    setCommittedQuery("");
     setCurrentPage(1);
     setDateFilter("all");
     setMobilePreviewJob(null);
@@ -140,6 +143,7 @@ export default function Dashboard() {
     if (pendingSearch) {
       sessionStorage.removeItem("pending_search");
       setSearchInput(pendingSearch);
+      setCommittedQuery(pendingSearch);
       setSearchParams({ search: pendingSearch }, { replace: true });
     }
   }, []);
@@ -163,6 +167,7 @@ export default function Dashboard() {
     const urlSearch = searchParams.get("search") || "";
     if (!urlSearch) {
       setSearchInput("");
+      setCommittedQuery("");
       setRoleFilter(null);
       setCategoryId(null);
       setCompanyFilter(null);
@@ -179,7 +184,16 @@ export default function Dashboard() {
     });
   }, []);
 
-  const handleSearchCommit = useCallback(() => {
+  const handleSearchCommit = useCallback((committedValue?: string) => {
+    setCurrentPage(1);
+    setFallbackActive(false);
+    const next = (committedValue ?? searchInput).trim();
+    setCommittedQuery((prev) => (prev === next ? prev : next));
+  }, [searchInput]);
+
+  const handleRelatedSelect = useCallback((term: string) => {
+    setSearchInput(term);
+    setCommittedQuery(term);
     setCurrentPage(1);
     setFallbackActive(false);
   }, []);
@@ -420,6 +434,7 @@ export default function Dashboard() {
                 value={searchInput}
                 onChange={handleSearchChange}
                 onSearch={handleSearchCommit}
+                onSuggestionSelect={handleRelatedSelect}
                 placeholder="Search jobs by title, company, skills…"
               />
             </div>
@@ -507,6 +522,20 @@ export default function Dashboard() {
               </Popover>
             </div>
           </div>
+
+          {/* Related searches — appears after a search is committed */}
+          {committedQuery.trim().length >= 2 && (
+            <RelatedSearches query={committedQuery} onSelect={handleRelatedSelect} />
+          )}
+
+          {/* Results count for committed search */}
+          {committedQuery.trim().length >= 2 && !isLoading && (
+            <p className="mb-3 text-sm text-muted-foreground">
+              <span className="font-semibold text-foreground">{totalCount.toLocaleString()}</span> job{totalCount !== 1 ? "s" : ""} found for{" "}
+              <span className="font-medium text-foreground">"{committedQuery.trim()}"</span>
+            </p>
+          )}
+
           {!isLoading && (isSearchPending || isFetching) && (
             <p className="mb-4 text-xs text-muted-foreground">Updating results…</p>
           )}
