@@ -307,6 +307,21 @@ async function processSeed({ admin, appId, appKey, seed, stats }: ProcessSeedArg
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  // ⛔ Adzuna ingest is DISABLED. The free Adzuna API only returns redirect URLs
+  // (adzuna.com/details/* or /land/ad/*) that route through their own page rather
+  // than the direct employer apply link. Sociax requires direct-apply links, so we
+  // no-op here to avoid burning API quota and importing more middleman jobs.
+  return new Response(
+    JSON.stringify({
+      success: false,
+      disabled: true,
+      reason:
+        "Adzuna ingest is disabled — free API only returns adzuna.com redirect links, not direct employer apply URLs.",
+    }),
+    { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+
+  // eslint-disable-next-line no-unreachable
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
