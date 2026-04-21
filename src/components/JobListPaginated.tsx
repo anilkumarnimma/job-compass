@@ -1,6 +1,5 @@
-import { memo, useMemo } from "react";
+import { memo } from "react";
 import { Job } from "@/types/job";
-import { useJobContext } from "@/context/JobContext";
 import { JobMatchResult } from "@/lib/jobMatcher";
 import { LandingProbabilityResult } from "@/lib/landingProbability";
 import { JobCard } from "@/components/JobCard";
