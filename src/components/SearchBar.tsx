@@ -66,7 +66,7 @@ export const SearchBar = memo(function SearchBar({ value, onChange, placeholder 
     setIsFocused(false);
     setHighlightedIndex(-1);
     onSuggestionSelect?.(suggestion);
-    onSearch?.();
+    onSearch?.(suggestion);
   }, [flushChange, onSuggestionSelect, onSearch]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -95,7 +95,8 @@ export const SearchBar = memo(function SearchBar({ value, onChange, placeholder 
     if (e.key === "Enter") {
       e.preventDefault();
       flushChange(localValue);
-      onSearch?.();
+      setIsFocused(false);
+      onSearch?.(localValue);
     }
   }, [showSuggestions, suggestions, highlightedIndex, handleSelect, flushChange, localValue, onSearch]);
 
