@@ -433,6 +433,7 @@ export default function Dashboard() {
                 value={searchInput}
                 onChange={handleSearchChange}
                 onSearch={handleSearchCommit}
+                onSuggestionSelect={handleRelatedSelect}
                 placeholder="Search jobs by title, company, skills…"
               />
             </div>
