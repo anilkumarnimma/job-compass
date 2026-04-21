@@ -1,6 +1,5 @@
-import { memo, useMemo } from "react";
+import { memo } from "react";
 import { Job } from "@/types/job";
-import { useJobContext } from "@/context/JobContext";
 import { JobMatchResult } from "@/lib/jobMatcher";
 import { LandingProbabilityResult } from "@/lib/landingProbability";
 import { JobCard } from "@/components/JobCard";
@@ -71,8 +70,11 @@ export const JobListPaginated = memo(function JobListPaginated({
   landingResults,
   searchQuery,
 }: JobListPaginatedProps) {
-  const { isApplied } = useJobContext();
-  const visibleJobs = useMemo(() => jobs.filter(job => !isApplied(job.id)), [jobs, isApplied]);
+  // Note: we used to hide applied jobs here, but that caused pages to look
+  // empty when many results overlapped with the user's history (e.g. broad
+  // searches like "Data Analyst"). Applied jobs now stay visible — the JobCard
+  // already shows an "Applied ✓" state and disables the apply button.
+  const visibleJobs = jobs;
 
   if (isLoading) {
     return (
