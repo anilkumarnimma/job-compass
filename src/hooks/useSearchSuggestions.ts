@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface Suggestion {
   suggestion: string;
-  company_name: string;
   match_count: number;
 }
 
@@ -31,7 +30,7 @@ export function useSearchSuggestions(query: string, enabled = true) {
       try {
         const request = supabase.rpc("suggest_job_titles", {
           query_text: query.trim(),
-          max_results: 10,
+          max_results: 8,
         }).abortSignal(controller.signal);
 
         const { data, error } = await request;

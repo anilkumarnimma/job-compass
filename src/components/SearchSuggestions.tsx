@@ -1,4 +1,4 @@
-import { Search, Building2 } from "lucide-react";
+import { Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Suggestion } from "@/hooks/useSearchSuggestions";
 
@@ -34,14 +34,14 @@ export function SearchSuggestions({ suggestions, isOpen, onSelect, highlightedIn
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -4 }}
         transition={{ duration: 0.15 }}
-        className="absolute left-0 right-0 top-full mt-1.5 z-50 
-          bg-card/95 backdrop-blur-xl border border-border/60 
+        className="absolute left-0 right-0 top-full mt-1.5 z-50
+          bg-card/95 backdrop-blur-xl border border-border/60
           rounded-xl shadow-elevated overflow-hidden"
       >
         <div className="py-1.5">
           {suggestions.map((s, i) => (
             <button
-              key={`${s.suggestion}-${s.company_name}`}
+              key={s.suggestion}
               onMouseDown={(e) => {
                 e.preventDefault();
                 onSelect(s.suggestion);
@@ -53,15 +53,9 @@ export function SearchSuggestions({ suggestions, isOpen, onSelect, highlightedIn
                 }`}
             >
               <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <div className="flex-1 text-left truncate">
-                <span className="block truncate">
-                  {highlightMatch(s.suggestion, query)}
-                </span>
-                <span className="flex items-center gap-1 text-[11px] text-muted-foreground/70 mt-0.5">
-                  <Building2 className="h-3 w-3" />
-                  {highlightMatch(s.company_name, query)}
-                </span>
-              </div>
+              <span className="flex-1 text-left truncate">
+                {highlightMatch(s.suggestion, query)}
+              </span>
             </button>
           ))}
         </div>
