@@ -520,6 +520,20 @@ export default function Dashboard() {
               </Popover>
             </div>
           </div>
+
+          {/* Related searches — appears after a search is committed */}
+          {committedQuery.trim().length >= 2 && (
+            <RelatedSearches query={committedQuery} onSelect={handleRelatedSelect} />
+          )}
+
+          {/* Results count for committed search */}
+          {committedQuery.trim().length >= 2 && !isLoading && (
+            <p className="mb-3 text-sm text-muted-foreground">
+              <span className="font-semibold text-foreground">{totalCount.toLocaleString()}</span> job{totalCount !== 1 ? "s" : ""} found for{" "}
+              <span className="font-medium text-foreground">"{committedQuery.trim()}"</span>
+            </p>
+          )}
+
           {!isLoading && (isSearchPending || isFetching) && (
             <p className="mb-4 text-xs text-muted-foreground">Updating results…</p>
           )}
