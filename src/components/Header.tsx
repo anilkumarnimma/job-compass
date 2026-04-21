@@ -147,12 +147,12 @@ export function Header() {
                       <ChevronDown className="h-3 w-3" />
                       </Button>
                     </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 rounded-xl border-border/50 shadow-premium">
-                    <div className="flex items-center gap-3 px-2 py-2">
+                  <DropdownMenuContent align="end" className="w-72 max-w-[calc(100vw-1rem)] rounded-xl border-border/50 shadow-premium">
+                    <div className="flex items-center gap-3 px-2 py-2 min-w-0">
                       <ProfileAvatar size="md" />
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium text-foreground">{profile?.full_name || profile?.first_name || "User"}</span>
-                        <span className="text-xs text-muted-foreground">{user?.email}</span>
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <span className="text-sm font-medium text-foreground truncate">{profile?.full_name || profile?.first_name || "User"}</span>
+                        <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
                       </div>
                     </div>
                     <DropdownMenuSeparator />
