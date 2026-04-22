@@ -220,6 +220,13 @@ async function fetchPlatform(platform: string, slug: string, companyName: string
 }
 
 // ───────────── Main handler ─────────────
+// Chunked, self-invoking design:
+//  - Each invocation processes BATCH_SIZE companies in parallel, then self-invokes
+//    with the next offset until all companies are done.
+//  - This keeps every invocation well under the edge function wall-time limit.
+const BATCH_SIZE = 6;            // companies processed in parallel per invocation
+const FETCH_CONCURRENCY = 6;     // parallel platform fetches inside a batch
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -231,9 +238,11 @@ Deno.serve(async (req) => {
   const token = authHeader.replace("Bearer ", "");
   let triggeredBy: string | null = null;
   let triggerType = "manual";
+  let isServiceCall = false;
 
   if (token === SERVICE_KEY) {
     triggerType = "scheduled";
+    isServiceCall = true;
   } else {
     const userClient = createClient(SUPABASE_URL, ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
@@ -257,19 +266,31 @@ Deno.serve(async (req) => {
 
   const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
-  // Optional filter: specific company_id from request body
+  // Body parameters:
+  //   company_id  – run a single company only
+  //   run_id      – continue an in-progress run (chunked self-invocation)
+  //   offset      – starting offset within the company list (chunked)
   let bodyCompanyId: string | null = null;
+  let continuationRunId: string | null = null;
+  let chunkOffset = 0;
   try {
     const body = await req.json();
     bodyCompanyId = body?.company_id || null;
+    continuationRunId = body?.run_id || null;
+    chunkOffset = Number(body?.offset) || 0;
+    if (body?.trigger_type) triggerType = body.trigger_type;
   } catch { /* no body */ }
 
-  const { data: runRow } = await admin
-    .from("ats_ingest_runs")
-    .insert({ trigger_type: triggerType, triggered_by: triggeredBy, status: "running" })
-    .select("id")
-    .single();
-  const runId = runRow?.id;
+  // Either reuse an existing run row (continuation) or insert a new one (first call)
+  let runId: string | null = continuationRunId;
+  if (!runId) {
+    const { data: runRow } = await admin
+      .from("ats_ingest_runs")
+      .insert({ trigger_type: triggerType, triggered_by: triggeredBy, status: "running" })
+      .select("id")
+      .single();
+    runId = runRow?.id ?? null;
+  }
   const startedAt = Date.now();
 
   const stats = {
