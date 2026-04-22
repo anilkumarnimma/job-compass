@@ -126,6 +126,7 @@ function ScrollReveal({ children, delay = 0 }: { children: React.ReactNode; dela
 
 export default function Index() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [heroSearch, setHeroSearch] = useState("");
   const [heroFocused, setHeroFocused] = useState(false);
   const [highlightedIdx, setHighlightedIdx] = useState(-1);
@@ -264,15 +265,17 @@ export default function Index() {
                   <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
                 </Button>
               </Link>
-              <Link to="/auth">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="w-full sm:w-auto rounded-full px-8 border-border/60 hover:bg-secondary backdrop-blur-sm"
-                >
-                  Create Account
-                </Button>
-              </Link>
+              {!user && (
+                <Link to="/auth">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full sm:w-auto rounded-full px-8 border-border/60 hover:bg-secondary backdrop-blur-sm"
+                  >
+                    Create Account
+                  </Button>
+                </Link>
+              )}
             </motion.div>
           </div>
         </div>
