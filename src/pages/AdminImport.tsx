@@ -35,6 +35,7 @@ import {
 import { JSearchIngestPanel } from "@/components/admin/JSearchIngestPanel";
 import { MuseIngestPanel } from "@/components/admin/MuseIngestPanel";
 import { ArbeitnowIngestPanel } from "@/components/admin/ArbeitnowIngestPanel";
+import { CompanyDiscoveryPanel } from "@/components/admin/CompanyDiscoveryPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AdminImport() {
@@ -133,8 +134,13 @@ export default function AdminImport() {
             <TabsTrigger value="jsearch">🌐 JSearch</TabsTrigger>
             <TabsTrigger value="muse">🎯 The Muse</TabsTrigger>
             <TabsTrigger value="arbeitnow">💼 Arbeitnow</TabsTrigger>
+            <TabsTrigger value="discovery">🏢 Company Discovery</TabsTrigger>
             <TabsTrigger value="sheets">📋 Google Sheets</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="discovery">
+            <CompanyDiscoveryPanel />
+          </TabsContent>
 
           <TabsContent value="jsearch">
             <JSearchIngestPanel />
