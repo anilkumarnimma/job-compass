@@ -397,11 +397,19 @@ Deno.serve(async (req) => {
           imported: importedThisCompany,
         });
 
+        // Auto-reactivate inactive companies that returned jobs.
+        // Auto-deactivate active companies that have been silent (0 jobs).
+        const newStatus =
+          jobs.length > 0
+            ? "active"
+            : (company.status === "active" ? "inactive" : company.status);
+
         await admin
           .from("ats_companies")
           .update({
             last_checked: new Date().toISOString(),
             jobs_found_last_run: jobs.length,
+            status: newStatus,
           })
           .eq("id", company.id);
 
