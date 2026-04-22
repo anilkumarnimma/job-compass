@@ -283,11 +283,14 @@ Deno.serve(async (req) => {
     per_company: [] as Array<{ slug: string; platform: string; fetched: number; imported: number }>,
   };
 
+  // Probe both active AND inactive companies. If an inactive one returns jobs,
+  // we'll auto-reactivate it below. Skip only 'pending' (never validated) and
+  // 'failed' (permanently broken slugs).
   let companyQuery = admin
     .from("ats_companies")
-    .select("id, slug, company_name, ats_platform")
-    .eq("status", "active");
-  if (bodyCompanyId) companyQuery = admin.from("ats_companies").select("id, slug, company_name, ats_platform").eq("id", bodyCompanyId);
+    .select("id, slug, company_name, ats_platform, status")
+    .in("status", ["active", "inactive"]);
+  if (bodyCompanyId) companyQuery = admin.from("ats_companies").select("id, slug, company_name, ats_platform, status").eq("id", bodyCompanyId);
 
   const { data: companies, error: cErr } = await companyQuery;
 
