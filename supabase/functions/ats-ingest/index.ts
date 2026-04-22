@@ -67,6 +67,61 @@ function isSeniorRole(title: string): boolean {
   return SENIOR_TOKENS.some((tok) => t.includes(tok));
 }
 
+// ───────────── USA-only location filter (mirrored from src/lib/usaLocationFilter.ts) ─────────────
+const US_STATES_ABBR = new Set([
+  "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD",
+  "MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC",
+  "SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC",
+]);
+const US_STATE_NAMES = [
+  "alabama","alaska","arizona","arkansas","california","colorado","connecticut","delaware","florida","georgia",
+  "hawaii","idaho","illinois","indiana","iowa","kansas","kentucky","louisiana","maine","maryland",
+  "massachusetts","michigan","minnesota","mississippi","missouri","montana","nebraska","nevada",
+  "new hampshire","new jersey","new mexico","new york","north carolina","north dakota","ohio","oklahoma","oregon",
+  "pennsylvania","rhode island","south carolina","south dakota","tennessee","texas","utah","vermont","virginia",
+  "washington","west virginia","wisconsin","wyoming","district of columbia",
+];
+const NON_US_INDICATORS = [
+  "canada","mexico","india","uk","united kingdom","england","scotland","wales","ireland","germany","france","spain",
+  "italy","netherlands","sweden","norway","denmark","finland","switzerland","austria","belgium","portugal","poland",
+  "czech","romania","hungary","greece","turkey","israel","japan","china","korea","singapore","australia",
+  "new zealand","brazil","argentina","colombia","chile","philippines","indonesia","malaysia","thailand","vietnam",
+  "taiwan","hong kong","dubai","uae","saudi","qatar","egypt","nigeria","kenya","south africa","ukraine","russia",
+  "slovenia","croatia","serbia","estonia","latvia","lithuania","luxembourg","iceland","bulgaria","slovakia",
+  "british columbia","alberta","ontario","quebec","manitoba","saskatchewan",
+  "europe","asia","africa","latin america","apac","emea","global",
+  // common ISO/abbrev tails
+  "ie","de","fr","es","it","nl","se","no","dk","fi","ch","at","be","pt","pl","jp","cn","kr","sg","au","nz","br","mx","ca",
+];
+function isUSALocation(location: string | null | undefined): boolean {
+  if (!location || !location.trim()) return false;
+  const loc = location.trim();
+  const lower = loc.toLowerCase();
+  for (const indicator of NON_US_INDICATORS) {
+    const re = new RegExp(`(^|[^a-z])${indicator.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z]|$)`, "i");
+    if (re.test(lower)) {
+      if (indicator === "mexico" && /new mexico/.test(lower)) continue;
+      if (indicator === "england" && /new england/.test(lower)) continue;
+      if (lower.includes(", us") || lower.includes("usa") || lower.includes("united states")) {
+        if (lower.includes(";") || lower.includes("|")) return false;
+        continue;
+      }
+      return false;
+    }
+  }
+  if (/\bUS\b/.test(loc) || /\bUSA\b/i.test(loc) || /united states/i.test(loc)) return true;
+  const stateAbbrMatch = loc.match(/,\s*([A-Z]{2})\s*(?:,\s*US)?(?:\s*\(.*\))?\s*$/);
+  if (stateAbbrMatch && US_STATES_ABBR.has(stateAbbrMatch[1])) return true;
+  const midStateMatch = loc.match(/,\s*([A-Z]{2})\s*,/);
+  if (midStateMatch && US_STATES_ABBR.has(midStateMatch[1])) return true;
+  for (const s of US_STATE_NAMES) if (lower.includes(s)) return true;
+  if (/remote/i.test(loc)) {
+    if (/\bUS\b/.test(loc) || /\bUSA\b/i.test(loc) || /united states/i.test(loc)) return true;
+    return false;
+  }
+  return false;
+}
+
 // ───────────── Per-platform fetchers ─────────────
 interface NormalizedJob {
   title: string;
@@ -264,6 +319,10 @@ Deno.serve(async (req) => {
             continue;
           }
           if (isSeniorRole(j.title)) {
+            stats.total_filtered++;
+            continue;
+          }
+          if (!isUSALocation(j.location)) {
             stats.total_filtered++;
             continue;
           }
