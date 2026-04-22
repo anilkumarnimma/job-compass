@@ -386,6 +386,26 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
               icon={<AlertCircle className="h-10 w-10 text-destructive/70" />}
               title="Could not load your resume"
               body={structureError}
+              action={
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    resetStructure();
+                    if (profile?.resume_url) {
+                      loadStructure({
+                        resume_path: profile.resume_url,
+                        filename: profile.resume_filename || undefined,
+                        cache_key: `${resumeVersion}::retry-${Date.now()}`,
+                      });
+                    }
+                  }}
+                  className="mt-2"
+                >
+                  <RefreshCw className="h-3.5 w-3.5 mr-2" />
+                  Try again
+                </Button>
+              }
             />
           ) : isWorking && !resume ? (
             <EmptyState
@@ -461,16 +481,19 @@ function EmptyState({
   icon,
   title,
   body,
+  action,
 }: {
   icon: React.ReactNode;
   title: string;
   body: string;
+  action?: React.ReactNode;
 }) {
   return (
     <div className="bg-white rounded-md border border-border/60 mx-auto max-w-2xl px-10 py-16 text-center flex flex-col items-center gap-3">
       {icon}
       <p className="text-sm font-medium text-foreground">{title}</p>
       {body && <p className="text-xs text-muted-foreground max-w-sm">{body}</p>}
+      {action}
     </div>
   );
 }
