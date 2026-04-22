@@ -121,6 +121,10 @@ export default {
           "0%, 100%": { opacity: "0.4" },
           "50%": { opacity: "0.7" },
         },
+        "logo-marquee": {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -130,6 +134,7 @@ export default {
         "panel-in": "panel-in 0.16s ease-out",
         "shimmer": "shimmer 2s linear infinite",
         "pulse-slow": "pulse-slow 4s ease-in-out infinite",
+        "logo-marquee": "logo-marquee 40s linear infinite",
       },
     },
   },

@@ -8,6 +8,7 @@ import {
   FileText,
   Sparkles,
 } from "lucide-react";
+import { CompanyLogoMarquee } from "@/components/CompanyLogoMarquee";
 
 const aboutFeatures = [
   {
@@ -64,6 +65,10 @@ export function AboutSection() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/5 rounded-full blur-[150px] pointer-events-none" />
 
       <div className="container max-w-6xl mx-auto px-4 relative z-10">
+        <ScrollReveal>
+          <CompanyLogoMarquee />
+        </ScrollReveal>
+
         <ScrollReveal>
           <div className="text-center mb-14">
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 text-accent text-xs font-medium mb-4 border border-accent/20">
