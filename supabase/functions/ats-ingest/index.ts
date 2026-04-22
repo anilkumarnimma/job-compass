@@ -293,16 +293,6 @@ Deno.serve(async (req) => {
   }
   const startedAt = Date.now();
 
-  const stats = {
-    companies_processed: 0,
-    total_fetched: 0,
-    total_imported: 0,
-    total_skipped: 0,
-    total_filtered: 0,
-    duplicates_removed: 0,
-    errors: [] as Array<{ slug: string; platform: string; error: string }>,
-    per_company: [] as Array<{ slug: string; platform: string; fetched: number; imported: number }>,
-  };
 
   // Probe both active AND inactive companies (stable order for chunking).
   // Skip only 'pending' (never validated) and 'failed' (permanently broken slugs).
