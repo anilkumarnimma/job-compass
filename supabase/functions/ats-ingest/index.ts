@@ -454,6 +454,22 @@ Deno.serve(async (req) => {
     }).eq("id", runId);
 
     console.log(`[ats-ingest] Run ${runId} done: ${stats.total_imported} imported across ${stats.companies_processed} companies`);
+
+    // Notify opted-in users about new jobs (fire-and-forget)
+    if (stats.total_imported > 0) {
+      try {
+        await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/notify-new-jobs`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          },
+          body: JSON.stringify({ count: stats.total_imported, source: "ats" }),
+        });
+      } catch (e) {
+        console.error("[ats-ingest] notify-new-jobs error:", e);
+      }
+    }
   };
 
   // @ts-ignore EdgeRuntime
