@@ -987,6 +987,36 @@ export type Database = {
         }
         Relationships: []
       }
+      new_jobs_notification_log: {
+        Row: {
+          created_at: string
+          id: string
+          jobs_count_last_notification: number
+          last_notified_at: string
+          source: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          jobs_count_last_notification?: number
+          last_notified_at?: string
+          source?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          jobs_count_last_notification?: number
+          last_notified_at?: string
+          source?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       processed_stripe_events: {
         Row: {
           event_id: string
