@@ -30,6 +30,7 @@ import {
   Link2, Briefcase, GraduationCap, Sparkles, Plus, Wand2, Award, Pencil, X, Target, Bell, Mail, Shield, KeyRound, Eye, EyeOff, Check,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { LocationAutocomplete, LocationParts } from "@/components/LocationAutocomplete";
 
 const WORK_AUTH_OPTIONS = [
   "US Citizen", "Permanent Resident (Green Card)", "H-1B", "OPT / CPT",
