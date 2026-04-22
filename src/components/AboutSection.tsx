@@ -66,6 +66,9 @@ export function AboutSection() {
 
       <div className="container max-w-6xl mx-auto px-4 relative z-10">
         <ScrollReveal>
+          <p className="text-center text-xs md:text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground mb-4">
+            Helping candidates land roles at the world's top companies
+          </p>
           <CompanyLogoMarquee />
         </ScrollReveal>
 
