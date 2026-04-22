@@ -304,29 +304,42 @@ Deno.serve(async (req) => {
     per_company: [] as Array<{ slug: string; platform: string; fetched: number; imported: number }>,
   };
 
-  // Probe both active AND inactive companies. If an inactive one returns jobs,
-  // we'll auto-reactivate it below. Skip only 'pending' (never validated) and
-  // 'failed' (permanently broken slugs).
+  // Probe both active AND inactive companies (stable order for chunking).
+  // Skip only 'pending' (never validated) and 'failed' (permanently broken slugs).
   let companyQuery = admin
     .from("ats_companies")
     .select("id, slug, company_name, ats_platform, status")
-    .in("status", ["active", "inactive"]);
-  if (bodyCompanyId) companyQuery = admin.from("ats_companies").select("id, slug, company_name, ats_platform, status").eq("id", bodyCompanyId);
+    .in("status", ["active", "inactive"])
+    .order("id", { ascending: true });
+  if (bodyCompanyId) {
+    companyQuery = admin
+      .from("ats_companies")
+      .select("id, slug, company_name, ats_platform, status")
+      .eq("id", bodyCompanyId);
+  }
 
-  const { data: companies, error: cErr } = await companyQuery;
+  const { data: allCompanies, error: cErr } = await companyQuery;
 
-  if (cErr || !companies?.length) {
-    await admin.from("ats_ingest_runs").update({
-      status: "failed",
-      completed_at: new Date().toISOString(),
-      duration_ms: Date.now() - startedAt,
-      errors: [{ slug: "n/a", platform: "n/a", error: cErr?.message || "No active companies" }],
-    }).eq("id", runId);
+  if (cErr || !allCompanies?.length) {
+    if (runId) {
+      await admin.from("ats_ingest_runs").update({
+        status: "failed",
+        completed_at: new Date().toISOString(),
+        duration_ms: Date.now() - startedAt,
+        errors: [{ slug: "n/a", platform: "n/a", error: cErr?.message || "No active companies" }],
+      }).eq("id", runId);
+    }
     return new Response(
       JSON.stringify({ error: "No active companies. Run discovery first." }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
+
+  // Slice for this invocation's chunk
+  const totalCompanies = allCompanies.length;
+  const chunkEnd = Math.min(chunkOffset + BATCH_SIZE, totalCompanies);
+  const companies = allCompanies.slice(chunkOffset, chunkEnd);
+  const isLastChunk = chunkEnd >= totalCompanies || !!bodyCompanyId;
 
   const backgroundWork = async () => {
     console.log(`[ats-ingest] Starting ingest for ${companies.length} active companies (run ${runId})`);
