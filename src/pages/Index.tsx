@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useSearchSuggestions } from "@/hooks/useSearchSuggestions";
 import { SearchSuggestions } from "@/components/SearchSuggestions";
