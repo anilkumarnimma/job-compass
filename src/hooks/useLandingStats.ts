@@ -15,17 +15,15 @@ export function useLandingStats() {
       cutoff.setDate(cutoff.getDate() - 45);
       const cutoffISO = cutoff.toISOString();
 
-      // Use head:true count queries to avoid pulling full rows
-      const [jobRes, userRes] = await Promise.all([
+      // Use head:true count for jobs (public read), RPC for users (RLS-protected)
+      const [jobRes, userCountRes] = await Promise.all([
         supabase
           .from("jobs")
           .select("*", { count: "exact", head: true })
           .eq("is_published", true)
           .eq("is_archived", false)
           .gte("posted_date", cutoffISO),
-        supabase
-          .from("profiles")
-          .select("*", { count: "exact", head: true }),
+        supabase.rpc("get_public_user_count"),
       ]);
 
       if (jobRes.error) throw jobRes.error;
@@ -37,7 +35,7 @@ export function useLandingStats() {
       return {
         jobCount,
         companyCount: estimatedCompanyCount,
-        userCount: userRes.count ?? 0,
+        userCount: Number(userCountRes.data ?? 0),
       };
     },
     staleTime: 10 * 60 * 1000, // 10 minutes — landing stats rarely change

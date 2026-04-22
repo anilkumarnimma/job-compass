@@ -1322,6 +1322,7 @@ export type Database = {
           yesterday_count: number
         }[]
       }
+      get_public_user_count: { Args: never; Returns: number }
       get_top_hiring_roles: {
         Args: { max_roles?: number }
         Returns: {
