@@ -72,7 +72,7 @@ export function AboutSection() {
         <ScrollReveal>
           <div className="text-center mb-14">
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 text-accent text-xs font-medium mb-4 border border-accent/20">
-              Trusted talent destinations
+              About Sociax.tech
             </span>
             <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
               Your all-in-one job search companion
