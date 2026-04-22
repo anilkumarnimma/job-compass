@@ -114,7 +114,7 @@ const PrivacyPolicy = () => {
         <h2>Contact Us</h2>
         <p>If you have any questions or concerns about this Privacy Policy, please contact us at:</p>
         <ul>
-          <li>Email: <a href="mailto:anilkumarsociax@gmail.com">anilkumarsociax@gmail.com</a></li>
+          <li>Email: <a href="mailto:support@sociax.tech">support@sociax.tech</a></li>
           <li>Website: <a href="https://sociax.tech" target="_blank" rel="noopener noreferrer">https://sociax.tech</a></li>
         </ul>
       </div>
