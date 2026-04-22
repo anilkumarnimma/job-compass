@@ -558,8 +558,11 @@ Deno.serve(async (req) => {
     JSON.stringify({
       success: true,
       run_id: runId,
-      message: "ATS ingest started in background",
-      companies_count: companies.length,
+      message: isLastChunk
+        ? "ATS ingest started — final chunk processing in background"
+        : "ATS ingest started — chunked processing in background",
+      chunk: { offset: chunkOffset, size: companies.length, end: chunkEnd },
+      total_companies: totalCompanies,
     }),
     {
       status: 202,
