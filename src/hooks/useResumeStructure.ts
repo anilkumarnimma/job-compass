@@ -49,28 +49,16 @@ export function useResumeStructure() {
       setIsLoading(true);
       setError(null);
       try {
-        // Race the edge function call against a 90s client-side timeout so the
-        // "Reading your resume…" state never hangs indefinitely if the AI
-        // gateway stalls. The edge function itself returns within ~30s normally.
-        const invokePromise = supabase.functions.invoke("extract-resume-structure", {
+        // The edge function now retries across models with its own 55s per-attempt
+        // timeout, so we no longer need a client-side race. Just call and surface
+        // any returned error.
+        const { data, error: fnErr } = await supabase.functions.invoke("extract-resume-structure", {
           body: {
             resume_path: params.resume_path,
             filename: params.filename,
             mime_type: params.mime_type,
           },
         });
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(
-            () =>
-              reject(
-                new Error(
-                  "This is taking longer than expected. Please close this window and try again.",
-                ),
-              ),
-            90_000,
-          ),
-        );
-        const { data, error: fnErr } = (await Promise.race([invokePromise, timeoutPromise])) as Awaited<typeof invokePromise>;
         if (fnErr) throw new Error(fnErr.message || "Failed to load resume");
         if (data?.error) throw new Error(data.error);
         if (!data?.structure) throw new Error("No structure returned");

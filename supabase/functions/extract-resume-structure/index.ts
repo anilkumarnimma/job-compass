@@ -270,41 +270,65 @@ serve(async (req) => {
       },
     };
 
-    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a resume structure extractor. Reproduce the candidate's resume EXACTLY as a structured object. Do NOT invent, summarize, or reorganize. Keep section titles, ordering, headings, dates, and bullet wording exactly as they appear. Each bullet should be a single bullet point, no merging.",
+    // Retry across models with timeouts so a single stalled model never hangs the user.
+    const models = ["google/gemini-2.5-flash", "google/gemini-3-flash-preview", "google/gemini-2.5-flash-lite"];
+    let aiResp: Response | null = null;
+    let lastErr = "";
+    for (let attempt = 0; attempt < models.length; attempt++) {
+      const model = models[attempt];
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 55000);
+      try {
+        console.log(`[EXTRACT] Attempt ${attempt + 1} model=${model}`);
+        const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
           },
-          { role: "user", content: textPayload },
-        ],
-        tools: [tool],
-        tool_choice: { type: "function", function: { name: "return_resume_structure" } },
-      }),
-    });
+          signal: controller.signal,
+          body: JSON.stringify({
+            model,
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are a resume structure extractor. Reproduce the candidate's resume EXACTLY as a structured object. Do NOT invent, summarize, or reorganize. Keep section titles, ordering, headings, dates, and bullet wording exactly as they appear. Each bullet should be a single bullet point, no merging.",
+              },
+              { role: "user", content: textPayload },
+            ],
+            tools: [tool],
+            tool_choice: { type: "function", function: { name: "return_resume_structure" } },
+          }),
+        });
+        clearTimeout(timeout);
 
-    if (!aiResp.ok) {
-      const txt = await aiResp.text().catch(() => "");
-      console.error("[EXTRACT] AI failed:", aiResp.status, txt.slice(0, 200));
-      if (aiResp.status === 429) {
-        return new Response(JSON.stringify({ error: "AI is busy. Please try again in a moment." }), {
-          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        if (r.status === 429) {
+          return new Response(JSON.stringify({ error: "AI is busy. Please try again in a moment." }), {
+            status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (r.status === 402) {
+          return new Response(JSON.stringify({ error: "AI service temporarily unavailable." }), {
+            status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (r.ok) {
+          aiResp = r;
+          break;
+        }
+        lastErr = `status ${r.status}`;
+        console.error(`[EXTRACT] Attempt ${attempt + 1} failed:`, lastErr);
+      } catch (err: any) {
+        clearTimeout(timeout);
+        const isAbort = err?.name === "AbortError";
+        lastErr = isAbort ? "timeout" : (err?.message || "network error");
+        console.error(`[EXTRACT] Attempt ${attempt + 1} ${lastErr}`);
       }
-      if (aiResp.status === 402) {
-        return new Response(JSON.stringify({ error: "AI service temporarily unavailable." }), {
-          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      return new Response(JSON.stringify({ error: "Could not extract resume structure. Please try again." }), {
+    }
+
+    if (!aiResp) {
+      return new Response(JSON.stringify({ error: "Could not read your resume right now. Please try again in a moment." }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

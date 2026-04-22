@@ -152,19 +152,26 @@ You MUST call the ats_check_result function with your analysis. Do not respond w
     ];
 
     const callModel = async (model: string) => {
-      return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          messages,
-          tools: [extractionTool],
-          tool_choice: { type: "function", function: { name: "ats_check_result" } },
-        }),
-      });
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 45000);
+      try {
+        return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          signal: controller.signal,
+          body: JSON.stringify({
+            model,
+            messages,
+            tools: [extractionTool],
+            tool_choice: { type: "function", function: { name: "ats_check_result" } },
+          }),
+        });
+      } finally {
+        clearTimeout(timeout);
+      }
     };
 
     const models = ["google/gemini-2.5-flash", "google/gemini-3-flash-preview", "google/gemini-2.5-flash-lite"];

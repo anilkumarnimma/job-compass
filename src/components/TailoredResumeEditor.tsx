@@ -140,10 +140,13 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
     });
   }, [open, job, matchScore, isChecking, profile, runCheck]);
 
-  /* 5) Live debounced match-score recompute */
+  /* 5) Live debounced match-score recompute — only after user edits, not on
+     the initial AI hydration. Skipped while still tailoring to avoid stacking
+     redundant ATS calls on top of resume generation. */
   const isFirstResumeRef = useRef(true);
   useEffect(() => {
     if (!open || !job || !resume || !profile) return;
+    if (isGenerating || isLoadingStructure) return;
     if (isFirstResumeRef.current) {
       isFirstResumeRef.current = false;
       return;
@@ -174,9 +177,9 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
       }).then((res) => {
         if (res) setMatchScore(res.overall_score);
       });
-    }, 1000);
+    }, 1500);
     return () => clearTimeout(timer);
-  }, [resume, open, job, profile, runCheck]);
+  }, [resume, open, job, profile, runCheck, isGenerating, isLoadingStructure]);
 
   /* 6) Reset on close / job change */
   useEffect(() => {
