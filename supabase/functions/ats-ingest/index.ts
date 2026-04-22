@@ -220,6 +220,13 @@ async function fetchPlatform(platform: string, slug: string, companyName: string
 }
 
 // ───────────── Main handler ─────────────
+// Chunked, self-invoking design:
+//  - Each invocation processes BATCH_SIZE companies in parallel, then self-invokes
+//    with the next offset until all companies are done.
+//  - This keeps every invocation well under the edge function wall-time limit.
+const BATCH_SIZE = 6;            // companies processed in parallel per invocation
+const FETCH_CONCURRENCY = 6;     // parallel platform fetches inside a batch
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -231,9 +238,11 @@ Deno.serve(async (req) => {
   const token = authHeader.replace("Bearer ", "");
   let triggeredBy: string | null = null;
   let triggerType = "manual";
+  let isServiceCall = false;
 
   if (token === SERVICE_KEY) {
     triggerType = "scheduled";
+    isServiceCall = true;
   } else {
     const userClient = createClient(SUPABASE_URL, ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
@@ -257,214 +266,284 @@ Deno.serve(async (req) => {
 
   const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
-  // Optional filter: specific company_id from request body
+  // Body parameters:
+  //   company_id  – run a single company only
+  //   run_id      – continue an in-progress run (chunked self-invocation)
+  //   offset      – starting offset within the company list (chunked)
   let bodyCompanyId: string | null = null;
+  let continuationRunId: string | null = null;
+  let chunkOffset = 0;
   try {
     const body = await req.json();
     bodyCompanyId = body?.company_id || null;
+    continuationRunId = body?.run_id || null;
+    chunkOffset = Number(body?.offset) || 0;
+    if (body?.trigger_type) triggerType = body.trigger_type;
   } catch { /* no body */ }
 
-  const { data: runRow } = await admin
-    .from("ats_ingest_runs")
-    .insert({ trigger_type: triggerType, triggered_by: triggeredBy, status: "running" })
-    .select("id")
-    .single();
-  const runId = runRow?.id;
+  // Either reuse an existing run row (continuation) or insert a new one (first call)
+  let runId: string | null = continuationRunId;
+  if (!runId) {
+    const { data: runRow } = await admin
+      .from("ats_ingest_runs")
+      .insert({ trigger_type: triggerType, triggered_by: triggeredBy, status: "running" })
+      .select("id")
+      .single();
+    runId = runRow?.id ?? null;
+  }
   const startedAt = Date.now();
 
-  const stats = {
-    companies_processed: 0,
-    total_fetched: 0,
-    total_imported: 0,
-    total_skipped: 0,
-    total_filtered: 0,
-    duplicates_removed: 0,
-    errors: [] as Array<{ slug: string; platform: string; error: string }>,
-    per_company: [] as Array<{ slug: string; platform: string; fetched: number; imported: number }>,
-  };
 
-  // Probe both active AND inactive companies. If an inactive one returns jobs,
-  // we'll auto-reactivate it below. Skip only 'pending' (never validated) and
-  // 'failed' (permanently broken slugs).
+  // Probe both active AND inactive companies (stable order for chunking).
+  // Skip only 'pending' (never validated) and 'failed' (permanently broken slugs).
   let companyQuery = admin
     .from("ats_companies")
     .select("id, slug, company_name, ats_platform, status")
-    .in("status", ["active", "inactive"]);
-  if (bodyCompanyId) companyQuery = admin.from("ats_companies").select("id, slug, company_name, ats_platform, status").eq("id", bodyCompanyId);
+    .in("status", ["active", "inactive"])
+    .order("id", { ascending: true });
+  if (bodyCompanyId) {
+    companyQuery = admin
+      .from("ats_companies")
+      .select("id, slug, company_name, ats_platform, status")
+      .eq("id", bodyCompanyId);
+  }
 
-  const { data: companies, error: cErr } = await companyQuery;
+  const { data: allCompanies, error: cErr } = await companyQuery;
 
-  if (cErr || !companies?.length) {
-    await admin.from("ats_ingest_runs").update({
-      status: "failed",
-      completed_at: new Date().toISOString(),
-      duration_ms: Date.now() - startedAt,
-      errors: [{ slug: "n/a", platform: "n/a", error: cErr?.message || "No active companies" }],
-    }).eq("id", runId);
+  if (cErr || !allCompanies?.length) {
+    if (runId) {
+      await admin.from("ats_ingest_runs").update({
+        status: "failed",
+        completed_at: new Date().toISOString(),
+        duration_ms: Date.now() - startedAt,
+        errors: [{ slug: "n/a", platform: "n/a", error: cErr?.message || "No active companies" }],
+      }).eq("id", runId);
+    }
     return new Response(
       JSON.stringify({ error: "No active companies. Run discovery first." }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 
-  const backgroundWork = async () => {
-    console.log(`[ats-ingest] Starting ingest for ${companies.length} active companies (run ${runId})`);
+  // Slice for this invocation's chunk
+  const totalCompanies = allCompanies.length;
+  const chunkEnd = Math.min(chunkOffset + BATCH_SIZE, totalCompanies);
+  const companies = allCompanies.slice(chunkOffset, chunkEnd);
+  const isLastChunk = chunkEnd >= totalCompanies || !!bodyCompanyId;
 
-    for (const company of companies) {
-      try {
-        const jobs = await fetchPlatform(company.ats_platform, company.slug, company.company_name);
-        stats.total_fetched += jobs.length;
-        let importedThisCompany = 0;
+  // Process a single company end-to-end. Returns per-company stats delta.
+  const processCompany = async (company: any) => {
+    const delta = {
+      total_fetched: 0,
+      total_imported: 0,
+      total_skipped: 0,
+      total_filtered: 0,
+      errors: [] as Array<{ slug: string; platform: string; error: string }>,
+      per_company: null as null | { slug: string; platform: string; fetched: number; imported: number },
+    };
+    try {
+      const jobs = await fetchPlatform(company.ats_platform, company.slug, company.company_name);
+      delta.total_fetched += jobs.length;
+      let importedThisCompany = 0;
 
-        // Pre-filter (cheap, in-memory)
-        const candidates: NormalizedJob[] = [];
-        for (const j of jobs) {
-          if (!j.title || !j.apply_link) { stats.total_skipped++; continue; }
-          if (isSeniorRole(j.title)) { stats.total_filtered++; continue; }
-          if (!isUSALocation(j.location)) { stats.total_filtered++; continue; }
-          candidates.push(j);
-        }
-
-        // Batch dedup: single query per company instead of one query per job
-        const links = candidates.map((c) => c.apply_link);
-        const existingLinks = new Set<string>();
-        if (links.length > 0) {
-          // Chunk to avoid PostgREST URL limits (~1000 items per .in())
-          const CHUNK = 500;
-          for (let i = 0; i < links.length; i += CHUNK) {
-            const slice = links.slice(i, i + CHUNK);
-            const { data: existingRows } = await admin
-              .from("jobs")
-              .select("external_apply_link")
-              .in("external_apply_link", slice);
-            for (const row of existingRows || []) {
-              if (row.external_apply_link) existingLinks.add(row.external_apply_link);
-            }
-          }
-        }
-
-        // Build batch insert payload (skip duplicates)
-        const toInsert: any[] = [];
-        for (const j of candidates) {
-          if (existingLinks.has(j.apply_link)) {
-            stats.total_skipped++;
-            continue;
-          }
-          // Avoid duplicates within the same batch
-          if (toInsert.some((row) => row.external_apply_link === j.apply_link)) {
-            stats.total_skipped++;
-            continue;
-          }
-          const skills = enrichSkills(`${j.title} ${j.description}`);
-          toInsert.push({
-            title: j.title.trim(),
-            company: j.company.trim(),
-            location: j.location || "Remote",
-            description: j.description || "",
-            skills,
-            external_apply_link: j.apply_link,
-            employment_type: j.employment_type,
-            posted_date: j.posted_date,
-            is_published: true,
-            is_archived: false,
-            is_direct_apply: true,
-          });
-        }
-
-        // Batch insert in chunks of 100
-        if (toInsert.length > 0) {
-          const INSERT_CHUNK = 100;
-          for (let i = 0; i < toInsert.length; i += INSERT_CHUNK) {
-            const slice = toInsert.slice(i, i + INSERT_CHUNK);
-            const { error: insertErr, count } = await admin
-              .from("jobs")
-              .insert(slice, { count: "exact" });
-            if (insertErr) {
-              stats.errors.push({ slug: company.slug, platform: company.ats_platform, error: insertErr.message });
-              stats.total_skipped += slice.length;
-            } else {
-              const inserted = count ?? slice.length;
-              stats.total_imported += inserted;
-              importedThisCompany += inserted;
-            }
-          }
-        }
-
-        stats.per_company.push({
-          slug: company.slug,
-          platform: company.ats_platform,
-          fetched: jobs.length,
-          imported: importedThisCompany,
-        });
-
-        // Auto-reactivate inactive companies that returned jobs.
-        // Auto-deactivate active companies that have been silent (0 jobs).
-        const newStatus =
-          jobs.length > 0
-            ? "active"
-            : (company.status === "active" ? "inactive" : company.status);
-
-        await admin
-          .from("ats_companies")
-          .update({
-            last_checked: new Date().toISOString(),
-            jobs_found_last_run: jobs.length,
-            status: newStatus,
-          })
-          .eq("id", company.id);
-
-        stats.companies_processed++;
-
-        // Live progress
-        await admin.from("ats_ingest_runs").update({
-          companies_processed: stats.companies_processed,
-          total_fetched: stats.total_fetched,
-          total_imported: stats.total_imported,
-          total_skipped: stats.total_skipped,
-          total_filtered: stats.total_filtered,
-          details: { per_company: stats.per_company.slice(-50) },
-        }).eq("id", runId);
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        console.error(`[ats-ingest] Error on ${company.ats_platform}/${company.slug}:`, msg);
-        stats.errors.push({ slug: company.slug, platform: company.ats_platform, error: msg });
+      const candidates: NormalizedJob[] = [];
+      for (const j of jobs) {
+        if (!j.title || !j.apply_link) { delta.total_skipped++; continue; }
+        if (isSeniorRole(j.title)) { delta.total_filtered++; continue; }
+        if (!isUSALocation(j.location)) { delta.total_filtered++; continue; }
+        candidates.push(j);
       }
+
+      const links = candidates.map((c) => c.apply_link);
+      const existingLinks = new Set<string>();
+      if (links.length > 0) {
+        const CHUNK = 500;
+        for (let i = 0; i < links.length; i += CHUNK) {
+          const slice = links.slice(i, i + CHUNK);
+          const { data: existingRows } = await admin
+            .from("jobs")
+            .select("external_apply_link")
+            .in("external_apply_link", slice);
+          for (const row of existingRows || []) {
+            if (row.external_apply_link) existingLinks.add(row.external_apply_link);
+          }
+        }
+      }
+
+      const toInsert: any[] = [];
+      const seenInBatch = new Set<string>();
+      for (const j of candidates) {
+        if (existingLinks.has(j.apply_link)) { delta.total_skipped++; continue; }
+        if (seenInBatch.has(j.apply_link)) { delta.total_skipped++; continue; }
+        seenInBatch.add(j.apply_link);
+        const skills = enrichSkills(`${j.title} ${j.description}`);
+        toInsert.push({
+          title: j.title.trim(),
+          company: j.company.trim(),
+          location: j.location || "Remote",
+          description: j.description || "",
+          skills,
+          external_apply_link: j.apply_link,
+          employment_type: j.employment_type,
+          posted_date: j.posted_date,
+          is_published: true,
+          is_archived: false,
+          is_direct_apply: true,
+        });
+      }
+
+      if (toInsert.length > 0) {
+        const INSERT_CHUNK = 100;
+        for (let i = 0; i < toInsert.length; i += INSERT_CHUNK) {
+          const slice = toInsert.slice(i, i + INSERT_CHUNK);
+          const { error: insertErr, count } = await admin
+            .from("jobs")
+            .insert(slice, { count: "exact" });
+          if (insertErr) {
+            delta.errors.push({ slug: company.slug, platform: company.ats_platform, error: insertErr.message });
+            delta.total_skipped += slice.length;
+          } else {
+            const inserted = count ?? slice.length;
+            delta.total_imported += inserted;
+            importedThisCompany += inserted;
+          }
+        }
+      }
+
+      delta.per_company = {
+        slug: company.slug,
+        platform: company.ats_platform,
+        fetched: jobs.length,
+        imported: importedThisCompany,
+      };
+
+      const newStatus =
+        jobs.length > 0
+          ? "active"
+          : (company.status === "active" ? "inactive" : company.status);
+
+      await admin
+        .from("ats_companies")
+        .update({
+          last_checked: new Date().toISOString(),
+          jobs_found_last_run: jobs.length,
+          status: newStatus,
+        })
+        .eq("id", company.id);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error(`[ats-ingest] Error on ${company.ats_platform}/${company.slug}:`, msg);
+      delta.errors.push({ slug: company.slug, platform: company.ats_platform, error: msg });
+    }
+    return delta;
+  };
+
+  const backgroundWork = async () => {
+    console.log(`[ats-ingest] Run ${runId} chunk offset=${chunkOffset} size=${companies.length} (total=${totalCompanies})`);
+
+    // Run companies in parallel within this chunk (bounded concurrency)
+    const results: Awaited<ReturnType<typeof processCompany>>[] = [];
+    for (let i = 0; i < companies.length; i += FETCH_CONCURRENCY) {
+      const batch = companies.slice(i, i + FETCH_CONCURRENCY);
+      const out = await Promise.all(batch.map((c) => processCompany(c)));
+      results.push(...out);
     }
 
-    // Dedup sweep
+    // Aggregate this chunk's deltas
+    const chunkDelta = {
+      total_fetched: 0,
+      total_imported: 0,
+      total_skipped: 0,
+      total_filtered: 0,
+      companies_processed: 0,
+      errors: [] as Array<{ slug: string; platform: string; error: string }>,
+      per_company: [] as Array<{ slug: string; platform: string; fetched: number; imported: number }>,
+    };
+    for (const d of results) {
+      chunkDelta.total_fetched += d.total_fetched;
+      chunkDelta.total_imported += d.total_imported;
+      chunkDelta.total_skipped += d.total_skipped;
+      chunkDelta.total_filtered += d.total_filtered;
+      chunkDelta.companies_processed += 1;
+      if (d.errors.length) chunkDelta.errors.push(...d.errors);
+      if (d.per_company) chunkDelta.per_company.push(d.per_company);
+    }
+
+    // Read current run state, then write merged totals
+    const { data: currentRun } = await admin
+      .from("ats_ingest_runs")
+      .select("companies_processed,total_fetched,total_imported,total_skipped,total_filtered,errors,details")
+      .eq("id", runId)
+      .single();
+
+    const merged = {
+      companies_processed: (currentRun?.companies_processed || 0) + chunkDelta.companies_processed,
+      total_fetched: (currentRun?.total_fetched || 0) + chunkDelta.total_fetched,
+      total_imported: (currentRun?.total_imported || 0) + chunkDelta.total_imported,
+      total_skipped: (currentRun?.total_skipped || 0) + chunkDelta.total_skipped,
+      total_filtered: (currentRun?.total_filtered || 0) + chunkDelta.total_filtered,
+      errors: ([...(Array.isArray(currentRun?.errors) ? currentRun!.errors : []), ...chunkDelta.errors]).slice(0, 100),
+      details: {
+        per_company: ([
+          ...(((currentRun?.details as any)?.per_company) || []),
+          ...chunkDelta.per_company,
+        ]).slice(-200),
+      },
+    };
+
+    await admin.from("ats_ingest_runs").update(merged).eq("id", runId);
+
+    if (!isLastChunk) {
+      // Self-invoke for next chunk (fire-and-forget). Returns immediately so
+      // this invocation can finish well within the wall-time budget.
+      const nextOffset = chunkEnd;
+      console.log(`[ats-ingest] Run ${runId} self-invoking next chunk offset=${nextOffset}`);
+      try {
+        await fetch(`${SUPABASE_URL}/functions/v1/ats-ingest`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${SERVICE_KEY}`,
+          },
+          body: JSON.stringify({
+            run_id: runId,
+            offset: nextOffset,
+            trigger_type: triggerType,
+          }),
+        });
+      } catch (e) {
+        console.error("[ats-ingest] self-invoke error:", e);
+      }
+      return;
+    }
+
+    // Final chunk: dedup sweep + finalize
+    let duplicates_removed = 0;
     try {
       const { data: dedupRes } = await admin.rpc("remove_duplicate_jobs");
-      stats.duplicates_removed = (dedupRes as { removed?: number })?.removed || 0;
+      duplicates_removed = (dedupRes as { removed?: number })?.removed || 0;
     } catch (e) {
       console.error("[ats-ingest] Dedup error:", e);
     }
 
     await admin.from("ats_ingest_runs").update({
-      status: stats.errors.length > 0 ? "completed_with_errors" : "completed",
+      status: merged.errors.length > 0 ? "completed_with_errors" : "completed",
       completed_at: new Date().toISOString(),
       duration_ms: Date.now() - startedAt,
-      companies_processed: stats.companies_processed,
-      total_fetched: stats.total_fetched,
-      total_imported: stats.total_imported,
-      total_skipped: stats.total_skipped,
-      total_filtered: stats.total_filtered,
-      duplicates_removed: stats.duplicates_removed,
-      errors: stats.errors.slice(0, 50),
-      details: { per_company: stats.per_company.slice(-100) },
+      duplicates_removed,
     }).eq("id", runId);
 
-    console.log(`[ats-ingest] Run ${runId} done: ${stats.total_imported} imported across ${stats.companies_processed} companies`);
+    console.log(`[ats-ingest] Run ${runId} FINAL: ${merged.total_imported} imported across ${merged.companies_processed} companies`);
 
-    // Notify opted-in users about new jobs (fire-and-forget)
-    if (stats.total_imported > 0) {
+    if (merged.total_imported > 0) {
       try {
-        await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/notify-new-jobs`, {
+        await fetch(`${SUPABASE_URL}/functions/v1/notify-new-jobs`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+            Authorization: `Bearer ${SERVICE_KEY}`,
           },
-          body: JSON.stringify({ count: stats.total_imported, source: "ats" }),
+          body: JSON.stringify({ count: merged.total_imported, source: "ats" }),
         });
       } catch (e) {
         console.error("[ats-ingest] notify-new-jobs error:", e);
@@ -479,8 +558,11 @@ Deno.serve(async (req) => {
     JSON.stringify({
       success: true,
       run_id: runId,
-      message: "ATS ingest started in background",
-      companies_count: companies.length,
+      message: isLastChunk
+        ? "ATS ingest started — final chunk processing in background"
+        : "ATS ingest started — chunked processing in background",
+      chunk: { offset: chunkOffset, size: companies.length, end: chunkEnd },
+      total_companies: totalCompanies,
     }),
     {
       status: 202,
