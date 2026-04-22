@@ -481,16 +481,19 @@ function EmptyState({
   icon,
   title,
   body,
+  action,
 }: {
   icon: React.ReactNode;
   title: string;
   body: string;
+  action?: React.ReactNode;
 }) {
   return (
     <div className="bg-white rounded-md border border-border/60 mx-auto max-w-2xl px-10 py-16 text-center flex flex-col items-center gap-3">
       {icon}
       <p className="text-sm font-medium text-foreground">{title}</p>
       {body && <p className="text-xs text-muted-foreground max-w-sm">{body}</p>}
+      {action}
     </div>
   );
 }
