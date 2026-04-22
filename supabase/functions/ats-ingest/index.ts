@@ -322,6 +322,10 @@ Deno.serve(async (req) => {
             stats.total_filtered++;
             continue;
           }
+          if (!isUSALocation(j.location)) {
+            stats.total_filtered++;
+            continue;
+          }
 
           // Dedup by external_apply_link
           const { data: existing } = await admin
