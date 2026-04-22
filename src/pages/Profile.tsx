@@ -672,7 +672,32 @@ export default function Profile() {
                   )}
                   <div className="space-y-2">
                     <Label htmlFor="address">Street Address</Label>
-                    <Input id="address" placeholder="123 Main St, Apt 4B" value={formData.address} onChange={(e) => set("address", e.target.value)} disabled={disabled} />
+                    <LocationAutocomplete
+                      id="address"
+                      value={formData.address}
+                      onChange={(v) => set("address", v)}
+                      onSelect={(parts: LocationParts) => {
+                        // Atomically fill all location fields from the chosen suggestion.
+                        // Country is only set if it matches our allowed list.
+                        const matchedCountry = countries.find(
+                          (c) => c.toLowerCase() === parts.country.toLowerCase()
+                        );
+                        setFormData((prev) => ({
+                          ...prev,
+                          address: parts.address || prev.address,
+                          city: parts.city || prev.city,
+                          state: parts.state || prev.state,
+                          zip: parts.zip || prev.zip,
+                          country: matchedCountry || prev.country,
+                        }));
+                        setIsDirty(true);
+                      }}
+                      placeholder="Start typing your address…"
+                      disabled={disabled}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Type a few characters and pick a suggestion to autofill City, State, ZIP, and Country.
+                    </p>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-3">
                     <div className="space-y-2">
