@@ -10,6 +10,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { hasEntryLevelIntent, stripEntryLevelKeywords } from "@/lib/jobFilters";
 
 const PAGE_SIZE = 20;
+const FIRST_PAGE_OVERFETCH_SIZE = 120;
 // Bumped batches so client-filtered pagination has enough rows to fill multiple pages.
 // Visa filter typically keeps ~30-40% of jobs → 400 raw ≈ ~7-8 pages.
 // Entry-level filter typically keeps ~50% → 300 raw ≈ ~7 pages.
@@ -62,6 +63,7 @@ async function fetchJobsPage(
   const effectiveQuery = entryLevel ? stripEntryLevelKeywords(trimmed) : trimmed;
   const isVisaFiltered = visaFilter !== "all";
   const needsClientFilter = isVisaFiltered || entryLevel;
+  const shouldOverfetchFirstPage = !needsClientFilter && page === 1;
   let allJobs: Job[] = [];
 
   if (effectiveQuery || trimmed) {
@@ -69,7 +71,7 @@ async function fetchJobsPage(
     const expandedTerms = expandSearchTerms(queryForDb);
     const fetchSize = needsClientFilter
       ? (isVisaFiltered ? VISA_BATCH_SIZE : ENTRY_LEVEL_BATCH_SIZE)
-      : PAGE_SIZE;
+      : (shouldOverfetchFirstPage ? FIRST_PAGE_OVERFETCH_SIZE : PAGE_SIZE);
     const fetchOffset = needsClientFilter ? 0 : (page - 1) * PAGE_SIZE;
 
     let rpcQuery = supabase.rpc("search_jobs", {
@@ -106,7 +108,7 @@ async function fetchJobsPage(
 
     const fetchSize = needsClientFilter
       ? (isVisaFiltered ? VISA_BATCH_SIZE : ENTRY_LEVEL_BATCH_SIZE)
-      : PAGE_SIZE;
+      : (shouldOverfetchFirstPage ? FIRST_PAGE_OVERFETCH_SIZE : PAGE_SIZE);
     const rangeStart = needsClientFilter ? 0 : (page - 1) * PAGE_SIZE;
     const rangeEnd = rangeStart + fetchSize - 1;
 
@@ -147,6 +149,10 @@ async function fetchJobsPage(
     const startIdx = (page - 1) * PAGE_SIZE;
     const pageJobs = filteredJobs.slice(startIdx, startIdx + PAGE_SIZE);
     return { jobs: pageJobs, visaFilteredCount: totalFiltered };
+  }
+
+  if (shouldOverfetchFirstPage) {
+    return { jobs: filteredJobs.slice(0, PAGE_SIZE) };
   }
 
   return { jobs: filteredJobs };
