@@ -313,34 +313,47 @@ Deno.serve(async (req) => {
         stats.total_fetched += jobs.length;
         let importedThisCompany = 0;
 
+        // Pre-filter (cheap, in-memory)
+        const candidates: NormalizedJob[] = [];
         for (const j of jobs) {
-          if (!j.title || !j.apply_link) {
+          if (!j.title || !j.apply_link) { stats.total_skipped++; continue; }
+          if (isSeniorRole(j.title)) { stats.total_filtered++; continue; }
+          if (!isUSALocation(j.location)) { stats.total_filtered++; continue; }
+          candidates.push(j);
+        }
+
+        // Batch dedup: single query per company instead of one query per job
+        const links = candidates.map((c) => c.apply_link);
+        const existingLinks = new Set<string>();
+        if (links.length > 0) {
+          // Chunk to avoid PostgREST URL limits (~1000 items per .in())
+          const CHUNK = 500;
+          for (let i = 0; i < links.length; i += CHUNK) {
+            const slice = links.slice(i, i + CHUNK);
+            const { data: existingRows } = await admin
+              .from("jobs")
+              .select("external_apply_link")
+              .in("external_apply_link", slice);
+            for (const row of existingRows || []) {
+              if (row.external_apply_link) existingLinks.add(row.external_apply_link);
+            }
+          }
+        }
+
+        // Build batch insert payload (skip duplicates)
+        const toInsert: any[] = [];
+        for (const j of candidates) {
+          if (existingLinks.has(j.apply_link)) {
             stats.total_skipped++;
             continue;
           }
-          if (isSeniorRole(j.title)) {
-            stats.total_filtered++;
-            continue;
-          }
-          if (!isUSALocation(j.location)) {
-            stats.total_filtered++;
-            continue;
-          }
-
-          // Dedup by external_apply_link
-          const { data: existing } = await admin
-            .from("jobs")
-            .select("id")
-            .eq("external_apply_link", j.apply_link)
-            .maybeSingle();
-          if (existing) {
+          // Avoid duplicates within the same batch
+          if (toInsert.some((row) => row.external_apply_link === j.apply_link)) {
             stats.total_skipped++;
             continue;
           }
-
           const skills = enrichSkills(`${j.title} ${j.description}`);
-
-          const { error: insertErr } = await admin.from("jobs").insert({
+          toInsert.push({
             title: j.title.trim(),
             company: j.company.trim(),
             location: j.location || "Remote",
@@ -353,13 +366,24 @@ Deno.serve(async (req) => {
             is_archived: false,
             is_direct_apply: true,
           });
+        }
 
-          if (insertErr) {
-            stats.errors.push({ slug: company.slug, platform: company.ats_platform, error: insertErr.message });
-            stats.total_skipped++;
-          } else {
-            stats.total_imported++;
-            importedThisCompany++;
+        // Batch insert in chunks of 100
+        if (toInsert.length > 0) {
+          const INSERT_CHUNK = 100;
+          for (let i = 0; i < toInsert.length; i += INSERT_CHUNK) {
+            const slice = toInsert.slice(i, i + INSERT_CHUNK);
+            const { error: insertErr, count } = await admin
+              .from("jobs")
+              .insert(slice, { count: "exact" });
+            if (insertErr) {
+              stats.errors.push({ slug: company.slug, platform: company.ats_platform, error: insertErr.message });
+              stats.total_skipped += slice.length;
+            } else {
+              const inserted = count ?? slice.length;
+              stats.total_imported += inserted;
+              importedThisCompany += inserted;
+            }
           }
         }
 
