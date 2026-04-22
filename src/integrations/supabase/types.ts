@@ -100,6 +100,153 @@ export type Database = {
         }
         Relationships: []
       }
+      ats_companies: {
+        Row: {
+          ats_platform: string
+          auto_discovered: boolean
+          company_name: string
+          created_at: string
+          date_added: string
+          id: string
+          jobs_found_last_run: number
+          last_checked: string | null
+          slug: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          ats_platform: string
+          auto_discovered?: boolean
+          company_name: string
+          created_at?: string
+          date_added?: string
+          id?: string
+          jobs_found_last_run?: number
+          last_checked?: string | null
+          slug: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          ats_platform?: string
+          auto_discovered?: boolean
+          company_name?: string
+          created_at?: string
+          date_added?: string
+          id?: string
+          jobs_found_last_run?: number
+          last_checked?: string | null
+          slug?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ats_discovery_runs: {
+        Row: {
+          completed_at: string | null
+          details: Json | null
+          duration_ms: number | null
+          errors: Json | null
+          id: string
+          started_at: string
+          status: string
+          total_activated: number
+          total_added: number
+          total_candidates: number
+          total_deactivated: number
+          total_validated: number
+          trigger_type: string
+          triggered_by: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          details?: Json | null
+          duration_ms?: number | null
+          errors?: Json | null
+          id?: string
+          started_at?: string
+          status?: string
+          total_activated?: number
+          total_added?: number
+          total_candidates?: number
+          total_deactivated?: number
+          total_validated?: number
+          trigger_type?: string
+          triggered_by?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          details?: Json | null
+          duration_ms?: number | null
+          errors?: Json | null
+          id?: string
+          started_at?: string
+          status?: string
+          total_activated?: number
+          total_added?: number
+          total_candidates?: number
+          total_deactivated?: number
+          total_validated?: number
+          trigger_type?: string
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
+      ats_ingest_runs: {
+        Row: {
+          companies_processed: number
+          completed_at: string | null
+          details: Json | null
+          duplicates_removed: number
+          duration_ms: number | null
+          errors: Json | null
+          id: string
+          started_at: string
+          status: string
+          total_fetched: number
+          total_filtered: number
+          total_imported: number
+          total_skipped: number
+          trigger_type: string
+          triggered_by: string | null
+        }
+        Insert: {
+          companies_processed?: number
+          completed_at?: string | null
+          details?: Json | null
+          duplicates_removed?: number
+          duration_ms?: number | null
+          errors?: Json | null
+          id?: string
+          started_at?: string
+          status?: string
+          total_fetched?: number
+          total_filtered?: number
+          total_imported?: number
+          total_skipped?: number
+          trigger_type?: string
+          triggered_by?: string | null
+        }
+        Update: {
+          companies_processed?: number
+          completed_at?: string | null
+          details?: Json | null
+          duplicates_removed?: number
+          duration_ms?: number | null
+          errors?: Json | null
+          id?: string
+          started_at?: string
+          status?: string
+          total_fetched?: number
+          total_filtered?: number
+          total_imported?: number
+          total_skipped?: number
+          trigger_type?: string
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
       auto_apply_queue: {
         Row: {
           consumed_at: string | null
