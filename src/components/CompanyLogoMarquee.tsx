@@ -47,7 +47,8 @@ function logoUrl(company: string) {
     Snowflake: "snowflake.com",
   };
   const domain = domainMap[company] ?? `${company.toLowerCase()}.com`;
-  return `https://logo.clearbit.com/${domain}`;
+  // Google's favicon service is highly reliable and CORS-friendly
+  return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
 }
 
 export function CompanyLogoMarquee() {
@@ -60,32 +61,24 @@ export function CompanyLogoMarquee() {
       <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background to-transparent z-10" />
       <div className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background to-transparent z-10" />
 
-      <div className="flex w-max animate-logo-marquee gap-12 py-2">
+      <div className="flex w-max animate-logo-marquee gap-10 py-2">
         {items.map((company, idx) => (
           <div
             key={`${company}-${idx}`}
-            className="flex items-center justify-center h-12 w-32 shrink-0 opacity-60 hover:opacity-100 transition-opacity duration-300 grayscale hover:grayscale-0"
+            className="flex items-center gap-3 h-12 shrink-0 px-4 rounded-xl bg-card/40 border border-border/40 opacity-80 hover:opacity-100 hover:border-accent/40 transition-all duration-300"
             title={company}
           >
             <img
               src={logoUrl(company)}
               alt={`${company} logo`}
               loading="lazy"
-              className="max-h-10 max-w-[120px] object-contain"
-              onError={(e) => {
-                // Fallback to plain company name if logo fails to load
-                const target = e.currentTarget;
-                target.style.display = "none";
-                const parent = target.parentElement;
-                if (parent && !parent.querySelector(".logo-fallback")) {
-                  const span = document.createElement("span");
-                  span.className =
-                    "logo-fallback font-display font-semibold text-foreground/70 text-base";
-                  span.textContent = company;
-                  parent.appendChild(span);
-                }
-              }}
+              width={28}
+              height={28}
+              className="h-7 w-7 object-contain rounded-sm"
             />
+            <span className="font-display font-semibold text-foreground/80 text-sm whitespace-nowrap">
+              {company}
+            </span>
           </div>
         ))}
       </div>
