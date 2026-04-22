@@ -1340,6 +1340,7 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_founder: { Args: never; Returns: boolean }
+      mark_stuck_ats_runs: { Args: never; Returns: undefined }
       publish_hiring_graph: { Args: never; Returns: undefined }
       read_vault_secret: { Args: { secret_name: string }; Returns: string }
       remove_duplicate_jobs: { Args: never; Returns: Json }
