@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { countries } from "@/data/countries";
 import {
   User, FileText, Upload, Download, Trash2, Loader2, Bug,
   Link2, Briefcase, GraduationCap, Sparkles, Plus, Wand2, Award, Pencil, X, Target, Bell, Mail, Shield, KeyRound, Eye, EyeOff, Check,
@@ -84,7 +85,7 @@ export default function Profile() {
   const [isDirty, setIsDirty] = useState(false);
 
   const [formData, setFormData] = useState({
-    first_name: "", last_name: "", contact_email: "", phone: "", address: "", city: "", state: "", zip: "",
+    first_name: "", last_name: "", contact_email: "", phone: "", address: "", city: "", state: "", zip: "", country: "",
     linkedin_url: "", github_url: "", portfolio_url: "",
     work_authorization: "", visa_status: "",
     experience_years: "" as string | number,
@@ -164,7 +165,7 @@ export default function Profile() {
       first_name: p.first_name || "", last_name: p.last_name || "",
       contact_email: p.contact_email || "",
       phone: p.phone || "", address: p.address || "",
-      city: p.city || "", state: p.state || "", zip: p.zip || "",
+      city: p.city || "", state: p.state || "", zip: p.zip || "", country: p.country || "",
       linkedin_url: p.linkedin_url || "", github_url: p.github_url || "",
       portfolio_url: p.portfolio_url || "",
       work_authorization: p.work_authorization || "", visa_status: p.visa_status || "",
@@ -252,6 +253,7 @@ export default function Profile() {
       contact_email: formData.contact_email || null,
       phone: formData.phone || null, address: formData.address || null,
       city: formData.city || null, state: formData.state || null, zip: formData.zip || null,
+      country: formData.country || null,
       location: [formData.city, formData.state].filter(Boolean).join(", ") || null,
       linkedin_url: formData.linkedin_url || null, github_url: formData.github_url || null,
       portfolio_url: formData.portfolio_url || null,
@@ -684,6 +686,22 @@ export default function Profile() {
                       <Label htmlFor="zip">ZIP Code</Label>
                       <Input id="zip" placeholder="94102" value={formData.zip} onChange={(e) => set("zip", e.target.value)} disabled={disabled} />
                     </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="country">Country</Label>
+                    <Select value={formData.country || undefined} onValueChange={(v) => set("country", v)} disabled={disabled}>
+                      <SelectTrigger id="country">
+                        <SelectValue placeholder="Select your country" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        {countries.map((c) => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Used to personalize your job feed (e.g. visa-sponsorship matches for US-based jobs).
+                    </p>
                   </div>
                 </>
               )}
