@@ -34,7 +34,6 @@ import {
 } from "@/components/ui/collapsible";
 import { JSearchIngestPanel } from "@/components/admin/JSearchIngestPanel";
 import { MuseIngestPanel } from "@/components/admin/MuseIngestPanel";
-import { ArbeitnowIngestPanel } from "@/components/admin/ArbeitnowIngestPanel";
 import { CompanyDiscoveryPanel } from "@/components/admin/CompanyDiscoveryPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -133,7 +132,6 @@ export default function AdminImport() {
           <TabsList className="mb-6 flex-wrap h-auto">
             <TabsTrigger value="jsearch">🌐 JSearch</TabsTrigger>
             <TabsTrigger value="muse">🎯 The Muse</TabsTrigger>
-            <TabsTrigger value="arbeitnow">💼 Arbeitnow</TabsTrigger>
             <TabsTrigger value="discovery">🏢 Company Discovery</TabsTrigger>
             <TabsTrigger value="sheets">📋 Google Sheets</TabsTrigger>
           </TabsList>
@@ -148,10 +146,6 @@ export default function AdminImport() {
 
           <TabsContent value="muse">
             <MuseIngestPanel />
-          </TabsContent>
-
-          <TabsContent value="arbeitnow">
-            <ArbeitnowIngestPanel />
           </TabsContent>
 
           <TabsContent value="sheets">
