@@ -545,8 +545,9 @@ export default function Profile() {
   const addCert = () => { setCertifications(p => [...p, { ...emptyCert }]); setIsDirty(true); };
   const removeCert = (i: number) => { setCertifications(p => p.filter((_, idx) => idx !== i)); setIsDirty(true); };
 
-  // Always allow editing — users can change any field anytime and click Save.
-  const disabled = false;
+  // Fields are read-only until the user clicks the Edit (pencil) button.
+  // When editing, a sticky Save/Cancel bar appears at the bottom.
+  const disabled = !isEditing;
 
    return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
