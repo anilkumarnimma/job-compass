@@ -15,6 +15,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { SociaAIOrb } from "@/components/SociaAIOrb";
 import { FullPageLoader } from "@/components/FullPageLoader";
 import { FeedbackPopup } from "@/components/FeedbackPopup";
+import { AuroraBackground } from "@/components/AuroraBackground";
 
 // Eager load critical pages
 import Index from "./pages/Index";
@@ -135,6 +136,7 @@ const App = () => (
         <AuthProvider>
           <JobProvider>
             <IntroSplash>
+            <AuroraBackground />
             <AnimatedCursor />
             <Toaster />
             <Sonner />
