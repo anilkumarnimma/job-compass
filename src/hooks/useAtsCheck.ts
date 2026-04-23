@@ -19,6 +19,21 @@ export interface AtsCheckResult {
   summary: string;
 }
 
+// Module-level session cache: skips AI call when the same job + same profile
+// fingerprint is checked again within the session. Cleared on full refresh.
+const atsCache = new Map<string, AtsCheckResult>();
+
+function makeAtsKey(
+  jobTitle: string,
+  jobDescription: string,
+  profileSrc: any,
+): string {
+  const skills = (profileSrc?.skills || []).slice(0, 12).join(",");
+  const exp = profileSrc?.experience_years ?? "";
+  const title = profileSrc?.current_title || "";
+  return `${jobTitle}|${jobDescription.slice(0, 120)}|${title}|${exp}|${skills}`;
+}
+
 export function useAtsCheck() {
   const [isChecking, setIsChecking] = useState(false);
   const [result, setResult] = useState<AtsCheckResult | null>(null);
@@ -51,6 +66,18 @@ export function useAtsCheck() {
     const profileSource = params.formProfile || profile;
     const myRequestId = ++requestIdRef.current;
 
+    // Check session cache first — saves AI credits when reopening the same job.
+    const cacheKey = makeAtsKey(
+      params.job_title || "",
+      params.job_description || "",
+      profileSource,
+    );
+    const cached = atsCache.get(cacheKey);
+    if (cached) {
+      setResult(cached);
+      return cached;
+    }
+
     setIsChecking(true);
     try {
       const { data, error } = await supabase.functions.invoke("ats-check", {
@@ -77,6 +104,7 @@ export function useAtsCheck() {
       if (data?.error) throw new Error(data.error);
 
       const atsResult = data.result as AtsCheckResult;
+      atsCache.set(cacheKey, atsResult);
       setResult(atsResult);
       scheduleFeedbackPrompt("ats", 5000);
       return atsResult;
