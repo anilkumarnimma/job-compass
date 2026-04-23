@@ -152,10 +152,10 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
   return (
     <>
     <Card
-      className={`group p-5 border bg-card/80 backdrop-blur-sm rounded-2xl cursor-pointer overflow-visible relative transition-all duration-200 hover:-translate-y-0.5 ${
-        isSelected 
-          ? "border-accent ring-1 ring-accent/30 bg-accent/5 shadow-[0_0_20px_hsl(var(--accent)/0.15)]" 
-          : "border-border/40 shadow-card hover:shadow-[0_8px_30px_hsl(var(--glow-accent)/0.1)] hover:border-accent/25"
+      className={`group p-5 border bg-card rounded-2xl cursor-pointer overflow-visible relative transition-all duration-300 ease-out hover:-translate-y-1 ${
+        isSelected
+          ? "border-accent/60 ring-1 ring-accent/30 shadow-[0_0_0_1px_hsl(var(--accent)/0.2),0_8px_28px_-8px_hsl(var(--accent)/0.25)]"
+          : "border-border/60 shadow-[0_1px_2px_hsl(var(--foreground)/0.04),0_1px_3px_hsl(var(--foreground)/0.03)] hover:shadow-[0_10px_30px_-10px_hsl(var(--foreground)/0.12)] hover:border-border dark:hover:border-accent/30"
       }`}
       onClick={handleCardClick}
       style={style}
