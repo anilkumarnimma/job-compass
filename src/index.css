@@ -304,14 +304,9 @@
     box-shadow: 0 2px 10px hsl(var(--foreground) / 0.04);
   }
 
-  /* Dashboard gradient background */
+  /* Dashboard gradient background — transparent to let AuroraBackground show through */
   .dashboard-gradient {
-    background: linear-gradient(
-      135deg,
-      hsl(var(--gradient-start)) 0%,
-      hsl(var(--gradient-mid)) 40%,
-      hsl(var(--gradient-end)) 100%
-    );
+    background: transparent;
     min-height: 100vh;
   }
 
