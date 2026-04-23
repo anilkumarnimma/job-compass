@@ -1374,6 +1374,10 @@ export type Database = {
       mark_stuck_ats_runs: { Args: never; Returns: undefined }
       publish_hiring_graph: { Args: never; Returns: undefined }
       read_vault_secret: { Args: { secret_name: string }; Returns: string }
+      read_vault_secret_internal: {
+        Args: { secret_name: string }
+        Returns: string
+      }
       remove_duplicate_jobs: { Args: never; Returns: Json }
       search_jobs: {
         Args: {
