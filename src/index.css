@@ -148,9 +148,14 @@
   }
 
   body {
-    @apply bg-background text-foreground font-body antialiased;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    @apply text-foreground font-body antialiased;
+    background-color: transparent;
+    transition: color 0.3s ease;
     padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  html {
+    background-color: hsl(var(--background));
   }
 
   .safe-area-bottom {
