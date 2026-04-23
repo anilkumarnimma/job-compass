@@ -148,14 +148,9 @@
   }
 
   body {
-    @apply text-foreground font-body antialiased;
-    background-color: transparent;
-    transition: color 0.3s ease;
+    @apply bg-background text-foreground font-body antialiased;
+    transition: background-color 0.3s ease, color 0.3s ease;
     padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-
-  html {
-    background-color: hsl(var(--background));
   }
 
   .safe-area-bottom {
@@ -309,9 +304,14 @@
     box-shadow: 0 2px 10px hsl(var(--foreground) / 0.04);
   }
 
-  /* Dashboard gradient background — transparent to let AuroraBackground show through */
+  /* Dashboard gradient background */
   .dashboard-gradient {
-    background: transparent;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--gradient-start)) 0%,
+      hsl(var(--gradient-mid)) 40%,
+      hsl(var(--gradient-end)) 100%
+    );
     min-height: 100vh;
   }
 
