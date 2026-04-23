@@ -441,7 +441,19 @@ export default function Dashboard() {
   const handleSelectCategory = useCallback((id: string | null) => {
     setCategoryId(id);
     setCurrentPage(1);
-  }, []);
+    // Clear search input so the category pill takes effect (search overrides pills otherwise)
+    if (id) {
+      setSearchInput("");
+      setCommittedQuery("");
+      setRoleFilter(null);
+      setCompanyFilter(null);
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("search");
+        return next;
+      }, { replace: true });
+    }
+  }, [setSearchParams]);
 
   const hasActiveFilter = roleFilter || companyFilter;
   const fallbackLabel = dateFilter === "today" ? "today" : dateFilter === "yesterday" ? "yesterday" : customDate ? format(customDate, "MMM d") : "";
