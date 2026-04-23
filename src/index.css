@@ -153,6 +153,14 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
+  /* In dark mode, let the PremiumBackground panel show through */
+  .dark body {
+    background-color: transparent;
+  }
+  .dark .dashboard-gradient {
+    background: transparent;
+  }
+
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
@@ -525,4 +533,108 @@
 [data-resume-canvas] .resume-add-btn:focus-visible {
   background-color: #e0faf5 !important;
   color: #0f6e56 !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Premium Panel Background (dark mode only)
+   - Deep navy/near-black base
+   - Soft purple/blue/pink glows from corners + sides
+   - Center stays clean for readability
+   - Subtle vignette for focus
+   - Pure CSS, GPU-friendly, no animation by default
+   ───────────────────────────────────────────────────────────── */
+.premium-bg {
+  display: none;
+}
+.dark .premium-bg {
+  display: block;
+}
+
+.premium-bg__base {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse 70% 55% at 50% 50%,
+      hsl(225 35% 8%) 0%,
+      hsl(225 40% 5%) 60%,
+      hsl(225 45% 3%) 100%
+    );
+}
+
+.premium-bg__glow {
+  position: absolute;
+  width: 55vw;
+  height: 55vw;
+  max-width: 900px;
+  max-height: 900px;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.55;
+  will-change: transform;
+}
+
+/* Top-left: violet */
+.premium-bg__glow--tl {
+  top: -20%;
+  left: -15%;
+  background: radial-gradient(
+    circle,
+    hsl(265 75% 45% / 0.55) 0%,
+    hsl(265 75% 45% / 0) 65%
+  );
+}
+
+/* Top-right: blue */
+.premium-bg__glow--tr {
+  top: -25%;
+  right: -18%;
+  background: radial-gradient(
+    circle,
+    hsl(220 85% 50% / 0.45) 0%,
+    hsl(220 85% 50% / 0) 65%
+  );
+}
+
+/* Bottom-left: deep blue */
+.premium-bg__glow--bl {
+  bottom: -25%;
+  left: -20%;
+  background: radial-gradient(
+    circle,
+    hsl(230 80% 40% / 0.4) 0%,
+    hsl(230 80% 40% / 0) 65%
+  );
+  opacity: 0.5;
+}
+
+/* Bottom-right: soft pink/magenta */
+.premium-bg__glow--br {
+  bottom: -22%;
+  right: -15%;
+  background: radial-gradient(
+    circle,
+    hsl(320 70% 55% / 0.32) 0%,
+    hsl(320 70% 55% / 0) 65%
+  );
+  opacity: 0.45;
+}
+
+/* Vignette: keeps focus toward center */
+.premium-bg__vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 85% 75% at 50% 50%,
+    transparent 55%,
+    hsl(225 50% 2% / 0.55) 95%,
+    hsl(225 55% 1% / 0.75) 100%
+  );
+}
+
+@media (max-width: 768px) {
+  .premium-bg__glow {
+    filter: blur(80px);
+    opacity: 0.45;
+  }
 }

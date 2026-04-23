@@ -10,6 +10,7 @@ import { lazy, Suspense } from "react";
 
 import { IntroSplash } from "@/components/IntroSplash";
 import { AnimatedCursor } from "@/components/AnimatedCursor";
+import { PremiumBackground } from "@/components/PremiumBackground";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { SociaAIOrb } from "@/components/SociaAIOrb";
@@ -135,6 +136,7 @@ const App = () => (
         <AuthProvider>
           <JobProvider>
             <IntroSplash>
+            <PremiumBackground />
             <AnimatedCursor />
             <Toaster />
             <Sonner />
