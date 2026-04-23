@@ -1019,13 +1019,34 @@ export default function Profile() {
             </CardContent>
           </Card>
 
-          {/* Save bar */}
+          {/* Floating Save / Cancel toggle pill */}
           {isEditing && (
-            <div className="flex items-center justify-end gap-3 sticky bottom-4 bg-background/95 backdrop-blur border border-border rounded-2xl p-4 shadow-lg">
-              <Button variant="outline" className="rounded-full" onClick={handleCancel}>Cancel</Button>
-              <Button className="rounded-full" onClick={handleSave} disabled={isUpdating || !isDirty}>
-                {isUpdating ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving...</> : "Save Profile"}
-              </Button>
+            <div className="sticky bottom-6 z-30 flex justify-center pointer-events-none">
+              <div className="pointer-events-auto inline-flex items-center gap-1 rounded-full border border-border bg-background/95 backdrop-blur shadow-xl p-1 animate-scale-in">
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  disabled={isUpdating}
+                  className="px-5 py-2 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200 active:scale-95 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={isUpdating}
+                  className="px-5 py-2 rounded-full text-sm font-semibold bg-primary text-primary-foreground shadow-md hover:bg-primary/90 hover:shadow-lg transition-all duration-200 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-2"
+                >
+                  {isUpdating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Profile"
+                  )}
+                </button>
+              </div>
             </div>
           )}
 
