@@ -21,6 +21,10 @@ interface CoverLetterResult {
   isPremium: boolean;
 }
 
+// Module-level session cache so reopening the cover-letter dialog for the
+// same job within one session does not re-trigger an AI call.
+const coverLetterCache = new Map<string, CoverLetterResult>();
+
 export function useCoverLetter() {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
@@ -31,6 +35,12 @@ export function useCoverLetter() {
     if (!user) {
       toast({ title: "Please sign in", variant: "destructive" });
       return null;
+    }
+
+    const cacheKey = `${user.id}|${params.jobId}`;
+    const cached = coverLetterCache.get(cacheKey);
+    if (cached) {
+      return cached;
     }
 
     setIsGenerating(true);
@@ -52,6 +62,9 @@ export function useCoverLetter() {
         throw new Error(data.error);
       }
 
+      const result = data as CoverLetterResult;
+      coverLetterCache.set(cacheKey, result);
+
       toast({
         title: "Cover letter generated ✨",
         description: `Draft ready for ${params.company}`,
@@ -60,7 +73,7 @@ export function useCoverLetter() {
       // Schedule feedback prompt 5s after generation
       scheduleFeedbackPrompt("cover_letter", 5000);
 
-      return data as CoverLetterResult;
+      return result;
     } catch (err: any) {
       toast({
         title: "Generation failed",
