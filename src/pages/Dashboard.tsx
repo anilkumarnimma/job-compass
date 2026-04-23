@@ -321,12 +321,11 @@ export default function Dashboard() {
       ? rawJobs
       : (prioritizedPageQuery.data ?? rawJobs);
 
+    // When a category pill is active (and no custom search), trust the server's
+    // results so a 20-row page isn't reduced to ~2. Just sort by recency.
     if (!categoryId || searchInput.trim().length >= 2) return base;
 
-    // Strict title-only enforcement: the search RPC may match a category term
-    // in company/skills, so we re-check the title here. Also sort by recency.
-    const filtered = base.filter((j) => titleMatchesCategory(j.title, categoryId));
-    return [...filtered].sort(
+    return [...base].sort(
       (a, b) => b.posted_date.getTime() - a.posted_date.getTime()
     );
   }, [usePriorityOrdering, prioritizedPageQuery.data, rawJobs, categoryId, searchInput]);
