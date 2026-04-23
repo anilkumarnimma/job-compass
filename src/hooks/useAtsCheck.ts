@@ -104,6 +104,7 @@ export function useAtsCheck() {
       if (data?.error) throw new Error(data.error);
 
       const atsResult = data.result as AtsCheckResult;
+      atsCache.set(cacheKey, atsResult);
       setResult(atsResult);
       scheduleFeedbackPrompt("ats", 5000);
       return atsResult;
