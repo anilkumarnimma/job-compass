@@ -545,7 +545,8 @@ export default function Profile() {
   const addCert = () => { setCertifications(p => [...p, { ...emptyCert }]); setIsDirty(true); };
   const removeCert = (i: number) => { setCertifications(p => p.filter((_, idx) => idx !== i)); setIsDirty(true); };
 
-  const disabled = !isEditing;
+  // Always allow editing — users can change any field anytime and click Save.
+  const disabled = false;
 
    return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
