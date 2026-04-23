@@ -777,7 +777,7 @@ export default function Profile() {
                   </div>
                   <CardDescription className="mt-1.5">Add your work history with dates</CardDescription>
                 </div>
-                {isEditing && <Button variant="outline" size="sm" className="rounded-full" onClick={addWork} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>}
+                <Button variant="outline" size="sm" className="rounded-full" onClick={addWork} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -785,7 +785,7 @@ export default function Profile() {
                 <>
                   {workExperiences.map((work, idx) => (
                     <div key={idx} className="space-y-4 p-4 rounded-lg border border-border bg-secondary/20 relative">
-                      {isEditing && workExperiences.length > 1 && (
+                      {workExperiences.length > 1 && (
                         <Button variant="ghost" size="sm" className="absolute top-2 right-2 text-destructive hover:text-destructive h-8 w-8 p-0" onClick={() => removeWork(idx)} type="button">
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -840,7 +840,7 @@ export default function Profile() {
                   </div>
                   <CardDescription className="mt-1.5">Add your education history</CardDescription>
                 </div>
-                {isEditing && <Button variant="outline" size="sm" className="rounded-full" onClick={addEdu} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>}
+                <Button variant="outline" size="sm" className="rounded-full" onClick={addEdu} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -848,7 +848,7 @@ export default function Profile() {
                 <>
                   {educations.map((edu, idx) => (
                     <div key={idx} className="space-y-4 p-4 rounded-lg border border-border bg-secondary/20 relative">
-                      {isEditing && educations.length > 1 && (
+                      {educations.length > 1 && (
                         <Button variant="ghost" size="sm" className="absolute top-2 right-2 text-destructive hover:text-destructive h-8 w-8 p-0" onClick={() => removeEdu(idx)} type="button"><Trash2 className="h-4 w-4" /></Button>
                       )}
                       <div className="grid gap-4 sm:grid-cols-2">
@@ -905,16 +905,16 @@ export default function Profile() {
                   </div>
                   <CardDescription className="mt-1.5">Professional certifications (optional)</CardDescription>
                 </div>
-                {isEditing && <Button variant="outline" size="sm" className="rounded-full" onClick={addCert} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>}
+                <Button variant="outline" size="sm" className="rounded-full" onClick={addCert} type="button"><Plus className="h-4 w-4 mr-1" /> Add</Button>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
               {certifications.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">No certifications added.{isEditing ? ' Click "Add" to add one.' : ''}</p>
+                <p className="text-sm text-muted-foreground text-center py-4">No certifications added. Click "Add" to add one.</p>
               ) : (
                 certifications.map((cert, idx) => (
                   <div key={idx} className="space-y-4 p-4 rounded-lg border border-border bg-secondary/20 relative">
-                    {isEditing && <Button variant="ghost" size="sm" className="absolute top-2 right-2 text-destructive hover:text-destructive h-8 w-8 p-0" onClick={() => removeCert(idx)} type="button"><Trash2 className="h-4 w-4" /></Button>}
+                    <Button variant="ghost" size="sm" className="absolute top-2 right-2 text-destructive hover:text-destructive h-8 w-8 p-0" onClick={() => removeCert(idx)} type="button"><Trash2 className="h-4 w-4" /></Button>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="space-y-2"><Label>Certification Name</Label><Input placeholder="AWS Solutions Architect" value={cert.name} onChange={(e) => updateCert(idx, "name", e.target.value)} disabled={disabled} /></div>
                       <div className="space-y-2"><Label>Issuer</Label><Input placeholder="Amazon Web Services" value={cert.issuer} onChange={(e) => updateCert(idx, "issuer", e.target.value)} disabled={disabled} /></div>
