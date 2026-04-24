@@ -42,12 +42,15 @@ function parseJob(row: any): Job {
   };
 }
 
+type FilterTab = "all" | "today" | "yesterday" | "week";
+
 interface UseJobSearchPaginatedOptions {
   searchQuery: string;
   page: number;
   dateFrom?: string | null;
   dateTo?: string | null;
   visaFilter?: VisaFilter;
+  filterTab?: FilterTab;
 }
 
 async function fetchJobsPage(
@@ -56,6 +59,7 @@ async function fetchJobsPage(
   dateFrom: string | null | undefined,
   dateTo: string | null | undefined,
   visaFilter: VisaFilter,
+  filterTab: FilterTab,
   signal?: AbortSignal,
 ) {
   const trimmed = searchQuery.trim();
