@@ -422,24 +422,20 @@ export function expandSearchTerms(query: string): string[] {
     if (pm) pm.forEach(idx => matchedFamilies.add(idx));
   }
 
-  // Collect close and broad terms from matched families
+  // Only collect CLOSE variants that share substring overlap with the query.
+  // This keeps "Senior Data Engineer" / "Data Platform Engineer" for a "data engineer" search,
+  // but drops unrelated family members like "BI Analyst" that would pollute results.
   Array.from(matchedFamilies).forEach(idx => {
     const family = ROLE_FAMILIES[idx];
     for (const term of family.close) {
       const t = term.toLowerCase();
-      if (t !== normalized && !words.includes(t)) {
-        expanded.add(t);
-      }
-    }
-    for (const term of family.broad) {
-      const t = term.toLowerCase();
-      if (t !== normalized && !words.includes(t) && !expanded.has(t)) {
-        broadSet.add(t);
-      }
+      if (t === normalized || words.includes(t)) continue;
+      // Require true substring overlap: term contains the query, or query contains the term
+      const overlaps = t.includes(normalized) || normalized.includes(t);
+      if (overlaps) expanded.add(t);
     }
   });
 
-  // Close terms first, then broad — total capped at 20
-  const result = Array.from(expanded).concat(Array.from(broadSet)).filter(t => t.length > 1);
-  return result.slice(0, 20);
+  // Broad expansion intentionally disabled — caused unrelated results (e.g. "BI Analyst" for "Data Engineer").
+  return Array.from(expanded).filter(t => t.length > 1).slice(0, 10);
 }

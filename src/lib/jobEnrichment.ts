@@ -198,13 +198,17 @@ export function spreadSimilarJobs(jobs: Job[]): Job[] {
   return result;
 }
 
-import { shouldExcludeJob, isNonEntryLevelJob } from "@/lib/jobFilters";
+import { isTutorListing, isNonEntryLevelJob } from "@/lib/jobFilters";
 import { getBestLocation } from "@/lib/locationExtractor";
 import { isUSALocation } from "@/lib/usaLocationFilter";
 
-/** Enrich a list of jobs: skills, salary, location, USA filter, and ordering */
+/** Enrich a list of jobs: skills, salary, location.
+ *  Preserves the server's relevance order (title-priority first, newest within each tier).
+ *  We deliberately do NOT apply isHighExperienceJob here — Senior/Lead/Staff titles
+ *  are valid matches and were being stripped from search results.
+ */
 export function enrichJobList(jobs: Job[], entryLevelOnly = false): Job[] {
-  let filtered = jobs.filter(job => !shouldExcludeJob(job));
+  let filtered = jobs.filter(job => !isTutorListing(job));
   // Remove jobs with empty/missing descriptions
   filtered = filtered.filter(job => job.description && job.description.trim().length >= 20);
   // Remove jobs whose apply link points to LinkedIn
@@ -212,12 +216,10 @@ export function enrichJobList(jobs: Job[], entryLevelOnly = false): Job[] {
   if (entryLevelOnly) {
     filtered = filtered.filter(job => !isNonEntryLevelJob(job));
   }
-  const enriched = filtered.map(job => ({
+  return filtered.map(job => ({
     ...job,
     skills: enrichJobSkills(job),
     salary_range: extractSalary(job),
     location: getBestLocation(job.location, job.description),
   }));
-  const sorted = sortByRecency(enriched);
-  return spreadSimilarJobs(sorted);
 }
