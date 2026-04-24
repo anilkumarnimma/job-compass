@@ -25,6 +25,7 @@ import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -464,6 +465,16 @@ export default function Dashboard() {
   }, [setSearchParams]);
 
   const hasActiveFilter = roleFilter || companyFilter;
+  const hasAnyActiveFilter =
+    searchInput.trim().length > 0 ||
+    committedQuery.trim().length > 0 ||
+    dateFilter !== "all" ||
+    !!customDate ||
+    visaFilter !== "all" ||
+    !!categoryId ||
+    !!roleFilter ||
+    !!companyFilter ||
+    fallbackActive;
   const fallbackLabel = dateFilter === "today" ? "today" : dateFilter === "yesterday" ? "yesterday" : customDate ? format(customDate, "MMM d") : "";
 
   return (
@@ -501,7 +512,7 @@ export default function Dashboard() {
                 placeholder="Search jobs by title, company, skills…"
               />
             </div>
-            <div className="flex items-center gap-2 shrink-0" data-tour="date-filters">
+            <div className="flex items-center gap-2 shrink-0 flex-wrap" data-tour="date-filters">
               {(["today", "yesterday"] as const).map((filter) => {
                 const isActive = dateFilter === filter && !fallbackActive;
                 return (
@@ -583,6 +594,19 @@ export default function Dashboard() {
                   </div>
                 </PopoverContent>
               </Popover>
+
+              {hasAnyActiveFilter && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={performDashboardReset}
+                  className="rounded-full px-3 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  Clear filters
+                </Button>
+              )}
             </div>
           </div>
 
