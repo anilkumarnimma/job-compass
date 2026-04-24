@@ -9,9 +9,15 @@ interface CompanyLogoProps {
   className?: string;
 }
 
-// Filter out ATS platform logos (Greenhouse, Lever, etc.) and LinkedIn logos
+// Filter out ATS platform logos (Greenhouse, Lever, etc.) and LinkedIn logos.
+// Google favicon URLs (google.com/s2/favicons) are always allowed — they're
+// just small icons even when the domain points to an ATS host.
 function isAtsLogo(url: string): boolean {
   const l = url.toLowerCase();
+  // Always allow Google favicon service regardless of target domain
+  if (l.includes('google.com/s2/favicons') || l.includes('gstatic.com/faviconv2')) {
+    return false;
+  }
   return (
     l.includes('greenhouse') ||
     l.includes('lever.co') ||
