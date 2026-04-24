@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const PAGE_SIZE = 10;
-const BULK_CONCURRENCY = 4;
+const BULK_CONCURRENCY = 2;
 
 type BulkMode = "ack-all" | "resend-all" | null;
 
