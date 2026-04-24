@@ -1301,6 +1301,7 @@ export type Database = {
             }
             Returns: number
           }
+      delete_old_jobs_3_months: { Args: never; Returns: number }
       get_job_counts: {
         Args: { search_query?: string }
         Returns: {
