@@ -134,6 +134,53 @@ function isDiceLink(url: string): boolean {
   }
 }
 
+// LinkedIn/ATS hosts block hotlinking, so substitute a Google favicon
+// derived from the apply-link domain (or company slug) instead.
+const BLOCKED_LOGO_HOSTS = [
+  'licdn.com', 'media.licdn.com', 'static.licdn.com', 'linkedin.com',
+  'greenhouse', 'lever.co', 'workday', 'icims', 'taleo',
+  'smartrecruiters', 'jobvite',
+];
+
+function isBlockedLogoUrl(url: string): boolean {
+  const l = url.toLowerCase();
+  return BLOCKED_LOGO_HOSTS.some((h) => l.includes(h));
+}
+
+function googleFaviconFor(domain: string): string {
+  return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+}
+
+function resolveLogo(
+  rawLogo: string | undefined,
+  applyLink: string | undefined,
+  company: string | undefined,
+): string | null {
+  // Use a valid, non-blocked logo as-is
+  if (rawLogo && /^https?:\/\/.+\..+/i.test(rawLogo) && !isBlockedLogoUrl(rawLogo)) {
+    return rawLogo;
+  }
+  // Otherwise derive a favicon from the apply link domain
+  if (applyLink) {
+    try {
+      const host = new URL(applyLink).hostname.replace(/^www\./, '');
+      // Skip generic ATS/job-board hosts — favicon would be ATS, not the company
+      const generic = ['linkedin.com', 'indeed.com', 'glassdoor.com', 'ziprecruiter.com',
+        'monster.com', 'dice.com', 'greenhouse.io', 'lever.co', 'workday.com',
+        'icims.com', 'smartrecruiters.com', 'jobvite.com', 'myworkdayjobs.com'];
+      if (!generic.some((g) => host.endsWith(g))) {
+        return googleFaviconFor(host);
+      }
+    } catch { /* fall through */ }
+  }
+  // Last resort: try company slug as domain
+  if (company) {
+    const slug = company.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (slug.length >= 3) return googleFaviconFor(`${slug}.com`);
+  }
+  return null;
+}
+
 const COMMON_SKILLS: Record<string, string> = {
   'js': 'JavaScript', 'javascript': 'JavaScript', 'typescript': 'TypeScript', 'ts': 'TypeScript',
   'react': 'React', 'reactjs': 'React', 'react.js': 'React', 'react js': 'React',
