@@ -364,10 +364,11 @@ export default function Dashboard() {
   }, [deferredJobs, matchResults, intelligence]);
 
   useEffect(() => {
-    if (!usePriorityOrdering && !isLoading && dateFilter !== "all" && !fallbackActive && searchData && searchData.totalCount === 0) {
-      setFallbackActive(true);
+    if (!allowDateFallback || usePriorityOrdering || isLoading || dateFilter === "all" || effectiveFallbackActive || !searchData || searchData.totalCount !== 0) {
+      return;
     }
-  }, [usePriorityOrdering, isLoading, dateFilter, fallbackActive, searchData]);
+    setFallbackActive(true);
+  }, [allowDateFallback, usePriorityOrdering, isLoading, dateFilter, effectiveFallbackActive, searchData]);
 
   const totalCount = searchData?.totalCount ?? 0;
   const totalPages = usePriorityOrdering
