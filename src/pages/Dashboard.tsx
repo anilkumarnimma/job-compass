@@ -203,6 +203,12 @@ export default function Dashboard() {
     setMobileSheetOpen(false);
     const next = (committedValue ?? searchInput).trim();
     setCommittedQuery((prev) => (prev === next ? prev : next));
+    // When the user searches anything, default the date filter to "Today"
+    // so the freshest jobs surface first.
+    if (next.length > 0) {
+      setDateFilter("today");
+      setCustomDate(undefined);
+    }
   }, [searchInput]);
 
   const handleRelatedSelect = useCallback((term: string) => {
@@ -216,6 +222,10 @@ export default function Dashboard() {
     setSelectedJob(null);
     setMobilePreviewJob(null);
     setMobileSheetOpen(false);
+    if (term.trim().length > 0) {
+      setDateFilter("today");
+      setCustomDate(undefined);
+    }
   }, []);
 
   const selectedCategory = useMemo(
