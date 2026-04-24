@@ -73,7 +73,7 @@ serve(async (req) => {
       });
     }
 
-    const { job_title, job_description, job_skills, resume_structure } = body;
+    const { job_title, job_description, job_skills, resume_structure, previous_result } = body;
 
     if (!job_title) {
       return new Response(JSON.stringify({ error: "job_title is required" }), {
@@ -115,6 +115,8 @@ If you did not edit a bullet, return text === the original bullet and changed=fa
 
 The summary should be returned in "summary" (new wording). Set "summary_changed" to true if you changed it.
 
+If a prior_tailored_version is provided, use it as a reference point so the regenerated output is meaningfully different in wording from the prior tailored version while still following all structural rules and staying truthful.
+
 Be aggressive but truthful — aim to modify ~60% of bullets to better match the role.`;
 
     // Send a compact JSON of the structure so the AI can faithfully echo it back.
@@ -122,6 +124,27 @@ Be aggressive but truthful — aim to modify ~60% of bullets to better match the
       target_job_title: job_title,
       target_job_skills: (job_skills || []).slice(0, 30),
       target_job_description: (job_description || "").slice(0, 2500),
+      prior_tailored_version: previous_result
+        ? {
+            summary: previous_result.summary || "",
+            skills: Array.isArray(previous_result.skills) ? previous_result.skills.slice(0, 80) : [],
+            sections: Array.isArray(previous_result.sections)
+              ? previous_result.sections.map((section: any) => ({
+                  title: section.title,
+                  items: Array.isArray(section.items)
+                    ? section.items.map((item: any) => ({
+                        heading: item.heading || "",
+                        subheading: item.subheading || "",
+                        date: item.date || "",
+                        bullets: Array.isArray(item.bullets)
+                          ? item.bullets.map((bullet: any) => bullet?.text || "")
+                          : [],
+                      }))
+                    : [],
+                }))
+              : [],
+          }
+        : null,
       resume: {
         header: resume_structure.header,
         summary: resume_structure.summary || "",
