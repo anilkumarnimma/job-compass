@@ -145,6 +145,7 @@ export default function Dashboard() {
       sessionStorage.removeItem("pending_search");
       setSearchInput(pendingSearch);
       setCommittedQuery(pendingSearch);
+      setDateFilter("today");
       setSearchParams({ search: pendingSearch }, { replace: true });
     }
   }, []);
