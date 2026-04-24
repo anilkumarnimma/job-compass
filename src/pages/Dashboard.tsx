@@ -239,6 +239,8 @@ export default function Dashboard() {
   const serverFilterTab: "all" | "today" | "yesterday" =
     dateFilter === "today" ? "today" : dateFilter === "yesterday" ? "yesterday" : "all";
   const useServerTab = serverFilterTab !== "all";
+  const allowDateFallback = !combinedSearchQuery.trim() && !roleFilter && !companyFilter;
+  const effectiveFallbackActive = fallbackActive && allowDateFallback;
 
   useEffect(() => {
     setCurrentPage(1);
@@ -251,10 +253,10 @@ export default function Dashboard() {
   const { data: searchData, isLoading: searchLoading, isFetching: searchFetching } = useJobSearchPaginated({
     searchQuery: combinedSearchQuery,
     page: currentPage,
-    dateFrom: fallbackActive || useServerTab ? null : dateFrom,
-    dateTo: fallbackActive || useServerTab ? null : dateTo,
+    dateFrom: effectiveFallbackActive || useServerTab ? null : dateFrom,
+    dateTo: effectiveFallbackActive || useServerTab ? null : dateTo,
     visaFilter,
-    filterTab: fallbackActive ? "all" : serverFilterTab,
+    filterTab: effectiveFallbackActive ? "all" : serverFilterTab,
   });
 
   const { profile } = useProfile();
