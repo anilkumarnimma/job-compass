@@ -69,26 +69,58 @@ Deno.serve(async (req) => {
 </body>
 </html>`;
 
-    const res = await fetch(`${GATEWAY_URL}/emails`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${lovableApiKey}`,
-        "X-Connection-Api-Key": resendApiKey,
-      },
-      body: JSON.stringify({
-        from: "Sociax <noreply@sociax.tech>",
-        to: [recipientEmail.toLowerCase()],
-        subject: `Your requested roles are now live on Sociax 🚀`,
-        html: htmlContent,
-      }),
-    });
+    const MAX_RETRIES = 5;
+    let attempt = 0;
+    let backoffMs = 1200;
+    let res: Response | null = null;
+    let resBody: any = null;
 
-    const resBody = await res.json();
+    while (attempt < MAX_RETRIES) {
+      res = await fetch(`${GATEWAY_URL}/emails`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${lovableApiKey}`,
+          "X-Connection-Api-Key": resendApiKey,
+        },
+        body: JSON.stringify({
+          from: "Sociax <noreply@sociax.tech>",
+          to: [recipientEmail.toLowerCase()],
+          subject: `Your requested roles are now live on Sociax 🚀`,
+          html: htmlContent,
+        }),
+      });
 
-    if (!res.ok) {
+      resBody = await res.json().catch(() => ({}));
+
+      // Retry on 429 (rate limit) or transient 5xx
+      const isRateLimit = res.status === 429 || resBody?.statusCode === 429 || resBody?.name === "rate_limit_exceeded";
+      const isTransient = res.status >= 500 && res.status < 600;
+
+      if (res.ok) break;
+
+      if ((isRateLimit || isTransient) && attempt < MAX_RETRIES - 1) {
+        const retryAfterHeader = res.headers.get("retry-after");
+        const retryAfterMs = retryAfterHeader ? Number(retryAfterHeader) * 1000 : 0;
+        const jitter = Math.floor(Math.random() * 400);
+        const waitMs = Math.max(retryAfterMs, backoffMs) + jitter;
+        console.warn(`[ROLE-REQUEST-ACK] ${isRateLimit ? "Rate limited" : "Transient error"}, retrying in ${waitMs}ms (attempt ${attempt + 1}/${MAX_RETRIES})`);
+        await new Promise((r) => setTimeout(r, waitMs));
+        backoffMs *= 2;
+        attempt++;
+        continue;
+      }
+
+      // Non-retryable or out of retries
       console.error("[ROLE-REQUEST-ACK] Resend failed:", resBody);
       return new Response(JSON.stringify({ error: "Email send failed", details: resBody }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!res || !res.ok) {
+      console.error("[ROLE-REQUEST-ACK] Max retries exceeded:", resBody);
+      return new Response(JSON.stringify({ error: "Email send failed after retries", details: resBody }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
