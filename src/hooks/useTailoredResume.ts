@@ -98,7 +98,7 @@ export function useTailoredResume() {
         cache.current.set(params.cache_key, tailored);
         setResult(tailored);
         return tailored;
-      } catch (err: any) {
+      } catch (err: unknown) {
         toast({
           title: "Resume tailoring failed",
           description: friendlyError(err, "We couldn't generate your tailored resume. Please try again."),
