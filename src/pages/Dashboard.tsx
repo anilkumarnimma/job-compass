@@ -145,6 +145,7 @@ export default function Dashboard() {
       sessionStorage.removeItem("pending_search");
       setSearchInput(pendingSearch);
       setCommittedQuery(pendingSearch);
+      setDateFilter("today");
       setSearchParams({ search: pendingSearch }, { replace: true });
     }
   }, []);
@@ -202,6 +203,12 @@ export default function Dashboard() {
     setMobileSheetOpen(false);
     const next = (committedValue ?? searchInput).trim();
     setCommittedQuery((prev) => (prev === next ? prev : next));
+    // When the user searches anything, default the date filter to "Today"
+    // so the freshest jobs surface first.
+    if (next.length > 0) {
+      setDateFilter("today");
+      setCustomDate(undefined);
+    }
   }, [searchInput]);
 
   const handleRelatedSelect = useCallback((term: string) => {
@@ -215,6 +222,10 @@ export default function Dashboard() {
     setSelectedJob(null);
     setMobilePreviewJob(null);
     setMobileSheetOpen(false);
+    if (term.trim().length > 0) {
+      setDateFilter("today");
+      setCustomDate(undefined);
+    }
   }, []);
 
   const selectedCategory = useMemo(
@@ -370,6 +381,22 @@ export default function Dashboard() {
     }
     setFallbackActive(true);
   }, [allowDateFallback, usePriorityOrdering, isLoading, dateFilter, effectiveFallbackActive, searchData]);
+
+  // When a search is active and "Today" returns no jobs, automatically
+  // fall back to "Yesterday" so users still see the freshest possible results.
+  useEffect(() => {
+    if (
+      !combinedSearchQuery.trim() ||
+      isLoading ||
+      isFetching ||
+      dateFilter !== "today" ||
+      !searchData ||
+      searchData.totalCount !== 0
+    ) {
+      return;
+    }
+    setDateFilter("yesterday");
+  }, [combinedSearchQuery, isLoading, isFetching, dateFilter, searchData]);
 
   const totalCount = searchData?.totalCount ?? 0;
   const totalPages = usePriorityOrdering
