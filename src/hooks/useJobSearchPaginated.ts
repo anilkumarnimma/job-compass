@@ -82,7 +82,7 @@ async function fetchJobsPage(
       search_query: queryForDb,
       page_size: fetchSize,
       page_offset: fetchOffset,
-      filter_tab: "all",
+      filter_tab: filterTab,
       expanded_terms: expandedTerms.length > 0 ? expandedTerms : undefined,
     });
 
