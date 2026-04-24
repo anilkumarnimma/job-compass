@@ -15,29 +15,43 @@ export function useLandingStats() {
       cutoff.setDate(cutoff.getDate() - 45);
       const cutoffISO = cutoff.toISOString();
 
-      // Use head:true count for jobs (public read), RPC for users (RLS-protected)
-      const [jobRes, userCountRes] = await Promise.all([
+      const [jobRes, companiesRes, userCountRes] = await Promise.all([
         supabase
           .from("jobs")
           .select("*", { count: "exact", head: true })
           .eq("is_published", true)
           .eq("is_archived", false)
+          .eq("is_direct_apply", true)
+          .is("deleted_at", null)
+          .gte("posted_date", cutoffISO),
+        supabase
+          .from("jobs")
+          .select("company")
+          .eq("is_published", true)
+          .eq("is_archived", false)
+          .eq("is_direct_apply", true)
+          .is("deleted_at", null)
           .gte("posted_date", cutoffISO),
         supabase.rpc("get_public_user_count"),
       ]);
 
       if (jobRes.error) throw jobRes.error;
+      if (companiesRes.error) throw companiesRes.error;
+      if (userCountRes.error) throw userCountRes.error;
 
-      // Estimate company count as ~30% of job count to avoid fetching all rows
       const jobCount = jobRes.count ?? 0;
-      const estimatedCompanyCount = Math.max(1, Math.round(jobCount * 0.3));
+      const companyCount = new Set(
+        (companiesRes.data ?? [])
+          .map((row) => row.company?.trim().toLowerCase())
+          .filter((company): company is string => Boolean(company))
+      ).size;
 
       return {
         jobCount,
-        companyCount: estimatedCompanyCount,
+        companyCount,
         userCount: Number(userCountRes.data ?? 0),
       };
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes — landing stats rarely change
+    staleTime: 60 * 1000,
   });
 }

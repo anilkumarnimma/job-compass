@@ -291,7 +291,7 @@ export default function Index() {
             {[
               { value: landingStats?.jobCount ?? 0, label: "Jobs", suffix: "+" },
               { value: landingStats?.companyCount ?? 0, label: "Companies", suffix: "+" },
-              { value: Math.max(landingStats?.userCount ?? 0, 500), label: "Users", suffix: "+" },
+              { value: landingStats?.userCount ?? 0, label: "Users", suffix: "+" },
             ].map((stat, i) => (
               <div key={stat.label} className="flex items-center gap-2">
                 <span className="font-display font-bold text-lg md:text-xl text-foreground">
