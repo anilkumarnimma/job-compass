@@ -600,7 +600,10 @@ export default function Dashboard() {
           )}
 
           {!isLoading && (isSearchPending || isFetching) && (
-            <p className="mb-4 text-xs text-muted-foreground">Updating results…</p>
+            <div className="mb-4 inline-flex items-center gap-2 text-xs text-muted-foreground bg-secondary/60 border border-border/40 px-3 py-1.5 rounded-full">
+              <span className="h-3 w-3 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+              <span>Updating results…</span>
+            </div>
           )}
           {isUSUser && <VisaFilterPills value={visaFilter} onChange={setVisaFilter} />}
         </div>
