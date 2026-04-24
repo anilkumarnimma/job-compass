@@ -198,7 +198,7 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
   }, [queryClient, searchQuery, page, dateFrom, dateTo, visaFilter, filterTab, needsClientFilter, jobsQuery.data]);
 
   const countQuery = useQuery({
-    queryKey: ["jobs", "count", debouncedCountSearch],
+    queryKey: ["jobs", "count", debouncedCountSearch, filterTab],
     queryFn: async ({ signal }) => {
       const trimmed = debouncedCountSearch.trim();
       if (trimmed) {
@@ -208,7 +208,8 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
         let rpcQuery = supabase.rpc("count_search_jobs", {
           search_query: queryForDb,
           expanded_terms: expandedTerms.length > 0 ? expandedTerms : undefined,
-        });
+          filter_tab: filterTab,
+        } as any);
 
         if (signal) {
           rpcQuery = rpcQuery.abortSignal(signal);
@@ -229,6 +230,22 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
         .eq("is_direct_apply", true)
         .is("deleted_at", null)
         .gte("posted_date", cutoff.toISOString());
+
+      // Apply server-side date tab when no search query
+      if (filterTab !== "all") {
+        const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        if (filterTab === "today") {
+          baseCountQuery = baseCountQuery.gte("posted_date", todayStart.toISOString());
+        } else if (filterTab === "yesterday") {
+          const y = new Date(todayStart); y.setDate(y.getDate() - 1);
+          baseCountQuery = baseCountQuery.gte("posted_date", y.toISOString()).lt("posted_date", todayStart.toISOString());
+        } else if (filterTab === "week") {
+          const w = new Date(todayStart); w.setDate(w.getDate() - 7);
+          const y = new Date(todayStart); y.setDate(y.getDate() - 1);
+          baseCountQuery = baseCountQuery.gte("posted_date", w.toISOString()).lt("posted_date", y.toISOString());
+        }
+      }
 
       if (signal) {
         baseCountQuery = baseCountQuery.abortSignal(signal);
