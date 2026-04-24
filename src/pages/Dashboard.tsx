@@ -234,6 +234,11 @@ export default function Dashboard() {
   }, [searchInput, selectedCategory, roleFilter, companyFilter]);
 
   const { dateFrom, dateTo } = getDateRange(dateFilter, customDate);
+  // Today/Yesterday → server-side filterTab so all matching jobs are reachable
+  // (avoids 120-row client slice losing matches). Custom dates stay client-side.
+  const serverFilterTab: "all" | "today" | "yesterday" =
+    dateFilter === "today" ? "today" : dateFilter === "yesterday" ? "yesterday" : "all";
+  const useServerTab = serverFilterTab !== "all";
 
   useEffect(() => {
     setCurrentPage(1);
@@ -246,9 +251,10 @@ export default function Dashboard() {
   const { data: searchData, isLoading: searchLoading, isFetching: searchFetching } = useJobSearchPaginated({
     searchQuery: combinedSearchQuery,
     page: currentPage,
-    dateFrom: fallbackActive ? null : dateFrom,
-    dateTo: fallbackActive ? null : dateTo,
+    dateFrom: fallbackActive || useServerTab ? null : dateFrom,
+    dateTo: fallbackActive || useServerTab ? null : dateTo,
     visaFilter,
+    filterTab: fallbackActive ? "all" : serverFilterTab,
   });
 
   const { profile } = useProfile();

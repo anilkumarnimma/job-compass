@@ -42,12 +42,15 @@ function parseJob(row: any): Job {
   };
 }
 
+type FilterTab = "all" | "today" | "yesterday" | "week";
+
 interface UseJobSearchPaginatedOptions {
   searchQuery: string;
   page: number;
   dateFrom?: string | null;
   dateTo?: string | null;
   visaFilter?: VisaFilter;
+  filterTab?: FilterTab;
 }
 
 async function fetchJobsPage(
@@ -56,6 +59,7 @@ async function fetchJobsPage(
   dateFrom: string | null | undefined,
   dateTo: string | null | undefined,
   visaFilter: VisaFilter,
+  filterTab: FilterTab,
   signal?: AbortSignal,
 ) {
   const trimmed = searchQuery.trim();
@@ -78,7 +82,7 @@ async function fetchJobsPage(
       search_query: queryForDb,
       page_size: fetchSize,
       page_offset: fetchOffset,
-      filter_tab: "all",
+      filter_tab: filterTab,
       expanded_terms: expandedTerms.length > 0 ? expandedTerms : undefined,
     });
 
@@ -158,7 +162,7 @@ async function fetchJobsPage(
   return { jobs: filteredJobs };
 }
 
-export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, visaFilter = "all" }: UseJobSearchPaginatedOptions) {
+export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, visaFilter = "all", filterTab = "all" }: UseJobSearchPaginatedOptions) {
   const queryClient = useQueryClient();
   const isVisaFiltered = visaFilter !== "all";
   const entryLevel = hasEntryLevelIntent(searchQuery);
@@ -175,8 +179,8 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
   }, [searchQuery, queryClient]);
 
   const jobsQuery = useQuery({
-    queryKey: ["jobs", "paginated", searchQuery, page, dateFrom, dateTo, visaFilter],
-    queryFn: ({ signal }) => fetchJobsPage(searchQuery, page, dateFrom, dateTo, visaFilter, signal),
+    queryKey: ["jobs", "paginated", searchQuery, page, dateFrom, dateTo, visaFilter, filterTab],
+    queryFn: ({ signal }) => fetchJobsPage(searchQuery, page, dateFrom, dateTo, visaFilter, filterTab, signal),
     staleTime: STALE_TIME,
     placeholderData: (prev) => prev,
   });
@@ -186,15 +190,15 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
     if (!needsClientFilter && jobsQuery.data && jobsQuery.data.jobs.length === PAGE_SIZE) {
       const nextPage = page + 1;
       queryClient.prefetchQuery({
-        queryKey: ["jobs", "paginated", searchQuery, nextPage, dateFrom, dateTo, visaFilter],
-        queryFn: () => fetchJobsPage(searchQuery, nextPage, dateFrom, dateTo, visaFilter),
+        queryKey: ["jobs", "paginated", searchQuery, nextPage, dateFrom, dateTo, visaFilter, filterTab],
+        queryFn: () => fetchJobsPage(searchQuery, nextPage, dateFrom, dateTo, visaFilter, filterTab),
         staleTime: STALE_TIME,
       });
     }
-  }, [queryClient, searchQuery, page, dateFrom, dateTo, visaFilter, needsClientFilter, jobsQuery.data]);
+  }, [queryClient, searchQuery, page, dateFrom, dateTo, visaFilter, filterTab, needsClientFilter, jobsQuery.data]);
 
   const countQuery = useQuery({
-    queryKey: ["jobs", "count", debouncedCountSearch],
+    queryKey: ["jobs", "count", debouncedCountSearch, filterTab],
     queryFn: async ({ signal }) => {
       const trimmed = debouncedCountSearch.trim();
       if (trimmed) {
@@ -204,7 +208,8 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
         let rpcQuery = supabase.rpc("count_search_jobs", {
           search_query: queryForDb,
           expanded_terms: expandedTerms.length > 0 ? expandedTerms : undefined,
-        });
+          filter_tab: filterTab,
+        } as any);
 
         if (signal) {
           rpcQuery = rpcQuery.abortSignal(signal);
@@ -225,6 +230,22 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
         .eq("is_direct_apply", true)
         .is("deleted_at", null)
         .gte("posted_date", cutoff.toISOString());
+
+      // Apply server-side date tab when no search query
+      if (filterTab !== "all") {
+        const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        if (filterTab === "today") {
+          baseCountQuery = baseCountQuery.gte("posted_date", todayStart.toISOString());
+        } else if (filterTab === "yesterday") {
+          const y = new Date(todayStart); y.setDate(y.getDate() - 1);
+          baseCountQuery = baseCountQuery.gte("posted_date", y.toISOString()).lt("posted_date", todayStart.toISOString());
+        } else if (filterTab === "week") {
+          const w = new Date(todayStart); w.setDate(w.getDate() - 7);
+          const y = new Date(todayStart); y.setDate(y.getDate() - 1);
+          baseCountQuery = baseCountQuery.gte("posted_date", w.toISOString()).lt("posted_date", y.toISOString());
+        }
+      }
 
       if (signal) {
         baseCountQuery = baseCountQuery.abortSignal(signal);

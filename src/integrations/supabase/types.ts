@@ -1288,10 +1288,19 @@ export type Database = {
         Args: { p_daily_limit: number; p_user_id: string }
         Returns: Json
       }
-      count_search_jobs: {
-        Args: { expanded_terms?: string[]; search_query?: string }
-        Returns: number
-      }
+      count_search_jobs:
+        | {
+            Args: { expanded_terms?: string[]; search_query?: string }
+            Returns: number
+          }
+        | {
+            Args: {
+              expanded_terms?: string[]
+              filter_tab?: string
+              search_query?: string
+            }
+            Returns: number
+          }
       get_job_counts: {
         Args: { search_query?: string }
         Returns: {
