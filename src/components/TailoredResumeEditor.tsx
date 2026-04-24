@@ -84,6 +84,7 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
   const [matchScore, setMatchScore] = useState<number | null>(null);
   const [pageInfo, setPageInfo] = useState<{ current: number; total: number }>({ current: 1, total: 1 });
   const [confirmRegenerate, setConfirmRegenerate] = useState(false);
+  const lastGeneratedRef = useRef<typeof result>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
 
   const hasResume = !!(profile?.resume_url || profile?.resume_filename);
@@ -118,6 +119,10 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
     if (!structure) return;
     setResume(buildEditableResume(structure, result, profile));
   }, [structure, result, profile]);
+
+  useEffect(() => {
+    if (result) lastGeneratedRef.current = result;
+  }, [result]);
 
   /* 4) Initial ATS match score */
   useEffect(() => {
@@ -251,6 +256,7 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
     if (!job || !structure) return;
     setConfirmRegenerate(false);
     setResume(null);
+    const previousResult = result ?? lastGeneratedRef.current;
     clearResult();
     setMatchScore(null);
     isFirstResumeRef.current = true;
@@ -261,6 +267,7 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
       resume_structure: structure,
       cache_key: `${job.id}::${resumeVersion}`,
       force: true,
+      previous_result: previousResult,
     });
   };
 
@@ -321,7 +328,7 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    Ask the AI for a fresh tailored version
+                    Use your current tailored version as the baseline and regenerate a fresh one
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

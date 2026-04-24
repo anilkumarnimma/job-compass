@@ -47,6 +47,8 @@ interface GenerateParams {
   cache_key: string;
   /** when true, ignore any cached result and force a fresh AI call */
   force?: boolean;
+  /** optional prior tailored result to use as a baseline for regeneration */
+  previous_result?: TailoredResumeData | null;
 }
 
 export function useTailoredResume() {
@@ -60,8 +62,9 @@ export function useTailoredResume() {
     async (params: GenerateParams) => {
       if (!user) return null;
 
+      const cached = cache.current.get(params.cache_key) ?? null;
+
       if (!params.force) {
-        const cached = cache.current.get(params.cache_key);
         if (cached) {
           setResult(cached);
           return cached;
@@ -80,6 +83,7 @@ export function useTailoredResume() {
             job_description: params.job_description,
             job_skills: params.job_skills,
             resume_structure: params.resume_structure,
+            previous_result: params.previous_result ?? cached,
           },
         });
 
@@ -94,7 +98,7 @@ export function useTailoredResume() {
         cache.current.set(params.cache_key, tailored);
         setResult(tailored);
         return tailored;
-      } catch (err: any) {
+      } catch (err: unknown) {
         toast({
           title: "Resume tailoring failed",
           description: friendlyError(err, "We couldn't generate your tailored resume. Please try again."),
