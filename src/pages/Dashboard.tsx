@@ -382,6 +382,22 @@ export default function Dashboard() {
     setFallbackActive(true);
   }, [allowDateFallback, usePriorityOrdering, isLoading, dateFilter, effectiveFallbackActive, searchData]);
 
+  // When a search is active and "Today" returns no jobs, automatically
+  // fall back to "Yesterday" so users still see the freshest possible results.
+  useEffect(() => {
+    if (
+      !combinedSearchQuery.trim() ||
+      isLoading ||
+      isFetching ||
+      dateFilter !== "today" ||
+      !searchData ||
+      searchData.totalCount !== 0
+    ) {
+      return;
+    }
+    setDateFilter("yesterday");
+  }, [combinedSearchQuery, isLoading, isFetching, dateFilter, searchData]);
+
   const totalCount = searchData?.totalCount ?? 0;
   const totalPages = usePriorityOrdering
     ? Math.max(1, Math.ceil(totalCount / DASHBOARD_PAGE_SIZE))
