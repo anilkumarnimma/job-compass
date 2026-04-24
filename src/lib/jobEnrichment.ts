@@ -211,8 +211,8 @@ export function enrichJobList(jobs: Job[], entryLevelOnly = false): Job[] {
   let filtered = jobs.filter(job => !isTutorListing(job));
   // Remove jobs with empty/missing descriptions
   filtered = filtered.filter(job => job.description && job.description.trim().length >= 20);
-  // Remove jobs whose apply link points to LinkedIn
-  filtered = filtered.filter(job => !/linkedin\.com/i.test(job.external_apply_link || ''));
+  // LinkedIn-direct apply links are now filtered out at the SQL layer
+  // (see search_jobs / count_search_jobs / get_job_counts) so pagination stays consistent.
   if (entryLevelOnly) {
     filtered = filtered.filter(job => !isNonEntryLevelJob(job));
   }
