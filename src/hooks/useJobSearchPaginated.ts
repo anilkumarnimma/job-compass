@@ -162,7 +162,7 @@ async function fetchJobsPage(
   return { jobs: filteredJobs };
 }
 
-export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, visaFilter = "all" }: UseJobSearchPaginatedOptions) {
+export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, visaFilter = "all", filterTab = "all" }: UseJobSearchPaginatedOptions) {
   const queryClient = useQueryClient();
   const isVisaFiltered = visaFilter !== "all";
   const entryLevel = hasEntryLevelIntent(searchQuery);
@@ -179,8 +179,8 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
   }, [searchQuery, queryClient]);
 
   const jobsQuery = useQuery({
-    queryKey: ["jobs", "paginated", searchQuery, page, dateFrom, dateTo, visaFilter],
-    queryFn: ({ signal }) => fetchJobsPage(searchQuery, page, dateFrom, dateTo, visaFilter, signal),
+    queryKey: ["jobs", "paginated", searchQuery, page, dateFrom, dateTo, visaFilter, filterTab],
+    queryFn: ({ signal }) => fetchJobsPage(searchQuery, page, dateFrom, dateTo, visaFilter, filterTab, signal),
     staleTime: STALE_TIME,
     placeholderData: (prev) => prev,
   });
@@ -190,12 +190,12 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
     if (!needsClientFilter && jobsQuery.data && jobsQuery.data.jobs.length === PAGE_SIZE) {
       const nextPage = page + 1;
       queryClient.prefetchQuery({
-        queryKey: ["jobs", "paginated", searchQuery, nextPage, dateFrom, dateTo, visaFilter],
-        queryFn: () => fetchJobsPage(searchQuery, nextPage, dateFrom, dateTo, visaFilter),
+        queryKey: ["jobs", "paginated", searchQuery, nextPage, dateFrom, dateTo, visaFilter, filterTab],
+        queryFn: () => fetchJobsPage(searchQuery, nextPage, dateFrom, dateTo, visaFilter, filterTab),
         staleTime: STALE_TIME,
       });
     }
-  }, [queryClient, searchQuery, page, dateFrom, dateTo, visaFilter, needsClientFilter, jobsQuery.data]);
+  }, [queryClient, searchQuery, page, dateFrom, dateTo, visaFilter, filterTab, needsClientFilter, jobsQuery.data]);
 
   const countQuery = useQuery({
     queryKey: ["jobs", "count", debouncedCountSearch],
