@@ -15,12 +15,15 @@ Deno.serve(async (req) => {
     const updated = await stripe.subscriptions.update(subscription_id, {
       cancel_at_period_end: true,
     });
+    const item = updated.items?.data?.[0];
+    const periodEnd = (updated as any).current_period_end ?? item?.current_period_end ?? null;
     return new Response(
       JSON.stringify({
         ok: true,
         id: updated.id,
         cancel_at_period_end: updated.cancel_at_period_end,
-        current_period_end: new Date(updated.current_period_end * 1000).toISOString(),
+        cancel_at: updated.cancel_at,
+        current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
         status: updated.status,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
