@@ -18,6 +18,24 @@ const respond = (payload: Record<string, unknown>, status = 200) =>
 
 const isValidStripeKey = (key: string) => /^(sk|rk)_(live|test)_/.test(key.trim());
 
+// In Stripe API 2025-08-27.basil, current_period_end moved from the subscription
+// to the subscription item. Read from item first, fall back to top-level for safety.
+const getPeriodEndISO = (sub: any): string | null => {
+  const candidates: Array<unknown> = [
+    sub?.items?.data?.[0]?.current_period_end,
+    sub?.current_period_end,
+    sub?.cancel_at,
+    sub?.trial_end,
+  ];
+  for (const value of candidates) {
+    if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+      const d = new Date(value * 1000);
+      if (!isNaN(d.getTime())) return d.toISOString();
+    }
+  }
+  return null;
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
