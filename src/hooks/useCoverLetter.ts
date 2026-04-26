@@ -140,9 +140,13 @@ ${formatContent(content)}
     const html = `
 <!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><title>Cover Letter - ${safeCompany}</title>
+<head><meta charset="utf-8"><title> </title>
 <style>
-@media print { @page { margin: 1in; } }
+@page { margin: 1in; size: auto; }
+@media print {
+  @page { margin: 1in; }
+  html, body { -webkit-print-color-adjust: exact; }
+}
 body{font-family:'Georgia',serif;font-size:11pt;line-height:1.7;max-width:650px;margin:0 auto;padding:40px;color:#1a1a1a;}
 p{margin-bottom:14px;}
 strong{font-weight:600;}
@@ -150,8 +154,15 @@ strong{font-weight:600;}
 </head>
 <body>
 ${formatContent(content)}
-<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();}}</script>
+<script>
+  // Clear title so browsers don't print "Cover Letter - Company" as header
+  document.title = '';
+  window.onload=function(){setTimeout(function(){window.print();},100);window.onafterprint=function(){window.close();}}
+</script>
 </body></html>`;
+    // Note: The "about:blank" footer and date header are browser-injected defaults
+    // when printing. Users must disable "Headers and footers" in the print dialog's
+    // "More settings" to fully remove them — browsers do not allow CSS to hide these.
     printWindow.document.write(html);
     printWindow.document.close();
   };
