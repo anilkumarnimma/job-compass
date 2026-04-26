@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
           return respond({
             ok: true,
             action: "resumed",
-            subscription_end: new Date(updated.current_period_end * 1000).toISOString(),
+            subscription_end: getPeriodEndISO(updated),
           });
         } catch (stripeErr) {
           const message = stripeErr instanceof Error ? stripeErr.message : String(stripeErr);
