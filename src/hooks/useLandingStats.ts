@@ -15,7 +15,7 @@ export function useLandingStats() {
       cutoff.setDate(cutoff.getDate() - 45);
       const cutoffISO = cutoff.toISOString();
 
-      const [jobRes, companiesRes, userCountRes] = await Promise.all([
+      const [jobRes, companyCountRes, userCountRes] = await Promise.all([
         supabase
           .from("jobs")
           .select("*", { count: "exact", head: true })
@@ -24,31 +24,17 @@ export function useLandingStats() {
           .eq("is_direct_apply", true)
           .is("deleted_at", null)
           .gte("posted_date", cutoffISO),
-        supabase
-          .from("jobs")
-          .select("company")
-          .eq("is_published", true)
-          .eq("is_archived", false)
-          .eq("is_direct_apply", true)
-          .is("deleted_at", null)
-          .gte("posted_date", cutoffISO),
+        supabase.rpc("get_landing_company_count", { days_back: 45 }),
         supabase.rpc("get_public_user_count"),
       ]);
 
       if (jobRes.error) throw jobRes.error;
-      if (companiesRes.error) throw companiesRes.error;
+      if (companyCountRes.error) throw companyCountRes.error;
       if (userCountRes.error) throw userCountRes.error;
 
-      const jobCount = jobRes.count ?? 0;
-      const companyCount = new Set(
-        (companiesRes.data ?? [])
-          .map((row) => row.company?.trim().toLowerCase())
-          .filter((company): company is string => Boolean(company))
-      ).size;
-
       return {
-        jobCount,
-        companyCount,
+        jobCount: jobRes.count ?? 0,
+        companyCount: Number(companyCountRes.data ?? 0),
         userCount: Number(userCountRes.data ?? 0),
       };
     },

@@ -1311,6 +1311,10 @@ export type Database = {
           yesterday_count: number
         }[]
       }
+      get_landing_company_count: {
+        Args: { days_back?: number }
+        Returns: number
+      }
       get_public_user_count: { Args: never; Returns: number }
       get_top_hiring_roles: {
         Args: { max_roles?: number }
