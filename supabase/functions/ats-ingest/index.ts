@@ -438,8 +438,39 @@ Deno.serve(async (req) => {
     return delta;
   };
 
+  // Fire the next chunk IMMEDIATELY (before processing this one) so the
+  // self-invocation chain doesn't depend on this invocation's wall-time budget.
+  // Each chunk is fully independent — it reads the merged totals from the DB.
+  const dispatchNextChunk = async () => {
+    if (isLastChunk) return;
+    const nextOffset = chunkEnd;
+    console.log(`[ats-ingest] Run ${runId} dispatching next chunk offset=${nextOffset}`);
+    try {
+      // Fire-and-forget; do NOT await the response body. We just need the request
+      // to be sent before this invocation ends.
+      await fetch(`${SUPABASE_URL}/functions/v1/ats-ingest`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${SERVICE_KEY}`,
+        },
+        body: JSON.stringify({
+          run_id: runId,
+          offset: nextOffset,
+          trigger_type: triggerType,
+        }),
+      });
+    } catch (e) {
+      console.error("[ats-ingest] self-invoke error:", e);
+    }
+  };
+
   const backgroundWork = async () => {
     console.log(`[ats-ingest] Run ${runId} chunk offset=${chunkOffset} size=${companies.length} (total=${totalCompanies})`);
+
+    // Kick off the next chunk first so the chain keeps going even if this
+    // invocation is slow or runs out of wall-time.
+    await dispatchNextChunk();
 
     // Run companies in parallel within this chunk (bounded concurrency)
     const results: Awaited<ReturnType<typeof processCompany>>[] = [];
@@ -494,28 +525,10 @@ Deno.serve(async (req) => {
     await admin.from("ats_ingest_runs").update(merged).eq("id", runId);
 
     if (!isLastChunk) {
-      // Self-invoke for next chunk (fire-and-forget). Returns immediately so
-      // this invocation can finish well within the wall-time budget.
-      const nextOffset = chunkEnd;
-      console.log(`[ats-ingest] Run ${runId} self-invoking next chunk offset=${nextOffset}`);
-      try {
-        await fetch(`${SUPABASE_URL}/functions/v1/ats-ingest`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${SERVICE_KEY}`,
-          },
-          body: JSON.stringify({
-            run_id: runId,
-            offset: nextOffset,
-            trigger_type: triggerType,
-          }),
-        });
-      } catch (e) {
-        console.error("[ats-ingest] self-invoke error:", e);
-      }
+      // Next chunk was already dispatched at the top.
       return;
     }
+
 
     // Final chunk: dedup sweep + finalize
     let duplicates_removed = 0;
