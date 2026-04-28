@@ -1,6 +1,10 @@
 import * as Sentry from "@sentry/react";
 
-const DSN = import.meta.env.VITE_SENTRY_DSN as string | undefined;
+// Sentry DSN is a publishable identifier (safe to ship in client bundles).
+// Falls back to env var so other environments can override.
+const DSN =
+  (import.meta.env.VITE_SENTRY_DSN as string | undefined) ||
+  "https://a71f58bcc5303a36f20ee20b3c987ab1@o4511295304040448.ingest.us.sentry.io/4511295306399744";
 
 export function initSentry() {
   if (!DSN) {
