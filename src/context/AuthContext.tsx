@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { setSentryUser } from "@/lib/sentry";
 
 const checkSubscriptionStatus = async () => {
   try {
@@ -58,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Only synchronous state updates here
       setSession(session);
       setUser(session?.user ?? null);
+      setSentryUser(session?.user ? { id: session.user.id, email: session.user.email } : null);
 
       // Defer Supabase calls with setTimeout to prevent deadlock
       if (session?.user) {
@@ -75,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      setSentryUser(session?.user ? { id: session.user.id, email: session.user.email } : null);
       if (session?.user) {
         checkAdminRole(session.user.id);
         checkSubscriptionStatus();
@@ -124,6 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setSession(null);
     setIsAdmin(false);
+    setSentryUser(null);
   };
 
   return (

@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { Sentry } from "@/lib/sentry";
 
 interface ErrorLogPayload {
   error_type: string;
@@ -34,6 +35,21 @@ export async function logError(payload: ErrorLogPayload) {
     
     const dedupeKey = `${payload.error_type}:${payload.message}`;
     if (isDuplicate(dedupeKey)) return;
+
+    // Mirror to Sentry (no-op if DSN not configured)
+    try {
+      Sentry.captureMessage(payload.message, {
+        level: payload.error_type.includes("crash") ? "error" : "warning",
+        tags: { error_type: payload.error_type },
+        extra: {
+          stack: payload.stack,
+          page_url: payload.page_url,
+          ...payload.metadata,
+        },
+      });
+    } catch {
+      // ignore Sentry errors
+    }
 
     const { data: { user } } = await supabase.auth.getUser();
 

@@ -24,7 +24,21 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("ErrorBoundary caught an error:", error, errorInfo);
-    // Log to error_logs table for monitoring
+    // Report to Sentry with React component stack context
+    try {
+      import("@/lib/sentry").then(({ Sentry }) => {
+        Sentry.withScope((scope) => {
+          scope.setTag("error_type", "react_crash");
+          scope.setContext("react", {
+            componentStack: errorInfo.componentStack?.substring(0, 2000),
+          });
+          Sentry.captureException(error);
+        });
+      });
+    } catch {
+      // ignore
+    }
+    // Log to error_logs table for in-app monitoring (kept as backup)
     try {
       import("@/lib/errorLogger").then(({ logError }) => {
         logError({
