@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { HiringGraphManager } from "@/components/founder/HiringGraphManager";
-import { MarketAlertManager } from "@/components/founder/MarketAlertManager";
+
 import { EmailNotificationManager } from "@/components/founder/EmailNotificationManager";
 import { ManualPremiumManager } from "@/components/founder/ManualPremiumManager";
 import {
@@ -132,10 +132,6 @@ export default function FounderEmployers() {
           <HiringGraphManager />
         </div>
 
-        {/* Market Alert Manager - Founder Only */}
-        <div className="mb-8">
-          <MarketAlertManager />
-        </div>
 
         {/* Email Notification Manager - Founder Only */}
         <div className="mb-8">

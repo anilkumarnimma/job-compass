@@ -456,10 +456,9 @@ export default function Dashboard() {
     if (value !== "custom") setCustomDate(undefined);
     setDateFilter(value);
     setAllTimeDropdownOpen(false);
-    if (value === "all") {
-      performDashboardReset();
-    }
-  }, [performDashboardReset]);
+    setCurrentPage(1);
+    setFallbackActive(false);
+  }, []);
 
   const handleCustomDateSelect = useCallback((date: Date | undefined) => {
     if (date) {
