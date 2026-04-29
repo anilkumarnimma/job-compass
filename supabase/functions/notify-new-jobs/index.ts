@@ -39,7 +39,6 @@ function renderEmail(opts: {
   const niceSource =
     {
       ats: "company career sites",
-      muse: "The Muse",
       jsearch: "JSearch",
       arbeitnow: "Arbeitnow",
       sheet: "our editorial team",
