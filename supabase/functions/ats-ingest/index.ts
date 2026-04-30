@@ -434,11 +434,29 @@ Deno.serve(async (req) => {
           ? "active"
           : (company.status === "active" ? "inactive" : company.status);
 
+      // Tier-tracking signals: feeds the auto-promote/demote pass at end of run
+      const newConsecutiveEmpty = importedThisCompany > 0
+        ? 0
+        : (company.consecutive_empty_runs || 0) + 1;
+
+      // Recalculate jobs_last_7days from actual ats_polling inserts in last 7d.
+      // Cheap (1 indexed count per company per run) and self-correcting.
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { count: last7d } = await admin
+        .from("jobs")
+        .select("id", { count: "exact", head: true })
+        .eq("ats_company_slug", company.slug)
+        .eq("ingested_via", "ats_polling")
+        .gte("created_at", sevenDaysAgo);
+
       await admin
         .from("ats_companies")
         .update({
           last_checked: new Date().toISOString(),
           jobs_found_last_run: jobs.length,
+          jobs_last_run: importedThisCompany,
+          jobs_last_7days: last7d || 0,
+          consecutive_empty_runs: newConsecutiveEmpty,
           status: newStatus,
         })
         .eq("id", company.id);
