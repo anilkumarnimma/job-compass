@@ -54,39 +54,54 @@ export type Database = {
           ats_platform: string
           auto_discovered: boolean
           company_name: string
+          consecutive_empty_runs: number
           created_at: string
           date_added: string
           id: string
+          ingested_via: string
           jobs_found_last_run: number
+          jobs_last_7days: number
+          jobs_last_run: number
           last_checked: string | null
           slug: string
           status: string
+          tier: number
           updated_at: string
         }
         Insert: {
           ats_platform: string
           auto_discovered?: boolean
           company_name: string
+          consecutive_empty_runs?: number
           created_at?: string
           date_added?: string
           id?: string
+          ingested_via?: string
           jobs_found_last_run?: number
+          jobs_last_7days?: number
+          jobs_last_run?: number
           last_checked?: string | null
           slug: string
           status?: string
+          tier?: number
           updated_at?: string
         }
         Update: {
           ats_platform?: string
           auto_discovered?: boolean
           company_name?: string
+          consecutive_empty_runs?: number
           created_at?: string
           date_added?: string
           id?: string
+          ingested_via?: string
           jobs_found_last_run?: number
+          jobs_last_7days?: number
+          jobs_last_run?: number
           last_checked?: string | null
           slug?: string
           status?: string
+          tier?: number
           updated_at?: string
         }
         Relationships: []
@@ -584,6 +599,7 @@ export type Database = {
       }
       jobs: {
         Row: {
+          ats_company_slug: string | null
           company: string
           company_logo: string | null
           created_at: string
@@ -597,6 +613,7 @@ export type Database = {
           experience_years: string | null
           external_apply_link: string
           id: string
+          ingested_via: string
           is_archived: boolean
           is_direct_apply: boolean
           is_published: boolean
@@ -610,6 +627,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ats_company_slug?: string | null
           company: string
           company_logo?: string | null
           created_at?: string
@@ -623,6 +641,7 @@ export type Database = {
           experience_years?: string | null
           external_apply_link: string
           id?: string
+          ingested_via?: string
           is_archived?: boolean
           is_direct_apply?: boolean
           is_published?: boolean
@@ -636,6 +655,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ats_company_slug?: string | null
           company?: string
           company_logo?: string | null
           created_at?: string
@@ -649,6 +669,7 @@ export type Database = {
           experience_years?: string | null
           external_apply_link?: string
           id?: string
+          ingested_via?: string
           is_archived?: boolean
           is_direct_apply?: boolean
           is_published?: boolean
