@@ -300,13 +300,21 @@ Deno.serve(async (req) => {
   // Skip only 'pending' (never validated) and 'failed' (permanently broken slugs).
   let companyQuery = admin
     .from("ats_companies")
-    .select("id, slug, company_name, ats_platform, status")
+    .select("id, slug, company_name, ats_platform, status, tier, consecutive_empty_runs")
     .in("status", ["active", "inactive"])
     .order("id", { ascending: true });
+  if (tierFilter !== null) {
+    companyQuery = admin
+      .from("ats_companies")
+      .select("id, slug, company_name, ats_platform, status, tier, consecutive_empty_runs")
+      .eq("tier", tierFilter)
+      .eq("status", "active")
+      .order("id", { ascending: true });
+  }
   if (bodyCompanyId) {
     companyQuery = admin
       .from("ats_companies")
-      .select("id, slug, company_name, ats_platform, status")
+      .select("id, slug, company_name, ats_platform, status, tier, consecutive_empty_runs")
       .eq("id", bodyCompanyId);
   }
 
