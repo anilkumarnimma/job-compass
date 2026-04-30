@@ -273,12 +273,14 @@ Deno.serve(async (req) => {
   let bodyCompanyId: string | null = null;
   let continuationRunId: string | null = null;
   let chunkOffset = 0;
+  let tierFilter: number | null = null;
   try {
     const body = await req.json();
     bodyCompanyId = body?.company_id || null;
     continuationRunId = body?.run_id || null;
     chunkOffset = Number(body?.offset) || 0;
     if (body?.trigger_type) triggerType = body.trigger_type;
+    if (body?.tier && [1, 2, 3].includes(Number(body.tier))) tierFilter = Number(body.tier);
   } catch { /* no body */ }
 
   // Either reuse an existing run row (continuation) or insert a new one (first call)
