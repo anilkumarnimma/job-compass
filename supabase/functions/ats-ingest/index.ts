@@ -399,6 +399,8 @@ Deno.serve(async (req) => {
           is_published: true,
           is_archived: false,
           is_direct_apply: true,
+          ingested_via: "ats_polling",
+          ats_company_slug: company.slug,
         });
       }
 
