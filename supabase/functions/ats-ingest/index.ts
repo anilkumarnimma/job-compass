@@ -560,13 +560,36 @@ Deno.serve(async (req) => {
     }
 
 
-    // Final chunk: dedup sweep + finalize
+    // Final chunk: dedup sweep + tier rebalance + finalize
     let duplicates_removed = 0;
     try {
       const { data: dedupRes } = await admin.rpc("remove_duplicate_jobs");
       duplicates_removed = (dedupRes as { removed?: number })?.removed || 0;
     } catch (e) {
       console.error("[ats-ingest] Dedup error:", e);
+    }
+
+    // Auto tier promotion / demotion
+    // Promote: T3 -> T2 if jobs_last_7days >= 5 AND consecutive_empty_runs = 0
+    //          T2 -> T1 if jobs_last_7days >= 20 AND consecutive_empty_runs = 0
+    // Demote:  T1 -> T2 if consecutive_empty_runs >= 14
+    //          T2 -> T3 if consecutive_empty_runs >= 21
+    try {
+      const promotions = await Promise.all([
+        admin.from("ats_companies").update({ tier: 2 })
+          .eq("tier", 3).gte("jobs_last_7days", 5).eq("consecutive_empty_runs", 0)
+          .eq("status", "active"),
+        admin.from("ats_companies").update({ tier: 1 })
+          .eq("tier", 2).gte("jobs_last_7days", 20).eq("consecutive_empty_runs", 0)
+          .eq("status", "active"),
+        admin.from("ats_companies").update({ tier: 2 })
+          .eq("tier", 1).gte("consecutive_empty_runs", 14),
+        admin.from("ats_companies").update({ tier: 3 })
+          .eq("tier", 2).gte("consecutive_empty_runs", 21),
+      ]);
+      console.log(`[ats-ingest] Tier rebalance complete (4 rules applied)`);
+    } catch (e) {
+      console.error("[ats-ingest] Tier rebalance error:", e);
     }
 
     await admin.from("ats_ingest_runs").update({
