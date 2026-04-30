@@ -257,7 +257,9 @@ export function SkillsCloudWidget({ className }: { className?: string }) {
       <div className="flex items-center gap-2 mb-4">
         <Sparkles className="h-4 w-4 text-accent" />
         <h3 className="font-display font-semibold text-sm text-foreground">Top Skills</h3>
-        <span className="ml-auto text-xs text-muted-foreground">{skills.length} skills</span>
+        <span className="ml-auto text-xs text-muted-foreground">
+          {skills.length > 20 ? `Showing 20 of ${skills.length}` : `${skills.length} skills`}
+        </span>
       </div>
       <div className="flex flex-wrap gap-2">
         {skills.slice(0, 20).map((skill, i) => (
@@ -271,6 +273,11 @@ export function SkillsCloudWidget({ className }: { className?: string }) {
             {skill}
           </motion.span>
         ))}
+        {skills.length > 20 && (
+          <span className="px-3 py-1.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">
+            +{skills.length - 20} more
+          </span>
+        )}
       </div>
     </motion.div>
   );
