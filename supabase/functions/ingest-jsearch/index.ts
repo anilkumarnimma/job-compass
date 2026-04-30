@@ -491,6 +491,7 @@ Deno.serve(async (req) => {
             is_published: true,
             is_archived: false,
             is_direct_apply: true,
+            ingested_via: "jsearch",
           });
 
           if (insertErr) {
