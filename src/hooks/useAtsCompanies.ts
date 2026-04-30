@@ -14,6 +14,10 @@ export interface AtsCompany {
   date_added: string;
   created_at: string;
   updated_at: string;
+  tier: 1 | 2 | 3;
+  jobs_last_run: number;
+  jobs_last_7days: number;
+  consecutive_empty_runs: number;
 }
 
 export interface AtsDiscoveryRun {
