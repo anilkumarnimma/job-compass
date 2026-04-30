@@ -31,14 +31,14 @@ export function useUserVisit() {
     if (!user || recordedRef.current) return;
     recordedRef.current = true;
     (async () => {
-      // Auto-enroll into email digest (idempotent)
-      await supabase
-        .from("email_notification_preferences")
-        .insert({ user_id: user.id })
-        .select()
-        .maybeSingle()
-        .then(() => {})
-        .catch(() => {});
+      // Auto-enroll into email digest (idempotent — ignore unique violation)
+      try {
+        await supabase
+          .from("email_notification_preferences")
+          .insert({ user_id: user.id });
+      } catch {
+        /* row already exists */
+      }
 
       const { data, error } = await supabase.rpc("record_user_visit", {
         p_user_id: user.id,
