@@ -273,12 +273,14 @@ Deno.serve(async (req) => {
   let bodyCompanyId: string | null = null;
   let continuationRunId: string | null = null;
   let chunkOffset = 0;
+  let tierFilter: number | null = null;
   try {
     const body = await req.json();
     bodyCompanyId = body?.company_id || null;
     continuationRunId = body?.run_id || null;
     chunkOffset = Number(body?.offset) || 0;
     if (body?.trigger_type) triggerType = body.trigger_type;
+    if (body?.tier && [1, 2, 3].includes(Number(body.tier))) tierFilter = Number(body.tier);
   } catch { /* no body */ }
 
   // Either reuse an existing run row (continuation) or insert a new one (first call)
@@ -298,13 +300,21 @@ Deno.serve(async (req) => {
   // Skip only 'pending' (never validated) and 'failed' (permanently broken slugs).
   let companyQuery = admin
     .from("ats_companies")
-    .select("id, slug, company_name, ats_platform, status")
+    .select("id, slug, company_name, ats_platform, status, tier, consecutive_empty_runs")
     .in("status", ["active", "inactive"])
     .order("id", { ascending: true });
+  if (tierFilter !== null) {
+    companyQuery = admin
+      .from("ats_companies")
+      .select("id, slug, company_name, ats_platform, status, tier, consecutive_empty_runs")
+      .eq("tier", tierFilter)
+      .eq("status", "active")
+      .order("id", { ascending: true });
+  }
   if (bodyCompanyId) {
     companyQuery = admin
       .from("ats_companies")
-      .select("id, slug, company_name, ats_platform, status")
+      .select("id, slug, company_name, ats_platform, status, tier, consecutive_empty_runs")
       .eq("id", bodyCompanyId);
   }
 
@@ -389,6 +399,8 @@ Deno.serve(async (req) => {
           is_published: true,
           is_archived: false,
           is_direct_apply: true,
+          ingested_via: "ats_polling",
+          ats_company_slug: company.slug,
         });
       }
 
@@ -422,11 +434,29 @@ Deno.serve(async (req) => {
           ? "active"
           : (company.status === "active" ? "inactive" : company.status);
 
+      // Tier-tracking signals: feeds the auto-promote/demote pass at end of run
+      const newConsecutiveEmpty = importedThisCompany > 0
+        ? 0
+        : (company.consecutive_empty_runs || 0) + 1;
+
+      // Recalculate jobs_last_7days from actual ats_polling inserts in last 7d.
+      // Cheap (1 indexed count per company per run) and self-correcting.
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { count: last7d } = await admin
+        .from("jobs")
+        .select("id", { count: "exact", head: true })
+        .eq("ats_company_slug", company.slug)
+        .eq("ingested_via", "ats_polling")
+        .gte("created_at", sevenDaysAgo);
+
       await admin
         .from("ats_companies")
         .update({
           last_checked: new Date().toISOString(),
           jobs_found_last_run: jobs.length,
+          jobs_last_run: importedThisCompany,
+          jobs_last_7days: last7d || 0,
+          consecutive_empty_runs: newConsecutiveEmpty,
           status: newStatus,
         })
         .eq("id", company.id);
@@ -530,13 +560,36 @@ Deno.serve(async (req) => {
     }
 
 
-    // Final chunk: dedup sweep + finalize
+    // Final chunk: dedup sweep + tier rebalance + finalize
     let duplicates_removed = 0;
     try {
       const { data: dedupRes } = await admin.rpc("remove_duplicate_jobs");
       duplicates_removed = (dedupRes as { removed?: number })?.removed || 0;
     } catch (e) {
       console.error("[ats-ingest] Dedup error:", e);
+    }
+
+    // Auto tier promotion / demotion
+    // Promote: T3 -> T2 if jobs_last_7days >= 5 AND consecutive_empty_runs = 0
+    //          T2 -> T1 if jobs_last_7days >= 20 AND consecutive_empty_runs = 0
+    // Demote:  T1 -> T2 if consecutive_empty_runs >= 14
+    //          T2 -> T3 if consecutive_empty_runs >= 21
+    try {
+      const promotions = await Promise.all([
+        admin.from("ats_companies").update({ tier: 2 })
+          .eq("tier", 3).gte("jobs_last_7days", 5).eq("consecutive_empty_runs", 0)
+          .eq("status", "active"),
+        admin.from("ats_companies").update({ tier: 1 })
+          .eq("tier", 2).gte("jobs_last_7days", 20).eq("consecutive_empty_runs", 0)
+          .eq("status", "active"),
+        admin.from("ats_companies").update({ tier: 2 })
+          .eq("tier", 1).gte("consecutive_empty_runs", 14),
+        admin.from("ats_companies").update({ tier: 3 })
+          .eq("tier", 2).gte("consecutive_empty_runs", 21),
+      ]);
+      console.log(`[ats-ingest] Tier rebalance complete (4 rules applied)`);
+    } catch (e) {
+      console.error("[ats-ingest] Tier rebalance error:", e);
     }
 
     await admin.from("ats_ingest_runs").update({

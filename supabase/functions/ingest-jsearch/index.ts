@@ -491,6 +491,7 @@ Deno.serve(async (req) => {
             is_published: true,
             is_archived: false,
             is_direct_apply: true,
+            ingested_via: "jsearch",
           });
 
           if (insertErr) {
@@ -560,6 +561,23 @@ Deno.serve(async (req) => {
         });
       } catch (e) {
         console.error("[ingest-jsearch] notify-new-jobs error:", e);
+      }
+    }
+
+    // Auto-grow the ATS company list from any new Greenhouse/Lever/Ashby
+    // apply links that JSearch surfaced. Fire-and-forget.
+    if (stats.total_imported > 0) {
+      try {
+        await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/ats-extract-from-existing`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          },
+          body: JSON.stringify({}),
+        });
+      } catch (e) {
+        console.error("[ingest-jsearch] ats-extract-from-existing error:", e);
       }
     }
 

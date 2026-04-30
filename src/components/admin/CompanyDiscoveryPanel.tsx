@@ -16,6 +16,9 @@ import {
   Trash2,
   Power,
   PowerOff,
+  ChevronUp,
+  ChevronDown,
+  Zap,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -34,8 +37,21 @@ import {
   useRunAtsIngest,
   useAddAtsCompany,
   useUpdateAtsCompanyStatus,
+  useUpdateAtsCompanyTier,
   useDeleteAtsCompany,
 } from "@/hooks/useAtsCompanies";
+
+const TIER_LABEL: Record<1 | 2 | 3, string> = {
+  1: "Tier 1 · every 4h",
+  2: "Tier 2 · every 12h",
+  3: "Tier 3 · daily",
+};
+
+const TIER_BADGE: Record<1 | 2 | 3, string> = {
+  1: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+  2: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30",
+  3: "bg-muted text-muted-foreground border-border",
+};
 
 export function CompanyDiscoveryPanel() {
   const { data: companies = [], isLoading: companiesLoading } = useAtsCompanies();
@@ -46,6 +62,7 @@ export function CompanyDiscoveryPanel() {
   const runIngest = useRunAtsIngest();
   const addCompany = useAddAtsCompany();
   const updateStatus = useUpdateAtsCompanyStatus();
+  const updateTier = useUpdateAtsCompanyTier();
   const deleteCompany = useDeleteAtsCompany();
 
   const [newSlug, setNewSlug] = useState("");
@@ -53,12 +70,17 @@ export function CompanyDiscoveryPanel() {
   const [newPlatform, setNewPlatform] = useState<"greenhouse" | "lever" | "ashby">("greenhouse");
   const [filterPlatform, setFilterPlatform] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterTier, setFilterTier] = useState<string>("all");
+  const [pendingCompanyId, setPendingCompanyId] = useState<string | null>(null);
 
   // Stats
   const total = companies.length;
   const active = companies.filter((c) => c.status === "active").length;
   const inactive = companies.filter((c) => c.status === "inactive").length;
   const pending = companies.filter((c) => c.status === "pending").length;
+  const tier1 = companies.filter((c) => c.tier === 1 && c.status === "active").length;
+  const tier2 = companies.filter((c) => c.tier === 2 && c.status === "active").length;
+  const tier3 = companies.filter((c) => c.tier === 3 && c.status === "active").length;
   const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
   const newThisWeek = companies.filter((c) => new Date(c.date_added).getTime() > oneWeekAgo).length;
   const autoDiscovered = companies.filter((c) => c.auto_discovered).length;
@@ -69,6 +91,7 @@ export function CompanyDiscoveryPanel() {
   const filtered = companies.filter((c) => {
     if (filterPlatform !== "all" && c.ats_platform !== filterPlatform) return false;
     if (filterStatus !== "all" && c.status !== filterStatus) return false;
+    if (filterTier !== "all" && String(c.tier) !== filterTier) return false;
     return true;
   });
 
@@ -85,6 +108,13 @@ export function CompanyDiscoveryPanel() {
     );
   };
 
+  const handleTestNow = (companyId: string) => {
+    setPendingCompanyId(companyId);
+    runIngest.mutate({ companyId }, {
+      onSettled: () => setTimeout(() => setPendingCompanyId(null), 4000),
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header card */}
@@ -97,7 +127,7 @@ export function CompanyDiscoveryPanel() {
             <div>
               <h2 className="text-xl font-bold text-foreground">Company Discovery</h2>
               <p className="text-sm text-muted-foreground">
-                Auto-discovers Greenhouse, Lever, and Ashby company boards. Runs weekly on Sundays at 00:00 UTC.
+                Tiered polling: Tier 1 every 4h, Tier 2 every 12h, Tier 3 daily. Companies auto-promote/demote based on output.
               </p>
             </div>
           </div>
@@ -106,42 +136,93 @@ export function CompanyDiscoveryPanel() {
               onClick={() => runDiscovery.mutate()}
               disabled={runDiscovery.isPending}
               variant="outline"
+              size="sm"
               className="gap-2"
             >
               {runDiscovery.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
               Run Discovery
             </Button>
             <Button
+              onClick={() => runIngest.mutate({ tier: 1 })}
+              disabled={runIngest.isPending || tier1 === 0}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Play className="h-4 w-4" />
+              Tier 1 ({tier1})
+            </Button>
+            <Button
+              onClick={() => runIngest.mutate({ tier: 2 })}
+              disabled={runIngest.isPending || tier2 === 0}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Play className="h-4 w-4" />
+              Tier 2 ({tier2})
+            </Button>
+            <Button
+              onClick={() => runIngest.mutate({ tier: 3 })}
+              disabled={runIngest.isPending || tier3 === 0}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Play className="h-4 w-4" />
+              Tier 3 ({tier3})
+            </Button>
+            <Button
               onClick={() => runIngest.mutate(undefined)}
               disabled={runIngest.isPending || active === 0}
+              size="sm"
               className="gap-2"
             >
               {runIngest.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-              Ingest Active Now
+              Run All Active
             </Button>
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="mt-5 grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+            <div className="text-xs text-muted-foreground">Tier 1 active</div>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{tier1}</div>
+            <div className="text-[10px] text-muted-foreground mt-0.5">checking every 4h</div>
+          </div>
+          <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+            <div className="text-xs text-muted-foreground">Tier 2 active</div>
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{tier2}</div>
+            <div className="text-[10px] text-muted-foreground mt-0.5">checking every 12h</div>
+          </div>
+          <div className="p-3 rounded-lg bg-muted/40 border border-border/40">
+            <div className="text-xs text-muted-foreground">Tier 3 active</div>
+            <div className="text-2xl font-bold text-foreground">{tier3}</div>
+            <div className="text-[10px] text-muted-foreground mt-0.5">checking daily</div>
+          </div>
+          <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+            <div className="text-xs text-muted-foreground">Auto-discovered (7d)</div>
+            <div className="text-2xl font-bold text-primary">{newThisWeek}</div>
+            <div className="text-[10px] text-muted-foreground mt-0.5">{autoDiscovered} total auto</div>
+          </div>
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="p-3 rounded-lg bg-muted/40">
             <div className="text-xs text-muted-foreground">Total tracked</div>
-            <div className="text-2xl font-bold text-foreground">{total}</div>
+            <div className="text-xl font-bold text-foreground">{total}</div>
           </div>
           <div className="p-3 rounded-lg bg-green-500/10">
             <div className="text-xs text-muted-foreground">Active</div>
-            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{active}</div>
+            <div className="text-xl font-bold text-green-600 dark:text-green-400">{active}</div>
           </div>
           <div className="p-3 rounded-lg bg-yellow-500/10">
             <div className="text-xs text-muted-foreground">Pending</div>
-            <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{pending}</div>
+            <div className="text-xl font-bold text-yellow-600 dark:text-yellow-400">{pending}</div>
           </div>
           <div className="p-3 rounded-lg bg-destructive/10">
             <div className="text-xs text-muted-foreground">Inactive</div>
-            <div className="text-2xl font-bold text-destructive">{inactive}</div>
-          </div>
-          <div className="p-3 rounded-lg bg-primary/10">
-            <div className="text-xs text-muted-foreground">New this week</div>
-            <div className="text-2xl font-bold text-primary">{newThisWeek}</div>
+            <div className="text-xl font-bold text-destructive">{inactive}</div>
           </div>
         </div>
 
@@ -204,7 +285,7 @@ export function CompanyDiscoveryPanel() {
           </Button>
         </div>
         <p className="text-xs text-muted-foreground mt-2">
-          New companies start as <strong>pending</strong>. Run discovery to auto-validate & activate.
+          New companies start as <strong>pending · Tier 2</strong>. Run discovery to auto-validate. After ingest, top performers automatically promote to Tier 1.
         </p>
       </Card>
 
@@ -215,7 +296,18 @@ export function CompanyDiscoveryPanel() {
             <Building2 className="h-4 w-4 text-primary" />
             Tracked Companies ({filtered.length} of {total})
           </h3>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <Select value={filterTier} onValueChange={setFilterTier}>
+              <SelectTrigger className="w-[120px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All tiers</SelectItem>
+                <SelectItem value="1">Tier 1</SelectItem>
+                <SelectItem value="2">Tier 2</SelectItem>
+                <SelectItem value="3">Tier 3</SelectItem>
+              </SelectContent>
+            </Select>
             <Select value={filterPlatform} onValueChange={setFilterPlatform}>
               <SelectTrigger className="w-[160px]">
                 <SelectValue />
@@ -254,10 +346,12 @@ export function CompanyDiscoveryPanel() {
                 <TableRow>
                   <TableHead>Company</TableHead>
                   <TableHead>Platform</TableHead>
+                  <TableHead>Tier</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-center">Jobs (last)</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Added</TableHead>
+                  <TableHead className="text-center" title="Jobs imported on the last run">Last run</TableHead>
+                  <TableHead className="text-center" title="Jobs imported in the past 7 days">7d</TableHead>
+                  <TableHead className="text-center" title="Consecutive runs with 0 imports">Empty</TableHead>
+                  <TableHead>Last checked</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -267,9 +361,17 @@ export function CompanyDiscoveryPanel() {
                     <TableCell>
                       <div className="font-medium">{c.company_name}</div>
                       <div className="text-xs text-muted-foreground font-mono">{c.slug}</div>
+                      {c.auto_discovered && (
+                        <div className="text-[10px] text-muted-foreground mt-0.5">auto-discovered</div>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="capitalize">{c.ats_platform}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={TIER_BADGE[c.tier]} title={TIER_LABEL[c.tier]}>
+                        T{c.tier}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge
@@ -285,19 +387,53 @@ export function CompanyDiscoveryPanel() {
                         {c.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-center">{c.jobs_found_last_run}</TableCell>
-                    <TableCell>
-                      {c.auto_discovered ? (
-                        <Badge variant="outline" className="text-xs">Auto-discovered</Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-xs">Seed/Manual</Badge>
-                      )}
+                    <TableCell className="text-center text-sm">{c.jobs_last_run}</TableCell>
+                    <TableCell className="text-center text-sm font-medium">{c.jobs_last_7days}</TableCell>
+                    <TableCell className="text-center text-sm">
+                      <span className={c.consecutive_empty_runs >= 10 ? "text-destructive" : "text-muted-foreground"}>
+                        {c.consecutive_empty_runs}
+                      </span>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(c.date_added), { addSuffix: true })}
+                      {c.last_checked
+                        ? formatDistanceToNow(new Date(c.last_checked), { addSuffix: true })
+                        : "—"}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          title="Test now (run only this company)"
+                          disabled={runIngest.isPending}
+                          onClick={() => handleTestNow(c.id)}
+                        >
+                          {pendingCompanyId === c.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Zap className="h-4 w-4" />
+                          )}
+                        </Button>
+                        {c.tier > 1 && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            title={`Promote to Tier ${c.tier - 1}`}
+                            onClick={() => updateTier.mutate({ id: c.id, tier: (c.tier - 1) as 1 | 2 })}
+                          >
+                            <ChevronUp className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {c.tier < 3 && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            title={`Demote to Tier ${c.tier + 1}`}
+                            onClick={() => updateTier.mutate({ id: c.id, tier: (c.tier + 1) as 2 | 3 })}
+                          >
+                            <ChevronDown className="h-4 w-4" />
+                          </Button>
+                        )}
                         {c.status === "active" ? (
                           <Button
                             size="icon"
