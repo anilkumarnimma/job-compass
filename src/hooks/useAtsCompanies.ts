@@ -121,18 +121,39 @@ export function useRunAtsDiscovery() {
 export function useRunAtsIngest() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (companyId?: string) => {
-      const { data, error } = await supabase.functions.invoke("ats-ingest", {
-        body: companyId ? { company_id: companyId } : {},
-      });
+    mutationFn: async (input?: { companyId?: string; tier?: 1 | 2 | 3 }) => {
+      const body: Record<string, unknown> = {};
+      if (input?.companyId) body.company_id = input.companyId;
+      if (input?.tier) body.tier = input.tier;
+      const { data, error } = await supabase.functions.invoke("ats-ingest", { body });
       if (error) throw error;
-      return data as { success: boolean; run_id: string; companies_count: number };
+      return data as { success: boolean; run_id: string; companies_count?: number };
     },
-    onSuccess: (data) => {
+    onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ["ats-ingest-runs"] });
-      toast.success(`ATS ingest started for ${data.companies_count} companies`);
+      qc.invalidateQueries({ queryKey: ["ats-companies"] });
+      const label = vars?.tier ? `Tier ${vars.tier}` : vars?.companyId ? "Single company" : "All active";
+      toast.success(`${label} ingest started`);
     },
     onError: (e: Error) => toast.error(e.message || "ATS ingest failed"),
+  });
+}
+
+export function useUpdateAtsCompanyTier() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; tier: 1 | 2 | 3 }) => {
+      const { error } = await (supabase as any)
+        .from("ats_companies")
+        .update({ tier: input.tier })
+        .eq("id", input.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["ats-companies"] });
+      toast.success("Tier updated");
+    },
+    onError: (e: Error) => toast.error(e.message || "Update failed"),
   });
 }
 
