@@ -1154,6 +1154,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_streaks: {
+        Row: {
+          created_at: string
+          current_streak: number
+          id: string
+          jobs_viewed_date: string | null
+          jobs_viewed_today: number
+          last_active_date: string | null
+          longest_streak: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          jobs_viewed_date?: string | null
+          jobs_viewed_today?: number
+          last_active_date?: string | null
+          longest_streak?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          jobs_viewed_date?: string | null
+          jobs_viewed_today?: number
+          last_active_date?: string | null
+          longest_streak?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_subscriptions: {
         Row: {
           created_at: string
@@ -1181,6 +1217,63 @@ export type Database = {
           stripe_customer_id?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_visits: {
+        Row: {
+          created_at: string
+          id: string
+          last_visit_at: string
+          previous_visit_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_visit_at?: string
+          previous_visit_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_visit_at?: string
+          previous_visit_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      weekly_digest_log: {
+        Row: {
+          id: string
+          jobs_applied: number
+          jobs_viewed: number
+          matched_jobs_count: number
+          sent_at: string
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          id?: string
+          jobs_applied?: number
+          jobs_viewed?: number
+          matched_jobs_count?: number
+          sent_at?: string
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          id?: string
+          jobs_applied?: number
+          jobs_viewed?: number
+          matched_jobs_count?: number
+          sent_at?: string
+          user_id?: string
+          week_start?: string
         }
         Relationships: []
       }
@@ -1242,12 +1335,14 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_founder: { Args: never; Returns: boolean }
       mark_stuck_ats_runs: { Args: never; Returns: undefined }
+      profile_completeness: { Args: { p_user_id: string }; Returns: Json }
       publish_hiring_graph: { Args: never; Returns: undefined }
       read_vault_secret: { Args: { secret_name: string }; Returns: string }
       read_vault_secret_internal: {
         Args: { secret_name: string }
         Returns: string
       }
+      record_user_visit: { Args: { p_user_id: string }; Returns: Json }
       remove_duplicate_jobs: { Args: never; Returns: Json }
       search_jobs: {
         Args: {
@@ -1291,6 +1386,7 @@ export type Database = {
           suggestion: string
         }[]
       }
+      update_user_streak: { Args: { p_user_id: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never
