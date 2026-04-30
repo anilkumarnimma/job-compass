@@ -533,6 +533,10 @@ export default function Dashboard() {
               <p className="text-sm text-muted-foreground">
                 <span className="font-medium text-foreground">{totalCount.toLocaleString()}</span> job{totalCount !== 1 ? 's' : ''} available
               </p>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <NewJobsBadge />
+                <StreakCard />
+              </div>
             </div>
             <AutoApplyBanner />
           </div>
