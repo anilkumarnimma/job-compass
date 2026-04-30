@@ -51,6 +51,10 @@ import { AutoApplyBanner } from "@/components/AutoApplyBanner";
 import { RoleCategoryPills } from "@/components/RoleCategoryPills";
 import { getCategoryById, titleMatchesCategory } from "@/lib/roleCategories";
 import { RelatedSearches } from "@/components/RelatedSearches";
+import { StreakCard } from "@/components/StreakCard";
+import { NewJobsBadge } from "@/components/NewJobsBadge";
+import { ProfileCompletionBanner } from "@/components/ProfileCompletionBanner";
+import { useUserStreak } from "@/hooks/useRetention";
 
 
 
@@ -433,6 +437,8 @@ export default function Dashboard() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
+  const { incrementJobView } = useUserStreak();
+
   const handleJobTap = useCallback((job: Job) => {
     if (isMobile) {
       setMobilePreviewJob(job);
@@ -440,7 +446,9 @@ export default function Dashboard() {
     } else {
       setSelectedJob(prev => prev?.id === job.id ? null : job);
     }
-  }, [isMobile]);
+    // Fire-and-forget streak increment
+    incrementJobView();
+  }, [isMobile, incrementJobView]);
 
   const handleFilterByRole = useCallback((role: string) => {
     setRoleFilter(role);
@@ -513,6 +521,7 @@ export default function Dashboard() {
         <LinkedInFeatureAnnouncementInline />
         {/* Resume Upload CTA (only shown if no resume) */}
         <ResumeUploadBanner />
+        <ProfileCompletionBanner />
 
         {/* Header + Search + Filters (above columns) */}
         <div className="mb-4">
@@ -524,6 +533,10 @@ export default function Dashboard() {
               <p className="text-sm text-muted-foreground">
                 <span className="font-medium text-foreground">{totalCount.toLocaleString()}</span> job{totalCount !== 1 ? 's' : ''} available
               </p>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <NewJobsBadge />
+                <StreakCard />
+              </div>
             </div>
             <AutoApplyBanner />
           </div>
