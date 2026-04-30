@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button";
 import { useProfileCompleteness, useAccountAgeDays } from "@/hooks/useRetention";
 
 const FIELD_LABELS: Record<string, string> = {
+  full_name: "Add your full name",
+  phone: "Add your phone number",
+  location: "Add your location",
   resume: "Upload your resume",
-  skills: "Add at least 3 skills",
-  experience_years: "Set your years of experience",
-  work_authorization: "Add your work authorization",
 };
 
 const STORAGE_KEY = "sociax_profile_banner_dismissed";
