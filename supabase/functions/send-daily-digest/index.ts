@@ -227,7 +227,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             from: "Sociax Jobs <support@sociax.tech>",
             to: [profile.email],
-            subject: `📋 Sociax Jobs Notify — ${newJobs.length} new jobs today${matchedJobs.length > 0 ? ` · ${matchedJobs.length} match your skills` : ""}`,
+            subject: `📋 ${windowMode === "midday" ? "Midday update" : "Sociax Jobs Notify"} — ${newJobs.length} ${windowMode === "midday" ? "fresh" : "new"} jobs${matchedJobs.length > 0 ? ` · ${matchedJobs.length} match your skills` : ""}`,
             html: emailHtml,
           }),
         });
