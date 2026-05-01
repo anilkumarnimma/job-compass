@@ -152,7 +152,7 @@ Deno.serve(async (req) => {
 <div style="max-width:600px;margin:0 auto;padding:24px;">
   <div style="background:white;border-radius:12px;padding:32px;border:1px solid #e2e8f0;">
     <h1 style="margin:0 0 8px;font-size:24px;color:#0f172a;">📋 Sociax Jobs Notify</h1>
-    <p style="margin:0 0 24px;color:#64748b;font-size:14px;">Hey ${userName}, here's your daily job digest from Sociax!</p>`;
+    <p style="margin:0 0 24px;color:#64748b;font-size:14px;">Hey ${userName}, here's your ${windowMode === "midday" ? "midday" : "daily"} job digest from Sociax!</p>`;
 
       // New jobs section
       if (pref.new_jobs_enabled && newJobs.length > 0) {
