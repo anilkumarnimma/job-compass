@@ -79,20 +79,25 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get new jobs from last 24 hours
-    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    // Determine lookback window: "morning" (24h, default) or "midday" (~5h since 8am send)
+    let body: any = {};
+    try { body = await req.json(); } catch { /* no body */ }
+    const windowMode = body?.window === "midday" ? "midday" : "morning";
+    const lookbackMs = windowMode === "midday" ? 5 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+    const sinceIso = new Date(Date.now() - lookbackMs).toISOString();
+
     const { data: newJobs } = await supabase
       .from("jobs")
       .select("id, title, company, location, skills, description, employment_type, salary_range, external_apply_link")
       .eq("is_published", true)
       .eq("is_archived", false)
-      .gte("posted_date", yesterday)
+      .gte("posted_date", sinceIso)
       .order("posted_date", { ascending: false })
       .limit(50);
 
     if (!newJobs || newJobs.length === 0) {
       return new Response(
-        JSON.stringify({ message: "No new jobs today", sent: 0 }),
+        JSON.stringify({ message: `No new jobs in ${windowMode} window`, sent: 0 }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
