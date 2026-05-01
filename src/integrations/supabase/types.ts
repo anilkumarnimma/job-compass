@@ -920,6 +920,7 @@ export type Database = {
           id: string
           is_active: boolean
           is_premium: boolean
+          last_inactivity_nudge_at: string | null
           last_name: string | null
           linkedin_url: string | null
           location: string | null
@@ -965,6 +966,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_premium?: boolean
+          last_inactivity_nudge_at?: string | null
           last_name?: string | null
           linkedin_url?: string | null
           location?: string | null
@@ -1010,6 +1012,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_premium?: boolean
+          last_inactivity_nudge_at?: string | null
           last_name?: string | null
           linkedin_url?: string | null
           location?: string | null

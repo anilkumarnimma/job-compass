@@ -79,20 +79,25 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get new jobs from last 24 hours
-    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    // Determine lookback window: "morning" (24h, default) or "midday" (~5h since 8am send)
+    let body: any = {};
+    try { body = await req.json(); } catch { /* no body */ }
+    const windowMode = body?.window === "midday" ? "midday" : "morning";
+    const lookbackMs = windowMode === "midday" ? 5 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+    const sinceIso = new Date(Date.now() - lookbackMs).toISOString();
+
     const { data: newJobs } = await supabase
       .from("jobs")
       .select("id, title, company, location, skills, description, employment_type, salary_range, external_apply_link")
       .eq("is_published", true)
       .eq("is_archived", false)
-      .gte("posted_date", yesterday)
+      .gte("posted_date", sinceIso)
       .order("posted_date", { ascending: false })
       .limit(50);
 
     if (!newJobs || newJobs.length === 0) {
       return new Response(
-        JSON.stringify({ message: "No new jobs today", sent: 0 }),
+        JSON.stringify({ message: `No new jobs in ${windowMode} window`, sent: 0 }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -147,7 +152,7 @@ Deno.serve(async (req) => {
 <div style="max-width:600px;margin:0 auto;padding:24px;">
   <div style="background:white;border-radius:12px;padding:32px;border:1px solid #e2e8f0;">
     <h1 style="margin:0 0 8px;font-size:24px;color:#0f172a;">📋 Sociax Jobs Notify</h1>
-    <p style="margin:0 0 24px;color:#64748b;font-size:14px;">Hey ${userName}, here's your daily job digest from Sociax!</p>`;
+    <p style="margin:0 0 24px;color:#64748b;font-size:14px;">Hey ${userName}, here's your ${windowMode === "midday" ? "midday" : "daily"} job digest from Sociax!</p>`;
 
       // New jobs section
       if (pref.new_jobs_enabled && newJobs.length > 0) {
@@ -222,7 +227,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             from: "Sociax Jobs <support@sociax.tech>",
             to: [profile.email],
-            subject: `📋 Sociax Jobs Notify — ${newJobs.length} new jobs today${matchedJobs.length > 0 ? ` · ${matchedJobs.length} match your skills` : ""}`,
+            subject: `📋 ${windowMode === "midday" ? "Midday update" : "Sociax Jobs Notify"} — ${newJobs.length} ${windowMode === "midday" ? "fresh" : "new"} jobs${matchedJobs.length > 0 ? ` · ${matchedJobs.length} match your skills` : ""}`,
             html: emailHtml,
           }),
         });
