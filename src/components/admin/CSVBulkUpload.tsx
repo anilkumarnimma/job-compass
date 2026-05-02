@@ -542,7 +542,9 @@ export function CSVBulkUpload({ onComplete }: CSVBulkUploadProps) {
           experience_years: job.experience_years || null,
           salary_range: job.salary_range || extractSalaryFromDescription(job.description) || null,
           company_logo: resolveLogo(job.company_logo, job.external_apply_link, job.company),
-          posted_date: job.posted_date || new Date().toISOString(),
+          // Always stamp ingestion time so users see "just now" / "X minutes ago"
+          // for freshly imported jobs, even if the CSV had a stale posted_date.
+          posted_date: new Date().toISOString(),
           is_published: true,
           is_reviewing: false,
           created_by_user_id: user.id,
