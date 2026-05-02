@@ -37,6 +37,7 @@ const Recommendations = lazy(() => import("./pages/Recommendations"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -121,6 +122,7 @@ function AppRoutes() {
       <Route path="/payment-success" element={<LazyPage><PaymentSuccess /></LazyPage>} />
       <Route path="/unsubscribe" element={<LazyPage><Unsubscribe /></LazyPage>} />
       <Route path="/privacy-policy" element={<LazyPage><PrivacyPolicy /></LazyPage>} />
+      <Route path="/terms-of-service" element={<LazyPage><TermsOfService /></LazyPage>} />
       <Route path="/help" element={<LazyPage><Help /></LazyPage>} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<LazyPage><NotFound /></LazyPage>} />
