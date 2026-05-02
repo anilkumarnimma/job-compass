@@ -395,7 +395,9 @@ Deno.serve(async (req) => {
           skills,
           external_apply_link: j.apply_link,
           employment_type: j.employment_type,
-          posted_date: j.posted_date,
+          // Always stamp posted_date as ingestion time so users see "X minutes ago"
+          // for jobs we just discovered, regardless of how stale the source's date is.
+          posted_date: new Date().toISOString(),
           is_published: true,
           is_archived: false,
           is_direct_apply: true,
