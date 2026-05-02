@@ -13,6 +13,9 @@ export function Footer() {
             <Link to="/privacy-policy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Privacy Policy
             </Link>
+            <Link to="/terms-of-service" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Terms of Service
+            </Link>
             <p className="text-sm text-muted-foreground">
               © {new Date().getFullYear()} Sociax.tech. All rights reserved.
             </p>
