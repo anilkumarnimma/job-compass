@@ -507,7 +507,9 @@ Deno.serve(async (req) => {
             location: row.location?.trim() || 'Remote',
             description: description.trim(),
             external_apply_link: row.apply_link.trim(),
-            posted_date: postedDate.toISOString(),
+            // Always stamp ingestion time so imported jobs surface as "just now"
+            // for users, regardless of the date in the source sheet.
+            posted_date: new Date().toISOString(),
             employment_type: employmentType,
             experience_years: row.experience_years?.trim() || null,
             salary_range: row.salary?.trim() || extractSalaryFromDescription(description) || null,
