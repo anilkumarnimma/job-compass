@@ -76,37 +76,34 @@ const TermsOfService = () => {
         <p>All content, features, branding, code, design, AI prompts, matching algorithms, and infrastructure of the Service are the exclusive property of Sociax and are protected by copyright, trademark, and trade secret laws. The "Sociax" name and logo are trademarks of Sociax.</p>
         <p>You retain ownership of content you upload (e.g., your resume, profile information). By uploading content, you grant Sociax a non-exclusive, worldwide, royalty-free license to process, store, and use that content solely to provide the Service to you.</p>
 
-        <h2>10. Chrome Extension</h2>
-        <p>The Sociax Job-Autofill Chrome Extension is provided as an optional companion tool. Your use of the Extension is also governed by our <a href="/privacy-policy">Privacy Policy</a>. You are responsible for reviewing autofilled data before submitting any application.</p>
-
-        <h2>11. Privacy</h2>
+        <h2>10. Privacy</h2>
         <p>Your use of the Service is also governed by our <a href="/privacy-policy">Privacy Policy</a>, which describes how we collect, use, and protect your data.</p>
 
-        <h2>12. Email Communications</h2>
+        <h2>11. Email Communications</h2>
         <p>By creating an account, you consent to receive transactional and product emails (e.g., daily job digests, midday digests, inactivity nudges, password resets, billing notices). You may unsubscribe from non-essential emails at any time using the unsubscribe link in any email or via the toggle in your Profile.</p>
 
-        <h2>13. Termination</h2>
+        <h2>12. Termination</h2>
         <p>You may delete your account at any time by contacting <a href="mailto:support@sociax.tech">support@sociax.tech</a>. We may suspend or terminate your access to the Service at any time, with or without notice, for violation of these Terms or for any other reason at our sole discretion. Upon termination, your right to use the Service ceases immediately.</p>
 
-        <h2>14. Disclaimers</h2>
+        <h2>13. Disclaimers</h2>
         <p>THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. WE DO NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED, SECURE, OR ERROR-FREE.</p>
 
-        <h2>15. Limitation of Liability</h2>
+        <h2>14. Limitation of Liability</h2>
         <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, SOCIAX SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING LOSS OF PROFITS, DATA, OR EMPLOYMENT OPPORTUNITIES, ARISING FROM YOUR USE OF THE SERVICE. OUR TOTAL LIABILITY FOR ANY CLAIM SHALL NOT EXCEED THE AMOUNT YOU PAID TO US IN THE TWELVE (12) MONTHS PRECEDING THE CLAIM, OR USD $100, WHICHEVER IS GREATER.</p>
 
-        <h2>16. Indemnification</h2>
+        <h2>15. Indemnification</h2>
         <p>You agree to indemnify and hold harmless Sociax, its officers, employees, and partners from any claims, damages, losses, or expenses (including legal fees) arising from your use of the Service, your violation of these Terms, or your violation of any third-party rights.</p>
 
-        <h2>17. Changes to the Service and Terms</h2>
+        <h2>16. Changes to the Service and Terms</h2>
         <p>We reserve the right to modify, suspend, or discontinue any part of the Service at any time. We may update these Terms from time to time; material changes will be reflected with an updated "Last Updated" date. Continued use of the Service after changes constitutes acceptance.</p>
 
-        <h2>18. Governing Law</h2>
+        <h2>17. Governing Law</h2>
         <p>These Terms are governed by the laws of the jurisdiction in which Sociax operates, without regard to conflict-of-law principles. Any disputes shall be resolved through binding arbitration or in courts of competent jurisdiction at our discretion.</p>
 
-        <h2>19. Severability</h2>
+        <h2>18. Severability</h2>
         <p>If any provision of these Terms is found unenforceable, the remaining provisions will continue in full force and effect.</p>
 
-        <h2>20. Contact Us</h2>
+        <h2>19. Contact Us</h2>
         <p>For questions about these Terms, contact us at:</p>
         <ul>
           <li>Email: <a href="mailto:support@sociax.tech">support@sociax.tech</a></li>
