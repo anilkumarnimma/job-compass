@@ -37,6 +37,7 @@ const Recommendations = lazy(() => import("./pages/Recommendations"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
