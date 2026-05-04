@@ -299,22 +299,25 @@ export function useRecommendedJobs() {
         } as RecommendedJob & { _roleRelevant: boolean });
       }
 
-      // STRICT: Only show role-relevant jobs (same domain or adjacent domain)
-      // AND enforce minimum match score so weak matches never lead the list.
+      // STRICT: Only show role-relevant jobs (same/adjacent domain) AND
+      // require at least some title-word overlap so unrelated roles
+      // (e.g. "Sales Development Representative" for a Data Engineer) never
+      // appear in personalized recommendations, even if their skill score is high.
       const roleRelevantJobs = allProcessed.filter(
-        (j) => (j as any)._roleRelevant && j.matchScore >= MIN_MATCH_SCORE
+        (j) =>
+          (j as any)._roleRelevant &&
+          (j.titleProximity ?? 0) >= 1 &&
+          j.matchScore >= MIN_MATCH_SCORE
       );
 
-      // Combined ranking: match score dominates, title proximity is a tiebreaker bonus.
-      // This prevents a low-scoring same-domain job (e.g. 41% Data Engineer) from
-      // outranking a strong adjacent-domain match (e.g. 75% SDR).
+      // Combined ranking: match score dominates, title proximity is a strong tiebreaker
+      // so an exact-title 60% match still beats a same-family 70% match.
       const rankKey = (j: RecommendedJob) =>
-        j.matchScore + (j.titleProximity ?? 0) * 3;
+        j.matchScore + (j.titleProximity ?? 0) * 5;
 
       const sortFn = (a: RecommendedJob, b: RecommendedJob) => {
         const diff = rankKey(b) - rankKey(a);
         if (diff !== 0) return diff;
-        // Tiebreaker: exact title proximity, then newest
         const proxDiff = (b.titleProximity ?? 0) - (a.titleProximity ?? 0);
         if (proxDiff !== 0) return proxDiff;
         return b.posted_date.getTime() - a.posted_date.getTime();
