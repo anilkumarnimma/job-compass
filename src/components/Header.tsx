@@ -124,16 +124,7 @@ export function Header() {
             
             {user ? (
               <>
-                {!isPremium && !isFounder && !isEmployer && (
-                  <Button
-                    size="sm"
-                    className="rounded-full h-8 px-3 text-[12px] bg-accent hover:bg-accent/90 text-accent-foreground shadow-sm hover:shadow-glow transition-all duration-300"
-                    onClick={() => window.open(STRIPE_LINK, "_blank")}
-                  >
-                    <Sparkles className="h-3.5 w-3.5 mr-1" />
-                    Upgrade
-                  </Button>
-                )}
+                {/* PROMO: app is free for everyone — Upgrade button hidden */}
                 {(!isEmployer || isFounder) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

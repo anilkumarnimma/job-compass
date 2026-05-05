@@ -10,7 +10,8 @@ import { useLandingStats } from "@/hooks/useLandingStats";
 import { FeaturedJobCard } from "@/components/FeaturedJobCard";
 import { FloatingHeroTags } from "@/components/FloatingHeroTags";
 import { AboutSection } from "@/components/AboutSection";
-import { PricingSection } from "@/components/PricingSection";
+// PROMO: app is free for everyone — pricing section hidden
+// import { PricingSection } from "@/components/PricingSection";
 import { InsightsSection } from "@/components/InsightsSection";
 import {
   Briefcase,
@@ -323,8 +324,8 @@ export default function Index() {
       {/* Insights / Blog Section */}
       <InsightsSection />
 
-      {/* Pricing Section */}
-      <PricingSection />
+      {/* PROMO: app is free for everyone — pricing section hidden */}
+      {/* <PricingSection /> */}
 
       {/* Hiring Signals Section */}
       <section className="py-20 border-y border-border/30">
