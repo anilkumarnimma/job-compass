@@ -10,7 +10,8 @@ import { useLandingStats } from "@/hooks/useLandingStats";
 import { FeaturedJobCard } from "@/components/FeaturedJobCard";
 import { FloatingHeroTags } from "@/components/FloatingHeroTags";
 import { AboutSection } from "@/components/AboutSection";
-import { PricingSection } from "@/components/PricingSection";
+// PROMO: app is free for everyone — pricing section hidden
+// import { PricingSection } from "@/components/PricingSection";
 import { InsightsSection } from "@/components/InsightsSection";
 import {
   Briefcase,
