@@ -995,8 +995,8 @@ export default function Profile() {
             </CardContent>
           </Card>
 
-          {/* Subscription & Billing */}
-          <SubscriptionBillingCard />
+          {/* PROMO: app is free for everyone — Subscription & Billing card hidden */}
+          {/* <SubscriptionBillingCard /> */}
 
           {/* Email Notification Preferences */}
           <EmailNotificationPrefsCard userId={user.id} />

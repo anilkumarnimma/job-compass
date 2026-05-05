@@ -323,8 +323,8 @@ export default function Index() {
       {/* Insights / Blog Section */}
       <InsightsSection />
 
-      {/* Pricing Section */}
-      <PricingSection />
+      {/* PROMO: app is free for everyone — pricing section hidden */}
+      {/* <PricingSection /> */}
 
       {/* Hiring Signals Section */}
       <section className="py-20 border-y border-border/30">
