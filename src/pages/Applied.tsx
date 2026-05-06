@@ -1,4 +1,5 @@
 import { Layout } from "@/components/Layout";
+import { openApplyLink } from "@/lib/openApplyLink";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -155,7 +156,7 @@ export default function Applied() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.open(job.external_apply_link, "_blank")}
+                      onClick={() => openApplyLink(job.external_apply_link)}
                     >
                       <ExternalLink className="h-3.5 w-3.5" />
                       View Job

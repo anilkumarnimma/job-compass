@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Briefcase, ArrowRight, BookmarkCheck } from "lucide-react";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { useAuth } from "@/context/AuthContext";
+import { openApplyLink } from "@/lib/openApplyLink";
 
 interface FeaturedJob {
   id: string;
@@ -43,7 +44,7 @@ export function FeaturedJobCard() {
       navigate("/auth");
       return;
     }
-    window.open(job!.external_apply_link, "_blank", "noopener");
+    openApplyLink(job!.external_apply_link);
   };
 
   const handleCardClick = () => {
