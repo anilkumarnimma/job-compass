@@ -31,21 +31,17 @@ export function openApplyLink(rawUrl: string | null | undefined): void {
   }
 
   if (!win) {
-    // Popup blocked — give the user a manual escape hatch
+    // Popup blocked — copy URL to clipboard so the user can paste it
+    try {
+      navigator.clipboard?.writeText(url);
+    } catch {
+      // ignore
+    }
     toast({
-      title: "Popup blocked",
+      title: "Popup blocked — link copied",
       description:
-        "Your browser blocked the new tab. Click here to open the application.",
-      action: (
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-accent-foreground"
-        >
-          Open
-        </a>
-      ) as any,
+        "Your browser blocked the new tab. The application URL has been copied to your clipboard.",
+      variant: "destructive",
     });
   }
 }
