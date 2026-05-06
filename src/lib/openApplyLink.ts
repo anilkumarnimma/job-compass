@@ -1,9 +1,12 @@
 import { toast } from "@/hooks/use-toast";
 
 /**
- * Safely open an external apply link in a new tab.
- * - Trims whitespace and ensures https:// scheme
- * - Falls back to a copy-link toast if the browser blocks the popup
+ * Safely open an external apply link.
+ * Strategy:
+ *  1. Sanitize URL (trim + force https://)
+ *  2. Try a synthetic <a target="_blank"> click — most reliable across browsers
+ *  3. Fallback to window.open
+ *  4. Final fallback: navigate the current tab so the user always lands on the page
  */
 export function openApplyLink(rawUrl: string | null | undefined): void {
   if (!rawUrl) {
@@ -17,31 +20,43 @@ export function openApplyLink(rawUrl: string | null | undefined): void {
 
   let url = rawUrl.trim();
   if (!url) return;
-
-  // Ensure protocol — bare hostnames render as black/blank tabs
   if (!/^https?:\/\//i.test(url)) {
     url = `https://${url.replace(/^\/+/, "")}`;
   }
 
+  // 1) Try anchor click — preserves the user gesture better than window.open
+  try {
+    const a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    return;
+  } catch {
+    /* continue to window.open */
+  }
+
+  // 2) window.open fallback
   let win: Window | null = null;
   try {
     win = window.open(url, "_blank", "noopener,noreferrer");
   } catch {
     win = null;
   }
+  if (win) return;
 
-  if (!win) {
-    // Popup blocked — copy URL to clipboard so the user can paste it
-    try {
-      navigator.clipboard?.writeText(url);
-    } catch {
-      // ignore
-    }
-    toast({
-      title: "Popup blocked — link copied",
-      description:
-        "Your browser blocked the new tab. The application URL has been copied to your clipboard.",
-      variant: "destructive",
-    });
+  // 3) Same-tab navigation as last resort so the user actually reaches the page
+  try {
+    navigator.clipboard?.writeText(url);
+  } catch {
+    /* ignore */
   }
+  toast({
+    title: "Opening application page…",
+    description: "Your browser blocked the new tab, so we're opening it here instead.",
+  });
+  window.location.href = url;
 }
