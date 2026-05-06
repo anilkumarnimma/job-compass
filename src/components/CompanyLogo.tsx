@@ -33,8 +33,30 @@ function isAtsLogo(url: string): boolean {
   );
 }
 
+// Guess a likely domain from a company name (e.g. "Acme Corp" -> "acmecorp.com").
+// Strips common suffixes (Inc, LLC, Ltd, Corp, Co, etc.) and non-alphanumerics.
+function guessDomain(name: string): string | null {
+  if (!name) return null;
+  const cleaned = name
+    .toLowerCase()
+    .replace(/\b(inc|llc|ltd|limited|corp|corporation|co|company|gmbh|ag|sa|plc|holdings|group|the)\b/g, "")
+    .replace(/[^a-z0-9]/g, "")
+    .trim();
+  if (!cleaned || cleaned.length < 2) return null;
+  return `${cleaned}.com`;
+}
+
+function getFallbackLogoUrl(companyName: string): string | null {
+  const domain = guessDomain(companyName);
+  if (!domain) return null;
+  // Google favicon service — free, cached, no API key needed
+  return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+}
+
 export function CompanyLogo({ logoUrl, companyName, size = "md", className }: CompanyLogoProps) {
-  const effectiveLogoUrl = logoUrl && !isAtsLogo(logoUrl) ? logoUrl : null;
+  const primaryLogoUrl = logoUrl && !isAtsLogo(logoUrl) ? logoUrl : null;
+  const fallbackLogoUrl = !primaryLogoUrl ? getFallbackLogoUrl(companyName) : null;
+  const effectiveLogoUrl = primaryLogoUrl || fallbackLogoUrl;
   const sizeClasses = {
     sm: "h-8 w-8 text-xs",
     md: "h-11 w-11 text-sm",
