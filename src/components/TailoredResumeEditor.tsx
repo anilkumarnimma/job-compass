@@ -35,12 +35,14 @@ import {
   Sparkles,
   X,
   RefreshCw,
+  Upload,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useTailoredResume } from "@/hooks/useTailoredResume";
 import { useResumeStructure } from "@/hooks/useResumeStructure";
 import { useAtsCheck } from "@/hooks/useAtsCheck";
 import { useProfile } from "@/hooks/useProfile";
+import { useNavigate } from "react-router-dom";
 import {
   EditableResume,
   buildEditableResume,
@@ -55,6 +57,10 @@ import {
   copyResumeToClipboard,
 } from "@/lib/resumeExport";
 import { ResumeCanvas } from "./resume-editor/ResumeCanvas";
+import { ResumeTemplateSelector } from "./ResumeTemplateSelector";
+import { TailoringProgress } from "./TailoringProgress";
+import { TailoredResumeFeedback } from "./TailoredResumeFeedback";
+import { ResumeTemplateId, DEFAULT_TEMPLATE_ID, RESUME_TEMPLATES } from "@/lib/resumeTemplates";
 
 interface TailoredResumeEditorProps {
   open: boolean;
