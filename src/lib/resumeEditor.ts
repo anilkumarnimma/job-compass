@@ -114,14 +114,25 @@ export function buildEditableResume(
   const summary_original = tailored?.summary_original ?? structure.summary ?? "";
   const summary_changed = !!tailored?.summary_changed;
 
-  // Skills — tailored order if present, else original.
-  const skills = (tailored?.skills?.length ? tailored.skills : structure.skills) || [];
+  // Skills — tailored order if present, else original. Deduplicate (case-insensitive) keeping first occurrence.
+  const rawSkills = (tailored?.skills?.length ? tailored.skills : structure.skills) || [];
+  const seenSkill = new Set<string>();
+  const skills: string[] = [];
+  for (const s of rawSkills) {
+    const k = String(s || "").toLowerCase().trim();
+    if (!k || seenSkill.has(k)) continue;
+    seenSkill.add(k);
+    skills.push(String(s));
+  }
 
-  // Sections — preserve the EXACT order from the original structure.
+  // Sections — preserve EXACT order from the original structure, but filter out
+  // any "skills" / "summary" sections (those are rendered separately to avoid duplicates).
   const tailoredSections = tailored?.sections || [];
+  const isSpecialTitle = (t: string) => /^(skills?|technical skills?|core skills?|summary|profile|objective)$/i.test((t || "").trim());
 
-  const sections: ResumeSection[] = (structure.sections || []).map(
-    (origSec, sIdx): ResumeSection => {
+  const sections: ResumeSection[] = (structure.sections || [])
+    .map((origSec, sIdx): ResumeSection | null => {
+      if (isSpecialTitle(origSec.title || "")) return null;
       const tailoredSec = tailoredSections[sIdx];
       const items: ResumeItem[] = (origSec.items || []).map((origItem: ResumeStructureItem, iIdx) => {
         const tailoredItem = tailoredSec?.items?.[iIdx];
@@ -157,8 +168,8 @@ export function buildEditableResume(
         items,
         fromResume: true,
       };
-    },
-  );
+    })
+    .filter((s): s is ResumeSection => s !== null);
 
   // Build render order using extracted section_order. Tokens reference custom
   // sections by id so renames don't break ordering. Unknown tokens are skipped;
