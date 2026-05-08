@@ -543,6 +543,27 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ResumeTemplateSelector
+        open={showTemplateSelector}
+        onOpenChange={(o) => {
+          setShowTemplateSelector(o);
+          if (!o && !templateId) onOpenChange(false);
+        }}
+        onConfirm={(id) => {
+          setTemplateId(id);
+          setShowTemplateSelector(false);
+        }}
+      />
+
+      {showFeedback && job && (
+        <TailoredResumeFeedback
+          templateUsed={templateId || DEFAULT_TEMPLATE_ID}
+          jobTitle={job.title}
+          companyName={job.company}
+          onDismiss={() => setShowFeedback(false)}
+        />
+      )}
     </Dialog>
   );
 }
