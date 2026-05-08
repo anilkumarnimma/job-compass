@@ -208,9 +208,9 @@ function SectionWrap({ title, children, tpl }: { title: string; children: React.
     return (
       <section className="mt-3">
         <h2
-          className="font-bold uppercase tracking-[0.08em] leading-tight pl-2 mb-1.5"
+          className="font-bold uppercase tracking-[0.08em] leading-tight pl-2.5 mb-1.5"
           style={{
-            fontSize: `${tpl.bodySize}pt`,
+            fontSize: `${tpl.bodySize + 1}pt`,
             color: tpl.accentCss,
             borderLeft: `3px solid ${tpl.accentCss}`,
           }}
@@ -223,9 +223,9 @@ function SectionWrap({ title, children, tpl }: { title: string; children: React.
   }
   if (tpl.headerStyle === "thin-grey-divider") {
     return (
-      <section className="mt-2">
+      <section className="mt-1.5">
         <h2
-          className="font-bold uppercase tracking-[0.06em] leading-tight pb-0.5 mb-1 text-black"
+          className="font-bold uppercase tracking-[0.04em] leading-tight pb-0.5 mb-0.5 text-black"
           style={{ fontSize: `${tpl.bodySize}pt`, borderBottom: "1px solid #bbb" }}
         >
           {title}
@@ -234,12 +234,16 @@ function SectionWrap({ title, children, tpl }: { title: string; children: React.
       </section>
     );
   }
-  // underline-allcaps (classic)
+  // underline-allcaps (classic) — full width thick black border, ALL CAPS, bold serif
   return (
-    <section className="mt-2">
+    <section className="mt-3">
       <h2
-        className="font-bold uppercase tracking-[0.08em] text-black pb-0.5 mb-1 leading-tight"
-        style={{ fontSize: `${tpl.bodySize}pt`, borderBottom: "1px solid #000" }}
+        className="font-bold uppercase tracking-[0.12em] text-black pb-1 mb-1.5 leading-tight"
+        style={{
+          fontSize: `${tpl.bodySize + 1}pt`,
+          borderBottom: "1.5px solid #000",
+          fontFamily: "Georgia, 'Times New Roman', serif",
+        }}
       >
         {title}
       </h2>
