@@ -141,8 +141,9 @@ export function ResumeCanvas({ resume, keywords, templateId }: ResumeCanvasProps
     return sec ? renderCustom(sec) : null;
   });
 
-  const padX = tpl.id === "compact" ? "px-8" : "px-10";
-  const padY = tpl.id === "compact" ? "py-5" : "py-6";
+  const padX = tpl.id === "compact" ? "px-6" : "px-10";
+  const padY = tpl.id === "compact" ? "py-4" : "py-6";
+  const lineHeight = tpl.id === "compact" ? 1.2 : 1.6;
 
   return (
     <div
@@ -152,28 +153,50 @@ export function ResumeCanvas({ resume, keywords, templateId }: ResumeCanvasProps
         minHeight: "11in",
         fontFamily: tpl.fontFamily,
         color: "#000",
+        lineHeight,
         boxShadow: "0 10px 30px -10px rgba(0,0,0,0.18), 0 4px 10px -2px rgba(0,0,0,0.08)",
       }}
       data-resume-canvas
     >
       {/* Header */}
-      <div
-        className={cn(tpl.id === "modern" ? "text-left" : "text-center", "pb-1.5")}
-        style={tpl.id === "classic" ? { borderBottom: "1px solid #000" } : undefined}
-      >
-        <h1
-          className="font-bold leading-tight m-0"
-          style={{
-            fontSize: `${tpl.nameSize}pt`,
-            color: tpl.id === "modern" ? tpl.accentCss : "#000",
-          }}
+      {tpl.id === "modern" ? (
+        <div className="pb-2" style={{ borderBottom: `1px solid ${tpl.accentCss}` }}>
+          <div className="flex items-stretch gap-3">
+            <div style={{ width: 4, backgroundColor: tpl.accentCss, borderRadius: 2 }} />
+            <div className="flex-1">
+              <h1
+                className="font-bold leading-tight m-0"
+                style={{ fontSize: `${tpl.nameSize}pt`, color: tpl.accentCss }}
+              >
+                {resume.header.full_name}
+              </h1>
+              <p className="mt-1 text-black leading-snug whitespace-pre-wrap" style={{ fontSize: "9.5pt" }}>
+                {resume.header.contact_line}
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div
+          className="text-center pb-1.5"
+          style={tpl.id === "classic" ? { borderBottom: "2px solid #000" } : undefined}
         >
-          {resume.header.full_name}
-        </h1>
-        <p className="mt-0.5 text-black leading-snug whitespace-pre-wrap" style={{ fontSize: "9.5pt" }}>
-          {resume.header.contact_line}
-        </p>
-      </div>
+          <h1
+            className="font-bold leading-tight m-0"
+            style={{
+              fontSize: `${tpl.nameSize}pt`,
+              color: "#000",
+              fontFamily: tpl.id === "classic" ? "Georgia, 'Times New Roman', serif" : tpl.fontFamily,
+              letterSpacing: tpl.id === "classic" ? "0.02em" : undefined,
+            }}
+          >
+            {resume.header.full_name}
+          </h1>
+          <p className="mt-0.5 text-black leading-snug whitespace-pre-wrap" style={{ fontSize: tpl.id === "compact" ? "8.5pt" : "9.5pt" }}>
+            {resume.header.contact_line}
+          </p>
+        </div>
+      )}
 
       {orderedNodes}
     </div>
