@@ -501,6 +501,33 @@ Deno.serve(async (req) => {
           // Build description
           const description = row.description_full || row.description_short || '';
 
+          // Skip jobs requiring 6+ years of experience (per title or description)
+          const expYearsNum = (() => {
+            const nums = (row.experience_years || '').match(/\d+/g);
+            return nums?.length ? Math.max(...nums.map(Number)) : null;
+          })();
+          if (expYearsNum !== null && expYearsNum > 5) {
+            result.skipped++;
+            continue;
+          }
+          const highExpPatterns = [
+            /\b([6-9]|[1-9]\d)\+?\s*[-–]?\s*(?:\d+\s*)?(?:years?|yrs?)(?:\s+of)?\s*(?:experience|exp\.?)?/i,
+            /(?:minimum|at\s+least|requires?)\s*(?:of\s+)?([6-9]|[1-9]\d)\s*(?:years?|yrs?)/i,
+            /(?:experience|exp\.?)\s*(?:required)?[\s:]+([6-9]|[1-9]\d)\+?\s*(?:years?|yrs?)/i,
+          ];
+          let highExp = false;
+          for (const p of highExpPatterns) {
+            const m = description.match(p);
+            if (m) {
+              const n = parseInt(m[0].match(/\d+/)?.[0] || '0', 10);
+              if (n > 5) { highExp = true; break; }
+            }
+          }
+          if (highExp) {
+            result.skipped++;
+            continue;
+          }
+
           jobsToInsert.push({
             title: row.title.trim(),
             company: row.company.trim(),
