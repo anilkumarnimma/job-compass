@@ -260,12 +260,16 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
 
   const handleDownload = (format: "pdf" | "docx" | "txt") => {
     if (!resume || !job) return;
-    if (format === "pdf") exportResumeAsPdf(resume, job.title, job.company);
+    const tplId = templateId || DEFAULT_TEMPLATE_ID;
+    if (format === "pdf") exportResumeAsPdf(resume, job.title, job.company, tplId);
     else if (format === "docx")
-      exportResumeAsDocx(resume, job.title, job.company).catch(() =>
+      exportResumeAsDocx(resume, job.title, job.company, tplId).catch(() =>
         toast({ title: "Download failed", description: "Could not generate Word file.", variant: "destructive" }),
       );
     else exportResumeAsText(resume, job.title, job.company);
+    if (format === "pdf" || format === "docx") {
+      setTimeout(() => setShowFeedback(true), 800);
+    }
   };
 
   const handleCopy = async () => {
@@ -290,6 +294,7 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
       job_title: job.title,
       job_description: job.description || "",
       job_skills: job.skills || [],
+      company_name: job.company,
       resume_structure: structure,
       cache_key: `${job.id}::${resumeVersion}`,
       force: true,
