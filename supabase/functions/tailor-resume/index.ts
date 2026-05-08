@@ -73,7 +73,7 @@ serve(async (req) => {
       });
     }
 
-    const { job_title, job_description, job_skills, resume_structure, previous_result } = body;
+    const { job_title, job_description, job_skills, company_name, resume_structure, previous_result } = body;
 
     if (!job_title) {
       return new Response(JSON.stringify({ error: "job_title is required" }), {
@@ -92,32 +92,56 @@ serve(async (req) => {
 
     console.log("[TAILOR] Job:", job_title, "| sections:", resume_structure.sections?.length);
 
-    const systemPrompt = `You are an expert ATS resume editor. You receive the candidate's actual uploaded resume in a STRUCTURED form. Your job is to MINIMALLY rewrite ONLY the wording of bullet points, the summary, and the order of skills — to better match a target job — WITHOUT changing the structure.
+    const systemPrompt = `You are an expert resume writer and career coach with 15 years of experience helping candidates land jobs at top companies. Your task is to tailor an existing resume specifically for a job description.
 
-ABSOLUTE RULES — VIOLATIONS ARE STRICTLY FORBIDDEN:
-1. NEVER change the candidate's name or contact details — return them EXACTLY as given.
-2. NEVER add or remove sections. Same sections, same titles, in the same order.
-3. NEVER add or remove items (jobs/projects/education entries). Keep them all, in original order.
-4. For each item, NEVER change the heading (job title), subheading (company / school), or date — copy them character-for-character.
-5. NEVER change the number of bullets per item. If an item has 5 bullets, return 5 bullets — same count, same order.
-6. NEVER change Education entries at all (degrees, schools, dates). Pass them through verbatim.
-7. NEVER fabricate companies, roles, dates, or qualifications.
+STRICT RULES — follow every single one:
 
-ALLOWED EDITS (do these aggressively where useful):
-- Rewrite each bullet's wording to naturally include keywords from the job description. The bullet's MEANING and FACTS must stay the same — only the phrasing changes.
-- Strengthen weak verbs (e.g. "helped" → "spearheaded").
-- Rewrite the summary to mention the target role / company naturally and include relevant keywords. Keep it to 3–5 sentences.
-- Reorder the skills array so skills that match the job description appear first. DO NOT add new skills. DO NOT remove skills.
+1. PRESERVE THE ORIGINAL RESUME STRUCTURE COMPLETELY
+   - Keep every section in the exact same order as the original
+   - Keep the same number of bullet points per job role
+   - Never add new sections that did not exist in the original
+   - Never remove sections that existed in the original
+   - Never change company names, job titles, dates, or education details
 
-OUTPUT FORMAT — call the tool exactly. For each bullet you MUST return:
-  { "text": <new wording>, "changed": <true if you changed it from the original, else false> }
-If you did not edit a bullet, return text === the original bullet and changed=false.
+2. REWRITE BULLET POINTS TO MATCH THE JOB
+   - Read the job description carefully and identify the top 8-10 keywords and required skills
+   - Rewrite each bullet point to naturally incorporate these keywords
+   - Every bullet point must start with a strong action verb
+   - Every bullet point must include a quantifiable achievement where possible — numbers, percentages, dollar amounts
+   - Never write vague bullets like "Worked on various projects" — be specific
+   - Each bullet must be one line maximum — no wrapping
 
-The summary should be returned in "summary" (new wording). Set "summary_changed" to true if you changed it.
+3. REWRITE THE SUMMARY
+   - Mention the specific job title from the job description
+   - Mention the specific company name
+   - Highlight the candidate's most relevant experience for this specific role
+   - Maximum 2-3 sentences — punchy and specific
+   - Never use clichés like results-driven, passionate, detail-oriented
 
-If a prior_tailored_version is provided, use it as a reference point so the regenerated output is meaningfully different in wording from the prior tailored version while still following all structural rules and staying truthful.
+4. OPTIMIZE SKILLS SECTION
+   - Move skills that appear in the job description to the top of the skills list
+   - Remove skills completely unrelated to the job
+   - Add skills from the job description that the candidate likely has based on their experience
 
-Be aggressive but truthful — aim to modify ~60% of bullets to better match the role.`;
+5. QUALITY STANDARDS
+   - Every sentence must be specific not generic
+   - The resume must read like it was written by a human career expert not AI
+   - A hiring manager reading this resume should immediately see why this candidate is perfect for this specific role
+   - The ATS match score should be 85% or higher after tailoring
+
+6. OUTPUT FORMAT
+   - Return the complete tailored resume as structured JSON preserving the exact same sections and structure as the input
+   - Do not add any explanation or commentary — only return the JSON
+   - Maintain all original formatting spacing and section headers exactly as they appeared in the original`;
+
+    const originalResumeText = JSON.stringify({
+      header: resume_structure.header,
+      summary: resume_structure.summary || "",
+      skills: resume_structure.skills || [],
+      sections: resume_structure.sections || [],
+    }, null, 2);
+
+    const userMessage = `Here is the candidate's original resume:\n${originalResumeText}\n\nHere is the job description to tailor for:\nJob Title: ${job_title}\nCompany: ${company_name || ""}\nFull Description: ${(job_description || "").slice(0, 4000)}\n\nTailor this resume for this specific role following all the rules above. Return only the tailored resume JSON nothing else.`;
 
     // Send a compact JSON of the structure so the AI can faithfully echo it back.
     const userPayload = {
