@@ -42,12 +42,10 @@ interface GenerateParams {
   job_title: string;
   job_description: string;
   job_skills: string[];
+  company_name?: string;
   resume_structure: ResumeStructure;
-  /** stable key for caching this combination (job + resume version) */
   cache_key: string;
-  /** when true, ignore any cached result and force a fresh AI call */
   force?: boolean;
-  /** optional prior tailored result to use as a baseline for regeneration */
   previous_result?: TailoredResumeData | null;
 }
 
@@ -82,6 +80,7 @@ export function useTailoredResume() {
             job_title: params.job_title,
             job_description: params.job_description,
             job_skills: params.job_skills,
+            company_name: params.company_name,
             resume_structure: params.resume_structure,
             previous_result: params.previous_result ?? cached,
           },
