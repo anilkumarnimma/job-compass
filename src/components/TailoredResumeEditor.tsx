@@ -396,17 +396,31 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
             </div>
           </div>
 
-          {/* Changes banner */}
-          {resume && changesCount > 0 && (
-            <div
-              className="mt-2 inline-flex items-center gap-1.5 self-start rounded-md px-2.5 py-1 text-[11px] font-medium"
-              style={{
-                backgroundColor: "hsl(174 72% 56% / 0.10)",
-                color: "hsl(174 72% 28%)",
-              }}
-            >
-              <Sparkles className="h-3 w-3" />
-              {changesCount} change{changesCount === 1 ? "" : "s"} made to match this role
+          {/* Summary banner with toggle */}
+          {resume && result && job && (
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-md border border-[hsl(174_72%_56%/0.35)] bg-[hsl(174_72%_56%/0.08)] px-3 py-1.5">
+              <div className="text-[11px] text-[hsl(174_72%_22%)] flex flex-wrap items-center gap-x-3 gap-y-0.5">
+                <span className="font-medium">✅ Resume tailored for {job.title} at {job.company}</span>
+                <span>{changesCount} bullets rewritten</span>
+                <span>{result.keywords_added?.length || 0} keywords added</span>
+                {result.summary_changed && <span>Summary personalised</span>}
+                {matchScore != null && <span>Match: {matchScore}%</span>}
+                <span className="text-[hsl(174_72%_30%)]">Template: {RESUME_TEMPLATES[templateId || DEFAULT_TEMPLATE_ID].label}</span>
+              </div>
+              <div className="flex items-center gap-1 text-[10.5px]">
+                <button
+                  onClick={() => setViewMode("original")}
+                  className={`px-2 py-0.5 rounded-md ${viewMode === "original" ? "bg-foreground text-background" : "bg-background border border-border"}`}
+                >
+                  View Original
+                </button>
+                <button
+                  onClick={() => setViewMode("tailored")}
+                  className={`px-2 py-0.5 rounded-md ${viewMode === "tailored" ? "bg-foreground text-background" : "bg-background border border-border"}`}
+                >
+                  View Tailored
+                </button>
+              </div>
             </div>
           )}
         </DialogHeader>
@@ -419,8 +433,13 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
           {!hasResume ? (
             <EmptyState
               icon={<AlertCircle className="h-10 w-10 text-muted-foreground/60" />}
-              title="No resume on file"
-              body="Upload your resume in Profile Settings to get started."
+              title="Upload your resume first to use this feature"
+              body="Your tailored resume is based on your real experience — we need your resume to get started."
+              action={
+                <Button size="sm" onClick={() => { onOpenChange(false); navigate("/profile"); }} className="mt-2">
+                  <Upload className="h-3.5 w-3.5 mr-2" /> Upload Resume Now
+                </Button>
+              }
             />
           ) : structureError ? (
             <EmptyState
@@ -448,16 +467,21 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
                 </Button>
               }
             />
-          ) : isWorking && !resume ? (
+          ) : !templateId ? (
             <EmptyState
-              icon={<Loader2 className="h-10 w-10 text-accent animate-spin" />}
-              title={isLoadingStructure ? "Reading your resume…" : "Tailoring for this role…"}
-              body={
-                isLoadingStructure
-                  ? "Preserving your sections, structure, and bullet points exactly."
-                  : "Only the wording is being adjusted — your structure stays the same."
+              icon={<Sparkles className="h-10 w-10 text-muted-foreground/60" />}
+              title="Choose a template to begin"
+              body="Pick a resume style for this role."
+              action={
+                <Button size="sm" onClick={() => setShowTemplateSelector(true)} className="mt-2">
+                  Choose template
+                </Button>
               }
             />
+          ) : isWorking && !resume ? (
+            <div className="bg-white rounded-md border border-border/60 mx-auto max-w-2xl">
+              <TailoringProgress />
+            </div>
           ) : !resume ? (
             <EmptyState
               icon={<Loader2 className="h-10 w-10 text-accent animate-spin" />}
@@ -465,7 +489,12 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
               body=""
             />
           ) : (
-            <ResumeCanvas resume={resume} onChange={setResume} keywords={keywords} />
+            <ResumeCanvas
+              resume={viewMode === "original" && originalResume ? originalResume : resume}
+              onChange={setResume}
+              keywords={keywords}
+              templateId={templateId}
+            />
           )}
         </div>
 
