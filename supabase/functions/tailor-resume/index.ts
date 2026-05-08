@@ -119,17 +119,32 @@ STRICT RULES — follow every single one:
    - Never use clichés like results-driven, passionate, detail-oriented
 
 4. OPTIMIZE SKILLS SECTION
-   - Move skills that appear in the job description to the top of the skills list
-   - Remove skills completely unrelated to the job
-   - Add skills from the job description that the candidate likely has based on their experience
+   - Reorder skills so that EVERY skill appearing in the job description (frameworks, languages, tools, platforms) appears at the very BEGINNING of the skills list — not buried in the middle
+   - Remove skills that are clearly irrelevant to this role (e.g. for a web engineering role remove IoT, Arduino, Raspberry Pi, hardware-only skills; for a data role remove unrelated frontend frameworks)
+   - You MAY add 2-5 new highly relevant skills explicitly mentioned in the job description that the candidate likely has based on their experience
 
-5. QUALITY STANDARDS
+5. KEYWORD MATCHING — CRITICAL:
+   Before rewriting any bullet point, first extract ALL technical keywords from the job description into a list. Then for each bullet point ask yourself: which of these keywords can I naturally incorporate into this bullet?
+
+   Priority keywords to match first — always include these if the job mentions them:
+   - Specific frameworks and languages mentioned (Next.js, TypeScript, Supabase, Node.js etc)
+   - Specific tools mentioned (n8n, Salesforce, Vapi, GitHub Actions etc)
+   - Specific patterns mentioned (multi-tenant, RBAC, real-time, webhooks etc)
+
+   If the candidate has used similar technology — map it. For example:
+   - Candidate used "Express.js" → job needs "Node.js" → rewrite to emphasise Node.js
+   - Candidate used "Jenkins CI/CD" → job needs "GitHub Actions" → mention both
+   - Candidate used "MongoDB" → job needs "PostgreSQL" → rewrite to show database expertise broadly
+
+   The goal is maximum keyword overlap between the resume and job description while keeping everything truthful and natural.
+
+6. QUALITY STANDARDS
    - Every sentence must be specific not generic
    - The resume must read like it was written by a human career expert not AI
    - A hiring manager reading this resume should immediately see why this candidate is perfect for this specific role
    - The ATS match score should be 85% or higher after tailoring
 
-6. OUTPUT FORMAT
+7. OUTPUT FORMAT
    - Return the complete tailored resume as structured JSON preserving the exact same sections and structure as the input
    - Do not add any explanation or commentary — only return the JSON
    - Maintain all original formatting spacing and section headers exactly as they appeared in the original`;
@@ -374,34 +389,30 @@ STRICT RULES — follow every single one:
       };
     });
 
-    // Skills: allow reordering of originals + addition of relevant skills from AI (capped).
+    // Skills: trust AI-provided ordering AND pruning. Dedupe case-insensitively.
+    // We allow AI to drop irrelevant originals and add new ones from job description.
     const origSkills: string[] = (original.skills || []).map((s: string) => String(s));
-    const lowerOrig = new Set(origSkills.map((s) => s.toLowerCase().trim()));
     let safeSkills = origSkills;
-    if (Array.isArray(aiOutput.skills)) {
+    if (Array.isArray(aiOutput.skills) && aiOutput.skills.length > 0) {
       const seen = new Set<string>();
       const reordered: string[] = [];
       for (const s of aiOutput.skills) {
-        const key = String(s || "").toLowerCase().trim();
-        if (!key || seen.has(key)) continue;
+        const raw = String(s || "").trim();
+        const key = raw.toLowerCase();
+        if (!raw || seen.has(key)) continue;
         seen.add(key);
-        if (lowerOrig.has(key)) {
-          const match = origSkills.find((o) => o.toLowerCase().trim() === key);
-          if (match) reordered.push(match);
-        } else {
-          // new skill suggested by AI from job description
-          reordered.push(String(s));
-        }
+        reordered.push(raw);
       }
-      // Ensure no original skills are silently dropped
-      for (const s of origSkills) {
-        const key = s.toLowerCase().trim();
-        if (!seen.has(key)) {
-          seen.add(key);
-          reordered.push(s);
-        }
-      }
-      safeSkills = reordered.slice(0, 80);
+      safeSkills = reordered.slice(0, 40);
+    } else {
+      // Fallback: just dedupe originals
+      const seen = new Set<string>();
+      safeSkills = origSkills.filter((s) => {
+        const k = s.toLowerCase().trim();
+        if (!k || seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
     }
 
     // Summary: keep the AI rewrite (only rewording is allowed)

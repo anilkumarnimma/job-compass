@@ -179,12 +179,18 @@ export function exportResumeAsPdf(
         ensureRoom(13);
         doc.setFont(tpl.pdfFont, "normal");
         doc.setFontSize(tpl.bodySize - 0.5);
-        const glyph = tpl.id === "modern" ? "■" : "–";
+        // Draw bullet glyph as a shape so it renders consistently across PDF fonts
         if (tpl.id === "modern") {
           const [r, g, b2] = tpl.accentRgb;
-          doc.setTextColor(r, g, b2);
+          doc.setFillColor(r, g, b2);
+          doc.rect(MARGIN_X + 6, y - 5, 4, 4, "F");
+        } else if (tpl.id === "compact") {
+          doc.setFillColor(0, 0, 0);
+          doc.circle(MARGIN_X + 8, y - 3, 1.1, "F");
+        } else {
+          doc.setTextColor(0, 0, 0);
+          doc.text("–", MARGIN_X + 6, y);
         }
-        doc.text(glyph, MARGIN_X + 6, y);
         doc.setTextColor(0, 0, 0);
         const lines = doc.splitTextToSize(text, PAGE_W - MARGIN_X * 2 - 18);
         for (let i = 0; i < lines.length; i++) {

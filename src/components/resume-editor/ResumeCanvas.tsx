@@ -94,14 +94,33 @@ export function ResumeCanvas({ resume, keywords, templateId }: ResumeCanvasProps
   const renderSkills = () =>
     resume.visibility.skills && resume.skills.length > 0 ? (
       <SectionWrap key="__skills" title="Skills" tpl={tpl}>
-        <p className="leading-snug text-black" style={{ fontSize: `${tpl.bodySize - 0.5}pt` }}>
-          {resume.skills.map((s, i) => (
-            <span key={`${s}-${i}`}>
-              {highlight(s, keywords)}
-              {i < resume.skills.length - 1 && <span className="mx-1.5">•</span>}
-            </span>
-          ))}
-        </p>
+        {tpl.id === "modern" ? (
+          <div className="flex flex-wrap gap-1.5">
+            {resume.skills.map((s, i) => (
+              <span
+                key={`${s}-${i}`}
+                className="inline-flex items-center rounded-full px-2 py-0.5 leading-snug"
+                style={{
+                  fontSize: `${tpl.bodySize - 1}pt`,
+                  border: `1px solid ${tpl.accentCss}`,
+                  color: tpl.accentCss,
+                  backgroundColor: "transparent",
+                }}
+              >
+                {highlight(s, keywords)}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="leading-snug text-black" style={{ fontSize: `${tpl.bodySize - 0.5}pt` }}>
+            {resume.skills.map((s, i) => (
+              <span key={`${s}-${i}`}>
+                {highlight(s, keywords)}
+                {i < resume.skills.length - 1 && <span className="mx-1.5">•</span>}
+              </span>
+            ))}
+          </p>
+        )}
       </SectionWrap>
     ) : null;
 
@@ -122,8 +141,9 @@ export function ResumeCanvas({ resume, keywords, templateId }: ResumeCanvasProps
     return sec ? renderCustom(sec) : null;
   });
 
-  const padX = tpl.id === "compact" ? "px-8" : "px-10";
-  const padY = tpl.id === "compact" ? "py-5" : "py-6";
+  const padX = tpl.id === "compact" ? "px-6" : "px-10";
+  const padY = tpl.id === "compact" ? "py-4" : "py-6";
+  const lineHeight = tpl.id === "compact" ? 1.2 : 1.6;
 
   return (
     <div
@@ -133,28 +153,50 @@ export function ResumeCanvas({ resume, keywords, templateId }: ResumeCanvasProps
         minHeight: "11in",
         fontFamily: tpl.fontFamily,
         color: "#000",
+        lineHeight,
         boxShadow: "0 10px 30px -10px rgba(0,0,0,0.18), 0 4px 10px -2px rgba(0,0,0,0.08)",
       }}
       data-resume-canvas
     >
       {/* Header */}
-      <div
-        className={cn(tpl.id === "modern" ? "text-left" : "text-center", "pb-1.5")}
-        style={tpl.id === "classic" ? { borderBottom: "1px solid #000" } : undefined}
-      >
-        <h1
-          className="font-bold leading-tight m-0"
-          style={{
-            fontSize: `${tpl.nameSize}pt`,
-            color: tpl.id === "modern" ? tpl.accentCss : "#000",
-          }}
+      {tpl.id === "modern" ? (
+        <div className="pb-2" style={{ borderBottom: `1px solid ${tpl.accentCss}` }}>
+          <div className="flex items-stretch gap-3">
+            <div style={{ width: 4, backgroundColor: tpl.accentCss, borderRadius: 2 }} />
+            <div className="flex-1">
+              <h1
+                className="font-bold leading-tight m-0"
+                style={{ fontSize: `${tpl.nameSize}pt`, color: tpl.accentCss }}
+              >
+                {resume.header.full_name}
+              </h1>
+              <p className="mt-1 text-black leading-snug whitespace-pre-wrap" style={{ fontSize: "9.5pt" }}>
+                {resume.header.contact_line}
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div
+          className="text-center pb-1.5"
+          style={tpl.id === "classic" ? { borderBottom: "2px solid #000" } : undefined}
         >
-          {resume.header.full_name}
-        </h1>
-        <p className="mt-0.5 text-black leading-snug whitespace-pre-wrap" style={{ fontSize: "9.5pt" }}>
-          {resume.header.contact_line}
-        </p>
-      </div>
+          <h1
+            className="font-bold leading-tight m-0"
+            style={{
+              fontSize: `${tpl.nameSize}pt`,
+              color: "#000",
+              fontFamily: tpl.id === "classic" ? "Georgia, 'Times New Roman', serif" : tpl.fontFamily,
+              letterSpacing: tpl.id === "classic" ? "0.02em" : undefined,
+            }}
+          >
+            {resume.header.full_name}
+          </h1>
+          <p className="mt-0.5 text-black leading-snug whitespace-pre-wrap" style={{ fontSize: tpl.id === "compact" ? "8.5pt" : "9.5pt" }}>
+            {resume.header.contact_line}
+          </p>
+        </div>
+      )}
 
       {orderedNodes}
     </div>
@@ -166,9 +208,9 @@ function SectionWrap({ title, children, tpl }: { title: string; children: React.
     return (
       <section className="mt-3">
         <h2
-          className="font-bold uppercase tracking-[0.08em] leading-tight pl-2 mb-1.5"
+          className="font-bold uppercase tracking-[0.08em] leading-tight pl-2.5 mb-1.5"
           style={{
-            fontSize: `${tpl.bodySize}pt`,
+            fontSize: `${tpl.bodySize + 1}pt`,
             color: tpl.accentCss,
             borderLeft: `3px solid ${tpl.accentCss}`,
           }}
@@ -181,9 +223,9 @@ function SectionWrap({ title, children, tpl }: { title: string; children: React.
   }
   if (tpl.headerStyle === "thin-grey-divider") {
     return (
-      <section className="mt-2">
+      <section className="mt-1.5">
         <h2
-          className="font-bold uppercase tracking-[0.06em] leading-tight pb-0.5 mb-1 text-black"
+          className="font-bold uppercase tracking-[0.04em] leading-tight pb-0.5 mb-0.5 text-black"
           style={{ fontSize: `${tpl.bodySize}pt`, borderBottom: "1px solid #bbb" }}
         >
           {title}
@@ -192,12 +234,16 @@ function SectionWrap({ title, children, tpl }: { title: string; children: React.
       </section>
     );
   }
-  // underline-allcaps (classic)
+  // underline-allcaps (classic) — full width thick black border, ALL CAPS, bold serif
   return (
-    <section className="mt-2">
+    <section className="mt-3">
       <h2
-        className="font-bold uppercase tracking-[0.08em] text-black pb-0.5 mb-1 leading-tight"
-        style={{ fontSize: `${tpl.bodySize}pt`, borderBottom: "1px solid #000" }}
+        className="font-bold uppercase tracking-[0.12em] text-black pb-1 mb-1.5 leading-tight"
+        style={{
+          fontSize: `${tpl.bodySize + 1}pt`,
+          borderBottom: "1.5px solid #000",
+          fontFamily: "Georgia, 'Times New Roman', serif",
+        }}
       >
         {title}
       </h2>
