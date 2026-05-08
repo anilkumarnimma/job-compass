@@ -91,9 +91,14 @@ export function isHighExperienceJob(job: Pick<Job, 'title' | 'description' | 'ex
   return false;
 }
 
+/** Returns true if the title indicates a senior-level role */
+export function isSeniorTitle(title: string): boolean {
+  return /\b(senior|sr\.?|lead|principal|staff|director|head\s+of|vp|vice\s+president|chief|cto|cfo|coo|ceo|architect|fellow|distinguished)\b/i.test(title);
+}
+
 /** Returns true if the job should be excluded from the platform */
 export function shouldExcludeJob(job: Pick<Job, 'title' | 'description' | 'experience_years'>): boolean {
-  return isTutorListing(job) || isHighExperienceJob(job);
+  return isTutorListing(job) || isHighExperienceJob(job) || isSeniorTitle(job.title);
 }
 
 /** Filter an array of jobs, removing unwanted ones */
