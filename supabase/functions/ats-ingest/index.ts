@@ -67,6 +67,24 @@ function isSeniorRole(title: string): boolean {
   return SENIOR_TOKENS.some((tok) => t.includes(tok));
 }
 
+// Detect descriptions requiring 6+ years of experience
+function requiresHighExperience(description: string): boolean {
+  if (!description) return false;
+  const patterns = [
+    /\b([6-9]|[1-9]\d)\+?\s*[-–]?\s*(?:\d+\s*)?(?:years?|yrs?)(?:\s+of)?\s*(?:experience|exp\.?)?/i,
+    /(?:minimum|at\s+least|requires?)\s*(?:of\s+)?([6-9]|[1-9]\d)\s*(?:years?|yrs?)/i,
+    /(?:experience|exp\.?)\s*(?:required)?[\s:]+([6-9]|[1-9]\d)\+?\s*(?:years?|yrs?)/i,
+  ];
+  for (const p of patterns) {
+    const m = description.match(p);
+    if (m) {
+      const num = parseInt(m[0].match(/\d+/)?.[0] || "0", 10);
+      if (num > 5) return true;
+    }
+  }
+  return false;
+}
+
 // ───────────── USA-only location filter (mirrored from src/lib/usaLocationFilter.ts) ─────────────
 const US_STATES_ABBR = new Set([
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD",
