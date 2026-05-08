@@ -378,6 +378,7 @@ Deno.serve(async (req) => {
       for (const j of jobs) {
         if (!j.title || !j.apply_link) { delta.total_skipped++; continue; }
         if (isSeniorRole(j.title)) { delta.total_filtered++; continue; }
+        if (requiresHighExperience(j.description || "")) { delta.total_filtered++; continue; }
         if (!isUSALocation(j.location)) { delta.total_filtered++; continue; }
         candidates.push(j);
       }
