@@ -160,14 +160,6 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
       onClick={handleCardClick}
       style={style}
     >
-      {/* Posted time badge - top right */}
-      <div className="absolute top-3 right-3 z-20">
-        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-accent/10 text-accent border border-accent/20 whitespace-nowrap">
-          <Clock className="h-3 w-3" />
-          {formatDistanceToNow(job.posted_date, { addSuffix: true })}
-        </span>
-      </div>
-
       {/* Header Row */}
       <div className="flex items-start gap-3.5 mb-3 relative z-10">
         <CompanyLogo
@@ -177,7 +169,7 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
           className="rounded-xl shrink-0 ring-1 ring-border/30"
         />
 
-        <div className="flex-1 min-w-0 pr-20">
+        <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <h3
@@ -196,15 +188,23 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
                   : 'Location not specified'}
               </p>
             </div>
-            {/* Compact score badges */}
-            <div className="flex items-center gap-1.5 shrink-0">
-              {landingProbability && (
-                <LandingProbabilityBadge result={landingProbability} compact />
-              )}
-              {!matchResult && job.is_reviewing && (
-                <Badge className="shrink-0 px-2.5 py-1 text-[11px] font-medium bg-success-bg text-success-text border-0 rounded-full whitespace-nowrap animate-pulse">
-                  ● Reviewing
-                </Badge>
+            {/* Top-right: posted time + score badges, stacked vertically */}
+            <div className="flex flex-col items-end gap-1.5 shrink-0">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-accent/10 text-accent border border-accent/20 whitespace-nowrap">
+                <Clock className="h-3 w-3" />
+                {formatDistanceToNow(job.posted_date, { addSuffix: true })}
+              </span>
+              {(landingProbability || (!matchResult && job.is_reviewing)) && (
+                <div className="flex items-center gap-1.5">
+                  {landingProbability && (
+                    <LandingProbabilityBadge result={landingProbability} compact />
+                  )}
+                  {!matchResult && job.is_reviewing && (
+                    <Badge className="shrink-0 px-2.5 py-1 text-[11px] font-medium bg-success-bg text-success-text border-0 rounded-full whitespace-nowrap animate-pulse">
+                      ● Reviewing
+                    </Badge>
+                  )}
+                </div>
               )}
             </div>
           </div>
