@@ -214,7 +214,11 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
         clearResult();
         resetStructure();
         setResume(null);
+        setOriginalResume(null);
         setMatchScore(null);
+        setTemplateId(null);
+        setShowFeedback(false);
+        setViewMode("tailored");
         isFirstResumeRef.current = true;
       }, 300);
       return () => clearTimeout(t);
@@ -224,6 +228,7 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
   useEffect(() => {
     setMatchScore(null);
     setResume(null);
+    setOriginalResume(null);
     clearResult();
     isFirstResumeRef.current = true;
   }, [job?.id, clearResult]);
