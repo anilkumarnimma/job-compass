@@ -160,6 +160,14 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
       onClick={handleCardClick}
       style={style}
     >
+      {/* Posted time badge - top right */}
+      <div className="absolute top-3 right-3 z-20">
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-accent/10 text-accent border border-accent/20 whitespace-nowrap">
+          <Clock className="h-3 w-3" />
+          {formatDistanceToNow(job.posted_date, { addSuffix: true })}
+        </span>
+      </div>
+
       {/* Header Row */}
       <div className="flex items-start gap-3.5 mb-3 relative z-10">
         <CompanyLogo
@@ -169,7 +177,7 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
           className="rounded-xl shrink-0 ring-1 ring-border/30"
         />
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 pr-20">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <h3
@@ -178,7 +186,7 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
               >
                 {job.title}
               </h3>
-              <p className="text-muted-foreground text-sm mt-0.5">
+              <p className="text-foreground font-semibold text-sm mt-0.5">
                 {job.company}
               </p>
               <p className="text-muted-foreground text-xs flex items-center gap-1 mt-0.5">
@@ -186,10 +194,6 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
                 {job.location && !/nan/i.test(job.location) && !/not specified/i.test(job.location) && job.location.length < 100
                   ? job.location.split(',')[0] 
                   : 'Location not specified'}
-              </p>
-              <p className="text-muted-foreground text-xs flex items-center gap-1 mt-0.5">
-                <Clock className="h-3 w-3" />
-                {formatDistanceToNow(job.posted_date, { addSuffix: true })}
               </p>
             </div>
             {/* Compact score badges */}
