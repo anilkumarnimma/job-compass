@@ -140,11 +140,7 @@ export function ResumeCanvas({ resume, keywords, templateId }: ResumeCanvasProps
       {/* Header */}
       <div
         className={cn(tpl.id === "modern" ? "text-left" : "text-center", "pb-1.5")}
-        style={
-          tpl.id === "underline-allcaps" || tpl.id === "classic"
-            ? { borderBottom: "1px solid #000" }
-            : undefined
-        }
+        style={tpl.id === "classic" ? { borderBottom: "1px solid #000" } : undefined}
       >
         <h1
           className="font-bold leading-tight m-0"
