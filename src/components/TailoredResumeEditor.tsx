@@ -76,6 +76,7 @@ interface TailoredResumeEditorProps {
 
 export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResumeEditorProps) {
   const { profile } = useProfile();
+  const navigate = useNavigate();
   const { generate, isGenerating, result, clearResult } = useTailoredResume();
   const { runCheck, isChecking } = useAtsCheck();
   const {
@@ -87,14 +88,24 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
   } = useResumeStructure();
 
   const [resume, setResume] = useState<EditableResume | null>(null);
+  const [originalResume, setOriginalResume] = useState<EditableResume | null>(null);
   const [matchScore, setMatchScore] = useState<number | null>(null);
   const [pageInfo, setPageInfo] = useState<{ current: number; total: number }>({ current: 1, total: 1 });
   const [confirmRegenerate, setConfirmRegenerate] = useState(false);
+  const [templateId, setTemplateId] = useState<ResumeTemplateId | null>(null);
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [viewMode, setViewMode] = useState<"tailored" | "original">("tailored");
+  const [showFeedback, setShowFeedback] = useState(false);
   const lastGeneratedRef = useRef<typeof result>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
 
   const hasResume = !!(profile?.resume_url || profile?.resume_filename);
   const resumeVersion = `${profile?.updated_at || ""}::${profile?.resume_filename || ""}`;
+
+  // Show template selector when dialog opens
+  useEffect(() => {
+    if (open && !templateId) setShowTemplateSelector(true);
+  }, [open, templateId]);
 
   /* 1) Load the structured resume from the user's uploaded file */
   useEffect(() => {
