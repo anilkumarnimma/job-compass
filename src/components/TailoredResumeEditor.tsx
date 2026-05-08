@@ -35,12 +35,14 @@ import {
   Sparkles,
   X,
   RefreshCw,
+  Upload,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useTailoredResume } from "@/hooks/useTailoredResume";
 import { useResumeStructure } from "@/hooks/useResumeStructure";
 import { useAtsCheck } from "@/hooks/useAtsCheck";
 import { useProfile } from "@/hooks/useProfile";
+import { useNavigate } from "react-router-dom";
 import {
   EditableResume,
   buildEditableResume,
@@ -55,6 +57,10 @@ import {
   copyResumeToClipboard,
 } from "@/lib/resumeExport";
 import { ResumeCanvas } from "./resume-editor/ResumeCanvas";
+import { ResumeTemplateSelector } from "./ResumeTemplateSelector";
+import { TailoringProgress } from "./TailoringProgress";
+import { TailoredResumeFeedback } from "./TailoredResumeFeedback";
+import { ResumeTemplateId, DEFAULT_TEMPLATE_ID, RESUME_TEMPLATES } from "@/lib/resumeTemplates";
 
 interface TailoredResumeEditorProps {
   open: boolean;
@@ -70,6 +76,7 @@ interface TailoredResumeEditorProps {
 
 export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResumeEditorProps) {
   const { profile } = useProfile();
+  const navigate = useNavigate();
   const { generate, isGenerating, result, clearResult } = useTailoredResume();
   const { runCheck, isChecking } = useAtsCheck();
   const {
@@ -81,44 +88,58 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
   } = useResumeStructure();
 
   const [resume, setResume] = useState<EditableResume | null>(null);
+  const [originalResume, setOriginalResume] = useState<EditableResume | null>(null);
   const [matchScore, setMatchScore] = useState<number | null>(null);
   const [pageInfo, setPageInfo] = useState<{ current: number; total: number }>({ current: 1, total: 1 });
   const [confirmRegenerate, setConfirmRegenerate] = useState(false);
+  const [templateId, setTemplateId] = useState<ResumeTemplateId | null>(null);
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [viewMode, setViewMode] = useState<"tailored" | "original">("tailored");
+  const [showFeedback, setShowFeedback] = useState(false);
   const lastGeneratedRef = useRef<typeof result>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
 
   const hasResume = !!(profile?.resume_url || profile?.resume_filename);
   const resumeVersion = `${profile?.updated_at || ""}::${profile?.resume_filename || ""}`;
 
-  /* 1) Load the structured resume from the user's uploaded file */
+  // Show template selector when dialog opens
   useEffect(() => {
-    if (!open || !hasResume || !profile?.resume_url) return;
+    if (open && !templateId) setShowTemplateSelector(true);
+  }, [open, templateId]);
+
+  /* 1) Load the structured resume from the user's uploaded file (only after template chosen) */
+  useEffect(() => {
+    if (!open || !hasResume || !profile?.resume_url || !templateId) return;
     if (structure || isLoadingStructure) return;
     loadStructure({
       resume_path: profile.resume_url,
       filename: profile.resume_filename || undefined,
       cache_key: `${resumeVersion}`,
     });
-  }, [open, hasResume, profile?.resume_url, profile?.resume_filename, structure, isLoadingStructure, loadStructure, resumeVersion]);
+  }, [open, hasResume, profile?.resume_url, profile?.resume_filename, structure, isLoadingStructure, loadStructure, resumeVersion, templateId]);
 
-  /* 2) Once we have the structure + a job, kick off tailoring */
+  /* 2) Once we have the structure + a job + template, kick off tailoring */
   useEffect(() => {
-    if (!open || !job || !structure) return;
+    if (!open || !job || !structure || !templateId) return;
     if (result || isGenerating) return;
     generate({
       job_title: job.title,
       job_description: job.description || "",
       job_skills: job.skills || [],
+      company_name: job.company,
       resume_structure: structure,
       cache_key: `${job.id}::${resumeVersion}`,
     });
-  }, [open, job, structure, result, isGenerating, generate, resumeVersion]);
+  }, [open, job, structure, result, isGenerating, generate, resumeVersion, templateId]);
 
-  /* 3) Hydrate the editable resume */
+  /* 3) Hydrate the editable resume + keep an "original" copy for toggle */
   useEffect(() => {
     if (!structure) return;
     setResume(buildEditableResume(structure, result, profile));
-  }, [structure, result, profile]);
+    if (!originalResume) {
+      setOriginalResume(buildEditableResume(structure, null, profile));
+    }
+  }, [structure, result, profile, originalResume]);
 
   useEffect(() => {
     if (result) lastGeneratedRef.current = result;
@@ -193,7 +214,11 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
         clearResult();
         resetStructure();
         setResume(null);
+        setOriginalResume(null);
         setMatchScore(null);
+        setTemplateId(null);
+        setShowFeedback(false);
+        setViewMode("tailored");
         isFirstResumeRef.current = true;
       }, 300);
       return () => clearTimeout(t);
@@ -203,6 +228,7 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
   useEffect(() => {
     setMatchScore(null);
     setResume(null);
+    setOriginalResume(null);
     clearResult();
     isFirstResumeRef.current = true;
   }, [job?.id, clearResult]);
@@ -234,12 +260,16 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
 
   const handleDownload = (format: "pdf" | "docx" | "txt") => {
     if (!resume || !job) return;
-    if (format === "pdf") exportResumeAsPdf(resume, job.title, job.company);
+    const tplId = templateId || DEFAULT_TEMPLATE_ID;
+    if (format === "pdf") exportResumeAsPdf(resume, job.title, job.company, tplId);
     else if (format === "docx")
-      exportResumeAsDocx(resume, job.title, job.company).catch(() =>
+      exportResumeAsDocx(resume, job.title, job.company, tplId).catch(() =>
         toast({ title: "Download failed", description: "Could not generate Word file.", variant: "destructive" }),
       );
     else exportResumeAsText(resume, job.title, job.company);
+    if (format === "pdf" || format === "docx") {
+      setTimeout(() => setShowFeedback(true), 800);
+    }
   };
 
   const handleCopy = async () => {
@@ -264,6 +294,7 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
       job_title: job.title,
       job_description: job.description || "",
       job_skills: job.skills || [],
+      company_name: job.company,
       resume_structure: structure,
       cache_key: `${job.id}::${resumeVersion}`,
       force: true,
@@ -365,17 +396,31 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
             </div>
           </div>
 
-          {/* Changes banner */}
-          {resume && changesCount > 0 && (
-            <div
-              className="mt-2 inline-flex items-center gap-1.5 self-start rounded-md px-2.5 py-1 text-[11px] font-medium"
-              style={{
-                backgroundColor: "hsl(174 72% 56% / 0.10)",
-                color: "hsl(174 72% 28%)",
-              }}
-            >
-              <Sparkles className="h-3 w-3" />
-              {changesCount} change{changesCount === 1 ? "" : "s"} made to match this role
+          {/* Summary banner with toggle */}
+          {resume && result && job && (
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-md border border-[hsl(174_72%_56%/0.35)] bg-[hsl(174_72%_56%/0.08)] px-3 py-1.5">
+              <div className="text-[11px] text-[hsl(174_72%_22%)] flex flex-wrap items-center gap-x-3 gap-y-0.5">
+                <span className="font-medium">✅ Resume tailored for {job.title} at {job.company}</span>
+                <span>{changesCount} bullets rewritten</span>
+                <span>{result.keywords_added?.length || 0} keywords added</span>
+                {result.summary_changed && <span>Summary personalised</span>}
+                {matchScore != null && <span>Match: {matchScore}%</span>}
+                <span className="text-[hsl(174_72%_30%)]">Template: {RESUME_TEMPLATES[templateId || DEFAULT_TEMPLATE_ID].label}</span>
+              </div>
+              <div className="flex items-center gap-1 text-[10.5px]">
+                <button
+                  onClick={() => setViewMode("original")}
+                  className={`px-2 py-0.5 rounded-md ${viewMode === "original" ? "bg-foreground text-background" : "bg-background border border-border"}`}
+                >
+                  View Original
+                </button>
+                <button
+                  onClick={() => setViewMode("tailored")}
+                  className={`px-2 py-0.5 rounded-md ${viewMode === "tailored" ? "bg-foreground text-background" : "bg-background border border-border"}`}
+                >
+                  View Tailored
+                </button>
+              </div>
             </div>
           )}
         </DialogHeader>
@@ -388,8 +433,13 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
           {!hasResume ? (
             <EmptyState
               icon={<AlertCircle className="h-10 w-10 text-muted-foreground/60" />}
-              title="No resume on file"
-              body="Upload your resume in Profile Settings to get started."
+              title="Upload your resume first to use this feature"
+              body="Your tailored resume is based on your real experience — we need your resume to get started."
+              action={
+                <Button size="sm" onClick={() => { onOpenChange(false); navigate("/profile"); }} className="mt-2">
+                  <Upload className="h-3.5 w-3.5 mr-2" /> Upload Resume Now
+                </Button>
+              }
             />
           ) : structureError ? (
             <EmptyState
@@ -417,16 +467,21 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
                 </Button>
               }
             />
-          ) : isWorking && !resume ? (
+          ) : !templateId ? (
             <EmptyState
-              icon={<Loader2 className="h-10 w-10 text-accent animate-spin" />}
-              title={isLoadingStructure ? "Reading your resume…" : "Tailoring for this role…"}
-              body={
-                isLoadingStructure
-                  ? "Preserving your sections, structure, and bullet points exactly."
-                  : "Only the wording is being adjusted — your structure stays the same."
+              icon={<Sparkles className="h-10 w-10 text-muted-foreground/60" />}
+              title="Choose a template to begin"
+              body="Pick a resume style for this role."
+              action={
+                <Button size="sm" onClick={() => setShowTemplateSelector(true)} className="mt-2">
+                  Choose template
+                </Button>
               }
             />
+          ) : isWorking && !resume ? (
+            <div className="bg-white rounded-md border border-border/60 mx-auto max-w-2xl">
+              <TailoringProgress />
+            </div>
           ) : !resume ? (
             <EmptyState
               icon={<Loader2 className="h-10 w-10 text-accent animate-spin" />}
@@ -434,7 +489,12 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
               body=""
             />
           ) : (
-            <ResumeCanvas resume={resume} onChange={setResume} keywords={keywords} />
+            <ResumeCanvas
+              resume={viewMode === "original" && originalResume ? originalResume : resume}
+              onChange={setResume}
+              keywords={keywords}
+              templateId={templateId}
+            />
           )}
         </div>
 
@@ -483,6 +543,27 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ResumeTemplateSelector
+        open={showTemplateSelector}
+        onOpenChange={(o) => {
+          setShowTemplateSelector(o);
+          if (!o && !templateId) onOpenChange(false);
+        }}
+        onConfirm={(id) => {
+          setTemplateId(id);
+          setShowTemplateSelector(false);
+        }}
+      />
+
+      {showFeedback && job && (
+        <TailoredResumeFeedback
+          templateUsed={templateId || DEFAULT_TEMPLATE_ID}
+          jobTitle={job.title}
+          companyName={job.company}
+          onDismiss={() => setShowFeedback(false)}
+        />
+      )}
     </Dialog>
   );
 }
