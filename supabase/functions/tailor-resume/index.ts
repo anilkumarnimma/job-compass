@@ -389,34 +389,30 @@ STRICT RULES — follow every single one:
       };
     });
 
-    // Skills: allow reordering of originals + addition of relevant skills from AI (capped).
+    // Skills: trust AI-provided ordering AND pruning. Dedupe case-insensitively.
+    // We allow AI to drop irrelevant originals and add new ones from job description.
     const origSkills: string[] = (original.skills || []).map((s: string) => String(s));
-    const lowerOrig = new Set(origSkills.map((s) => s.toLowerCase().trim()));
     let safeSkills = origSkills;
-    if (Array.isArray(aiOutput.skills)) {
+    if (Array.isArray(aiOutput.skills) && aiOutput.skills.length > 0) {
       const seen = new Set<string>();
       const reordered: string[] = [];
       for (const s of aiOutput.skills) {
-        const key = String(s || "").toLowerCase().trim();
-        if (!key || seen.has(key)) continue;
+        const raw = String(s || "").trim();
+        const key = raw.toLowerCase();
+        if (!raw || seen.has(key)) continue;
         seen.add(key);
-        if (lowerOrig.has(key)) {
-          const match = origSkills.find((o) => o.toLowerCase().trim() === key);
-          if (match) reordered.push(match);
-        } else {
-          // new skill suggested by AI from job description
-          reordered.push(String(s));
-        }
+        reordered.push(raw);
       }
-      // Ensure no original skills are silently dropped
-      for (const s of origSkills) {
-        const key = s.toLowerCase().trim();
-        if (!seen.has(key)) {
-          seen.add(key);
-          reordered.push(s);
-        }
-      }
-      safeSkills = reordered.slice(0, 80);
+      safeSkills = reordered.slice(0, 40);
+    } else {
+      // Fallback: just dedupe originals
+      const seen = new Set<string>();
+      safeSkills = origSkills.filter((s) => {
+        const k = s.toLowerCase().trim();
+        if (!k || seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
     }
 
     // Summary: keep the AI rewrite (only rewording is allowed)
