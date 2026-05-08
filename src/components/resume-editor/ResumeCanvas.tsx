@@ -94,14 +94,33 @@ export function ResumeCanvas({ resume, keywords, templateId }: ResumeCanvasProps
   const renderSkills = () =>
     resume.visibility.skills && resume.skills.length > 0 ? (
       <SectionWrap key="__skills" title="Skills" tpl={tpl}>
-        <p className="leading-snug text-black" style={{ fontSize: `${tpl.bodySize - 0.5}pt` }}>
-          {resume.skills.map((s, i) => (
-            <span key={`${s}-${i}`}>
-              {highlight(s, keywords)}
-              {i < resume.skills.length - 1 && <span className="mx-1.5">•</span>}
-            </span>
-          ))}
-        </p>
+        {tpl.id === "modern" ? (
+          <div className="flex flex-wrap gap-1.5">
+            {resume.skills.map((s, i) => (
+              <span
+                key={`${s}-${i}`}
+                className="inline-flex items-center rounded-full px-2 py-0.5 leading-snug"
+                style={{
+                  fontSize: `${tpl.bodySize - 1}pt`,
+                  border: `1px solid ${tpl.accentCss}`,
+                  color: tpl.accentCss,
+                  backgroundColor: "transparent",
+                }}
+              >
+                {highlight(s, keywords)}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="leading-snug text-black" style={{ fontSize: `${tpl.bodySize - 0.5}pt` }}>
+            {resume.skills.map((s, i) => (
+              <span key={`${s}-${i}`}>
+                {highlight(s, keywords)}
+                {i < resume.skills.length - 1 && <span className="mx-1.5">•</span>}
+              </span>
+            ))}
+          </p>
+        )}
       </SectionWrap>
     ) : null;
 
