@@ -178,7 +178,7 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
               >
                 {job.title}
               </h3>
-              <p className="text-foreground font-semibold text-sm mt-0.5">
+              <p className="text-accent font-semibold text-sm mt-0.5">
                 {job.company}
               </p>
               <p className="text-muted-foreground text-xs flex items-center gap-1 mt-0.5">
