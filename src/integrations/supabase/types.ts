@@ -477,25 +477,40 @@ export type Database = {
       feature_feedback: {
         Row: {
           comment: string | null
+          company_name: string | null
           created_at: string
+          feature: string | null
+          feedback_text: string | null
           id: string
-          rating: number
+          job_title: string | null
+          rating: number | null
+          template_used: string | null
           trigger_source: string
           user_id: string
         }
         Insert: {
           comment?: string | null
+          company_name?: string | null
           created_at?: string
+          feature?: string | null
+          feedback_text?: string | null
           id?: string
-          rating: number
+          job_title?: string | null
+          rating?: number | null
+          template_used?: string | null
           trigger_source: string
           user_id: string
         }
         Update: {
           comment?: string | null
+          company_name?: string | null
           created_at?: string
+          feature?: string | null
+          feedback_text?: string | null
           id?: string
-          rating?: number
+          job_title?: string | null
+          rating?: number | null
+          template_used?: string | null
           trigger_source?: string
           user_id?: string
         }
@@ -927,6 +942,7 @@ export type Database = {
           military_service: string | null
           phone: string | null
           portfolio_url: string | null
+          preferred_resume_template: string | null
           race_ethnicity: string | null
           resume_filename: string | null
           resume_intelligence: Json | null
@@ -973,6 +989,7 @@ export type Database = {
           military_service?: string | null
           phone?: string | null
           portfolio_url?: string | null
+          preferred_resume_template?: string | null
           race_ethnicity?: string | null
           resume_filename?: string | null
           resume_intelligence?: Json | null
@@ -1019,6 +1036,7 @@ export type Database = {
           military_service?: string | null
           phone?: string | null
           portfolio_url?: string | null
+          preferred_resume_template?: string | null
           race_ethnicity?: string | null
           resume_filename?: string | null
           resume_intelligence?: Json | null
