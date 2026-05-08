@@ -98,7 +98,11 @@ export function isSeniorTitle(title: string): boolean {
 
 /** Returns true if the job should be excluded from the platform */
 export function shouldExcludeJob(job: Pick<Job, 'title' | 'description' | 'experience_years'>): boolean {
-  return isTutorListing(job) || isHighExperienceJob(job) || isSeniorTitle(job.title);
+  if (isTutorListing(job)) return true;
+  // Always allow jobs that explicitly require <6 years of experience
+  const expNum = parseExpYears(job.experience_years);
+  if (expNum !== null && expNum <= 5) return false;
+  return isHighExperienceJob(job) || isSeniorTitle(job.title);
 }
 
 /** Filter an array of jobs, removing unwanted ones */
