@@ -374,7 +374,7 @@ STRICT RULES — follow every single one:
       };
     });
 
-    // Skills: only allow REORDERING of the original skills set. Never add/remove.
+    // Skills: allow reordering of originals + addition of relevant skills from AI (capped).
     const origSkills: string[] = (original.skills || []).map((s: string) => String(s));
     const lowerOrig = new Set(origSkills.map((s) => s.toLowerCase().trim()));
     let safeSkills = origSkills;
@@ -383,14 +383,17 @@ STRICT RULES — follow every single one:
       const reordered: string[] = [];
       for (const s of aiOutput.skills) {
         const key = String(s || "").toLowerCase().trim();
-        if (lowerOrig.has(key) && !seen.has(key)) {
-          seen.add(key);
-          // find original casing
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        if (lowerOrig.has(key)) {
           const match = origSkills.find((o) => o.toLowerCase().trim() === key);
           if (match) reordered.push(match);
+        } else {
+          // new skill suggested by AI from job description
+          reordered.push(String(s));
         }
       }
-      // Append any originals the AI dropped — to preserve completeness
+      // Ensure no original skills are silently dropped
       for (const s of origSkills) {
         const key = s.toLowerCase().trim();
         if (!seen.has(key)) {
@@ -398,7 +401,7 @@ STRICT RULES — follow every single one:
           reordered.push(s);
         }
       }
-      safeSkills = reordered;
+      safeSkills = reordered.slice(0, 80);
     }
 
     // Summary: keep the AI rewrite (only rewording is allowed)
