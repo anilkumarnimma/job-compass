@@ -106,7 +106,7 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
             >
               {job.title}
             </h3>
-            <p className="text-muted-foreground text-sm mt-0.5">{job.company}</p>
+            <p className="text-accent text-sm font-semibold mt-0.5">{job.company?.replace(/&amp;/g, "&").replace(/&#39;/g, "'").replace(/&quot;/g, '"')}</p>
             <p className="text-xs text-muted-foreground mt-1">
               Posted {formatDistanceToNow(job.posted_date, { addSuffix: false })} ago
             </p>
