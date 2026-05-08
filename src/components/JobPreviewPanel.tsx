@@ -111,21 +111,9 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
               Posted {formatDistanceToNow(job.posted_date, { addSuffix: false })} ago
             </p>
           </div>
-          {/* Match Score */}
+          {/* Match tier label only (percentage hidden — shown in Landing Probability panel below) */}
           {matchResult && (
             <div className="flex flex-col items-end gap-1 shrink-0">
-              <TooltipProvider delayDuration={200}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-sm font-bold tabular-nums ${matchResult.scoreColor}`}>
-                      {matchResult.score}%
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent side="left" className="text-xs max-w-[220px] whitespace-pre-line">
-                    {matchResult.reason}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
               <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border ${matchResult.tierColor}`}>
                 {matchResult.tierLabel}
               </span>

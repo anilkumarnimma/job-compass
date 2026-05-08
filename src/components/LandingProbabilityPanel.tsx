@@ -1,5 +1,5 @@
 import { LandingProbabilityResult } from "@/lib/landingProbability";
-import { Target, ChevronDown, ChevronUp } from "lucide-react";
+import { Target, ChevronDown, ChevronUp, CheckCircle2, AlertCircle, XCircle } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -27,7 +27,7 @@ export function LandingProbabilityPanel({ result }: LandingProbabilityPanelProps
           <Target className={`h-5 w-5 ${result.color}`} />
           <div>
             <p className="text-sm font-semibold text-foreground">
-              🎯 Landing Probability: <span className={result.color}>{result.probability}%</span>
+              Landing Probability: <span className={result.color}>{result.probability}%</span>
             </p>
             <p className={`text-xs ${result.color} font-medium`}>{result.message}</p>
           </div>
@@ -55,17 +55,19 @@ export function LandingProbabilityPanel({ result }: LandingProbabilityPanelProps
             className="overflow-hidden"
           >
             <div className="mt-3 pt-3 border-t border-border/40 space-y-2">
-              {result.breakdown.map((item, i) => (
-                <div key={i} className="flex items-start gap-2 text-xs">
-                  <span className="shrink-0 mt-0.5">
-                    {item.status === "positive" ? "✅" : item.status === "warning" ? "⚠️" : "❌"}
-                  </span>
-                  <div className="flex-1">
-                    <span className="font-medium text-foreground">{item.label}:</span>{" "}
-                    <span className="text-muted-foreground">{item.detail}</span>
+              {result.breakdown.map((item, i) => {
+                const Icon = item.status === "positive" ? CheckCircle2 : item.status === "warning" ? AlertCircle : XCircle;
+                const iconColor = item.status === "positive" ? "text-success" : item.status === "warning" ? "text-warning" : "text-destructive";
+                return (
+                  <div key={i} className="flex items-start gap-2 text-xs">
+                    <Icon className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${iconColor}`} />
+                    <div className="flex-1">
+                      <span className="font-medium text-foreground">{item.label}:</span>{" "}
+                      <span className="text-muted-foreground">{item.detail}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </motion.div>
         )}
