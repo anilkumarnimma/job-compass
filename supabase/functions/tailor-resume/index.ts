@@ -259,9 +259,11 @@ STRICT RULES — follow every single one:
           signal: controller.signal,
           body: JSON.stringify({
             model,
+            max_tokens: 3000,
+            temperature: 0.3,
             messages: [
               { role: "system", content: systemPrompt },
-              { role: "user", content: JSON.stringify(userPayload) },
+              { role: "user", content: userMessage },
             ],
             tools: [toolDef],
             tool_choice: { type: "function", function: { name: "return_tailored_resume" } },
