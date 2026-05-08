@@ -107,35 +107,39 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
     if (open && !templateId) setShowTemplateSelector(true);
   }, [open, templateId]);
 
-  /* 1) Load the structured resume from the user's uploaded file */
+  /* 1) Load the structured resume from the user's uploaded file (only after template chosen) */
   useEffect(() => {
-    if (!open || !hasResume || !profile?.resume_url) return;
+    if (!open || !hasResume || !profile?.resume_url || !templateId) return;
     if (structure || isLoadingStructure) return;
     loadStructure({
       resume_path: profile.resume_url,
       filename: profile.resume_filename || undefined,
       cache_key: `${resumeVersion}`,
     });
-  }, [open, hasResume, profile?.resume_url, profile?.resume_filename, structure, isLoadingStructure, loadStructure, resumeVersion]);
+  }, [open, hasResume, profile?.resume_url, profile?.resume_filename, structure, isLoadingStructure, loadStructure, resumeVersion, templateId]);
 
-  /* 2) Once we have the structure + a job, kick off tailoring */
+  /* 2) Once we have the structure + a job + template, kick off tailoring */
   useEffect(() => {
-    if (!open || !job || !structure) return;
+    if (!open || !job || !structure || !templateId) return;
     if (result || isGenerating) return;
     generate({
       job_title: job.title,
       job_description: job.description || "",
       job_skills: job.skills || [],
+      company_name: job.company,
       resume_structure: structure,
       cache_key: `${job.id}::${resumeVersion}`,
     });
-  }, [open, job, structure, result, isGenerating, generate, resumeVersion]);
+  }, [open, job, structure, result, isGenerating, generate, resumeVersion, templateId]);
 
-  /* 3) Hydrate the editable resume */
+  /* 3) Hydrate the editable resume + keep an "original" copy for toggle */
   useEffect(() => {
     if (!structure) return;
     setResume(buildEditableResume(structure, result, profile));
-  }, [structure, result, profile]);
+    if (!originalResume) {
+      setOriginalResume(buildEditableResume(structure, null, profile));
+    }
+  }, [structure, result, profile, originalResume]);
 
   useEffect(() => {
     if (result) lastGeneratedRef.current = result;
