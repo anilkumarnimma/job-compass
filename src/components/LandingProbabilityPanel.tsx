@@ -64,9 +64,6 @@ export function LandingProbabilityPanel({ result }: LandingProbabilityPanelProps
                     <span className="font-medium text-foreground">{item.label}:</span>{" "}
                     <span className="text-muted-foreground">{item.detail}</span>
                   </div>
-                  <span className={`shrink-0 font-semibold tabular-nums ${item.impact.startsWith("-") ? "text-destructive" : "text-success"}`}>
-                    {item.impact}
-                  </span>
                 </div>
               ))}
             </div>
