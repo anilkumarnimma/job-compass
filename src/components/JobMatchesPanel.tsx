@@ -2,15 +2,10 @@ import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Sparkles, Target, TrendingUp, AlertTriangle, ArrowRight, Info } from "lucide-react";
-import { useRecommendedJobs, RecommendedJob } from "@/hooks/useRecommendedJobs";
+import { useRecommendedJobs } from "@/hooks/useRecommendedJobs";
 import { useProfile } from "@/hooks/useProfile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-
-function computeMatchPercent(job: RecommendedJob, maxScore: number): number {
-  if (maxScore <= 0) return 0;
-  return Math.min(100, Math.round((job.matchScore / maxScore) * 100));
-}
 
 export function JobMatchesPanel() {
   const { data: jobs, isLoading, canRecommend } = useRecommendedJobs();
