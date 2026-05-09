@@ -2,45 +2,31 @@ import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Sparkles, Target, TrendingUp, AlertTriangle, ArrowRight, Info } from "lucide-react";
-import { useRecommendedJobs, RecommendedJob } from "@/hooks/useRecommendedJobs";
+import { useRecommendedJobs } from "@/hooks/useRecommendedJobs";
 import { useProfile } from "@/hooks/useProfile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-
-function computeMatchPercent(job: RecommendedJob, maxScore: number): number {
-  if (maxScore <= 0) return 0;
-  return Math.min(100, Math.round((job.matchScore / maxScore) * 100));
-}
 
 export function JobMatchesPanel() {
   const { data: jobs, isLoading, canRecommend } = useRecommendedJobs();
   const { profile, isLoading: profileLoading } = useProfile();
   const navigate = useNavigate();
 
-  const maxScore = useMemo(() => {
-    if (!jobs?.length) return 1;
-    return Math.max(jobs[0].matchScore, 1);
-  }, [jobs]);
-
-  const { strong, good, needsSkills, topMatches, allZero } = useMemo(() => {
-    if (!jobs?.length) return { strong: 0, good: 0, needsSkills: 0, topMatches: [] as { title: string; percent: number }[], allZero: true };
+  const { strong, good, needsSkills, allZero } = useMemo(() => {
+    if (!jobs?.length) return { strong: 0, good: 0, needsSkills: 0, allZero: true };
 
     let s = 0, g = 0, n = 0;
-    const top: { title: string; percent: number }[] = [];
     const allZero = jobs.every(j => j.matchScore === 0);
 
     for (const job of jobs) {
-      const pct = computeMatchPercent(job, maxScore);
-      // Lowered thresholds: strong 70%+, good 40-69%, needs skills 20-39%
-      if (pct >= 70) s++;
-      else if (pct >= 40) g++;
-      else if (pct >= 20) n++;
-      // else: below 20% - don't count
-      if (top.length < 3) top.push({ title: job.title, percent: pct });
+      const score = job.matchScore; // absolute 0-100
+      if (score >= 70) s++;
+      else if (score >= 40) g++;
+      else if (score >= 20) n++;
     }
 
-    return { strong: s, good: g, needsSkills: n, topMatches: top, allZero };
-  }, [jobs, maxScore]);
+    return { strong: s, good: g, needsSkills: n, allZero };
+  }, [jobs]);
 
   if (profileLoading || isLoading) {
     return (

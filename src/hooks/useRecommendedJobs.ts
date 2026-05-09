@@ -30,7 +30,7 @@ function buildTitleFilters(primaryRole: string, currentTitle: string): string[] 
   return Array.from(titles);
 }
 
-function buildProfileFallbackIntelligence(profile: NonNullable<ReturnType<typeof useProfile>["profile"]>): ResumeIntelligence | null {
+export function buildProfileFallbackIntelligence(profile: NonNullable<ReturnType<typeof useProfile>["profile"]>): ResumeIntelligence | null {
   const profileSkills = Array.isArray(profile.skills) ? profile.skills.filter(Boolean) : [];
   const profileWork = Array.isArray(profile.work_experience) ? profile.work_experience : [];
   const currentRole = profile.current_title?.trim() || profileWork.find((item) => item?.title?.trim())?.title?.trim() || "";
