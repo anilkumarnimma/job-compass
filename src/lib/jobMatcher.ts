@@ -97,8 +97,8 @@ export function calculateJobMatch(job: Job, intelligence: ResumeIntelligence): J
   const titleScore = titleSimilarity(job.title, intelligence.primaryRole, intelligence.jobTitlesToTarget || []);
   const expScore = experienceMatch(job.experience_years, intelligence);
 
-  // Weighted score — title 38%, skills 37%, experience 25%
-  const rawScore = (skillRatio * 37) + (titleScore * 38) + (expScore * 25);
+  // Weighted score — skills 50%, title 30%, experience 20%
+  const rawScore = (skillRatio * 50) + (titleScore * 30) + (expScore * 20);
   const score = Math.min(Math.round(rawScore), 100);
 
   // Determine tier
