@@ -399,23 +399,39 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
       return count || 0;
     },
     staleTime: STALE_TIME,
-    enabled: !needsClientFilter && !personalize,
+    enabled: !needsClientFilter,
+  });
+
+  // For pages beyond the personalized pool, fall back to the default newest-first fetch.
+  const personalizedMaxPage = Math.ceil(PERSONALIZED_POOL_SIZE / PAGE_SIZE);
+  const personalizedFallbackQuery = useQuery({
+    queryKey: ["jobs", "paginated", searchQuery, page, dateFrom, dateTo, visaFilter, filterTab],
+    queryFn: ({ signal }) => fetchJobsPage(searchQuery, page, dateFrom, dateTo, visaFilter, filterTab, signal),
+    staleTime: STALE_TIME,
+    placeholderData: (prev) => prev,
+    enabled: personalize && page > personalizedMaxPage,
   });
 
   // ---------- Assemble final result ----------
   if (personalize) {
     const all = personalizedQuery.data || [];
-    const totalCount = all.length;
+    const totalCount = countQuery.data ?? all.length;
     const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-    const start = (page - 1) * PAGE_SIZE;
+    let pageJobs: Job[];
+    if (page > personalizedMaxPage) {
+      pageJobs = personalizedFallbackQuery.data?.jobs || [];
+    } else {
+      const start = (page - 1) * PAGE_SIZE;
+      pageJobs = all.slice(start, start + PAGE_SIZE);
+    }
     return {
       data: {
-        jobs: all.slice(start, start + PAGE_SIZE),
+        jobs: pageJobs,
         totalCount,
         totalPages,
       },
-      isLoading: personalizedQuery.isLoading,
-      isFetching: personalizedQuery.isFetching,
+      isLoading: personalizedQuery.isLoading || personalizedFallbackQuery.isLoading,
+      isFetching: personalizedQuery.isFetching || personalizedFallbackQuery.isFetching,
     };
   }
 
