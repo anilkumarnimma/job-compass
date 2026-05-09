@@ -72,21 +72,28 @@ const EXPERIENCE_LEVELS: Record<string, number> = {
 };
 
 function experienceMatch(jobExpStr: string | null, intelligence: ResumeIntelligence): number {
-  if (!jobExpStr) return 0.7; // Unknown requirement, neutral
-  
   const userYears = intelligence.yearsOfExperience ?? EXPERIENCE_LEVELS[intelligence.experienceLevel] ?? 3;
-  
-  // Parse job experience requirement (e.g. "3-5 years", "5+ years", "3 years")
-  const nums = jobExpStr.match(/(\d+)/g);
-  if (!nums) return 0.7;
-  
-  const minReq = parseInt(nums[0]);
-  const maxReq = nums[1] ? parseInt(nums[1]) : minReq + 3;
-  
-  if (userYears >= minReq && userYears <= maxReq + 2) return 1;
-  if (userYears >= minReq - 1) return 0.8;
-  if (userYears >= minReq - 3) return 0.5;
-  return 0.2;
+
+  // Classify the job's seniority bucket from its required-years string.
+  let jobBucket: "entry" | "mid" | "senior" = "mid";
+  if (jobExpStr) {
+    const nums = jobExpStr.match(/(\d+)/g);
+    const minReq = nums ? parseInt(nums[0]) : null;
+    if (minReq !== null) {
+      if (minReq < 2) jobBucket = "entry";
+      else if (minReq < 5) jobBucket = "mid";
+      else jobBucket = "senior";
+    }
+  }
+
+  // User bucket → score per job bucket (0..1, scaled to the 20-pt experience weight)
+  if (userYears <= 2) {
+    return jobBucket === "entry" ? 1 : jobBucket === "mid" ? 0.5 : 0;
+  }
+  if (userYears <= 5) {
+    return jobBucket === "mid" ? 1 : jobBucket === "entry" ? 0.75 : 0.25;
+  }
+  return jobBucket === "senior" ? 1 : jobBucket === "mid" ? 0.75 : 0.25;
 }
 
 export function calculateJobMatch(job: Job, intelligence: ResumeIntelligence): JobMatchResult {
