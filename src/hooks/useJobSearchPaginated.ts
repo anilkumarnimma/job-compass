@@ -169,6 +169,79 @@ async function fetchJobsPage(
   return { jobs: filteredJobs };
 }
 
+async function fetchPersonalizedPool(
+  searchQuery: string,
+  dateFrom: string | null | undefined,
+  dateTo: string | null | undefined,
+  filterTab: FilterTab,
+  signal?: AbortSignal,
+): Promise<Job[]> {
+  const trimmed = searchQuery.trim();
+  let allJobs: Job[] = [];
+
+  if (trimmed) {
+    const expandedTerms = expandSearchTerms(trimmed);
+    let rpcQuery = supabase.rpc("search_jobs", {
+      search_query: trimmed,
+      page_size: PERSONALIZED_POOL_SIZE,
+      page_offset: 0,
+      filter_tab: filterTab,
+      expanded_terms: expandedTerms.length > 0 ? expandedTerms : undefined,
+    });
+    if (signal) rpcQuery = rpcQuery.abortSignal(signal);
+    const { data, error } = await rpcQuery;
+    if (error) throw error;
+    allJobs = (data || []).map(parseJob);
+  } else {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 45);
+    let q = supabase
+      .from("jobs")
+      .select("*")
+      .eq("is_published", true)
+      .eq("is_archived", false)
+      .eq("is_direct_apply", true)
+      .is("deleted_at", null)
+      .gte("posted_date", cutoff.toISOString())
+      .order("posted_date", { ascending: false })
+      .range(0, PERSONALIZED_POOL_SIZE - 1);
+
+    if (filterTab !== "all") {
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      if (filterTab === "today") {
+        q = q.gte("posted_date", todayStart.toISOString());
+      } else if (filterTab === "yesterday") {
+        const y = new Date(todayStart); y.setDate(y.getDate() - 1);
+        q = q.gte("posted_date", y.toISOString()).lt("posted_date", todayStart.toISOString());
+      } else if (filterTab === "week") {
+        const w = new Date(todayStart); w.setDate(w.getDate() - 7);
+        const y = new Date(todayStart); y.setDate(y.getDate() - 1);
+        q = q.gte("posted_date", w.toISOString()).lt("posted_date", y.toISOString());
+      }
+    }
+
+    if (signal) q = q.abortSignal(signal);
+    const { data, error } = await q;
+    if (error) throw error;
+    allJobs = (data || []).map(parseJob);
+  }
+
+  if (dateFrom || dateTo) {
+    allJobs = allJobs.filter(j => {
+      if (dateFrom && j.posted_date < new Date(dateFrom)) return false;
+      if (dateTo) {
+        const to = new Date(dateTo);
+        to.setDate(to.getDate() + 1);
+        if (j.posted_date >= to) return false;
+      }
+      return true;
+    });
+  }
+
+  return enrichJobList(allJobs, false);
+}
+
 export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, visaFilter = "all", filterTab = "all" }: UseJobSearchPaginatedOptions) {
   const queryClient = useQueryClient();
   const isVisaFiltered = visaFilter !== "all";
@@ -176,25 +249,88 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
   const needsClientFilter = isVisaFiltered || entryLevel;
   const debouncedCountSearch = useDebounce(searchQuery, 450);
 
+  // Personalization: if the user has any profile signal (skills/title/work/resume),
+  // re-rank the candidate pool by match score (skills 50% / title 30% / experience 20%),
+  // tiebreak by recency within ±10 points, and push applied/saved to the bottom.
+  const { profile } = useProfile();
+  const { data: excludeIds } = useAppliedSavedJobIds();
+
+  const personalIntelligence = useMemo<ResumeIntelligence | null>(() => {
+    if (!profile) return null;
+    const stored = (profile.resume_intelligence as ResumeIntelligence | null) || null;
+    return stored ?? buildProfileFallbackIntelligence(profile);
+  }, [profile]);
+
+  const profileFingerprint = useMemo(() => {
+    if (!personalIntelligence) return null;
+    return [
+      personalIntelligence.primaryRole || "",
+      (personalIntelligence.topSkills || []).slice(0, 8).join(","),
+      personalIntelligence.experienceLevel || "",
+      personalIntelligence.yearsOfExperience ?? "",
+    ].join("|");
+  }, [personalIntelligence]);
+
+  // Personalize when we have profile data AND no client-side post-filter is active
+  // (visa / entry-level paths overfetch + slice differently and would conflict).
+  const personalize = !!personalIntelligence && !needsClientFilter;
+
   // Cancel stale in-flight queries when search changes (not on unmount)
   const prevSearchRef = useRef(searchQuery);
   useEffect(() => {
     if (prevSearchRef.current !== searchQuery) {
       queryClient.cancelQueries({ queryKey: ["jobs", "paginated", prevSearchRef.current] });
+      queryClient.cancelQueries({ queryKey: ["jobs", "personalized", prevSearchRef.current] });
       prevSearchRef.current = searchQuery;
     }
   }, [searchQuery, queryClient]);
 
+  // ---------- Personalized branch ----------
+  const personalizedQuery = useQuery({
+    queryKey: ["jobs", "personalized", searchQuery, dateFrom, dateTo, filterTab, profileFingerprint],
+    queryFn: async ({ signal }) => {
+      const pool = await fetchPersonalizedPool(searchQuery, dateFrom, dateTo, filterTab, signal);
+      if (!personalIntelligence) return pool;
+
+      const scored = pool.map((j) => {
+        const m = calculateJobMatch(j, personalIntelligence);
+        return { job: j, score: m.score };
+      });
+
+      // Match score desc; within 10pt window, prefer recency
+      scored.sort((a, b) => {
+        const diff = b.score - a.score;
+        if (Math.abs(diff) >= 10) return diff;
+        return b.job.posted_date.getTime() - a.job.posted_date.getTime();
+      });
+
+      // Push applied/saved to bottom (preserve their relative order)
+      const top: typeof scored = [];
+      const bottom: typeof scored = [];
+      for (const s of scored) {
+        if (excludeIds?.has(s.job.id)) bottom.push(s);
+        else top.push(s);
+      }
+      return [...top, ...bottom].map((s) => s.job);
+    },
+    enabled: personalize,
+    staleTime: PERSONALIZED_STALE_TIME,
+    gcTime: PERSONALIZED_STALE_TIME,
+    placeholderData: (prev) => prev,
+  });
+
+  // ---------- Default (non-personalized) branch ----------
   const jobsQuery = useQuery({
     queryKey: ["jobs", "paginated", searchQuery, page, dateFrom, dateTo, visaFilter, filterTab],
     queryFn: ({ signal }) => fetchJobsPage(searchQuery, page, dateFrom, dateTo, visaFilter, filterTab, signal),
     staleTime: STALE_TIME,
     placeholderData: (prev) => prev,
+    enabled: !personalize,
   });
 
-  // Prefetch next page in background for instant navigation
+  // Prefetch next page in background for instant navigation (default branch only)
   useEffect(() => {
-    if (!needsClientFilter && jobsQuery.data && jobsQuery.data.jobs.length === PAGE_SIZE) {
+    if (!personalize && !needsClientFilter && jobsQuery.data && jobsQuery.data.jobs.length === PAGE_SIZE) {
       const nextPage = page + 1;
       queryClient.prefetchQuery({
         queryKey: ["jobs", "paginated", searchQuery, nextPage, dateFrom, dateTo, visaFilter, filterTab],
@@ -202,7 +338,7 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
         staleTime: STALE_TIME,
       });
     }
-  }, [queryClient, searchQuery, page, dateFrom, dateTo, visaFilter, filterTab, needsClientFilter, jobsQuery.data]);
+  }, [queryClient, searchQuery, page, dateFrom, dateTo, visaFilter, filterTab, needsClientFilter, personalize, jobsQuery.data]);
 
   const countQuery = useQuery({
     queryKey: ["jobs", "count", debouncedCountSearch, filterTab],
@@ -263,18 +399,31 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
       return count || 0;
     },
     staleTime: STALE_TIME,
-    enabled: !needsClientFilter,
+    enabled: !needsClientFilter && !personalize,
   });
+
+  // ---------- Assemble final result ----------
+  if (personalize) {
+    const all = personalizedQuery.data || [];
+    const totalCount = all.length;
+    const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+    const start = (page - 1) * PAGE_SIZE;
+    return {
+      data: {
+        jobs: all.slice(start, start + PAGE_SIZE),
+        totalCount,
+        totalPages,
+      },
+      isLoading: personalizedQuery.isLoading,
+      isFetching: personalizedQuery.isFetching,
+    };
+  }
 
   const clientFilteredCount = (jobsQuery.data as any)?.visaFilteredCount;
   const rawTotalCount = needsClientFilter
     ? (clientFilteredCount ?? 0)
     : (countQuery.data ?? 0);
 
-  // PERMANENT FIX: when client-side filtering is active, the count above is
-  // bounded by what we actually fetched (ENTRY_LEVEL_BATCH_SIZE / VISA_BATCH_SIZE).
-  // Before, server count_search_jobs returned the un-enriched total → users
-  // could click page 6+ and see an empty list. Now totalCount === reachable rows.
   const totalCount = rawTotalCount;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
