@@ -3,20 +3,27 @@ import { supabase } from "@/integrations/supabase/client";
 import { Job } from "@/types/job";
 import { expandSearchTerms } from "@/lib/searchExpansion";
 import { enrichJobList } from "@/lib/jobEnrichment";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import { VisaFilter, filterJobsByVisa } from "@/lib/visaSponsorship";
 import { useDebounce } from "@/hooks/useDebounce";
 import { hasEntryLevelIntent, stripEntryLevelKeywords } from "@/lib/jobFilters";
+import { useProfile } from "@/hooks/useProfile";
+import { useAppliedSavedJobIds } from "@/hooks/useAppliedSavedJobIds";
+import { buildProfileFallbackIntelligence } from "@/hooks/useRecommendedJobs";
+import { calculateJobMatch } from "@/lib/jobMatcher";
+import { ResumeIntelligence } from "@/hooks/useResumeIntelligence";
 
 const PAGE_SIZE = 20;
 const FIRST_PAGE_OVERFETCH_SIZE = 120;
+const PERSONALIZED_POOL_SIZE = 300;
 // Bumped batches so client-filtered pagination has enough rows to fill multiple pages.
 // Visa filter typically keeps ~30-40% of jobs → 400 raw ≈ ~7-8 pages.
 // Entry-level filter typically keeps ~50% → 300 raw ≈ ~7 pages.
 const ENTRY_LEVEL_BATCH_SIZE = 300;
 const VISA_BATCH_SIZE = 400;
 const STALE_TIME = 5 * 60 * 1000; // 5 minutes
+const PERSONALIZED_STALE_TIME = 60 * 60 * 1000; // 1 hour cache per profile
 
 function parseJob(row: any): Job {
   return {
