@@ -293,14 +293,18 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
     queryFn: async ({ signal }) => {
       const pool = await fetchPersonalizedPool(searchQuery, dateFrom, dateTo, filterTab, signal);
 
-      // When the user is actively searching, sort strictly by latest posted time
-      // (most recently posted jobs first — matches the timestamp shown on cards).
+      // When the user is actively searching, sort strictly by latest updated time
+      // (most recently updated jobs first). This treats title variants like
+      // "Software Engineer", "Software Engineer 1", "Software Engineer I",
+      // "Junior Software Engineer" equally — they all match via full-text search,
+      // and ordering is purely by recency of update.
       if (hasSearchQuery) {
-        const sorted = [...pool].sort((a, b) => {
-          const aT = (a.posted_date instanceof Date ? a.posted_date : new Date(a.posted_date)).getTime();
-          const bT = (b.posted_date instanceof Date ? b.posted_date : new Date(b.posted_date)).getTime();
-          return bT - aT;
-        });
+        const ts = (j: Job) => {
+          const u = j.updated_at instanceof Date ? j.updated_at : new Date(j.updated_at as any);
+          const p = j.posted_date instanceof Date ? j.posted_date : new Date(j.posted_date as any);
+          return Math.max(u.getTime() || 0, p.getTime() || 0);
+        };
+        const sorted = [...pool].sort((a, b) => ts(b) - ts(a));
         // Push applied/saved to bottom (preserve relative order)
         const top: Job[] = [];
         const bottom: Job[] = [];
