@@ -179,16 +179,21 @@ async function fetchPersonalizedPool(
   let allJobs: Job[] = [];
 
   if (trimmed) {
-    const expandedTerms = expandSearchTerms(trimmed);
-    let rpcQuery = supabase.rpc("search_jobs", {
-      search_query: trimmed,
-      page_size: PERSONALIZED_POOL_SIZE,
-      page_offset: 0,
-      filter_tab: filterTab,
-      expanded_terms: expandedTerms.length > 0 ? expandedTerms : undefined,
-    });
-    if (signal) rpcQuery = rpcQuery.abortSignal(signal);
-    const { data, error } = await rpcQuery;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 365);
+    let q = supabase
+      .from("jobs")
+      .select("*")
+      .eq("is_published", true)
+      .eq("is_archived", false)
+      .eq("is_direct_apply", true)
+      .is("deleted_at", null)
+      .gte("posted_date", cutoff.toISOString())
+      .ilike("title", `%${trimmed}%`)
+      .order("updated_at", { ascending: false })
+      .range(0, PERSONALIZED_POOL_SIZE - 1);
+    if (signal) q = q.abortSignal(signal);
+    const { data, error } = await q;
     if (error) throw error;
     allJobs = (data || []).map(parseJob);
   } else {
