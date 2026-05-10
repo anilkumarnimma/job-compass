@@ -198,7 +198,7 @@ export function spreadSimilarJobs(jobs: Job[]): Job[] {
   return result;
 }
 
-import { isTutorListing, isNonEntryLevelJob } from "@/lib/jobFilters";
+import { isTutorListing, isNonEntryLevelJob, isHighExperienceJob } from "@/lib/jobFilters";
 import { getBestLocation } from "@/lib/locationExtractor";
 import { isUSALocation } from "@/lib/usaLocationFilter";
 
