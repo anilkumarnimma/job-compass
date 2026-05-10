@@ -7,7 +7,7 @@
  import { CompanyLogo } from "@/components/CompanyLogo";
  import { Bookmark, ExternalLink, Trash2, MapPin, Loader2 } from "lucide-react";
  import { Link, Navigate } from "react-router-dom";
- import { formatDistanceToNow } from "date-fns";
+ import { formatJobTimestamp } from "@/lib/jobTimestamp";
  
  export default function Saved() {
    const { savedJobs, unsaveJob, applyToJob, isApplied, isLoading } = useJobContext();
@@ -97,7 +97,7 @@
                            {job.location}
                          </span>
                          <span>
-                           Posted {formatDistanceToNow(job.posted_date, { addSuffix: true })}
+                           Posted {formatJobTimestamp(job.posted_date)}
                          </span>
                        </div>
  

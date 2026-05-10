@@ -271,9 +271,11 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
     ].join("|");
   }, [personalIntelligence]);
 
-  // Personalize when we have profile data AND no client-side post-filter is active
-  // (visa / entry-level paths overfetch + slice differently and would conflict).
-  const personalize = !!personalIntelligence && !needsClientFilter;
+  // Personalize when we have profile data OR an active search query, AND no client-side
+  // post-filter is active (visa / entry-level paths overfetch + slice differently).
+  // Search queries are always sorted by latest updated time first (no scoring re-rank).
+  const hasSearchQuery = !!searchQuery.trim();
+  const personalize = (!!personalIntelligence || hasSearchQuery) && !needsClientFilter;
 
   // Cancel stale in-flight queries when search changes (not on unmount)
   const prevSearchRef = useRef(searchQuery);
@@ -290,6 +292,26 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
     queryKey: ["jobs", "personalized", searchQuery, dateFrom, dateTo, filterTab, profileFingerprint],
     queryFn: async ({ signal }) => {
       const pool = await fetchPersonalizedPool(searchQuery, dateFrom, dateTo, filterTab, signal);
+
+      // When the user is actively searching, sort strictly by latest updated time
+      // (most recently updated jobs first). Skip match-score re-ranking so keyword
+      // results follow the recency rule the product expects.
+      if (hasSearchQuery) {
+        const sorted = [...pool].sort((a, b) => {
+          const aT = (a.updated_at instanceof Date ? a.updated_at : new Date(a.updated_at)).getTime();
+          const bT = (b.updated_at instanceof Date ? b.updated_at : new Date(b.updated_at)).getTime();
+          return bT - aT;
+        });
+        // Push applied/saved to bottom (preserve relative order)
+        const top: Job[] = [];
+        const bottom: Job[] = [];
+        for (const j of sorted) {
+          if (excludeIds?.has(j.id)) bottom.push(j);
+          else top.push(j);
+        }
+        return [...top, ...bottom];
+      }
+
       if (!personalIntelligence) return pool;
 
       const scored = pool.map((j) => {

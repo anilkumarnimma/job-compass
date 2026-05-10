@@ -13,7 +13,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, BriefcaseBusiness } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { formatJobTimestamp } from "@/lib/jobTimestamp";
 import { useNavigate } from "react-router-dom";
 
 
@@ -96,7 +96,7 @@ export function MobileJobPreviewSheet({ job, open, onOpenChange }: MobileJobPrev
                   )}
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
                     <Clock className="h-3 w-3" />
-                    Posted {formatDistanceToNow(job.posted_date, { addSuffix: false })} ago
+                    Posted {formatJobTimestamp(job.posted_date)}
                   </span>
                 </div>
               </div>
