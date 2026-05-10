@@ -25,6 +25,12 @@ const VISA_BATCH_SIZE = 400;
 const STALE_TIME = 5 * 60 * 1000; // 5 minutes
 const PERSONALIZED_STALE_TIME = 60 * 60 * 1000; // 1 hour cache per profile
 
+function getUpdatedTime(job: Job): number {
+  const updated = job.updated_at instanceof Date ? job.updated_at : new Date(job.updated_at as any);
+  const posted = job.posted_date instanceof Date ? job.posted_date : new Date(job.posted_date as any);
+  return updated.getTime() || posted.getTime() || 0;
+}
+
 function parseJob(row: any): Job {
   return {
     id: row.id,
@@ -300,23 +306,10 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
       // When the user is actively searching, sort strictly by latest updated time
       // (most recently updated jobs first). This treats title variants like
       // "Software Engineer", "Software Engineer 1", "Software Engineer I",
-      // "Junior Software Engineer" equally — they all match via full-text search,
+      // "Junior Software Engineer" equally — they all match by title only,
       // and ordering is purely by recency of update.
       if (hasSearchQuery) {
-        const ts = (j: Job) => {
-          const u = j.updated_at instanceof Date ? j.updated_at : new Date(j.updated_at as any);
-          const p = j.posted_date instanceof Date ? j.posted_date : new Date(j.posted_date as any);
-          return Math.max(u.getTime() || 0, p.getTime() || 0);
-        };
-        const sorted = [...pool].sort((a, b) => ts(b) - ts(a));
-        // Push applied/saved to bottom (preserve relative order)
-        const top: Job[] = [];
-        const bottom: Job[] = [];
-        for (const j of sorted) {
-          if (excludeIds?.has(j.id)) bottom.push(j);
-          else top.push(j);
-        }
-        return [...top, ...bottom];
+        return [...pool].sort((a, b) => getUpdatedTime(b) - getUpdatedTime(a));
       }
 
       if (!personalIntelligence) return pool;
