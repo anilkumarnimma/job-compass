@@ -227,7 +227,7 @@ export default function Dashboard() {
     setMobilePreviewJob(null);
     setMobileSheetOpen(false);
     if (term.trim().length > 0) {
-      setDateFilter("today");
+      setDateFilter("all");
       setCustomDate(undefined);
     }
   }, []);
