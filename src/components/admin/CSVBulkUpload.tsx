@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Upload, FileSpreadsheet, X, CheckCircle2, AlertCircle, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRemoveDuplicates } from "@/hooks/useRemoveDuplicates";
+import { isHighExperienceJob } from "@/lib/jobFilters";
 
 
 
@@ -439,6 +440,16 @@ function parseCSV(text: string): ParseResult {
 
     if (isDiceLink(row.external_apply_link)) {
       errors.push({ row: i + 1, message: "Dice links are not allowed" });
+      continue;
+    }
+
+    // Block jobs requiring more than 5 years of experience.
+    if (isHighExperienceJob({
+      title: row.title,
+      description: row.description || "",
+      experience_years: row.experience_years || null,
+    })) {
+      errors.push({ row: i + 1, message: "Job requires more than 5 years of experience (only 0–5 years allowed)" });
       continue;
     }
 

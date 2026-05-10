@@ -10,6 +10,8 @@ import { CompanyLogo } from "@/components/CompanyLogo";
 import { useCreateJob, useUpdateJob, useUploadLogo } from "@/hooks/useAdminJobs";
 import { Job, EmploymentType } from "@/types/job";
 import { Loader2, Upload, X, Link as LinkIcon } from "lucide-react";
+import { isHighExperienceJob } from "@/lib/jobFilters";
+import { toast } from "sonner";
  
  interface JobFormProps {
    job?: Job | null;
@@ -42,9 +44,18 @@ import { Loader2, Upload, X, Link as LinkIcon } from "lucide-react";
    const [logoInputMode, setLogoInputMode] = useState<"upload" | "url">("upload");
    const isLoading = createJob.isPending || updateJob.isPending || uploadLogo.isPending;
  
-   const handleSubmit = async (e: React.FormEvent) => {
-     e.preventDefault();
- 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (isHighExperienceJob({
+      title: formData.title,
+      description: formData.description,
+      experience_years: formData.experience_years || null,
+    })) {
+      toast.error("This job requires more than 5 years of experience and cannot be posted. Only 0–5 years roles are allowed.");
+      return;
+    }
+
     const jobData = {
       ...formData,
       skills: formData.skills.split(",").map((s) => s.trim()).filter(Boolean),
