@@ -443,6 +443,16 @@ function parseCSV(text: string): ParseResult {
       continue;
     }
 
+    // Block jobs requiring more than 5 years of experience.
+    if (isHighExperienceJob({
+      title: row.title,
+      description: row.description || "",
+      experience_years: row.experience_years || null,
+    })) {
+      errors.push({ row: i + 1, message: "Job requires more than 5 years of experience (only 0–5 years allowed)" });
+      continue;
+    }
+
     // Apply graceful defaults for non-critical fields so we don't lose real jobs.
     valid.push({
       title: row.title,
