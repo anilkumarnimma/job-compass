@@ -149,7 +149,7 @@ export default function Dashboard() {
       sessionStorage.removeItem("pending_search");
       setSearchInput(pendingSearch);
       setCommittedQuery(pendingSearch);
-      setDateFilter("today");
+      setDateFilter("all");
       setSearchParams({ search: pendingSearch }, { replace: true });
     }
   }, []);
@@ -207,10 +207,10 @@ export default function Dashboard() {
     setMobileSheetOpen(false);
     const next = (committedValue ?? searchInput).trim();
     setCommittedQuery((prev) => (prev === next ? prev : next));
-    // When the user searches anything, default the date filter to "Today"
-    // so the freshest jobs surface first.
+    // When the user searches anything, show ALL-time matches sorted by latest
+    // updated time first (priority), not just today's jobs.
     if (next.length > 0) {
-      setDateFilter("today");
+      setDateFilter("all");
       setCustomDate(undefined);
     }
   }, [searchInput]);
