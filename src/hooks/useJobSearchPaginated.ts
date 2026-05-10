@@ -293,13 +293,12 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
     queryFn: async ({ signal }) => {
       const pool = await fetchPersonalizedPool(searchQuery, dateFrom, dateTo, filterTab, signal);
 
-      // When the user is actively searching, sort strictly by latest updated time
-      // (most recently updated jobs first). Skip match-score re-ranking so keyword
-      // results follow the recency rule the product expects.
+      // When the user is actively searching, sort strictly by latest posted time
+      // (most recently posted jobs first — matches the timestamp shown on cards).
       if (hasSearchQuery) {
         const sorted = [...pool].sort((a, b) => {
-          const aT = (a.updated_at instanceof Date ? a.updated_at : new Date(a.updated_at)).getTime();
-          const bT = (b.updated_at instanceof Date ? b.updated_at : new Date(b.updated_at)).getTime();
+          const aT = (a.posted_date instanceof Date ? a.posted_date : new Date(a.posted_date)).getTime();
+          const bT = (b.posted_date instanceof Date ? b.posted_date : new Date(b.posted_date)).getTime();
           return bT - aT;
         });
         // Push applied/saved to bottom (preserve relative order)
