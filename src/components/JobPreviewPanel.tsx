@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { MapPin, Clock, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, BriefcaseBusiness, Target, Brain } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { formatJobTimestamp } from "@/lib/jobTimestamp";
 import { useNavigate } from "react-router-dom";
 import { analyzeVisaSponsorship } from "@/lib/visaSponsorship";
 import { VisaSponsorshipBadge } from "@/components/VisaSponsorshipBadge";
@@ -108,7 +108,7 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
             </h3>
             <p className="text-accent text-sm font-semibold mt-0.5">{job.company?.replace(/&amp;/g, "&").replace(/&#39;/g, "'").replace(/&quot;/g, '"')}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Posted {formatDistanceToNow(job.posted_date, { addSuffix: false })} ago
+              Posted {formatJobTimestamp(job.posted_date)}
             </p>
           </div>
           {/* Match tier label only (percentage hidden — shown in Landing Probability panel below) */}

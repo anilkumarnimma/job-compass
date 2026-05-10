@@ -10,7 +10,7 @@ import { useJobContext } from "@/context/JobContext";
 import { useAuth } from "@/context/AuthContext";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, ArrowRight, Target, FileText, Linkedin } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { formatJobTimestamp } from "@/lib/jobTimestamp";
 import { useNavigate } from "react-router-dom";
 import { memo, useCallback, useState, useMemo, lazy, Suspense } from "react";
 import { analyzeVisaSponsorship } from "@/lib/visaSponsorship";
@@ -192,7 +192,7 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
             <div className="flex flex-col items-end gap-1.5 shrink-0">
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-accent/10 text-accent border border-accent/20 whitespace-nowrap">
                 <Clock className="h-3 w-3" />
-                {formatDistanceToNow(job.posted_date, { addSuffix: true })}
+                {formatJobTimestamp(job.posted_date)}
               </span>
               {(landingProbability || (!matchResult && job.is_reviewing)) && (
                 <div className="flex items-center gap-1.5">
