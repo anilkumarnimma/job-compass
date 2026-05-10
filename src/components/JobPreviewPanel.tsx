@@ -108,7 +108,7 @@ export function JobPreviewPanel({ job, matchResult, landingProbability }: JobPre
             </h3>
             <p className="text-accent text-sm font-semibold mt-0.5">{job.company?.replace(/&amp;/g, "&").replace(/&#39;/g, "'").replace(/&quot;/g, '"')}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Posted {formatJobTimestamp(job.updated_at)}
+              Updated {formatJobTimestamp(job.updated_at)}
             </p>
           </div>
           {/* Match tier label only (percentage hidden — shown in Landing Probability panel below) */}
