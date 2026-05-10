@@ -96,7 +96,7 @@ export function MobileJobPreviewSheet({ job, open, onOpenChange }: MobileJobPrev
                   )}
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
                     <Clock className="h-3 w-3" />
-                    Posted {formatJobTimestamp(job.posted_date)}
+                    Posted {formatJobTimestamp(job.updated_at)}
                   </span>
                 </div>
               </div>
