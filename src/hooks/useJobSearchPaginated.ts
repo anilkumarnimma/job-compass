@@ -375,21 +375,22 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
       const trimmed = debouncedCountSearch.trim();
       if (trimmed) {
         const effectiveQ = hasEntryLevelIntent(trimmed) ? stripEntryLevelKeywords(trimmed) : trimmed;
-        const queryForDb = effectiveQ || trimmed;
-        const expandedTerms = expandSearchTerms(queryForDb);
-        let rpcQuery = supabase.rpc("count_search_jobs", {
-          search_query: queryForDb,
-          expanded_terms: expandedTerms.length > 0 ? expandedTerms : undefined,
-          filter_tab: filterTab,
-        } as any);
-
-        if (signal) {
-          rpcQuery = rpcQuery.abortSignal(signal);
-        }
-
-        const { data, error } = await rpcQuery;
+        const queryForDb = (effectiveQ || trimmed).trim();
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - 365);
+        let cq = supabase
+          .from("jobs")
+          .select("*", { count: "exact", head: true })
+          .eq("is_published", true)
+          .eq("is_archived", false)
+          .eq("is_direct_apply", true)
+          .is("deleted_at", null)
+          .gte("posted_date", cutoff.toISOString())
+          .ilike("title", `%${queryForDb}%`);
+        if (signal) cq = cq.abortSignal(signal);
+        const { count, error } = await cq;
         if (error) throw error;
-        return Number(data) || 0;
+        return count || 0;
       }
 
       const cutoff = new Date();
