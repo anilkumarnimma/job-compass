@@ -85,8 +85,6 @@ async function fetchJobsPage(
 
   if (effectiveQuery || trimmed) {
     const queryForDb = (effectiveQuery || trimmed).trim();
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 365);
     const fetchSize = needsClientFilter
       ? (isVisaFiltered ? VISA_BATCH_SIZE : ENTRY_LEVEL_BATCH_SIZE)
       : (shouldOverfetchFirstPage ? FIRST_PAGE_OVERFETCH_SIZE : PAGE_SIZE);
@@ -101,7 +99,6 @@ async function fetchJobsPage(
       .eq("is_archived", false)
       .eq("is_direct_apply", true)
       .is("deleted_at", null)
-      .gte("posted_date", cutoff.toISOString())
       .ilike("title", `%${queryForDb}%`)
       .order("updated_at", { ascending: false })
       .range(rangeStart, rangeEnd);
@@ -185,8 +182,6 @@ async function fetchPersonalizedPool(
   let allJobs: Job[] = [];
 
   if (trimmed) {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 365);
     let q = supabase
       .from("jobs")
       .select("*")
@@ -194,7 +189,6 @@ async function fetchPersonalizedPool(
       .eq("is_archived", false)
       .eq("is_direct_apply", true)
       .is("deleted_at", null)
-      .gte("posted_date", cutoff.toISOString())
       .ilike("title", `%${trimmed}%`)
       .order("updated_at", { ascending: false })
       .range(0, PERSONALIZED_POOL_SIZE - 1);
@@ -369,8 +363,6 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
       if (trimmed) {
         const effectiveQ = hasEntryLevelIntent(trimmed) ? stripEntryLevelKeywords(trimmed) : trimmed;
         const queryForDb = (effectiveQ || trimmed).trim();
-        const cutoff = new Date();
-        cutoff.setDate(cutoff.getDate() - 365);
         let cq = supabase
           .from("jobs")
           .select("*", { count: "exact", head: true })
@@ -378,7 +370,6 @@ export function useJobSearchPaginated({ searchQuery, page, dateFrom, dateTo, vis
           .eq("is_archived", false)
           .eq("is_direct_apply", true)
           .is("deleted_at", null)
-          .gte("posted_date", cutoff.toISOString())
           .ilike("title", `%${queryForDb}%`);
         if (signal) cq = cq.abortSignal(signal);
         const { count, error } = await cq;
