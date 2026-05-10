@@ -78,41 +78,40 @@ async function fetchJobsPage(
   let allJobs: Job[] = [];
 
   if (effectiveQuery || trimmed) {
-    const queryForDb = effectiveQuery || trimmed;
-    const expandedTerms = expandSearchTerms(queryForDb);
+    const queryForDb = (effectiveQuery || trimmed).trim();
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 365);
     const fetchSize = needsClientFilter
       ? (isVisaFiltered ? VISA_BATCH_SIZE : ENTRY_LEVEL_BATCH_SIZE)
       : (shouldOverfetchFirstPage ? FIRST_PAGE_OVERFETCH_SIZE : PAGE_SIZE);
-    const fetchOffset = needsClientFilter ? 0 : (page - 1) * PAGE_SIZE;
+    const rangeStart = needsClientFilter ? 0 : (page - 1) * PAGE_SIZE;
+    const rangeEnd = rangeStart + fetchSize - 1;
 
-    let rpcQuery = supabase.rpc("search_jobs", {
-      search_query: queryForDb,
-      page_size: fetchSize,
-      page_offset: fetchOffset,
-      filter_tab: filterTab,
-      expanded_terms: expandedTerms.length > 0 ? expandedTerms : undefined,
-    });
+    // Title-only match: any job whose title contains the query phrase.
+    let q = supabase
+      .from("jobs")
+      .select("*")
+      .eq("is_published", true)
+      .eq("is_archived", false)
+      .eq("is_direct_apply", true)
+      .is("deleted_at", null)
+      .gte("posted_date", cutoff.toISOString())
+      .ilike("title", `%${queryForDb}%`)
+      .order("updated_at", { ascending: false })
+      .range(rangeStart, rangeEnd);
 
-    if (signal) {
-      rpcQuery = rpcQuery.abortSignal(signal);
+    if (dateFrom) q = q.gte("posted_date", dateFrom);
+    if (dateTo) {
+      const toDate = new Date(dateTo);
+      toDate.setDate(toDate.getDate() + 1);
+      q = q.lt("posted_date", toDate.toISOString().split("T")[0]);
     }
 
-    const { data, error } = await rpcQuery;
+    if (signal) q = q.abortSignal(signal);
 
+    const { data, error } = await q;
     if (error) throw error;
     allJobs = (data || []).map(parseJob);
-
-    if (dateFrom || dateTo) {
-      allJobs = allJobs.filter(j => {
-        if (dateFrom && j.posted_date < new Date(dateFrom)) return false;
-        if (dateTo) {
-          const to = new Date(dateTo);
-          to.setDate(to.getDate() + 1);
-          if (j.posted_date >= to) return false;
-        }
-        return true;
-      });
-    }
   } else {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 45);
