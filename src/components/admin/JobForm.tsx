@@ -10,6 +10,8 @@ import { CompanyLogo } from "@/components/CompanyLogo";
 import { useCreateJob, useUpdateJob, useUploadLogo } from "@/hooks/useAdminJobs";
 import { Job, EmploymentType } from "@/types/job";
 import { Loader2, Upload, X, Link as LinkIcon } from "lucide-react";
+import { isHighExperienceJob } from "@/lib/jobFilters";
+import { toast } from "sonner";
  
  interface JobFormProps {
    job?: Job | null;
