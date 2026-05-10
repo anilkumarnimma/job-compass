@@ -545,7 +545,7 @@ export default function Dashboard() {
                 onChange={handleSearchChange}
                 onSearch={handleSearchCommit}
                 onSuggestionSelect={handleRelatedSelect}
-                placeholder="Search jobs by title, company, skills…"
+                placeholder="Search jobs by title…"
               />
             </div>
             <div className="flex items-center gap-2 shrink-0 flex-wrap" data-tour="date-filters">
