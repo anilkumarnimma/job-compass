@@ -278,8 +278,8 @@ export default function About() {
             </p>
             <div className="grid md:grid-cols-2 gap-6">
               {[
-                { name: "Anil Kumar", title: "Engineering & Product" },
-                { name: "Karthik Reddy", title: "Engineering & Product" },
+                { name: "Founder", title: "Engineering & product", bio: "Wrote the first scraper at 2am after the 73rd dead apply link of the week." },
+                { name: "Co-builder", title: "Design & growth", bio: "Talks to job hunters every day. Translates pain into features the team ships next week." },
               ].map((p, i) => (
                 <div
                   key={i}
@@ -290,6 +290,15 @@ export default function About() {
                   </div>
                   <h3 className="font-display font-bold text-lg text-foreground">{p.name}</h3>
                   <div className="text-sm mb-3 text-accent">{p.title}</div>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{p.bio}</p>
+                  <a
+                    href="https://linkedin.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 mt-5 text-muted-foreground hover:text-accent transition-colors"
+                  >
+                    <Linkedin className="h-4 w-4" />
+                  </a>
                 </div>
               ))}
             </div>
