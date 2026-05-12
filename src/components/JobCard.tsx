@@ -214,8 +214,17 @@ export const JobCard = memo(function JobCard({ job, onViewDetails, onTap, isSele
       {/* Meta Row */}
       <div className="flex flex-wrap items-center gap-2 mb-3 relative z-10">
         {visaResult.status !== "unknown" && visaResult.status !== "unlikely" && (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 whitespace-nowrap">
-            ✅ {visaResult.label}
+          <span
+            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap border ${
+              visaResult.status === "sponsors"
+                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+                : visaResult.status === "stem_opt"
+                ? "bg-violet-500/15 text-violet-600 dark:text-violet-400 border-violet-500/25"
+                : "bg-sky-500/15 text-sky-600 dark:text-sky-400 border-sky-500/25"
+            }`}
+            title={visaResult.visaTypes.join(", ")}
+          >
+            {visaResult.emoji} {visaResult.label}
           </span>
         )}
         {job.location && !/nan/i.test(job.location) && !/not specified/i.test(job.location) && job.location.trim() !== '' && job.location.length < 100 && !/document\.|window\.|dispatchEvent|analytics/i.test(job.location) && (
