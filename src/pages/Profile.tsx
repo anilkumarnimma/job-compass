@@ -1267,3 +1267,81 @@ function EmailNotificationPrefsCard({ userId }: { userId: string }) {
     </Card>
   );
 }
+
+function DeleteAccountCard() {
+  const { signOut } = useAuth();
+  const { toast } = useToast();
+  const [open, setOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const { error } = await supabase.functions.invoke("delete-account");
+      if (error) throw error;
+      toast({ title: "Account deleted", description: "Your account and data have been removed." });
+      await signOut();
+      window.location.href = "/";
+    } catch (e) {
+      toast({
+        title: "Failed to delete account",
+        description: (e as Error).message || "Please try again or contact support.",
+        variant: "destructive",
+      });
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <>
+      <Card className="rounded-3xl border-destructive/30 bg-destructive/5">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Trash2 className="h-5 w-5 text-destructive" />
+            <CardTitle className="text-lg text-destructive">Delete Account</CardTitle>
+          </div>
+          <CardDescription>
+            Permanently delete your account, profile, applications, saved jobs, and all related data. This cannot be undone.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="destructive" className="rounded-full" onClick={() => setOpen(true)}>
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete my account
+          </Button>
+        </CardContent>
+      </Card>
+
+      <AlertDialog open={open} onOpenChange={(v) => { if (!deleting) { setOpen(v); setConfirmText(""); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove your profile, resume, applications, saved jobs, and subscription data. This action is irreversible.
+              <br /><br />
+              Type <span className="font-semibold text-destructive">DELETE</span> to confirm.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Input
+            value={confirmText}
+            onChange={(e) => setConfirmText(e.target.value)}
+            placeholder="Type DELETE"
+            disabled={deleting}
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={confirmText !== "DELETE" || deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Deleting...</> : "Delete forever"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
