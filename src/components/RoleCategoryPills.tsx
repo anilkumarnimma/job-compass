@@ -1,6 +1,6 @@
-import { useMemo, useRef, useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { ChevronDown, ChevronLeft, ChevronRight, Check, Sparkles } from "lucide-react";
+import { useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronDown, Check, Sparkles, Search } from "lucide-react";
 import { useRoleCategoryCounts } from "@/hooks/useRoleCategoryCounts";
 import {
   Popover,
@@ -16,220 +16,173 @@ interface RoleCategoryPillsProps {
   onSelect: (categoryId: string | null) => void;
 }
 
-const pillVariants = {
-  inactive: { scale: 1 },
-  active: { scale: 1, transition: { type: "spring" as const, stiffness: 400, damping: 25 } },
-  tap: { scale: 0.95 },
-};
-
 export function RoleCategoryPills({ selectedCategoryId, onSelect }: RoleCategoryPillsProps) {
   const { data, isLoading } = useRoleCategoryCounts();
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-  const [otherOpen, setOtherOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
 
-  // Hide curated pills with zero matches so the rail stays focused
-  const curatedPills = useMemo(
-    () => (data?.curated ?? []).filter((c) => c.count > 0),
-    [data]
+  const allPills = useMemo(() => {
+    const curated = (data?.curated ?? []).filter((c) => c.count > 0);
+    const other = data?.other ?? [];
+    return [...curated, ...other];
+  }, [data]);
+
+  const totalCount = useMemo(
+    () => allPills.reduce((sum, p) => sum + p.count, 0),
+    [allPills]
   );
-  const otherPills = data?.other ?? [];
 
-  const updateScrollIndicators = () => {
-    const el = scrollRef.current;
-    if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 4);
-    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
-  };
+  const selected = allPills.find((p) => p.category.id === selectedCategoryId);
 
-  useEffect(() => {
-    updateScrollIndicators();
-    const el = scrollRef.current;
-    if (!el) return;
-    el.addEventListener("scroll", updateScrollIndicators, { passive: true });
-    window.addEventListener("resize", updateScrollIndicators);
-    return () => {
-      el.removeEventListener("scroll", updateScrollIndicators);
-      window.removeEventListener("resize", updateScrollIndicators);
-    };
-  }, [curatedPills.length, otherPills.length]);
-
-  const scrollBy = (delta: number) => {
-    scrollRef.current?.scrollBy({ left: delta, behavior: "smooth" });
-  };
-
-  const selectedOther = otherPills.find((p) => p.category.id === selectedCategoryId);
+  const filtered = useMemo(() => {
+    if (!query.trim()) return allPills;
+    const q = query.trim().toLowerCase();
+    return allPills.filter((p) => p.category.label.toLowerCase().includes(q));
+  }, [allPills, query]);
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 mb-4 overflow-hidden">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-8 w-24 rounded-full shrink-0" />
-        ))}
+      <div className="mb-4">
+        <Skeleton className="h-10 w-64 rounded-full" />
       </div>
     );
   }
 
-  if (!curatedPills.length && !otherPills.length) {
-    return null;
-  }
+  if (!allPills.length) return null;
+
+  const handleSelect = (id: string | null) => {
+    onSelect(id);
+    setOpen(false);
+    setQuery("");
+  };
 
   return (
-    <div className="relative mb-4" data-tour="role-pills">
-      <div className="flex items-center gap-2">
-        {/* Left scroll indicator */}
-        {canScrollLeft && (
-          <button
-            onClick={() => scrollBy(-240)}
-            aria-label="Scroll categories left"
-            className="hidden md:flex items-center justify-center h-8 w-8 rounded-full bg-card border border-border/60 text-muted-foreground hover:text-foreground hover:border-foreground/40 shrink-0 shadow-sm"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-        )}
-
-        <div
-          ref={scrollRef}
-          className="flex items-center gap-2 overflow-x-auto scrollbar-thin scroll-smooth -mx-1 px-1 py-1 flex-1"
-          style={{ scrollbarWidth: "thin" }}
-        >
-          {/* All pill */}
+    <div className="mb-4" data-tour="role-pills">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
           <motion.button
-            variants={pillVariants}
-            initial="inactive"
-            animate={selectedCategoryId === null ? "active" : "inactive"}
-            whileTap="tap"
-            onClick={() => onSelect(null)}
+            whileTap={{ scale: 0.98 }}
             className={cn(
-              "shrink-0 inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              selectedCategoryId === null
-                ? "bg-foreground text-background border-foreground shadow-sm"
-                : "bg-card text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground"
+              "group inline-flex items-center gap-2.5 pl-3 pr-2.5 py-2 rounded-full border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "bg-card/60 backdrop-blur-md border-border/60 hover:border-foreground/30 shadow-sm"
             )}
           >
-            <Sparkles className="h-3 w-3" />
-            All roles
+            <span
+              className={cn(
+                "flex items-center justify-center h-6 w-6 rounded-full shrink-0",
+                selected
+                  ? "bg-foreground text-background"
+                  : "bg-foreground/90 text-background"
+              )}
+            >
+              <Sparkles className="h-3 w-3" />
+            </span>
+            <span className="flex flex-col items-start leading-tight">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                Role
+              </span>
+              <span className="text-sm font-semibold text-foreground">
+                {selected ? selected.category.label : "All roles"}
+              </span>
+            </span>
+            <span className="ml-1 tabular-nums text-[11px] font-medium px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">
+              {selected ? selected.count : totalCount}
+            </span>
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 text-muted-foreground transition-transform duration-200",
+                open && "rotate-180"
+              )}
+            />
           </motion.button>
-
-          {curatedPills.map(({ category, count }) => {
-            const isActive = selectedCategoryId === category.id;
-            return (
-              <motion.button
-                key={category.id}
-                variants={pillVariants}
-                initial="inactive"
-                animate={isActive ? "active" : "inactive"}
-                whileTap="tap"
-                onClick={() => onSelect(isActive ? null : category.id)}
-                title={`${count} ${category.label} job${count !== 1 ? "s" : ""}`}
+        </PopoverTrigger>
+        <PopoverContent
+          align="start"
+          sideOffset={8}
+          className="w-[320px] p-0 rounded-2xl shadow-elevated border-border/60 bg-card/95 backdrop-blur-lg overflow-hidden"
+        >
+          <div className="p-2 border-b border-border/60">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <input
+                autoFocus
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search roles…"
+                className="w-full pl-8 pr-2 py-1.5 text-xs bg-secondary/60 rounded-lg border border-transparent focus:border-border focus:outline-none placeholder:text-muted-foreground/70"
+              />
+            </div>
+          </div>
+          <div className="max-h-80 overflow-y-auto p-1">
+            <button
+              onClick={() => handleSelect(null)}
+              className={cn(
+                "w-full flex items-center justify-between gap-2 px-3 py-2 text-xs font-medium rounded-lg transition-colors",
+                selectedCategoryId === null
+                  ? "bg-foreground text-background"
+                  : "text-foreground hover:bg-secondary"
+              )}
+            >
+              <span className="flex items-center gap-2 truncate">
+                {selectedCategoryId === null && <Check className="h-3 w-3 shrink-0" />}
+                <span className="truncate">All roles</span>
+              </span>
+              <span
                 className={cn(
-                  "shrink-0 inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  isActive
-                    ? "bg-foreground text-background border-foreground shadow-sm"
-                    : "bg-card text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground"
+                  "tabular-nums text-[10px] px-1.5 py-0.5 rounded-full shrink-0",
+                  selectedCategoryId === null
+                    ? "bg-background/20 text-background"
+                    : "bg-muted text-muted-foreground"
                 )}
               >
-                {category.label}
-                <span
-                  className={cn(
-                    "tabular-nums text-[10px] px-1.5 py-0.5 rounded-full",
-                    isActive
-                      ? "bg-background/20 text-background"
-                      : "bg-muted text-muted-foreground"
-                  )}
-                >
-                  {count}
-                </span>
-              </motion.button>
-            );
-          })}
-
-          {/* Other roles dropdown */}
-          {otherPills.length > 0 && (
-            <Popover open={otherOpen} onOpenChange={setOtherOpen}>
-              <PopoverTrigger asChild>
-                <motion.button
-                  variants={pillVariants}
-                  initial="inactive"
-                  animate={selectedOther ? "active" : "inactive"}
-                  whileTap="tap"
-                  className={cn(
-                    "shrink-0 inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    selectedOther
-                      ? "bg-foreground text-background border-foreground shadow-sm"
-                      : "bg-card text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground"
-                  )}
-                >
-                  {selectedOther ? selectedOther.category.label : "Other roles"}
-                  <span
+                {totalCount}
+              </span>
+            </button>
+            <AnimatePresence initial={false}>
+              {filtered.map(({ category, count }) => {
+                const isActive = selectedCategoryId === category.id;
+                return (
+                  <motion.button
+                    key={category.id}
+                    layout
+                    initial={{ opacity: 0, y: -2 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.12 }}
+                    onClick={() => handleSelect(isActive ? null : category.id)}
                     className={cn(
-                      "tabular-nums text-[10px] px-1.5 py-0.5 rounded-full",
-                      selectedOther
-                        ? "bg-background/20 text-background"
-                        : "bg-muted text-muted-foreground"
+                      "w-full flex items-center justify-between gap-2 px-3 py-2 text-xs font-medium rounded-lg transition-colors",
+                      isActive
+                        ? "bg-foreground text-background"
+                        : "text-foreground hover:bg-secondary"
                     )}
                   >
-                    {otherPills.length}
-                  </span>
-                  <ChevronDown className="h-3 w-3" />
-                </motion.button>
-              </PopoverTrigger>
-              <PopoverContent
-                align="start"
-                className="w-64 p-1 rounded-xl shadow-elevated border-border/60 bg-card/95 backdrop-blur-lg"
-              >
-                <div className="max-h-72 overflow-y-auto">
-                  {otherPills.map(({ category, count }) => {
-                    const isActive = selectedCategoryId === category.id;
-                    return (
-                      <button
-                        key={category.id}
-                        onClick={() => {
-                          onSelect(isActive ? null : category.id);
-                          setOtherOpen(false);
-                        }}
-                        className={cn(
-                          "w-full flex items-center justify-between gap-2 px-3 py-2 text-xs font-medium rounded-lg transition-colors",
-                          isActive
-                            ? "bg-foreground text-background"
-                            : "text-foreground hover:bg-secondary"
-                        )}
-                      >
-                        <span className="flex items-center gap-2 truncate">
-                          {isActive && <Check className="h-3 w-3 shrink-0" />}
-                          <span className="truncate">{category.label}</span>
-                        </span>
-                        <span
-                          className={cn(
-                            "tabular-nums text-[10px] px-1.5 py-0.5 rounded-full shrink-0",
-                            isActive
-                              ? "bg-background/20 text-background"
-                              : "bg-muted text-muted-foreground"
-                          )}
-                        >
-                          {count}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </PopoverContent>
-            </Popover>
-          )}
-        </div>
-
-        {/* Right scroll indicator */}
-        {canScrollRight && (
-          <button
-            onClick={() => scrollBy(240)}
-            aria-label="Scroll categories right"
-            className="hidden md:flex items-center justify-center h-8 w-8 rounded-full bg-card border border-border/60 text-muted-foreground hover:text-foreground hover:border-foreground/40 shrink-0 shadow-sm"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        )}
-      </div>
+                    <span className="flex items-center gap-2 truncate">
+                      {isActive && <Check className="h-3 w-3 shrink-0" />}
+                      <span className="truncate">{category.label}</span>
+                    </span>
+                    <span
+                      className={cn(
+                        "tabular-nums text-[10px] px-1.5 py-0.5 rounded-full shrink-0",
+                        isActive
+                          ? "bg-background/20 text-background"
+                          : "bg-muted text-muted-foreground"
+                      )}
+                    >
+                      {count}
+                    </span>
+                  </motion.button>
+                );
+              })}
+            </AnimatePresence>
+            {filtered.length === 0 && (
+              <div className="px-3 py-6 text-center text-xs text-muted-foreground">
+                No roles match "{query}"
+              </div>
+            )}
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
