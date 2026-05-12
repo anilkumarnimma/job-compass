@@ -257,6 +257,7 @@ STRICT RULES — follow every single one:
     const maxRetries = 2;
     let response: Response | null = null;
     let lastError = "";
+    let aiOutput: any = null;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       const model = models[Math.min(attempt, models.length - 1)];
@@ -297,7 +298,32 @@ STRICT RULES — follow every single one:
             status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
-        if (response.ok) break;
+        if (response.ok) {
+          // Parse and validate tool_call here so we can retry with next model if missing
+          try {
+            const result = await response.json();
+            const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
+            if (toolCall?.function?.arguments) {
+              try {
+                aiOutput = JSON.parse(toolCall.function.arguments);
+                if (aiOutput && Array.isArray(aiOutput.sections)) break;
+                aiOutput = null;
+                lastError = "AI returned invalid resume shape";
+              } catch (e) {
+                aiOutput = null;
+                lastError = "AI returned unparseable JSON";
+              }
+            } else {
+              lastError = "AI response missing tool_call";
+            }
+          } catch {
+            lastError = "Failed to read AI response body";
+          }
+          console.error(`[TAILOR] Attempt ${attempt + 1} bad output: ${lastError}`);
+          response = null;
+          if (attempt < maxRetries) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+          continue;
+        }
 
         lastError = await response.text();
         console.error(`[TAILOR] Attempt ${attempt + 1} failed (status ${response.status}):`, lastError.slice(0, 300));
@@ -312,34 +338,9 @@ STRICT RULES — follow every single one:
       }
     }
 
-    if (!response || !response.ok) {
+    if (!aiOutput) {
       console.error("[TAILOR] All attempts failed. Last error:", lastError.slice(0, 200));
       return new Response(JSON.stringify({ error: "Resume tailoring is temporarily unavailable. Please try again in a moment." }), {
-        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    let result: any;
-    try {
-      result = await response.json();
-    } catch {
-      return new Response(JSON.stringify({ error: "Failed to process AI response. Please try again." }), {
-        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall?.function?.arguments) {
-      return new Response(JSON.stringify({ error: "AI did not return a valid resume. Please try again." }), {
-        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    let aiOutput: any;
-    try {
-      aiOutput = JSON.parse(toolCall.function.arguments);
-    } catch {
-      return new Response(JSON.stringify({ error: "AI returned invalid resume data. Please try again." }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
