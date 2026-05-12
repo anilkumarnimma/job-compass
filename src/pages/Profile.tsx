@@ -1103,6 +1103,9 @@ export default function Profile() {
             </Card>
           )}
 
+          {/* Danger Zone — Delete Account */}
+          <DeleteAccountCard />
+
           {/* Debug Role Section - only visible to founder/admin */}
           {showRoleDebug && (
           <Card className="border-dashed border-accent/50 bg-accent/5 rounded-3xl">
