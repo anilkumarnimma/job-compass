@@ -419,19 +419,14 @@ interface FilterTriggerProps {
   dotClass: string;
 }
 
-const FilterTrigger = ({
-  icon,
-  label,
-  value,
-  valueBadge,
-  active,
-  open,
-  dotClass,
-  ...rest
-}: FilterTriggerProps & React.ButtonHTMLAttributes<HTMLButtonElement>) => {
+const FilterTrigger = forwardRef<
+  HTMLButtonElement,
+  FilterTriggerProps & React.ButtonHTMLAttributes<HTMLButtonElement>
+>(({ icon, label, value, valueBadge, active, open, dotClass, ...rest }, ref) => {
   return (
     <button
       type="button"
+      ref={ref}
       {...rest}
       className={cn(
         "group flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring whitespace-nowrap",
@@ -482,4 +477,5 @@ const FilterTrigger = ({
       />
     </button>
   );
-};
+});
+FilterTrigger.displayName = "FilterTrigger";
