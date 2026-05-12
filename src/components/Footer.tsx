@@ -10,6 +10,9 @@ export function Footer() {
             <span className="font-display font-semibold text-sm text-foreground">Sociax.tech</span>
           </div>
           <div className="flex items-center gap-4">
+            <Link to="/about" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              About
+            </Link>
             <Link to="/privacy-policy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Privacy Policy
             </Link>
