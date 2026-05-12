@@ -28,7 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function VisaJobs() {
   const [searchInput, setSearchInput] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [visaFilter, setVisaFilter] = useState<VisaFilter>("sponsors");
+  const [visaFilter, setVisaFilter] = useState<VisaFilter>("all");
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [mobilePreviewJob, setMobilePreviewJob] = useState<Job | null>(null);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);

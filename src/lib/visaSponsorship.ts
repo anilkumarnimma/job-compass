@@ -199,19 +199,26 @@ export function analyzeVisaSponsorship(job: Job): VisaSponsorshipResult {
   };
 }
 
-export type VisaFilter = "all" | "sponsors" | "opt_friendly";
+export type VisaFilter = "all" | "h1b" | "opt";
 
 export function filterJobsByVisa(jobs: Job[], filter: VisaFilter): Job[] {
-  if (filter === "all") return jobs;
+  if (filter === "all") {
+    // Show only jobs with any visa-friendly signal
+    return jobs.filter(job => {
+      const r = analyzeVisaSponsorship(job);
+      return r.status === "sponsors" || r.status === "opt_friendly" || r.status === "stem_opt";
+    });
+  }
 
   return jobs.filter(job => {
     const result = analyzeVisaSponsorship(job);
     switch (filter) {
-      case "sponsors":
-        return result.status === "sponsors" || result.status === "opt_friendly" || result.status === "stem_opt";
-      case "opt_friendly":
-        return result.status === "opt_friendly" || result.status === "stem_opt" || 
-               (result.status === "sponsors" && result.visaTypes.includes("OPT"));
+      case "h1b":
+        // True H1B sponsors only — exclude OPT-only jobs
+        return result.status === "sponsors";
+      case "opt":
+        // OPT and STEM OPT friendly roles
+        return result.status === "opt_friendly" || result.status === "stem_opt";
       default:
         return true;
     }
