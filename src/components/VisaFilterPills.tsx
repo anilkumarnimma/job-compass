@@ -1,17 +1,16 @@
 import { VisaFilter } from "@/lib/visaSponsorship";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Globe } from "lucide-react";
 
 interface VisaFilterPillsProps {
   value: VisaFilter;
   onChange: (filter: VisaFilter) => void;
 }
 
-const filters: { value: VisaFilter; label: string; emoji: string }[] = [
-  { value: "all", label: "All Visa-Friendly", emoji: "🌍" },
-  { value: "h1b", label: "H1B Sponsorship", emoji: "✅" },
-  { value: "opt", label: "OPT / STEM OPT", emoji: "🎓" },
+const filters: { value: VisaFilter; label: string }[] = [
+  { value: "all", label: "All Visa-Friendly" },
+  { value: "h1b", label: "H1B Sponsorship" },
+  { value: "opt", label: "OPT / STEM OPT" },
 ];
 
 const chipVariants = {
