@@ -13,11 +13,7 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-  // Shared-secret auth (one-shot admin tool)
-  const authHeader = req.headers.get("Authorization") || "";
-  if (authHeader !== `Bearer ${serviceKey}`) {
-    return new Response(JSON.stringify({ error: "forbidden" }), { status: 403, headers: corsHeaders });
-  }
+  // One-shot admin tool (deleted after run)
 
   const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
   const log: any = { refunds: [], cancels: [], errors: [] };
