@@ -48,7 +48,7 @@ import { RoleRequestModal } from "@/components/RoleRequestModal";
 import { PremiumUpgradeBanner } from "@/components/PremiumUpgradeBanner";
 import { LinkedInFeatureBanner } from "@/components/LinkedInFeatureBanner";
 import { AutoApplyBanner } from "@/components/AutoApplyBanner";
-import { RoleCategoryPills } from "@/components/RoleCategoryPills";
+import { DashboardFilterBar } from "@/components/DashboardFilterBar";
 import { getCategoryById, titleMatchesCategory } from "@/lib/roleCategories";
 import { RelatedSearches } from "@/components/RelatedSearches";
 import { StreakCard } from "@/components/StreakCard";
