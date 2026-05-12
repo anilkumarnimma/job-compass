@@ -7,10 +7,30 @@ interface VisaFilterPillsProps {
   onChange: (filter: VisaFilter) => void;
 }
 
-const filters: { value: VisaFilter; label: string }[] = [
-  { value: "all", label: "All Visa-Friendly" },
-  { value: "h1b", label: "H1B Sponsorship" },
-  { value: "opt", label: "OPT / STEM OPT" },
+const filterConfig: {
+  value: VisaFilter;
+  label: string;
+  activeClass: string;
+  inactiveClass: string;
+}[] = [
+  {
+    value: "all",
+    label: "All Visa-Friendly",
+    activeClass: "bg-accent text-white border-accent shadow-sm shadow-accent/25",
+    inactiveClass: "bg-accent/6 text-accent border-accent/20 hover:bg-accent/12",
+  },
+  {
+    value: "h1b",
+    label: "H1B Sponsorship",
+    activeClass: "bg-success text-white border-success shadow-sm shadow-success/25",
+    inactiveClass: "bg-success/6 text-success border-success/20 hover:bg-success/12",
+  },
+  {
+    value: "opt",
+    label: "OPT / STEM OPT",
+    activeClass: "bg-[hsl(260,70%,55%)] text-white border-[hsl(260,70%,55%)] shadow-sm shadow-[hsl(260,70%,55%)]/25",
+    inactiveClass: "bg-[hsl(260,70%,55%)]/6 text-[hsl(260,60%,45%)] border-[hsl(260,70%,55%)]/20 hover:bg-[hsl(260,70%,55%)]/12",
+  },
 ];
 
 const chipVariants = {
@@ -21,8 +41,8 @@ const chipVariants = {
 
 export function VisaFilterPills({ value, onChange }: VisaFilterPillsProps) {
   return (
-    <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
-      {filters.map((filter) => {
+    <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+      {filterConfig.map((filter) => {
         const isActive = value === filter.value;
         return (
           <motion.button
@@ -33,10 +53,8 @@ export function VisaFilterPills({ value, onChange }: VisaFilterPillsProps) {
             whileTap="tap"
             onClick={() => onChange(filter.value)}
             className={cn(
-              "px-3 py-1.5 text-[11px] font-medium rounded-full border transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              isActive
-                ? "bg-foreground text-background border-foreground shadow-sm"
-                : "bg-card text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground"
+              "px-3.5 py-2 text-xs font-semibold rounded-full border transition-all duration-200 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              isActive ? filter.activeClass : filter.inactiveClass
             )}
           >
             {filter.label}
