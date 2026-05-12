@@ -160,7 +160,7 @@ export function analyzeVisaSponsorship(job: Job): VisaSponsorshipResult {
       visaTypes: ["STEM OPT", "OPT"],
       confidence: "medium",
       label: "STEM OPT Accepting",
-      emoji: "🔬",
+      emoji: "🌟",
       badgeClass: "bg-success/10 text-success border-success/20",
     };
   }
