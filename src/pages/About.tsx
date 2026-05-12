@@ -6,7 +6,6 @@ import {
   ArrowDown,
   ChevronDown,
   Sparkles,
-  Linkedin,
   Heart,
   Compass,
   Hammer,
