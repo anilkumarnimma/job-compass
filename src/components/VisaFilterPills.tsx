@@ -10,74 +10,83 @@ interface VisaFilterPillsProps {
 const filterConfig: {
   value: VisaFilter;
   label: string;
-  dotClass: string;
-  activeClass: string;
-  inactiveDotClass: string;
+  activeDotClass: string;
+  activeTextClass: string;
+  activeBgClass: string;
+  activeBorderClass: string;
+  activeShadow: string;
+  pulseDot?: boolean;
 }[] = [
   {
     value: "all",
     label: "All Visa-Friendly",
-    dotClass: "bg-accent",
-    activeClass:
-      "bg-accent/10 border-accent/30 text-accent shadow-[0_2px_10px_hsl(var(--accent)/0.12)]",
-    inactiveDotClass: "bg-muted-foreground/40",
+    activeDotClass: "bg-accent",
+    activeTextClass: "text-accent",
+    activeBgClass: "bg-accent/10",
+    activeBorderClass: "border-accent/30",
+    activeShadow: "0 2px 10px hsl(var(--accent) / 0.12)",
   },
   {
     value: "h1b",
     label: "H1B Sponsorship",
-    dotClass: "bg-emerald-500",
-    activeClass:
-      "bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400 shadow-[0_2px_10px_rgb(16,185,129,0.12)]",
-    inactiveDotClass: "bg-muted-foreground/40",
+    activeDotClass: "bg-emerald-500",
+    activeTextClass: "text-emerald-700 dark:text-emerald-400",
+    activeBgClass: "bg-emerald-500/10",
+    activeBorderClass: "border-emerald-500/30",
+    activeShadow: "0 2px 10px rgb(16 185 129 / 0.14)",
   },
   {
     value: "opt",
     label: "OPT / STEM OPT",
-    dotClass: "bg-indigo-500",
-    activeClass:
-      "bg-indigo-500/10 border-indigo-500/30 text-indigo-700 dark:text-indigo-300 shadow-[0_2px_10px_rgb(99,102,241,0.14)]",
-    inactiveDotClass: "bg-muted-foreground/40",
+    activeDotClass: "bg-indigo-500",
+    activeTextClass: "text-indigo-700 dark:text-indigo-300",
+    activeBgClass: "bg-indigo-500/10",
+    activeBorderClass: "border-indigo-500/30",
+    activeShadow: "0 2px 10px rgb(99 102 241 / 0.16)",
+    pulseDot: true,
   },
 ];
 
-const chipVariants = {
-  inactive: { scale: 1 },
-  active: { scale: 1, transition: { type: "spring" as const, stiffness: 400, damping: 25 } },
-  tap: { scale: 0.95 },
-};
-
 export function VisaFilterPills({ value, onChange }: VisaFilterPillsProps) {
   return (
-    <div className="inline-flex items-center gap-2 p-1.5 rounded-2xl bg-card/40 backdrop-blur-md border border-border/60 shadow-sm overflow-x-auto scrollbar-hide">
+    <div className="inline-flex items-center gap-1 p-1.5 rounded-2xl bg-card/40 backdrop-blur-md border border-border/60 shadow-sm overflow-x-auto scrollbar-hide">
       <span className="hidden sm:inline-block px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-        Visa Support
+        Visa Filter
       </span>
       {filterConfig.map((filter) => {
         const isActive = value === filter.value;
         return (
-          <motion.button
+          <button
             key={filter.value}
-            variants={chipVariants}
-            initial="inactive"
-            animate={isActive ? "active" : "inactive"}
-            whileTap="tap"
             onClick={() => onChange(filter.value)}
             className={cn(
-              "flex items-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-full border transition-all duration-200 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "relative flex items-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               isActive
-                ? `${filter.activeClass} font-semibold`
-                : "bg-transparent border-transparent text-muted-foreground hover:text-foreground hover:bg-card/70 hover:border-border"
+                ? `${filter.activeTextClass} font-semibold`
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
+            {isActive && (
+              <motion.span
+                layoutId="visa-filter-active-pill"
+                className={cn(
+                  "absolute inset-0 rounded-full border",
+                  filter.activeBgClass,
+                  filter.activeBorderClass
+                )}
+                style={{ boxShadow: filter.activeShadow }}
+                transition={{ type: "spring", stiffness: 500, damping: 38, mass: 0.7 }}
+              />
+            )}
             <span
               className={cn(
-                "w-1.5 h-1.5 rounded-full transition-colors",
-                isActive ? filter.dotClass : filter.inactiveDotClass,
-                isActive && filter.value === "opt" && "animate-pulse"
+                "relative z-10 w-1.5 h-1.5 rounded-full transition-colors",
+                isActive ? filter.activeDotClass : "bg-muted-foreground/40",
+                isActive && filter.pulseDot && "animate-pulse"
               )}
             />
-            {filter.label}
-          </motion.button>
+            <span className="relative z-10">{filter.label}</span>
+          </button>
         );
       })}
     </div>
