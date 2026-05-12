@@ -131,16 +131,16 @@ export default function About() {
     document.getElementById("our-story")?.scrollIntoView({ behavior: "smooth" });
   };
 
+  useEffect(() => {
+    const prevTitle = document.title;
+    document.title = "About — Sociax | Built for Job Hunters";
+    return () => {
+      document.title = prevTitle;
+    };
+  }, []);
+
   return (
     <>
-      <Helmet>
-        <title>About — Sociax | Built for Job Hunters</title>
-        <meta
-          name="description"
-          content="Sociax is built for job hunters. 50,000+ direct company jobs, AI tools that actually help, and free to start."
-        />
-        <link rel="canonical" href="https://sociax.tech/about" />
-      </Helmet>
 
       <style>{`
         @keyframes about-gradient-shift {
