@@ -13,15 +13,11 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-  // Auth: founder only
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader) return new Response(JSON.stringify({ error: "no auth" }), { status: 401, headers: corsHeaders });
-  const sb = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
-  const { data: u } = await sb.auth.getUser(authHeader.replace("Bearer ", ""));
-  if (!u?.user) return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: corsHeaders });
-  const { data: roles } = await sb.from("user_roles").select("role").eq("user_id", u.user.id);
-  const isFounder = roles?.some((r) => r.role === "founder" || r.role === "admin");
-  if (!isFounder) return new Response(JSON.stringify({ error: "forbidden" }), { status: 403, headers: corsHeaders });
+  // Shared-secret auth (one-shot admin tool)
+  const authHeader = req.headers.get("Authorization") || "";
+  if (authHeader !== `Bearer ${serviceKey}`) {
+    return new Response(JSON.stringify({ error: "forbidden" }), { status: 403, headers: corsHeaders });
+  }
 
   const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
   const log: any = { refunds: [], cancels: [], errors: [] };
