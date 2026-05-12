@@ -77,7 +77,11 @@ Deno.serve(async (req) => {
     }
     logStep("User authenticated", { userId: user.id });
 
-    const stripe = new Stripe(stripeKey.trim(), { apiVersion: "2025-08-27.basil" });
+    const stripe = new Stripe(stripeKey.trim(), {
+      apiVersion: "2025-08-27.basil",
+      timeout: 10000, // 10s per Stripe request (default 80s) — prevents IDLE_TIMEOUT
+      maxNetworkRetries: 1,
+    });
 
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId = customers.data.length > 0 ? customers.data[0].id : null;
