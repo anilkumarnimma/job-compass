@@ -277,8 +277,8 @@ export default function About() {
             </p>
             <div className="grid md:grid-cols-2 gap-6">
               {[
-                { name: "Anil Kumar", role: "Founder", title: "Engineering & product" },
-                { name: "Karthik Reddy", role: "Co-founder", title: "Design & growth" },
+                { name: "Anil Kumar", role: "Founder", title: "Builder" },
+                { name: "Karthik Reddy", role: "Co-founder", title: "Growth" },
               ].map((p, i) => (
                 <div
                   key={i}
