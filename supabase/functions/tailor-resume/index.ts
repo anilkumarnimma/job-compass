@@ -257,6 +257,7 @@ STRICT RULES — follow every single one:
     const maxRetries = 2;
     let response: Response | null = null;
     let lastError = "";
+    let aiOutput: any = null;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       const model = models[Math.min(attempt, models.length - 1)];
