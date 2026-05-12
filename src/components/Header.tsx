@@ -63,10 +63,11 @@ export function Header() {
   };
 
   const getNavLinks = () => {
-    if (user && isEmployer && !isFounder) return [];
-    if (!user) return [];
+    if (user && isEmployer && !isFounder) return [{ path: "/about", label: "About" }];
+    if (!user) return [{ path: "/about", label: "About" }];
     return [
       { path: "/dashboard", label: "Jobs" },
+      { path: "/about", label: "About" },
       { path: "/recommendations", label: "Recommendations" },
       { path: "/applied", label: "Applied" },
       { path: "/saved", label: "Saved" },
