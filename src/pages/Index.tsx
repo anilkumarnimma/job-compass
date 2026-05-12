@@ -424,6 +424,9 @@ export default function Index() {
         </div>
       </section>
 
+      {/* FAQ Section */}
+      <FAQSection />
+
       {/* CTA Section */}
       <section className="py-24 relative overflow-hidden">
         <div className="absolute inset-0 hero-mesh-bg opacity-50" />
