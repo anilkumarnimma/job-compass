@@ -1348,3 +1348,121 @@ function DeleteAccountCard() {
   );
 }
 
+
+function ChangePasswordCard({ email }: { email: string }) {
+  const { toast } = useToast();
+  const [open, setOpen] = useState(false);
+  const [currentPwd, setCurrentPwd] = useState("");
+  const [newPwd, setNewPwd] = useState("");
+  const [confirmPwd, setConfirmPwd] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const reset = () => {
+    setCurrentPwd(""); setNewPwd(""); setConfirmPwd("");
+    setShowCurrent(false); setShowNew(false);
+  };
+
+  const handleSave = async () => {
+    if (newPwd.length < 6) {
+      toast({ title: "Password too short", description: "Use at least 6 characters.", variant: "destructive" });
+      return;
+    }
+    if (newPwd !== confirmPwd) {
+      toast({ title: "Passwords do not match", variant: "destructive" });
+      return;
+    }
+    if (!email) {
+      toast({ title: "Account email missing", variant: "destructive" });
+      return;
+    }
+    setSaving(true);
+    // Verify current password by re-authenticating
+    const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password: currentPwd });
+    if (signInErr) {
+      setSaving(false);
+      toast({ title: "Current password is incorrect", variant: "destructive" });
+      return;
+    }
+    const { error: updErr } = await supabase.auth.updateUser({ password: newPwd });
+    setSaving(false);
+    if (updErr) {
+      toast({ title: "Failed to update password", description: updErr.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Password updated", description: "Your password was changed successfully." });
+    setOpen(false);
+    reset();
+  };
+
+  return (
+    <Card className="rounded-3xl">
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <KeyRound className="h-5 w-5 text-muted-foreground" />
+          <CardTitle className="text-lg">Change Password</CardTitle>
+        </div>
+        <CardDescription>Update your account password. You'll need your current password to confirm.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {!open ? (
+          <Button variant="outline" className="rounded-full" onClick={() => setOpen(true)}>
+            <KeyRound className="h-4 w-4 mr-2" />
+            Change password
+          </Button>
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Current password</Label>
+              <div className="relative">
+                <Input
+                  type={showCurrent ? "text" : "password"}
+                  value={currentPwd}
+                  onChange={(e) => setCurrentPwd(e.target.value)}
+                  placeholder="Enter your current password"
+                  className="pr-10"
+                />
+                <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" onClick={() => setShowCurrent(!showCurrent)}>
+                  {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>New password</Label>
+              <div className="relative">
+                <Input
+                  type={showNew ? "text" : "password"}
+                  value={newPwd}
+                  onChange={(e) => setNewPwd(e.target.value)}
+                  placeholder="Min 6 characters"
+                  className="pr-10"
+                />
+                <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" onClick={() => setShowNew(!showNew)}>
+                  {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Confirm new password</Label>
+              <Input
+                type="password"
+                value={confirmPwd}
+                onChange={(e) => setConfirmPwd(e.target.value)}
+                placeholder="Re-enter new password"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleSave} disabled={saving || !currentPwd || !newPwd} className="rounded-full">
+                {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Updating…</> : "Update password"}
+              </Button>
+              <Button variant="ghost" className="rounded-full" onClick={() => { setOpen(false); reset(); }} disabled={saving}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
