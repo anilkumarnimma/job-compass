@@ -154,18 +154,18 @@ export default function About() {
             <div className="relative">
               <div className="absolute left-[15px] md:left-1/2 top-2 bottom-2 w-px bg-border md:-translate-x-px" />
               {[
-                { when: "Late 2024", title: "First commit", body: "A barebones job scraper running on a personal laptop. 12 jobs. All broken links." },
-                { when: "Early 2025", title: "Apply links that actually work", body: "Built the verification layer. Every link tested daily. No more dead ends." },
-                { when: "Spring 2025", title: "AI tools, free tier", body: "Resume tailoring, cover letters, ATS scoring — opened to anyone, no card required." },
-                { when: "Summer 2025", title: "First 1,000 hunters", body: "Word spread on Reddit and Discord. Real people landing real interviews." },
+                { when: "January 2026", title: "First commit", body: "A barebones job scraper running on a personal laptop. 12 jobs. All broken links." },
+                { when: "February 2026", title: "Apply links that actually work", body: "Built the verification layer. Every link tested daily. No more dead ends." },
+                { when: "March 2026", title: "AI tools, free tier", body: "Resume tailoring, cover letters, ATS scoring — opened to anyone, no card required." },
+                { when: "April 2026", title: "First 1,000 hunters", body: "Word spread on Reddit and Discord. Real people landing real interviews." },
                 { when: "Now", title: "50,000+ live roles", body: "Built for 0–5 years experience. Global. And still completely free to start." },
               ].map((m, i) => (
                 <motion.div
                   key={i}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.4 }}
-                  transition={{ duration: 0.5, delay: i * 0.05 }}
+                  viewport={{ once: true, amount: 0.6 }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
                   className="relative pl-12 md:pl-0 md:grid md:grid-cols-2 md:gap-12 mb-10 last:mb-0"
                 >
                   <div className={`md:text-right ${i % 2 === 0 ? "" : "md:order-2 md:text-left"}`}>
