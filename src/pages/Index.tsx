@@ -13,6 +13,7 @@ import { AboutSection } from "@/components/AboutSection";
 // PROMO: app is free for everyone — pricing section hidden
 // import { PricingSection } from "@/components/PricingSection";
 import { InsightsSection } from "@/components/InsightsSection";
+import { FAQSection } from "@/components/FAQSection";
 import {
   Briefcase,
   Search,
@@ -422,6 +423,9 @@ export default function Index() {
           </div>
         </div>
       </section>
+
+      {/* FAQ Section */}
+      <FAQSection />
 
       {/* CTA Section */}
       <section className="py-24 relative overflow-hidden">
