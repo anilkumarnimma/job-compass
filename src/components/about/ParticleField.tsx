@@ -3,7 +3,23 @@ import * as THREE from "three";
 
 const PARTICLE_COUNT = 2000;
 const CONNECT_DIST = 150;
-const TEAL = new THREE.Color("#00c6a7");
+
+function getAccentColor(): THREE.Color {
+  if (typeof window === "undefined") return new THREE.Color("#22d3ee");
+  const hsl = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+  // hsl is like "185 90% 52%"
+  const c = new THREE.Color();
+  if (hsl) {
+    try {
+      const [h, s, l] = hsl.split(/\s+/).map((v) => parseFloat(v));
+      c.setHSL(h / 360, s / 100, l / 100);
+      return c;
+    } catch {
+      /* fallback */
+    }
+  }
+  return new THREE.Color("#22d3ee");
+}
 
 export function ParticleField() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -12,25 +28,23 @@ export function ParticleField() {
     const container = containerRef.current;
     if (!container) return;
 
-    // Detect mobile -> bail out, render gradient instead
     const isMobile = window.matchMedia("(max-width: 768px)").matches;
     if (isMobile) return;
 
+    const accent = getAccentColor();
     const width = container.clientWidth;
     const height = container.clientHeight;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color("#080c14");
-
     const camera = new THREE.PerspectiveCamera(60, width / height, 1, 2000);
     camera.position.z = 600;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(width, height);
+    renderer.setClearColor(0x000000, 0);
     container.appendChild(renderer.domElement);
 
-    // Particles
     const positions = new Float32Array(PARTICLE_COUNT * 3);
     const velocities = new Float32Array(PARTICLE_COUNT * 3);
     const basePositions = new Float32Array(PARTICLE_COUNT * 3);
@@ -56,27 +70,25 @@ export function ParticleField() {
       color: 0xffffff,
       size: 2.2,
       transparent: true,
-      opacity: 0.6,
+      opacity: 0.55,
       sizeAttenuation: true,
     });
     const points = new THREE.Points(pGeom, pMat);
     scene.add(points);
 
-    // Lines (preallocated)
     const MAX_LINES = 1500;
     const linePositions = new Float32Array(MAX_LINES * 2 * 3);
     const lineGeom = new THREE.BufferGeometry();
     lineGeom.setAttribute("position", new THREE.BufferAttribute(linePositions, 3));
     const lineMat = new THREE.LineBasicMaterial({
-      color: TEAL,
+      color: accent,
       transparent: true,
-      opacity: 0.1,
+      opacity: 0.12,
     });
     const lineSegments = new THREE.LineSegments(lineGeom, lineMat);
     scene.add(lineSegments);
     lineGeom.setDrawRange(0, 0);
 
-    // Mouse
     const mouse = new THREE.Vector2(-9999, -9999);
     const mouseWorld = new THREE.Vector3();
     const onMouseMove = (e: MouseEvent) => {
@@ -84,12 +96,9 @@ export function ParticleField() {
       mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
     };
-    const burstParticles: number[] = [];
     const onClick = () => {
-      // Pick 100 random particles to burst
       for (let n = 0; n < 100; n++) {
         const i = Math.floor(Math.random() * PARTICLE_COUNT);
-        burstParticles.push(i, performance.now() as number);
         velocities[i * 3] = (Math.random() - 0.5) * 8;
         velocities[i * 3 + 1] = (Math.random() - 0.5) * 8;
         velocities[i * 3 + 2] = (Math.random() - 0.5) * 8;
@@ -125,7 +134,6 @@ export function ParticleField() {
       const delta = Math.min((now - lastTime) / 16.67, 3);
       lastTime = now;
 
-      // Convert mouse to world space at z=0 plane
       mouseWorld.set(mouse.x, mouse.y, 0.5).unproject(camera);
 
       const positionsArr = posAttr.array as Float32Array;
@@ -135,17 +143,14 @@ export function ParticleField() {
         positionsArr[ix + 1] += velocities[ix + 1] * delta;
         positionsArr[ix + 2] += velocities[ix + 2] * delta;
 
-        // Drift back toward base position softly
         velocities[ix] += (basePositions[ix] - positionsArr[ix]) * 0.0005 * delta;
         velocities[ix + 1] += (basePositions[ix + 1] - positionsArr[ix + 1]) * 0.0005 * delta;
         velocities[ix + 2] += (basePositions[ix + 2] - positionsArr[ix + 2]) * 0.0005 * delta;
 
-        // Damping
         velocities[ix] *= 0.985;
         velocities[ix + 1] *= 0.985;
         velocities[ix + 2] *= 0.985;
 
-        // Mouse repulsion
         const dx = positionsArr[ix] - mouseWorld.x;
         const dy = positionsArr[ix + 1] - mouseWorld.y;
         const distSq = dx * dx + dy * dy;
@@ -157,9 +162,8 @@ export function ParticleField() {
       }
       posAttr.needsUpdate = true;
 
-      // Connect nearby particles (subset for perf)
       let li = 0;
-      const step = 2; // sample every 2nd particle to keep cost low
+      const step = 2;
       const distSqMax = CONNECT_DIST * CONNECT_DIST;
       for (let i = 0; i < PARTICLE_COUNT; i += step) {
         const ax = positionsArr[i * 3];
@@ -211,20 +215,21 @@ export function ParticleField() {
   }, []);
 
   return (
-    <div
-      ref={containerRef}
-      className="absolute inset-0 overflow-hidden"
-      style={{
-        background:
-          "radial-gradient(ellipse at center, #0a1420 0%, #080c14 60%, #050709 100%)",
-      }}
-    >
-      {/* Mobile fallback animated gradient */}
+    <div ref={containerRef} className="absolute inset-0 overflow-hidden">
+      {/* Soft ambient gradient using design tokens */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse at center, hsl(var(--accent) / 0.08) 0%, transparent 60%)",
+        }}
+      />
+      {/* Mobile fallback */}
       <div
         className="absolute inset-0 md:hidden"
         style={{
           background:
-            "linear-gradient(135deg, #080c14 0%, #0a2a26 35%, #00c6a7 50%, #0a2a26 65%, #080c14 100%)",
+            "linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--accent) / 0.15) 50%, hsl(var(--background)) 100%)",
           backgroundSize: "400% 400%",
           animation: "about-gradient-shift 12s ease infinite",
         }}
