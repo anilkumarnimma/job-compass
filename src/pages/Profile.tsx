@@ -1103,6 +1103,9 @@ export default function Profile() {
             </Card>
           )}
 
+          {/* Change Password */}
+          <ChangePasswordCard email={profile?.email || user.email || ""} />
+
           {/* Danger Zone — Delete Account */}
           <DeleteAccountCard />
 
