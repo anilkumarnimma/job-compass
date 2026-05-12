@@ -39,7 +39,7 @@ export function VisaFilterPills({ value, onChange }: VisaFilterPillsProps) {
                 : "bg-card text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground"
             )}
           >
-            {filter.emoji} {filter.label}
+            {filter.label}
           </motion.button>
         );
       })}
