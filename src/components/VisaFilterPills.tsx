@@ -22,7 +22,6 @@ const chipVariants = {
 export function VisaFilterPills({ value, onChange }: VisaFilterPillsProps) {
   return (
     <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
-      <Globe className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
       {filters.map((filter) => {
         const isActive = value === filter.value;
         return (
