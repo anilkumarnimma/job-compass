@@ -7,6 +7,32 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const stripMarkdownJson = (value: string) => {
+  const cleaned = value.trim().replace(/^```(?:json)?\s*/i, "").replace(/```$/i, "").trim();
+  if (cleaned.startsWith("{") && cleaned.endsWith("}")) return cleaned;
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  return start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned;
+};
+
+const contentToText = (content: unknown): string => {
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    return content.map((part: any) => typeof part === "string" ? part : (part?.text || part?.content || "")).join("\n");
+  }
+  return "";
+};
+
+const parseResumeOutput = (result: any) => {
+  const message = result?.choices?.[0]?.message;
+  const toolArgs = message?.tool_calls?.[0]?.function?.arguments;
+  const raw = typeof toolArgs === "string" ? toolArgs : contentToText(message?.content);
+  if (!raw) throw new Error("AI response missing structured content");
+  const parsed = JSON.parse(stripMarkdownJson(raw));
+  if (!parsed || !Array.isArray(parsed.sections)) throw new Error("AI returned invalid resume shape");
+  return parsed;
+};
+
 /**
  * NEW CONTRACT (preserve original structure):
  *
