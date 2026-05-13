@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useSearchSuggestions } from "@/hooks/useSearchSuggestions";
 import { SearchSuggestions } from "@/components/SearchSuggestions";
 import { Layout } from "@/components/Layout";
-import { HeroParticles } from "@/components/HeroParticles";
+import { ParticleField } from "@/components/about/ParticleField";
 import { AnimatedCounter } from "@/components/AnimatedCounter";
 import { useLandingStats } from "@/hooks/useLandingStats";
 import { FeaturedJobCard } from "@/components/FeaturedJobCard";
@@ -149,7 +149,7 @@ export default function Index() {
     <Layout showFooter={true}>
       {/* Hero Section */}
       <section className="relative py-28 md:py-40 overflow-hidden hero-mesh-bg">
-        <HeroParticles />
+        <ParticleField interactive={false} />
         <FloatingHeroTags />
 
         {/* Gradient orbs */}
