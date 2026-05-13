@@ -275,8 +275,9 @@ STRICT RULES — follow every single one:
           signal: controller.signal,
           body: JSON.stringify({
             model,
-            max_tokens: 3000,
-            temperature: 0.3,
+            ...(model.startsWith("openai/gpt-5")
+              ? { max_completion_tokens: 3000 }
+              : { max_tokens: 3000, temperature: 0.3 }),
             messages: [
               { role: "system", content: systemPrompt },
               { role: "user", content: userMessage },
