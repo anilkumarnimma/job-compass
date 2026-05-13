@@ -110,8 +110,10 @@ export function ParticleField({ interactive = true, className = "" }: ParticleFi
         velocities[i * 3 + 2] = (Math.random() - 0.5) * 8;
       }
     };
-    window.addEventListener("mousemove", onMouseMove);
-    renderer.domElement.addEventListener("click", onClick);
+    if (interactive) {
+      window.addEventListener("mousemove", onMouseMove);
+      renderer.domElement.addEventListener("click", onClick);
+    }
 
     const onResize = () => {
       const w = container.clientWidth;
