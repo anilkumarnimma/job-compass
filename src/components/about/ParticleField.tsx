@@ -32,6 +32,7 @@ export function ParticleField() {
     if (isMobile) return;
 
     const accent = getAccentColor();
+    const isDark = document.documentElement.classList.contains("dark");
     const width = container.clientWidth;
     const height = container.clientHeight;
 
