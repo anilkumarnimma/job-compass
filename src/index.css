@@ -226,9 +226,9 @@
   /* Hero gradient mesh background */
   .hero-mesh-bg {
     background: 
-      radial-gradient(ellipse at 20% 50%, hsl(var(--accent) / 0.08) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 20%, hsl(270 60% 50% / 0.06) 0%, transparent 50%),
-      radial-gradient(ellipse at 50% 80%, hsl(var(--accent) / 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 20% 50%, hsl(var(--accent) / 0.18) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 20%, hsl(270 70% 55% / 0.14) 0%, transparent 55%),
+      radial-gradient(ellipse at 50% 80%, hsl(var(--accent) / 0.10) 0%, transparent 55%),
       hsl(var(--background));
   }
 
