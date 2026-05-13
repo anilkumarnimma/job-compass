@@ -13,6 +13,7 @@ import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { ProfileWelcomeBanner, SkillsCloudWidget } from "@/components/ProfileBentoWidgets";
 import { ResumeIntelligenceCard } from "@/components/ResumeIntelligenceCard";
 import { SubscriptionBillingCard } from "@/components/SubscriptionBillingCard";
+import { ParticleField } from "@/components/about/ParticleField";
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Header } from "@/components/Header";
