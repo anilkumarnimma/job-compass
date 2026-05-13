@@ -32,6 +32,7 @@ export function ParticleField() {
     if (isMobile) return;
 
     const accent = getAccentColor();
+    const isDark = document.documentElement.classList.contains("dark");
     const width = container.clientWidth;
     const height = container.clientHeight;
 
@@ -67,10 +68,10 @@ export function ParticleField() {
     const pGeom = new THREE.BufferGeometry();
     pGeom.setAttribute("position", new THREE.BufferAttribute(positions, 3));
     const pMat = new THREE.PointsMaterial({
-      color: 0xffffff,
-      size: 2.2,
+      color: accent,
+      size: isDark ? 2.2 : 2.8,
       transparent: true,
-      opacity: 0.55,
+      opacity: isDark ? 0.55 : 0.85,
       sizeAttenuation: true,
     });
     const points = new THREE.Points(pGeom, pMat);
@@ -83,7 +84,7 @@ export function ParticleField() {
     const lineMat = new THREE.LineBasicMaterial({
       color: accent,
       transparent: true,
-      opacity: 0.12,
+      opacity: isDark ? 0.12 : 0.28,
     });
     const lineSegments = new THREE.LineSegments(lineGeom, lineMat);
     scene.add(lineSegments);
