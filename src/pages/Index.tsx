@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useSearchSuggestions } from "@/hooks/useSearchSuggestions";
 import { SearchSuggestions } from "@/components/SearchSuggestions";
 import { Layout } from "@/components/Layout";
-import { HeroParticles } from "@/components/HeroParticles";
+import { ParticleField } from "@/components/about/ParticleField";
 import { AnimatedCounter } from "@/components/AnimatedCounter";
 import { useLandingStats } from "@/hooks/useLandingStats";
 import { FeaturedJobCard } from "@/components/FeaturedJobCard";
@@ -149,7 +149,7 @@ export default function Index() {
     <Layout showFooter={true}>
       {/* Hero Section */}
       <section className="relative py-28 md:py-40 overflow-hidden hero-mesh-bg">
-        <HeroParticles />
+        <ParticleField interactive={false} />
         <FloatingHeroTags />
 
         {/* Gradient orbs */}
@@ -430,7 +430,7 @@ export default function Index() {
       {/* CTA Section */}
       <section className="py-24 relative overflow-hidden">
         <div className="absolute inset-0 hero-mesh-bg opacity-50" />
-        <HeroParticles />
+        <ParticleField interactive={false} />
         <div className="container max-w-6xl mx-auto px-4 text-center relative z-10">
           <ScrollReveal>
             <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-5">

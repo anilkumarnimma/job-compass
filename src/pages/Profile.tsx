@@ -13,6 +13,7 @@ import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { ProfileWelcomeBanner, SkillsCloudWidget } from "@/components/ProfileBentoWidgets";
 import { ResumeIntelligenceCard } from "@/components/ResumeIntelligenceCard";
 import { SubscriptionBillingCard } from "@/components/SubscriptionBillingCard";
+import { ParticleField } from "@/components/about/ParticleField";
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Header } from "@/components/Header";
@@ -550,9 +551,10 @@ export default function Profile() {
   const disabled = !isEditing;
 
    return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
+    <div className="min-h-screen bg-background pb-20 md:pb-0 relative">
+      <ParticleField interactive={false} className="opacity-30" />
       <Header />
-      <main className="container max-w-6xl mx-auto px-4 py-8">
+      <main className="container max-w-6xl mx-auto px-4 py-8 relative z-10">
         {/* Bento welcome section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <ProfileWelcomeBanner />

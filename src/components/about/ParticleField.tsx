@@ -4,6 +4,11 @@ import * as THREE from "three";
 const PARTICLE_COUNT = 2000;
 const CONNECT_DIST = 150;
 
+interface ParticleFieldProps {
+  interactive?: boolean;
+  className?: string;
+}
+
 function getAccentColor(): THREE.Color {
   if (typeof window === "undefined") return new THREE.Color("#22d3ee");
   const hsl = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
@@ -21,7 +26,7 @@ function getAccentColor(): THREE.Color {
   return new THREE.Color("#22d3ee");
 }
 
-export function ParticleField() {
+export function ParticleField({ interactive = true, className = "" }: ParticleFieldProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -105,8 +110,10 @@ export function ParticleField() {
         velocities[i * 3 + 2] = (Math.random() - 0.5) * 8;
       }
     };
-    window.addEventListener("mousemove", onMouseMove);
-    renderer.domElement.addEventListener("click", onClick);
+    if (interactive) {
+      window.addEventListener("mousemove", onMouseMove);
+      renderer.domElement.addEventListener("click", onClick);
+    }
 
     const onResize = () => {
       const w = container.clientWidth;
@@ -200,10 +207,12 @@ export function ParticleField() {
 
     return () => {
       cancelAnimationFrame(rafId);
-      window.removeEventListener("mousemove", onMouseMove);
+      if (interactive) {
+        window.removeEventListener("mousemove", onMouseMove);
+        renderer.domElement.removeEventListener("click", onClick);
+      }
       window.removeEventListener("resize", onResize);
       document.removeEventListener("visibilitychange", onVis);
-      renderer.domElement.removeEventListener("click", onClick);
       pGeom.dispose();
       pMat.dispose();
       lineGeom.dispose();
@@ -213,10 +222,13 @@ export function ParticleField() {
         renderer.domElement.parentNode.removeChild(renderer.domElement);
       }
     };
-  }, []);
+  }, [interactive]);
 
   return (
-    <div ref={containerRef} className="absolute inset-0 overflow-hidden">
+    <div
+      ref={containerRef}
+      className={`absolute inset-0 overflow-hidden ${!interactive ? "pointer-events-none" : ""} ${className}`}
+    >
       {/* Soft ambient gradient using design tokens */}
       <div
         className="absolute inset-0 pointer-events-none"
