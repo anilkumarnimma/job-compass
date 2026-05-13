@@ -253,7 +253,7 @@ STRICT RULES — follow every single one:
       },
     };
 
-    const models = ["google/gemini-2.5-flash", "google/gemini-3-flash-preview", "openai/gpt-5-mini"];
+    const models = ["openai/gpt-5", "openai/gpt-5-mini", "google/gemini-2.5-pro"];
     const maxRetries = 2;
     let response: Response | null = null;
     let lastError = "";
