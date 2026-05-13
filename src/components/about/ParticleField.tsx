@@ -207,10 +207,12 @@ export function ParticleField({ interactive = true, className = "" }: ParticleFi
 
     return () => {
       cancelAnimationFrame(rafId);
-      window.removeEventListener("mousemove", onMouseMove);
+      if (interactive) {
+        window.removeEventListener("mousemove", onMouseMove);
+        renderer.domElement.removeEventListener("click", onClick);
+      }
       window.removeEventListener("resize", onResize);
       document.removeEventListener("visibilitychange", onVis);
-      renderer.domElement.removeEventListener("click", onClick);
       pGeom.dispose();
       pMat.dispose();
       lineGeom.dispose();
@@ -220,10 +222,13 @@ export function ParticleField({ interactive = true, className = "" }: ParticleFi
         renderer.domElement.parentNode.removeChild(renderer.domElement);
       }
     };
-  }, []);
+  }, [interactive]);
 
   return (
-    <div ref={containerRef} className="absolute inset-0 overflow-hidden">
+    <div
+      ref={containerRef}
+      className={`absolute inset-0 overflow-hidden ${!interactive ? "pointer-events-none" : ""} ${className}`}
+    >
       {/* Soft ambient gradient using design tokens */}
       <div
         className="absolute inset-0 pointer-events-none"
