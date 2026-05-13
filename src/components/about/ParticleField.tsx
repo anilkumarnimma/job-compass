@@ -84,7 +84,7 @@ export function ParticleField() {
     const lineMat = new THREE.LineBasicMaterial({
       color: accent,
       transparent: true,
-      opacity: 0.12,
+      opacity: isDark ? 0.12 : 0.28,
     });
     const lineSegments = new THREE.LineSegments(lineGeom, lineMat);
     scene.add(lineSegments);
