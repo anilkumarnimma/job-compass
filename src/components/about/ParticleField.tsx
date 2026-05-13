@@ -68,10 +68,10 @@ export function ParticleField() {
     const pGeom = new THREE.BufferGeometry();
     pGeom.setAttribute("position", new THREE.BufferAttribute(positions, 3));
     const pMat = new THREE.PointsMaterial({
-      color: 0xffffff,
-      size: 2.2,
+      color: accent,
+      size: isDark ? 2.2 : 2.8,
       transparent: true,
-      opacity: 0.55,
+      opacity: isDark ? 0.55 : 0.85,
       sizeAttenuation: true,
     });
     const points = new THREE.Points(pGeom, pMat);
