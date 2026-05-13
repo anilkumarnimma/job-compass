@@ -7,6 +7,32 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const stripMarkdownJson = (value: string) => {
+  const cleaned = value.trim().replace(/^```(?:json)?\s*/i, "").replace(/```$/i, "").trim();
+  if (cleaned.startsWith("{") && cleaned.endsWith("}")) return cleaned;
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  return start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned;
+};
+
+const contentToText = (content: unknown): string => {
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    return content.map((part: any) => typeof part === "string" ? part : (part?.text || part?.content || "")).join("\n");
+  }
+  return "";
+};
+
+const parseResumeOutput = (result: any) => {
+  const message = result?.choices?.[0]?.message;
+  const toolArgs = message?.tool_calls?.[0]?.function?.arguments;
+  const raw = typeof toolArgs === "string" ? toolArgs : contentToText(message?.content);
+  if (!raw) throw new Error("AI response missing structured content");
+  const parsed = JSON.parse(stripMarkdownJson(raw));
+  if (!parsed || !Array.isArray(parsed.sections)) throw new Error("AI returned invalid resume shape");
+  return parsed;
+};
+
 /**
  * NEW CONTRACT (preserve original structure):
  *
@@ -253,7 +279,7 @@ STRICT RULES — follow every single one:
       },
     };
 
-    const models = ["openai/gpt-5", "openai/gpt-5-mini", "google/gemini-2.5-pro"];
+    const models = ["openai/gpt-5", "openai/gpt-5-mini", "openai/gpt-5.2"];
     const maxRetries = 2;
     let response: Response | null = null;
     let lastError = "";
@@ -276,14 +302,18 @@ STRICT RULES — follow every single one:
           body: JSON.stringify({
             model,
             ...(model.startsWith("openai/gpt-5")
-              ? { max_completion_tokens: 3000 }
+              ? { max_completion_tokens: 6000 }
               : { max_tokens: 3000, temperature: 0.3 }),
             messages: [
               { role: "system", content: systemPrompt },
               { role: "user", content: userMessage },
             ],
-            tools: [toolDef],
-            tool_choice: { type: "function", function: { name: "return_tailored_resume" } },
+            ...(model.startsWith("openai/")
+              ? { response_format: { type: "json_object" } }
+              : {
+                  tools: [toolDef],
+                  tool_choice: { type: "function", function: { name: "return_tailored_resume" } },
+                }),
           }),
         });
 
@@ -300,25 +330,16 @@ STRICT RULES — follow every single one:
           });
         }
         if (response.ok) {
-          // Parse and validate tool_call here so we can retry with next model if missing
+          // Parse and validate the AI output here so we can retry with the next model if needed.
           try {
             const result = await response.json();
-            const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
-            if (toolCall?.function?.arguments) {
-              try {
-                aiOutput = JSON.parse(toolCall.function.arguments);
-                if (aiOutput && Array.isArray(aiOutput.sections)) break;
-                aiOutput = null;
-                lastError = "AI returned invalid resume shape";
-              } catch (e) {
-                aiOutput = null;
-                lastError = "AI returned unparseable JSON";
-              }
-            } else {
-              lastError = "AI response missing tool_call";
-            }
-          } catch {
-            lastError = "Failed to read AI response body";
+            const finishReason = result.choices?.[0]?.finish_reason || result.choices?.[0]?.finishReason || "unknown";
+            aiOutput = parseResumeOutput(result);
+            console.log(`[TAILOR] Attempt ${attempt + 1} parsed output finish=${finishReason}`);
+            break;
+          } catch (e: any) {
+            aiOutput = null;
+            lastError = e?.message || "Failed to parse AI response body";
           }
           console.error(`[TAILOR] Attempt ${attempt + 1} bad output: ${lastError}`);
           response = null;
