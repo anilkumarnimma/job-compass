@@ -32,9 +32,9 @@ export function TailoringProgress() {
   return (
     <div className="max-w-md mx-auto text-center py-10">
       <Loader2 className="h-10 w-10 text-[hsl(174_72%_42%)] animate-spin mx-auto mb-4" />
-      <div className="text-sm font-medium text-foreground mb-3">{STEPS[step].label}</div>
+      <div className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-3">{STEPS[step].label}</div>
       <Progress value={pct} className="h-2" />
-      <div className="text-[11px] text-muted-foreground mt-2 tabular-nums">{pct}%</div>
+      <div className="text-xs font-medium text-slate-600 dark:text-slate-300 mt-2 tabular-nums">{pct}%</div>
     </div>
   );
 }

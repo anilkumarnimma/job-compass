@@ -34,6 +34,13 @@ function BulletText({ html, keywords }: { html: string; keywords: string[] }) {
 
 function ItemBlock({ item, keywords, tpl }: { item: ResumeItem; keywords: string[]; tpl: ResumeTemplate }) {
   const tight = tpl.spacing === "tight";
+  const norm = (s?: string) => (s || "").trim().toLowerCase();
+  // Strip subheading / date when they just duplicate the heading or each other
+  // (common AI hallucination on certifications where issuer fills every column).
+  let subheading = item.subheading || "";
+  let date = item.date || "";
+  if (norm(subheading) === norm(item.heading)) subheading = "";
+  if (norm(date) === norm(item.heading) || norm(date) === norm(subheading)) date = "";
   return (
     <div className={tight ? "mb-1" : "mb-2"}>
       <div className="flex items-baseline justify-between gap-3 w-full">
@@ -42,19 +49,19 @@ function ItemBlock({ item, keywords, tpl }: { item: ResumeItem; keywords: string
             <span style={{ fontSize: `${tpl.bodySize}pt`, fontWeight: 600 }} className="text-black">
               {item.heading}
             </span>
-            {item.subheading && (
+            {subheading && (
               <>
                 <span className="text-black" style={{ fontSize: `${tpl.bodySize - 0.5}pt` }}>—</span>
                 <span style={{ fontSize: `${tpl.bodySize}pt` }} className="text-black">
-                  {item.subheading}
+                  {subheading}
                 </span>
               </>
             )}
           </div>
         </div>
-        {item.date && (
+        {date && (
           <span className="text-black whitespace-nowrap text-right shrink-0 leading-tight" style={{ fontSize: `${tpl.bodySize - 1}pt` }}>
-            {item.date}
+            {date}
           </span>
         )}
       </div>
