@@ -30,11 +30,18 @@ export function TailoringProgress() {
   }, [step]);
 
   return (
-    <div className="max-w-md mx-auto text-center py-10">
-      <Loader2 className="h-10 w-10 text-[hsl(174_72%_42%)] animate-spin mx-auto mb-4" />
-      <div className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-3">{STEPS[step].label}</div>
-      <Progress value={pct} className="h-2" />
-      <div className="text-xs font-medium text-slate-600 dark:text-slate-300 mt-2 tabular-nums">{pct}%</div>
+    <div className="max-w-md mx-auto text-center py-12 px-6">
+      <div className="relative mx-auto mb-5 h-14 w-14">
+        <div className="absolute inset-0 rounded-full bg-[hsl(174_72%_42%)]/20 blur-xl animate-pulse" />
+        <Loader2 className="relative h-14 w-14 text-[hsl(174_72%_55%)] animate-spin mx-auto" />
+      </div>
+      <div className="text-lg font-semibold text-white mb-1 tracking-tight">{STEPS[step].label}</div>
+      <div className="text-xs text-slate-400 mb-5">Crafting your perfectly tailored resume</div>
+      <Progress
+        value={pct}
+        className="h-2 bg-white/10 [&>div]:bg-gradient-to-r [&>div]:from-[hsl(174_72%_42%)] [&>div]:to-[hsl(174_72%_60%)] [&>div]:shadow-[0_0_12px_hsl(174_72%_50%/0.6)]"
+      />
+      <div className="text-sm font-semibold text-[hsl(174_72%_60%)] mt-3 tabular-nums">{pct}%</div>
     </div>
   );
 }

@@ -479,8 +479,12 @@ export function TailoredResumeEditor({ open, onOpenChange, job }: TailoredResume
               }
             />
           ) : isWorking && !resume ? (
-            <div className="bg-white rounded-md border border-border/60 mx-auto max-w-2xl">
-              <TailoringProgress />
+            <div className="relative overflow-hidden rounded-2xl border border-[hsl(174_72%_42%)]/20 mx-auto max-w-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-[hsl(174_72%_18%)] shadow-2xl">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(174_72%_42%/0.18),transparent_60%)] pointer-events-none" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,hsl(174_72%_55%/0.12),transparent_55%)] pointer-events-none" />
+              <div className="relative">
+                <TailoringProgress />
+              </div>
             </div>
           ) : !resume ? (
             <EmptyState
