@@ -60,9 +60,9 @@ export default function About() {
         {/* SECTION 1 — Hero */}
         <section className="relative h-screen w-full overflow-hidden hero-mesh-bg">
           <ParticleField />
-          <div className="absolute top-10 left-[10%] w-[500px] h-[500px] bg-accent/10 rounded-full blur-[120px] pointer-events-none animate-pulse-slow" />
+          <div className="absolute top-10 left-[10%] w-[500px] h-[500px] bg-accent/20 dark:bg-accent/10 rounded-full blur-[120px] pointer-events-none animate-pulse-slow" />
           <div
-            className="absolute bottom-0 right-[10%] w-[600px] h-[600px] bg-accent/5 rounded-full blur-[150px] pointer-events-none animate-pulse-slow"
+            className="absolute bottom-0 right-[10%] w-[600px] h-[600px] bg-accent/15 dark:bg-accent/5 rounded-full blur-[150px] pointer-events-none animate-pulse-slow"
             style={{ animationDelay: "1s" }}
           />
 
