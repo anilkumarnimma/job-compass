@@ -4,6 +4,11 @@ import * as THREE from "three";
 const PARTICLE_COUNT = 2000;
 const CONNECT_DIST = 150;
 
+interface ParticleFieldProps {
+  interactive?: boolean;
+  className?: string;
+}
+
 function getAccentColor(): THREE.Color {
   if (typeof window === "undefined") return new THREE.Color("#22d3ee");
   const hsl = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
@@ -21,7 +26,7 @@ function getAccentColor(): THREE.Color {
   return new THREE.Color("#22d3ee");
 }
 
-export function ParticleField() {
+export function ParticleField({ interactive = true, className = "" }: ParticleFieldProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
