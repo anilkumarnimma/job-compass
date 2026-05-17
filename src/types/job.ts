@@ -40,6 +40,7 @@ export interface SavedJob {
   user_id: string;
   job_id: string;
   saved_at: Date;
+  folder: string;
   job?: Job;
 }
 
