@@ -52,13 +52,15 @@ export function ProfileCompletionBanner({ force = false }: { force?: boolean } =
         exit={{ opacity: 0, y: -8 }}
         className="relative mb-3 rounded-xl border border-primary/30 bg-gradient-to-r from-primary/5 to-accent/5 p-4 sm:p-5"
       >
-        <button
-          onClick={handleDismiss}
-          className="absolute top-2 right-2 p-1 rounded-md hover:bg-muted/50 transition-colors"
-          aria-label="Dismiss"
-        >
-          <X className="h-4 w-4 text-muted-foreground" />
-        </button>
+        {!force && (
+          <button
+            onClick={handleDismiss}
+            className="absolute top-2 right-2 p-1 rounded-md hover:bg-muted/50 transition-colors"
+            aria-label="Dismiss"
+          >
+            <X className="h-4 w-4 text-muted-foreground" />
+          </button>
+        )}
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex-1 min-w-0 pr-6">
@@ -83,11 +85,13 @@ export function ProfileCompletionBanner({ force = false }: { force?: boolean } =
               </ul>
             )}
           </div>
-          <Button asChild size="sm" className="shrink-0">
-            <Link to="/profile">
-              Complete profile <ArrowRight className="h-3.5 w-3.5 ml-1" />
-            </Link>
-          </Button>
+          {!force && (
+            <Button asChild size="sm" className="shrink-0">
+              <Link to="/profile">
+                Complete profile <ArrowRight className="h-3.5 w-3.5 ml-1" />
+              </Link>
+            </Button>
+          )}
         </div>
       </motion.div>
     </AnimatePresence>
