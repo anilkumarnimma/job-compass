@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { JobProvider } from "@/context/JobContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { lazy, Suspense } from "react";
+import { lazy } from "react";
 
 import { IntroSplash } from "@/components/IntroSplash";
 import { AnimatedCursor } from "@/components/AnimatedCursor";
