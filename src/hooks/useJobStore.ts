@@ -129,11 +129,12 @@ export function useSavedJobs() {
         .order("saved_at", { ascending: false });
 
       if (error) throw error;
-      return (data || []).map((row) => ({
+      return (data || []).map((row: any) => ({
         id: row.id,
         user_id: row.user_id,
         job_id: row.job_id,
         saved_at: new Date(row.saved_at),
+        folder: row.folder ?? "All",
         job: row.job ? parseJob(row.job) : undefined,
       })) as SavedJob[];
     },
@@ -210,6 +211,24 @@ export function useJobActions() {
     },
   });
 
+  const updateFolderMutation = useMutation({
+    mutationFn: async ({ jobId, folder }: { jobId: string; folder: string }) => {
+      if (!user) throw new Error("Must be logged in");
+      const { error } = await supabase
+        .from("saved_jobs")
+        .update({ folder } as any)
+        .eq("user_id", user.id)
+        .eq("job_id", jobId);
+      if (error) throw error;
+      return { jobId, folder };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["saved_jobs"] });
+      toast.success("Moved to folder");
+    },
+    onError: (e) => toast.error(friendlyError(e, "Couldn't move to folder")),
+  });
+
   // "Remove" from Applied = set status to 'withdrawn' (NOT delete)
   const removeApplicationMutation = useMutation({
     mutationFn: async (jobId: string) => {
@@ -274,12 +293,18 @@ export function useJobActions() {
     [updateStatusMutation]
   );
 
+  const updateSavedFolder = useCallback(
+    (jobId: string, folder: string) => updateFolderMutation.mutate({ jobId, folder }),
+    [updateFolderMutation]
+  );
+
   return {
     applyToJob,
     saveJob,
     unsaveJob,
     removeAppliedJob,
     updateApplicationStatus,
+    updateSavedFolder,
     isApplying: applyMutation.isPending,
     isSaving: saveMutation.isPending,
   };

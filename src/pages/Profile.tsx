@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { useProfile, ProfileData, WorkExperience, Education } from "@/hooks/useProfile";
+import { ProfileCompletionBanner } from "@/components/ProfileCompletionBanner";
 import { useToast } from "@/hooks/use-toast";
 import { useResumeParser, ExtractedResumeData } from "@/hooks/useResumeParser";
 import { useResumeIntelligence } from "@/hooks/useResumeIntelligence";
@@ -555,6 +556,7 @@ export default function Profile() {
       <ParticleField interactive={false} className="opacity-30" />
       <Header />
       <main className="container max-w-6xl mx-auto px-4 py-8 relative z-10">
+        <ProfileCompletionBanner force />
         {/* Bento welcome section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <ProfileWelcomeBanner />
