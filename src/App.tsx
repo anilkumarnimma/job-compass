@@ -40,6 +40,8 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const About = lazy(() => import("./pages/About"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const JobsPreview = lazy(() => import("./pages/JobsPreview"));
+const Pricing = lazy(() => import("./pages/Pricing"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -125,8 +127,9 @@ function AppRoutes() {
       <Route path="/about" element={<LazyPage><About /></LazyPage>} />
       <Route path="/reset-password" element={<LazyPage><ResetPassword /></LazyPage>} />
 
-      {/* Friendly redirects for commonly-typed URLs */}
-      <Route path="/jobs" element={<Navigate to="/dashboard" replace />} />
+      {/* Public preview / marketing routes */}
+      <Route path="/jobs" element={<LazyPage><JobsPreview /></LazyPage>} />
+      <Route path="/pricing" element={<LazyPage><Pricing /></LazyPage>} />
       <Route path="/faq" element={<Navigate to="/#faq" replace />} />
 
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
