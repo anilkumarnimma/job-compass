@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -6,7 +7,6 @@ import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Briefcase, MapPin, Building2, Sparkles, ArrowRight, Loader2 } from "lucide-react";
-import { Helmet } from "react-helmet-async";
 
 interface PreviewJob {
   id: string;
@@ -56,17 +56,16 @@ function formatPostedDate(iso: string): string {
 export default function JobsPreview() {
   const { data: jobs, isLoading, error } = usePublicJobsPreview();
 
+  useEffect(() => {
+    const prevTitle = document.title;
+    document.title = "Browse Jobs — Sociax";
+    return () => {
+      document.title = prevTitle;
+    };
+  }, []);
+
   return (
     <Layout>
-      <Helmet>
-        <title>Browse Jobs — Sociax</title>
-        <meta
-          name="description"
-          content="Preview the latest entry-level and early-career roles on Sociax. Sign up free to apply, save, and track jobs."
-        />
-        <link rel="canonical" href="https://www.sociax.tech/jobs" />
-      </Helmet>
-
       <div className="min-h-[calc(100vh-64px)] bg-background">
         <div className="max-w-5xl mx-auto px-4 py-10 md:py-16">
           {/* Header */}
