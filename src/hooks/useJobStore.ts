@@ -293,12 +293,18 @@ export function useJobActions() {
     [updateStatusMutation]
   );
 
+  const updateSavedFolder = useCallback(
+    (jobId: string, folder: string) => updateFolderMutation.mutate({ jobId, folder }),
+    [updateFolderMutation]
+  );
+
   return {
     applyToJob,
     saveJob,
     unsaveJob,
     removeAppliedJob,
     updateApplicationStatus,
+    updateSavedFolder,
     isApplying: applyMutation.isPending,
     isSaving: saveMutation.isPending,
   };
