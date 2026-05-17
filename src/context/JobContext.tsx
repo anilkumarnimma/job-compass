@@ -20,6 +20,7 @@ interface JobContextType {
   unsaveJob: (jobId: string) => void;
   removeAppliedJob: (jobId: string) => void;
   updateApplicationStatus: (jobId: string, status: string) => void;
+  updateSavedFolder: (jobId: string, folder: string) => void;
   isApplied: (jobId: string) => boolean;
   isSaved: (jobId: string) => boolean;
   showUpgradeDialog: boolean;
@@ -41,7 +42,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
   const { data: applications = [], isLoading: appsLoading } = useApplications();
   const { data: savedJobs = [], isLoading: savedLoading } = useSavedJobs();
   const { data: totalAppCount = 0 } = useTotalApplicationCount();
-  const { applyToJob: rawApply, saveJob: rawSave, unsaveJob, removeAppliedJob, updateApplicationStatus } = useJobActions();
+  const { applyToJob: rawApply, saveJob: rawSave, unsaveJob, removeAppliedJob, updateApplicationStatus, updateSavedFolder } = useJobActions();
   const { profile, isLoading: profileLoading } = useProfile();
   const { isComplete: profileComplete, missingFields: profileGateMissingFields } = useProfileComplete();
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
@@ -139,6 +140,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
     unsaveJob,
     removeAppliedJob,
     updateApplicationStatus,
+    updateSavedFolder,
     isApplied,
     isSaved,
     showUpgradeDialog,
@@ -155,7 +157,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
   }), [
     applications, savedJobs, appsLoading, savedLoading,
     applyToJob, confirmApply, cancelApply, confirmPostApply, dismissPostApply,
-    saveJob, unsaveJob, removeAppliedJob, updateApplicationStatus,
+    saveJob, unsaveJob, removeAppliedJob, updateApplicationStatus, updateSavedFolder,
     isApplied, isSaved,
     showUpgradeDialog, showApplyConfirm, showPostApplyConfirm, showProfileGate, profileGateMissingFields,
     pendingJob, clickedJob, totalAppCount, isPremium,
