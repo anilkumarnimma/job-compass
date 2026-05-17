@@ -1082,18 +1082,21 @@ export type Database = {
       }
       saved_jobs: {
         Row: {
+          folder: string
           id: string
           job_id: string
           saved_at: string
           user_id: string
         }
         Insert: {
+          folder?: string
           id?: string
           job_id: string
           saved_at?: string
           user_id: string
         }
         Update: {
+          folder?: string
           id?: string
           job_id?: string
           saved_at?: string
