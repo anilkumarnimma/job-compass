@@ -15,10 +15,11 @@ const FIELD_LABELS: Record<string, string> = {
 
 const STORAGE_KEY = "sociax_profile_banner_dismissed";
 
-export function ProfileCompletionBanner() {
+export function ProfileCompletionBanner({ force = false }: { force?: boolean } = {}) {
   const info = useProfileCompleteness();
   const ageDays = useAccountAgeDays();
   const [dismissed, setDismissed] = useState(() => {
+    if (force) return false;
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return false;
@@ -29,10 +30,12 @@ export function ProfileCompletionBanner() {
     }
   });
 
-  // Only show on day 2+ and only if profile < 100%
+  // Always show on /profile if force=true; otherwise day 2+ rule
   if (!info || info.percent >= 100) return null;
-  if (ageDays === null || ageDays < 1) return null;
-  if (dismissed) return null;
+  if (!force) {
+    if (ageDays === null || ageDays < 1) return null;
+    if (dismissed) return null;
+  }
 
   const handleDismiss = () => {
     try {
