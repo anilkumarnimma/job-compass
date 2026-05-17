@@ -2,19 +2,19 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { JobProvider } from "@/context/JobContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { lazy, Suspense } from "react";
+import { lazy } from "react";
 
 import { IntroSplash } from "@/components/IntroSplash";
 import { AnimatedCursor } from "@/components/AnimatedCursor";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { SociaAIOrb } from "@/components/SociaAIOrb";
-import { FullPageLoader } from "@/components/FullPageLoader";
 import { FeedbackPopup } from "@/components/FeedbackPopup";
+import { LazyPage } from "@/components/LazyPage";
 
 // Eager load critical pages
 import Index from "./pages/Index";
@@ -49,10 +49,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-function LazyPage({ children }: { children: React.ReactNode }) {
-  return <Suspense fallback={<FullPageLoader />}>{children}</Suspense>;
-}
 
 function AppRoutes() {
   return (
@@ -128,6 +124,11 @@ function AppRoutes() {
       <Route path="/help" element={<LazyPage><Help /></LazyPage>} />
       <Route path="/about" element={<LazyPage><About /></LazyPage>} />
       <Route path="/reset-password" element={<LazyPage><ResetPassword /></LazyPage>} />
+
+      {/* Friendly redirects for commonly-typed URLs */}
+      <Route path="/jobs" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/faq" element={<Navigate to="/#faq" replace />} />
+
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<LazyPage><NotFound /></LazyPage>} />
     </Routes>

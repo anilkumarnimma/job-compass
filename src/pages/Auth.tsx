@@ -34,6 +34,7 @@ export default function Auth() {
   const [country, setCountry] = useState("United States");
   const [countrySearch, setCountrySearch] = useState("");
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   // Country prompt for Google OAuth users
   const [showCountryPrompt, setShowCountryPrompt] = useState(false);
@@ -163,6 +164,11 @@ export default function Auth() {
 
     try {
       if (mode === "signup") {
+        if (!acceptedTerms) {
+          toast.error("Please accept the Terms of Service and Privacy Policy to continue.");
+          setIsLoading(false);
+          return;
+        }
         if (password !== confirmPassword) {
           toast.error("Passwords do not match.");
           setIsLoading(false);
@@ -452,12 +458,35 @@ export default function Auth() {
                 </div>
               </div>
 
+              {/* Terms acceptance (signup only) */}
+              {mode === "signup" && (
+                <label className="flex items-start gap-2 text-xs text-muted-foreground pt-1 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={acceptedTerms}
+                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    className="mt-0.5 h-3.5 w-3.5 rounded border-border accent-[hsl(var(--accent))] cursor-pointer"
+                  />
+                  <span>
+                    I agree to the{" "}
+                    <Link to="/terms-of-service" target="_blank" className="text-accent hover:underline font-medium">
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link to="/privacy-policy" target="_blank" className="text-accent hover:underline font-medium">
+                      Privacy Policy
+                    </Link>
+                    .
+                  </span>
+                </label>
+              )}
+
               {/* Submit */}
               <Button
                 type="submit"
                 variant="accent"
                 className="w-full h-9 text-sm font-medium mt-0.5"
-                disabled={isLoading || !country}
+                disabled={isLoading || !country || (mode === "signup" && !acceptedTerms)}
               >
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

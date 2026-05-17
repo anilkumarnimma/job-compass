@@ -265,6 +265,13 @@ export const SociaAIOrb: React.FC = () => {
   const tooltip = tooltipForPath(location.pathname);
   const chips = chipsForPath(location.pathname);
 
+  // Hide orb for guests on mobile so it never blocks Sign up / Apply CTAs.
+  // Marketing / legal / auth pages don't need an AI helper floating over content.
+  const guestMobileHiddenPaths = ["/", "/auth", "/privacy-policy", "/terms-of-service", "/help", "/about", "/reset-password", "/unsubscribe"];
+  if (isMobile && !user && guestMobileHiddenPaths.includes(location.pathname)) {
+    return null;
+  }
+
   const chatW = isMobile ? "100vw" : 380;
   const chatH = isMobile ? "75vh" : 520;
 
