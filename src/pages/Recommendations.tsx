@@ -247,6 +247,20 @@ export default function Recommendations() {
                         isSelected={selectedJob?.id === job.id}
                         context="recommendations"
                       />
+                      {(() => {
+                        const matched = job.matchResult?.matchedSkills?.slice(0, 3) || [];
+                        const titleHit = job.matchResult && job.matchResult.score >= 60;
+                        if (matched.length === 0 && !titleHit) return null;
+                        const parts: string[] = [];
+                        if (titleHit) parts.push(`title aligns with "${job.title}"`);
+                        if (matched.length > 0) parts.push(`matches your ${matched.join(", ")}`);
+                        return (
+                          <p className="mt-2 text-[11px] text-muted-foreground italic px-1">
+                            <Sparkles className="inline h-3 w-3 mr-1 text-accent/70" />
+                            Why this job: {parts.join(" — ")}.
+                          </p>
+                        );
+                      })()}
                     </div>
                   </motion.div>
                 ))}
