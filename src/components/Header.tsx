@@ -67,7 +67,6 @@ export function Header() {
     if (!user) {
       return [
         { path: "/jobs", label: "Browse Jobs" },
-        { path: "/pricing", label: "Pricing" },
         { path: "/about", label: "About" },
         { path: "/help", label: "Help" },
       ];
