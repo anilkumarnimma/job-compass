@@ -15,10 +15,11 @@ import { countries } from "@/data/countries";
 interface CountrySelectDialogProps {
   open: boolean;
   onSelect: (country: string) => void;
+  onClose?: () => void;
   isLoading?: boolean;
 }
 
-export function CountrySelectDialog({ open, onSelect, isLoading }: CountrySelectDialogProps) {
+export function CountrySelectDialog({ open, onSelect, onClose, isLoading }: CountrySelectDialogProps) {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState("United States");
 
