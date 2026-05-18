@@ -138,12 +138,13 @@ export default function Index() {
 
   const handleHeroSearch = useCallback((query?: string) => {
     const q = query || heroSearch.trim();
+    const base = user ? "/dashboard" : "/jobs";
     if (q) {
-      navigate(`/dashboard?search=${encodeURIComponent(q)}`);
+      navigate(`${base}?search=${encodeURIComponent(q)}`);
     } else {
-      navigate("/dashboard");
+      navigate(base);
     }
-  }, [heroSearch, navigate]);
+  }, [heroSearch, navigate, user]);
 
   return (
     <Layout showFooter={true}>
