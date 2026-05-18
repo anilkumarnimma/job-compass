@@ -56,13 +56,28 @@ function addGuestApplied(jobId: string) {
   }
 }
 
-function usePublicJobsPreview() {
+const ROLE_PRESETS: { id: string; label: string; keywords: string[] }[] = [
+  { id: "all", label: "All Roles", keywords: [] },
+  { id: "swe", label: "Software Engineer", keywords: ["software engineer", "developer", "swe"] },
+  { id: "data", label: "Data / Analytics", keywords: ["data analyst", "data scientist", "data engineer", "analytics"] },
+  { id: "product", label: "Product", keywords: ["product manager", "product owner"] },
+  { id: "design", label: "Design", keywords: ["designer", "ui/ux", "ux"] },
+  { id: "marketing", label: "Marketing", keywords: ["marketing", "growth", "seo"] },
+  { id: "sales", label: "Sales / BD", keywords: ["sales", "account executive", "business development"] },
+  { id: "ops", label: "Operations", keywords: ["operations", "supply chain", "coordinator"] },
+  { id: "finance", label: "Finance", keywords: ["finance", "accountant", "financial analyst"] },
+  { id: "ai", label: "AI / ML", keywords: ["machine learning", "ai engineer", "ml engineer"] },
+];
+
+const ROLE_STORAGE_KEY = "guest_preferred_role";
+
+function usePublicJobsPreview(roleKeywords: string[]) {
   return useQuery({
-    queryKey: ["public-jobs-preview"],
+    queryKey: ["public-jobs-preview", roleKeywords.join("|")],
     queryFn: async (): Promise<PreviewJob[]> => {
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - 30);
-      const { data, error } = await supabase
+      let query = supabase
         .from("jobs")
         .select(
           "id, title, company, company_logo, location, employment_type, salary_range, skills, posted_date, updated_at, external_apply_link"
@@ -71,9 +86,12 @@ function usePublicJobsPreview() {
         .eq("is_archived", false)
         .eq("is_direct_apply", true)
         .is("deleted_at", null)
-        .gte("posted_date", cutoff.toISOString())
-        .order("posted_date", { ascending: false })
-        .limit(20);
+        .gte("posted_date", cutoff.toISOString());
+      if (roleKeywords.length > 0) {
+        const ors = roleKeywords.map((k) => `title.ilike.%${k}%`).join(",");
+        query = query.or(ors);
+      }
+      const { data, error } = await query.order("posted_date", { ascending: false }).limit(25);
       if (error) throw error;
       return (data ?? []) as PreviewJob[];
     },
