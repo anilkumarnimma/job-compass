@@ -37,7 +37,7 @@ interface PreviewJob {
   external_apply_link: string | null;
 }
 
-const GUEST_APPLY_LIMIT = 2;
+const GUEST_APPLY_LIMIT = 5;
 const GUEST_APPLY_KEY = "guest_applied_jobs";
 
 function getGuestApplied(): string[] {
