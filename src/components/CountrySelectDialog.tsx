@@ -28,8 +28,8 @@ export function CountrySelectDialog({ open, onSelect, onClose, isLoading }: Coun
   );
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose?.(); }}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5 text-accent" />
