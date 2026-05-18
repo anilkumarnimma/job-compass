@@ -138,12 +138,13 @@ export default function Index() {
 
   const handleHeroSearch = useCallback((query?: string) => {
     const q = query || heroSearch.trim();
+    const base = user ? "/dashboard" : "/jobs";
     if (q) {
-      navigate(`/dashboard?search=${encodeURIComponent(q)}`);
+      navigate(`${base}?search=${encodeURIComponent(q)}`);
     } else {
-      navigate("/dashboard");
+      navigate(base);
     }
-  }, [heroSearch, navigate]);
+  }, [heroSearch, navigate, user]);
 
   return (
     <Layout showFooter={true}>
@@ -258,7 +259,7 @@ export default function Index() {
               transition={{ duration: 0.6, delay: 0.45 }}
               className="flex flex-col sm:flex-row items-center justify-center gap-4"
             >
-              <Link to="/dashboard">
+              <Link to={user ? "/dashboard" : "/jobs"}>
                 <Button
                   size="lg"
                   className="w-full sm:w-auto rounded-full px-8 bg-accent text-accent-foreground hover:bg-accent/90 shadow-glow hover:shadow-[0_0_40px_-5px_hsl(var(--accent)/0.4)] transition-all duration-300 group btn-glow"

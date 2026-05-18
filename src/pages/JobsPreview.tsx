@@ -37,7 +37,7 @@ interface PreviewJob {
   external_apply_link: string | null;
 }
 
-const GUEST_APPLY_LIMIT = 2;
+const GUEST_APPLY_LIMIT = 5;
 const GUEST_APPLY_KEY = "guest_applied_jobs";
 
 function getGuestApplied(): string[] {
@@ -56,13 +56,28 @@ function addGuestApplied(jobId: string) {
   }
 }
 
-function usePublicJobsPreview() {
+const ROLE_PRESETS: { id: string; label: string; keywords: string[] }[] = [
+  { id: "all", label: "All Roles", keywords: [] },
+  { id: "swe", label: "Software Engineer", keywords: ["software engineer", "developer", "swe"] },
+  { id: "data", label: "Data / Analytics", keywords: ["data analyst", "data scientist", "data engineer", "analytics"] },
+  { id: "product", label: "Product", keywords: ["product manager", "product owner"] },
+  { id: "design", label: "Design", keywords: ["designer", "ui/ux", "ux"] },
+  { id: "marketing", label: "Marketing", keywords: ["marketing", "growth", "seo"] },
+  { id: "sales", label: "Sales / BD", keywords: ["sales", "account executive", "business development"] },
+  { id: "ops", label: "Operations", keywords: ["operations", "supply chain", "coordinator"] },
+  { id: "finance", label: "Finance", keywords: ["finance", "accountant", "financial analyst"] },
+  { id: "ai", label: "AI / ML", keywords: ["machine learning", "ai engineer", "ml engineer"] },
+];
+
+const ROLE_STORAGE_KEY = "guest_preferred_role";
+
+function usePublicJobsPreview(roleKeywords: string[]) {
   return useQuery({
-    queryKey: ["public-jobs-preview"],
+    queryKey: ["public-jobs-preview", roleKeywords.join("|")],
     queryFn: async (): Promise<PreviewJob[]> => {
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - 30);
-      const { data, error } = await supabase
+      let query = supabase
         .from("jobs")
         .select(
           "id, title, company, company_logo, location, employment_type, salary_range, skills, posted_date, updated_at, external_apply_link"
@@ -71,9 +86,12 @@ function usePublicJobsPreview() {
         .eq("is_archived", false)
         .eq("is_direct_apply", true)
         .is("deleted_at", null)
-        .gte("posted_date", cutoff.toISOString())
-        .order("posted_date", { ascending: false })
-        .limit(20);
+        .gte("posted_date", cutoff.toISOString());
+      if (roleKeywords.length > 0) {
+        const ors = roleKeywords.map((k) => `title.ilike.%${k}%`).join(",");
+        query = query.or(ors);
+      }
+      const { data, error } = await query.order("posted_date", { ascending: false }).limit(25);
       if (error) throw error;
       return (data ?? []) as PreviewJob[];
     },
@@ -89,10 +107,27 @@ function getLocationBadge(location: string) {
 }
 
 export default function JobsPreview() {
-  const { data: jobs, isLoading, error } = usePublicJobsPreview();
+  const [selectedRole, setSelectedRole] = useState<string>(() => {
+    try {
+      return localStorage.getItem(ROLE_STORAGE_KEY) || "all";
+    } catch {
+      return "all";
+    }
+  });
+  const activeRole = ROLE_PRESETS.find((r) => r.id === selectedRole) ?? ROLE_PRESETS[0];
+  const { data: jobs, isLoading, error } = usePublicJobsPreview(activeRole.keywords);
   const { toast } = useToast();
   const navigate = useNavigate();
   const [appliedIds, setAppliedIds] = useState<string[]>(() => getGuestApplied());
+
+  const handleSelectRole = useCallback((roleId: string) => {
+    setSelectedRole(roleId);
+    try {
+      localStorage.setItem(ROLE_STORAGE_KEY, roleId);
+    } catch {
+      // ignore
+    }
+  }, []);
 
   useEffect(() => {
     const prevTitle = document.title;
@@ -176,6 +211,31 @@ export default function JobsPreview() {
                   Log in
                 </Button>
               </Link>
+            </div>
+          </div>
+
+          {/* Role filter pills */}
+          <div className="mb-6">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground text-center mb-3">
+              Pick a role to see relevant jobs
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {ROLE_PRESETS.map((r) => {
+                const active = r.id === selectedRole;
+                return (
+                  <button
+                    key={r.id}
+                    onClick={() => handleSelectRole(r.id)}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                      active
+                        ? "bg-accent text-accent-foreground border-accent shadow-glow"
+                        : "bg-secondary/40 text-muted-foreground border-border/40 hover:border-accent/40 hover:text-foreground"
+                    }`}
+                  >
+                    {r.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
