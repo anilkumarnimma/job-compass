@@ -214,6 +214,31 @@ export default function JobsPreview() {
             </div>
           </div>
 
+          {/* Role filter pills */}
+          <div className="mb-6">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground text-center mb-3">
+              Pick a role to see relevant jobs
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {ROLE_PRESETS.map((r) => {
+                const active = r.id === selectedRole;
+                return (
+                  <button
+                    key={r.id}
+                    onClick={() => handleSelectRole(r.id)}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                      active
+                        ? "bg-accent text-accent-foreground border-accent shadow-glow"
+                        : "bg-secondary/40 text-muted-foreground border-border/40 hover:border-accent/40 hover:text-foreground"
+                    }`}
+                  >
+                    {r.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Job list */}
           {isLoading && (
             <div className="flex justify-center py-20">
