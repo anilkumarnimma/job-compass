@@ -107,10 +107,27 @@ function getLocationBadge(location: string) {
 }
 
 export default function JobsPreview() {
-  const { data: jobs, isLoading, error } = usePublicJobsPreview();
+  const [selectedRole, setSelectedRole] = useState<string>(() => {
+    try {
+      return localStorage.getItem(ROLE_STORAGE_KEY) || "all";
+    } catch {
+      return "all";
+    }
+  });
+  const activeRole = ROLE_PRESETS.find((r) => r.id === selectedRole) ?? ROLE_PRESETS[0];
+  const { data: jobs, isLoading, error } = usePublicJobsPreview(activeRole.keywords);
   const { toast } = useToast();
   const navigate = useNavigate();
   const [appliedIds, setAppliedIds] = useState<string[]>(() => getGuestApplied());
+
+  const handleSelectRole = useCallback((roleId: string) => {
+    setSelectedRole(roleId);
+    try {
+      localStorage.setItem(ROLE_STORAGE_KEY, roleId);
+    } catch {
+      // ignore
+    }
+  }, []);
 
   useEffect(() => {
     const prevTitle = document.title;
