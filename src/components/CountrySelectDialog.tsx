@@ -15,10 +15,11 @@ import { countries } from "@/data/countries";
 interface CountrySelectDialogProps {
   open: boolean;
   onSelect: (country: string) => void;
+  onClose?: () => void;
   isLoading?: boolean;
 }
 
-export function CountrySelectDialog({ open, onSelect, isLoading }: CountrySelectDialogProps) {
+export function CountrySelectDialog({ open, onSelect, onClose, isLoading }: CountrySelectDialogProps) {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState("United States");
 
@@ -27,8 +28,8 @@ export function CountrySelectDialog({ open, onSelect, isLoading }: CountrySelect
   );
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose?.(); }}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5 text-accent" />

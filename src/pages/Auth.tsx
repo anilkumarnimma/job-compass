@@ -580,7 +580,7 @@ export default function Auth() {
       </div>
 
       {/* Country prompt for Google OAuth users without country */}
-      <CountrySelectDialog open={showCountryPrompt} onSelect={handleCountrySelected} isLoading={savingCountry} />
+      <CountrySelectDialog open={showCountryPrompt} onSelect={handleCountrySelected} onClose={() => setShowCountryPrompt(false)} isLoading={savingCountry} />
     </Layout>
   );
 }
