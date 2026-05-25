@@ -127,6 +127,35 @@ Deno.serve(async (req) => {
     let sentCount = 0;
     const errors: string[] = [];
 
+    const escHtml = (s: string | null | undefined): string =>
+      (s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+
+    const safeUrl = (u: string | null | undefined): string => {
+      const v = (u ?? "").trim();
+      if (/^https?:\/\//i.test(v)) return escHtml(v);
+      return "#";
+    };
+
+    const hmacKey = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(serviceRoleKey),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"],
+    );
+    const b64url = (buf: ArrayBuffer) =>
+      btoa(String.fromCharCode(...new Uint8Array(buf)))
+        .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    const signUnsub = async (uid: string): Promise<string> => {
+      const sig = await crypto.subtle.sign("HMAC", hmacKey, new TextEncoder().encode(uid));
+      return `${uid}.${b64url(sig)}`;
+    };
+
     for (const pref of prefs) {
       const profile = profiles.find((p) => p.user_id === pref.user_id);
       if (!profile?.email) continue;
@@ -141,8 +170,9 @@ Deno.serve(async (req) => {
         : [];
 
       // Build email content
-      const userName = profile.full_name || profile.email.split("@")[0];
-      const unsubscribeUrl = `${siteUrl}/unsubscribe?uid=${pref.user_id}`;
+      const userName = escHtml(profile.full_name || profile.email.split("@")[0]);
+      const unsubToken = await signUnsub(pref.user_id);
+      const unsubscribeUrl = `${siteUrl}/unsubscribe?token=${encodeURIComponent(unsubToken)}`;
 
       let emailHtml = `
 <!DOCTYPE html>
@@ -162,8 +192,8 @@ Deno.serve(async (req) => {
         for (const job of newJobs.slice(0, 5)) {
           emailHtml += `
       <div style="padding:12px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;">
-        <a href="${job.external_apply_link}" style="font-weight:600;color:#2563eb;text-decoration:none;font-size:15px;">${job.title}</a>
-        <p style="margin:4px 0 0;color:#64748b;font-size:13px;">${job.company} · ${job.location}${job.salary_range ? ` · ${job.salary_range}` : ""}</p>
+        <a href="${safeUrl(job.external_apply_link)}" style="font-weight:600;color:#2563eb;text-decoration:none;font-size:15px;">${escHtml(job.title)}</a>
+        <p style="margin:4px 0 0;color:#64748b;font-size:13px;">${escHtml(job.company)} · ${escHtml(job.location)}${job.salary_range ? ` · ${escHtml(job.salary_range)}` : ""}</p>
       </div>`;
         }
         if (newJobs.length > 5) {
@@ -180,8 +210,8 @@ Deno.serve(async (req) => {
         for (const job of matchedJobs) {
           emailHtml += `
       <div style="padding:12px;border:1px solid #dbeafe;border-radius:8px;margin-bottom:8px;background:#eff6ff;">
-        <a href="${job.external_apply_link}" style="font-weight:600;color:#2563eb;text-decoration:none;font-size:15px;">${job.title}</a>
-        <p style="margin:4px 0 0;color:#64748b;font-size:13px;">${job.company} · ${job.location}</p>
+        <a href="${safeUrl(job.external_apply_link)}" style="font-weight:600;color:#2563eb;text-decoration:none;font-size:15px;">${escHtml(job.title)}</a>
+        <p style="margin:4px 0 0;color:#64748b;font-size:13px;">${escHtml(job.company)} · ${escHtml(job.location)}</p>
       </div>`;
         }
         emailHtml += `</div>`;
@@ -195,8 +225,8 @@ Deno.serve(async (req) => {
         for (const job of sponsorshipJobs.slice(0, 5)) {
           emailHtml += `
       <div style="padding:12px;border:1px solid #d1fae5;border-radius:8px;margin-bottom:8px;background:#ecfdf5;">
-        <a href="${job.external_apply_link}" style="font-weight:600;color:#059669;text-decoration:none;font-size:15px;">${job.title}</a>
-        <p style="margin:4px 0 0;color:#64748b;font-size:13px;">${job.company} · ${job.location}</p>
+        <a href="${safeUrl(job.external_apply_link)}" style="font-weight:600;color:#059669;text-decoration:none;font-size:15px;">${escHtml(job.title)}</a>
+        <p style="margin:4px 0 0;color:#64748b;font-size:13px;">${escHtml(job.company)} · ${escHtml(job.location)}</p>
       </div>`;
         }
         emailHtml += `</div>`;
