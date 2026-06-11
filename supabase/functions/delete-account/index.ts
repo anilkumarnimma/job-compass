@@ -1,10 +1,67 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import Stripe from "https://esm.sh/stripe@18.5.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+const log = (step: string, details?: unknown) => {
+  console.log(`[DELETE-ACCOUNT] ${step}${details ? " - " + JSON.stringify(details) : ""}`);
+};
+
+async function cleanupStripe(email: string | undefined) {
+  const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+  if (!stripeKey || !email) {
+    log("Skipping Stripe cleanup", { hasKey: !!stripeKey, hasEmail: !!email });
+    return;
+  }
+  try {
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+    const customers = await stripe.customers.list({ email, limit: 10 });
+    log("Stripe customers found", { count: customers.data.length, email });
+
+    for (const customer of customers.data) {
+      // Cancel ALL non-terminal subscriptions (active, past_due, unpaid, trialing, paused)
+      const statuses: Array<Stripe.Subscription.Status | "all"> = ["all"];
+      for (const status of statuses) {
+        const subs = await stripe.subscriptions.list({
+          customer: customer.id,
+          status: status as Stripe.Subscription.Status,
+          limit: 100,
+        });
+        for (const sub of subs.data) {
+          if (["canceled", "incomplete_expired"].includes(sub.status)) continue;
+          try {
+            await stripe.subscriptions.cancel(sub.id, { invoice_now: false, prorate: false });
+            log("Cancelled subscription", { id: sub.id, status: sub.status });
+          } catch (e) {
+            log("Cancel sub failed", { id: sub.id, err: (e as Error).message });
+          }
+        }
+      }
+
+      // Void any open/draft invoices so Stripe stops retrying
+      const invoices = await stripe.invoices.list({ customer: customer.id, limit: 100 });
+      for (const inv of invoices.data) {
+        try {
+          if (inv.status === "open") {
+            await stripe.invoices.voidInvoice(inv.id);
+            log("Voided open invoice", { id: inv.id });
+          } else if (inv.status === "draft") {
+            await stripe.invoices.del(inv.id);
+            log("Deleted draft invoice", { id: inv.id });
+          }
+        } catch (e) {
+          log("Invoice cleanup failed", { id: inv.id, err: (e as Error).message });
+        }
+      }
+    }
+  } catch (e) {
+    log("Stripe cleanup error (non-fatal)", { err: (e as Error).message });
+  }
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -23,7 +80,6 @@ Deno.serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Verify the caller's JWT
     const userClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -36,10 +92,12 @@ Deno.serve(async (req) => {
     }
 
     const userId = userData.user.id;
+    const userEmail = userData.user.email;
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 
-    // Best-effort cleanup of related rows (profiles, applications, etc.)
-    // Most tables cascade via user_id; explicit deletes ensure no orphans.
+    // FIRST: Cancel Stripe subscriptions + void open invoices BEFORE deleting DB rows
+    await cleanupStripe(userEmail);
+
     const tables = [
       "applications", "saved_jobs", "cover_letters", "user_streaks",
       "user_visits", "user_subscriptions", "user_roles",
@@ -52,7 +110,6 @@ Deno.serve(async (req) => {
       await admin.from(t).delete().eq("user_id", userId);
     }
 
-    // Finally, delete the auth user
     const { error: delErr } = await admin.auth.admin.deleteUser(userId);
     if (delErr) {
       return new Response(JSON.stringify({ error: delErr.message }), {
